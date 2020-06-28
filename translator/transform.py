@@ -809,4 +809,4 @@ if __name__ == '__main__':
 	with open(config_files.unresolvedTypesFile, 'w'):
 		pass
 	# Do main program
-	test()
+	translate()
