@@ -153,23 +153,6 @@ class Env:
 		except:
 			print("Warning: env could not connect to ACL2 server")
 
-		# Open a new file with a list of unknown tokens
-		# TODO: remove
-		self.errorFile = open(exclusions.unknownTokensFile, "w")
-
-		# A debugging variable containing the name of the current function being translated
-		self.defineSlot = ""
-
-	def printGlobalNames(self):
-		print("Global names:")
-		print("=============")
-		for name in self.globalEnv:
-			print(name)
-
-		print("\nManual names:")
-		print("=============")
-		for name in self.manualEnv:
-			print(name)
 
 	def lookup(self, token, ignoreBindings=False):
 		"""
@@ -259,28 +242,6 @@ class Env:
 		print()
 		sys.exit(-1)
 
-		resp = None
-		while resp not in ['f', 's', 'e']:
-			resp = input("Options: add as a function; add as a symbol; exit (f/s/e)? ")
-		if resp == 'f':
-			numOfArgs = None
-			while numOfArgs == None:
-				try:
-					numOfArgs = int(input("Number of arguments: "))
-				except:
-					pass
-			self.manualEnv[token] = manualCode.apply_fn_gen(
-				manualTranslations.unimplementedFunctionGen(token, numOfArgs), numOfArgs)
-			self.errorFile.write(f"{token}\t{numOfArgs}\n")
-			return self.manualEnv[token]
-		if resp == 's':
-			self.manualEnv[token] = lambda _, env: ([ACL2String(token)], env, 1)
-			self.errorFile.write(f"{token}\n")
-			return self.manualEnv[token]
-		if resp == 'e':
-			self.errorFile.write(f"{token}\n")
-			sys.exit(1)
-
 	# === Environment manipulation
 	def addToAuto(self, token, fn):
 		"""
@@ -361,21 +322,6 @@ class Env:
 
 		return toReturn
 
-	def setBindingType(self, token, typ):
-		'''
-		Args:
-			- token : str
-			- typ : SailType
-
-		TODO: remove
-		'''
-		# Extract the most recent sail item given the string token
-		sailItem = [sailItem for (acl2Item, sailItem) in self.bindStack if acl2Item.upper() == token.upper()]
-		sailItem = sailItem[-1]
-
-		# Set the type
-		sailItem.setType(typ)
-
 	def popWithCheck(self, tokens):
 		"""
 		Pop the list of names from the bind stack.  To help avoid programmer
@@ -423,9 +369,9 @@ class Env:
 	def popFile(self):
 		self.fileStack.pop()
 
-	def getFile(self):
-		return self.fileStack[-1]
-
+	'''
+	As explained above, map Lisp file names to their translated ASTs. 
+	'''
 	def addToIncluded(self, file, ast):
 		if file in self.included:
 			sys.exit("Error: trying to add already included file")
@@ -462,9 +408,10 @@ class Env:
 		else:
 			return None
 
-	def getFullContext(self):
-		return self.contextStack
-
+	'''
+	As explained above, the define slot is the current function being
+	translated.
+	'''
 	def setDefineSlot(self, item):
 		self.defineSlot = item
 
@@ -485,11 +432,8 @@ class Env:
 	def clearCurrentType(self):
 		self.currentType = None
 
-	def addToUnresolvedTypes(self, item):
-		self.unresolvedTypes.append(item)
-
-	def getUnresolvedTypes(self):
-		return self.unresolvedTypes
+	def getCurrentType(self):
+		return self.currentType
 
 	# === Request an evaluation from the ACL2 server
 	def evalACL2(self, expr, debracket=False):
@@ -742,17 +686,6 @@ def transformACL2asttoSail(ACL2ast, env):
 			if not any(listStartsWith(currentItem, inc) for inc in config_patterns.only_translate[currFile]):
 				translate = False
 
-			# ... we also add in some others
-			# if currFile in exclusions.include_instead:
-			# 	for repl in exclusions.include_instead[currFile]:
-			# 		if listStartsWith(currentItem, repl):
-			# 			currentItem2 = currentItem.copy()
-			# 			for (i, item) in enumerate(exclusions.include_instead[currFile][repl]):
-			# 				currentItem2[i] = item
-			# 			currentItem = currentItem2
-			# 			translate = True
-			# 			break
-
 		if translate:
 			(sailFirst, env, _) = transformACL2asttoSail(currentItem, env)
 			SailAST.extend(sailFirst)
@@ -828,9 +761,6 @@ def transformACL2asttoSail(ACL2ast, env):
 
 	return SailAST, env, len(ACL2ast)
 
-# def resolveNils(Sailast):
-# 	# Go through the tree assigning parent pointers and collecting NILs along the way
-# 	pass
 
 def translate():
 	"""
