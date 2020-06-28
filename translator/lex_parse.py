@@ -1,15 +1,32 @@
 import sys
 
-class CodeTopLevel():
+"""
+This file contains functions for lexing and parsing Lisp/ACL2 code and classes
+for representing ACL2 ASTs.
+
+Important functions are:
+ -  lexLispFile
+ -  lexLispString
+ -  parseACL2
+ -  ASTprinter
+ -  pp_acl2
+"""
+
+################################################################################
+# Classes
+################################################################################
+
+
+class CodeTopLevel:
 	"""
-	Class representing a code file
+	Class representing a code file for both ACL2 and Sail.
 	TODO: maybe derive from List
 	"""
 	def __init__(self, topLevels):
-		'''
+		"""
 		Args:
 			 - topLevels : [ACL2astElem] | [SailASTelem]
-		'''
+		"""
 		self.topLevels = topLevels
 
 	def first(self):
@@ -34,94 +51,109 @@ class CodeTopLevel():
 		return len(self.topLevels)
 
 
-class ACL2Comment():
-	"""Class for representing LISP comments"""
+class ACL2Comment:
+	"""Class for representing Lisp comments"""
 	def __init__(self, comment):
-		'''
+		"""
 		Args:
 			- comment : str
-		'''
+		"""
 		self.comment = comment
+
 	def __str__(self):
 		return "COMMENT: {}".format(self.comment)
+
 	def __repr__(self):
-		'''TODO: remove'''
+		"""TODO: remove"""
 		return self.__str__()
 
 	def getComment(self):
 		return self.comment
 
 	def pp(self):
-		'''
+		"""
 		TODO: the ACL2Comment object should really not be present in the Sail
 		ast, but, for now, it is, hence this function is necessary when pretty
 		printing a Sail ast.
-		'''
+		"""
 		return f"/*{self.comment}*/"
 
-class ACL2String():
+
+class ACL2String:
 	"""Class for representing ACL2 strings"""
 	def __init__(self, string):
-		'''
+		"""
 		Args:
 			- string : str
-		'''
+		"""
 		self.string = string
+
 	def __str__(self):
 		return "STRING: {}".format(self.string)
+
 	def __repr__(self):
-		'''TODO: remove'''
+		"""TODO: remove"""
 		return self.__str__()
+
 	def __eq__(self, other):
 		if type(self) != type(other):
 			return False
 		return self.string == other.getString()
+
 	def __hash__(self):
 		return id(self)
 
 	def getString(self):
 		return self.string
 
-class NewLine():
-	"""Abstract class for newlines"""
+
+class NewLine:
+	"""
+	Class for newlines.  Originally intended for handling inline
+	comments, however now filtered out of ASTs.
+	"""
 	def __init__(self):
 		pass
+
 	def __str__(self):
 		return "\n"
 
-class ACL2quote():
-	"""Abstract class for quotes"""
+
+class ACL2quote:
+	"""Class for quotes"""
 	def __init__(self):
 		self.ast = None
+
 	def __str__(self):
 		return "QUOTE:"
 
 	def setAST(self, ast):
-		'''
-		Either a bracketted expression or a symbol can be quoted
+		"""
+		Either a bracketed expression or a symbol can be quoted
 
 		Args:
 			- ast : [ACL2astElem] | str
-		'''
+		"""
 		self.ast = ast
 
 	def getAST(self):
 		return self.ast
 
-class ACL2qq():
-	"""Abstract class for quasi quotes"""
+
+class ACL2qq:
+	"""Class for quasi quotes"""
 	def __init__(self):
 		self.ast = None
 	def __str__(self):
 		return "QQ:"
 
 	def setAST(self, ast):
-		'''
-		Either a bracketted expression or a symbol can be QQed
+		"""
+		Either a bracketed expression or a symbol can be QQed
 
 		Args:
 			- ast : [ACL2astElem] | str
-		'''
+		"""
 		self.ast = ast
 
 	def getAST(self):
@@ -160,7 +192,8 @@ def lexRawLisp(rawLisp):
 			toAdd.extend([subitem, NewLine()])
 		toAdd.append(splitItem[-1])
 		nlSplit.extend(toAdd)
-	# Remove extraeous '' strings
+
+	# Remove extraneous empty strings
 	return [x for x in nlSplit if x != '']
 
 def lexLisp(file):
@@ -171,7 +204,7 @@ def lexLisp(file):
 		- file : string
 	Return:
 		- [str] : lisp file split into tokens
-	'''
+	"""
 	with open(file, 'r') as f:
 		# Read the file
 		rawLisp = f.read()
@@ -180,14 +213,14 @@ def lexLisp(file):
 		
 
 def parseACL2Comment(tokens, index):
-	'''
+	"""
 	Args:
 		- tokens : [str].  The full list of tokens.
 		- index : int.  The index of the ';' or ';;' or '#||' token
 	Returns:
 		- (comment : ACL2Comment, index' : int).
-		  The parsed single line comment and index into the remaining tokens
-	'''
+		  The parsed comment and index into the remaining tokens
+	"""
 	# Single line comment
 	if tokens[index] in [';', ';;']:
 		stopPred = lambda token: isinstance(token, NewLine)
@@ -200,7 +233,7 @@ def parseACL2Comment(tokens, index):
 	comment = []
 	end = False
 	runningIndex = index + 1
-	while end != True:
+	while not end:
 		nextWord = tokens[runningIndex]
 		if stopPred(nextWord) or runningIndex == len(tokens) - 1:
 			end = True
@@ -213,12 +246,10 @@ def parseACL2Comment(tokens, index):
 		comment = [i if not isinstance(i, NewLine) else "\n" for i in comment]
 
 	# Return
-	return (ACL2Comment(' '.join(comment)), runningIndex)
+	return ACL2Comment(' '.join(comment)), runningIndex
 
 def parseACL2String(tokens, index):
-	'''
-	TODO: merge with parseACL2Comment (and do via regex in lex stage)
-
+	"""
 	Args:
 		- tokens : [str].  The full list of tokens.
 		- index : int.  The index of the '"' token
@@ -229,58 +260,62 @@ def parseACL2String(tokens, index):
 	string = []
 	end = False
 	index += 1
-	while end != True:
+	while not end:
 		nextWord = tokens[index]
 		if nextWord == "\"":
 			end = True
 		else:
 			string.append(nextWord)
 		index += 1
+
 	# Convert NewLines objects to strings
 	string = [s.__str__() for s in string]
-	return (ACL2String(' '.join(string)), index)
+	return ACL2String(' '.join(string)), index
 
 def parseACL2Quote(tokens, index):
-	'''
-	This function only adds in an empty quote object to the AST - 
+	"""
+	This function only adds in an empty quote object to the AST -
 	encapsulation is done at a later stage
 
 	Args:
-		- tokens : [str].  The full list of tokens.
+		- tokens : [str].  	The full list of tokens.  Not used but required as
+							this function is passed around.
 		- index : int.  The index of the "'" or 'quote' token
 	Returns:
 		- (quote : ACL2quote, index' : int = index + 1)
 		  An empty quote object and the index incremented
-	'''
-	return (ACL2quote(), index+1)
+	"""
+	return ACL2quote(), index + 1
 
 def parseACL2QQ(tokens, index):
-	'''
-	This function only adds in an empty QQ object to the AST - 
+	"""
+	This function only adds in an empty QQ object to the AST -
 	encapsulation is done at a later stage
 
 	Args:
-		- tokens : [str].  The full list of tokens.
+		- tokens : [str].  	The full list of tokens.  Not used but required as
+							this function is passed around.
 		- index : int.  The index of the "`"
 	Returns:
 		- (quote : ACL2qq, index' : int = index + 1)
 		  An empty QQ object and the index incremented
-	'''
-	return (ACL2qq(), index+1)
+	"""
+	return ACL2qq(), index + 1
 
 def encapsulateQuotes(ast):
-	'''
-	TODO: deal properly with double quotes.  The current model only uses double
-	quotes in theorems, which we ignore.
-
+	"""
 	Takes a parsed AST with empty quote/QQ objects and encapsulates the
-	suceeding symbols at the top level into them.
+	succeeding symbols at the top level into them.
 
 	Args:
 		- ast : [ACL2astElem]
 	Returns:
 		- ast' : [ACL2astElem]
-	'''
+
+	TODO:
+		- Deal properly with double quotes.  The current model only uses double
+		quotes in theorems, which we ignore.
+	"""
 	# Test for an empty AST first
 	if len(ast) == 0:
 		return []
@@ -294,11 +329,11 @@ def encapsulateQuotes(ast):
 		astElem = ast[index]
 		inc = 1
 
-		# Ecapsulate the next real symbol
+		# Encapsulate the next real symbol
 		if type(astElem) in [ACL2quote, ACL2qq]:
 			# Get the next astElem
 			nextAstElem = ast[index+1]
-			# If it's blatently the wrong type, raise an error
+			# If it's blatantly the wrong type, raise an error
 			if type(nextAstElem) in [ACL2quote, ACL2qq]:
 				print("WARNING: next symbol after quote/QQ is another quote/QQ - this is not implemented properly yet")
 			elif type(nextAstElem) not in [list, str]:
@@ -326,15 +361,17 @@ def encapsulateQuotes(ast):
 	return newAST
 
 def consumeSpecialToken(token):
-	'''Comsumes a token with which we want to do something special
+	"""
+	Consumes a token with which we want to do something special using the
+	functions above.
 
 	Args:
 		- token : str.  The current token
 	Returns:
 		- (	success : Bool,
 			fn : 	(tokens : [str], index : int)
-					-> (???, index' : int))
-	'''
+					-> (ACL2astElem, index' : int))
+	"""
 	tokenSwitchTable = {
 		";" : parseACL2Comment,
 		";;": parseACL2Comment,
@@ -345,9 +382,9 @@ def consumeSpecialToken(token):
 		"`": parseACL2QQ
 	}
 	if token in tokenSwitchTable:
-		return (True, tokenSwitchTable.get(token))
+		return True, tokenSwitchTable.get(token)
 	else:
-		return (False, None)
+		return False, None
 
 def structureLisp(tokens, index, level):
 	'''
@@ -364,7 +401,13 @@ def structureLisp(tokens, index, level):
 	Return:
 		- (ast : [ACL2astElem], index' : int).
 		  AST only - no meaning or types yet.  New index.
-	'''
+
+	TODO:
+		- Maybe include encapsulation of quotes/QQs in their respective
+		parsing functions, rather than a dedicated pass through the AST.
+	"""
+
+	# First pass - basic parsing
 	ast = []
 	end = False
 	while not end:
@@ -383,7 +426,7 @@ def structureLisp(tokens, index, level):
 		# Deal with close bracket
 		elif currentToken == ")":
 			if level == 0:
-				print("ERROR: source ill-bracketted (found close bracket at level 0)")
+				print("ERROR: source ill-bracketed (found close bracket at level 0)")
 				print("Previous tokens: {}".format(tokens[index-10:index]))
 				print("Next tokens: {}".format(tokens[index:index+10]))
 			index += 1
@@ -401,28 +444,31 @@ def structureLisp(tokens, index, level):
 				print("Previous tokens: {}".format(tokens[index-10:index]))
 				print("Next tokens: {}".format(tokens[index:index+10]))
 
-	# Scan the current level of the AST for newlines and comments, removing them
+	# Second pass: scan the current level of the AST for newlines and
+	# comments and remove them
 	ast = [a for a in ast if type(a) not in [ACL2Comment, NewLine]]
 
-	# Scan the current level of the AST for quotes and QQs, encapsulating the
-	# next 'real' ACL2 sumbol in the relevent quote/QQ object.  Because
-	# structureLisp is, itself, recursive, quotes/QQs lower in the hierarchy
-	# will have been handled already.
+	# Third pass: scan the current level of the AST for quotes and QQs,
+	# encapsulating the next 'real' ACL2 symbol in the relevant quote/QQ
+	# object.  Because parseACL2 is, itself, recursive, quotes/QQs lower in
+	# the hierarchy will have been handled already.
 	ast = encapsulateQuotes(ast)
 
-	return (ast, index)
+	return ast, index
 
 def ASTprinter(ast, level):
-	'''
-	Prints parsed AST.  Items can be an ACL2Comment, an ACL2String,
-	a list, a symbol (i.e. str) or a Newline
+	"""
+	Prints parsed AST with an indent at each level.  Items can be an
+	ACL2Comment, an ACL2String, a list, a symbol (i.e. str) or a Newline
 
 	Args:
 		- ast : [ACL2astElem]
 		- level : int.  Current bracket level
 	Returns:
 		- None
-	'''
+
+	TODO: update this with new ACL2 AST classes.
+	"""
 	for x in ast:
 		# List (recurse)
 		if isinstance(x, list):
@@ -443,10 +489,10 @@ def reverseParse(ACL2ast):
 	Create a concrete string from an AST structure
 
 	Args:
-		- ACL2ast : [acl2ASTelem]
+		- ACL2ast : [ACL2astElem]
 	Returns:
 		- str
-	'''
+	"""
 	toJoin = []
 		
 	# List (recurse)
@@ -483,7 +529,7 @@ def test():
 	tokens = lexLisp('x86.lisp')
 	(ast, _) = structureLisp(tokens, 0, 0)
 	ASTprinter(ast, 0)
-	return (tokens, ast)
+	return tokens, ast
 
 if __name__ == '__main__':
 	test()
