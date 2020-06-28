@@ -2,15 +2,20 @@ import socketFuncs
 
 import subprocess
 import socket
-import sys
 
-acl2Process = '/Users/patrick/Desktop/x86/temp/sbcl-source/acl2-8.3/saved_acl2'
+'''
+The translator requires a running ACL2 instance so macros can be expanded at
+translate time.  The functions here manage that process.
 
-if acl2Process is None:
-	sys.exit("Please specify file path in callACL2.py")
+Running `python3 callACL2.py` will start an ACL2 process and listen on port
+defined in config_files.py for strings to send to it.  Starting the ACL2
+process and loading the x86isa project books may take a bit of time - the
+server is ready to receive requests after it prints 'Ready'.
+'''
+
 
 def initialiseInternal():
-	'''
+	"""
 	Starts the ACL2 process, loads the x86isa project and changes to the
 	X86ISA package.  This may take some time.
 
@@ -18,7 +23,7 @@ def initialiseInternal():
 		- None
 	Returns:
 		- acl2 : subprocess
-	'''
+	"""
 	acl2 = subprocess.Popen(acl2Process,
                         shell=True,
                         stdin=subprocess.PIPE,
@@ -27,7 +32,6 @@ def initialiseInternal():
                         )
 	print("Waiting for prompt")
 	waitForPrompt(acl2)
-	# resp = interactFromPrompt(b'(include-book "projects/x86isa/top" :dir :system)', acl2)
 	resp = interactFromPrompt(b'(include-book "projects/x86isa/tools/execution/top" :ttags :all :dir :system)', acl2)
 	print(resp)
 	resp = interactFromPrompt(b'(in-package "X86ISA")', acl2)
@@ -36,25 +40,23 @@ def initialiseInternal():
 	return acl2
 
 def initialiseExternal():
-	'''
+	"""
 	Set up the socket on which we will receive incoming requests.
-	Port number '1159', roughly, spells 'lisp'.
 
 	Args:
 		- None
 	Returns:
 		- s : socket
-	'''
+	"""
 	s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 	s.bind(('localhost', 1159))
 
 	return s
 
 def waitForPrompt(acl2):
-	'''
-	Checks for the character sequence '!>' in the acl2 prompt.  If this
-	sequence is present, we are assummed to be at the prompt and ready ACL2
-	is ready to receive input.
+	"""
+	We assume the character sequence '!>` indicates the acl2 prompt and that
+	it is ready to receive input.
 
 	We must read a single byte at a time from the file-like subprocess object.
 	If we do not, the internal buffering may block us forever.
@@ -63,7 +65,7 @@ def waitForPrompt(acl2):
 		- acl2 : subprocess
 	Returns:
 		- None (but waits until at prompt until before doing so)
-	'''
+	"""
 	circBuff = [None, None]
 	index = 0
 	prompt = False
@@ -74,11 +76,11 @@ def waitForPrompt(acl2):
 		prompt = (circBuff == [b'!', b'>']) or (circBuff == [b'>', b'!'])
 
 def interactFromPrompt(command, acl2):
-	'''
+	"""
 	Sends a command to the acl2 subprocess and gathers the response.
 
 	As in `waitForPrompt`:
-		a) we assume the character sequence '!>' indicates the prompt.  
+		a) we assume the character sequence '!>' indicates the prompt.
 		b) we must only read 1 byte at a time from acl2's stdout
 
 	Args:
@@ -86,7 +88,7 @@ def interactFromPrompt(command, acl2):
 		- acl2 : socket
 	Returns:
 		- str
-	'''
+	"""
 	# Send command then a newline
 	print(f"Sending: {command}")
 	acl2.stdin.write(command)
@@ -99,7 +101,6 @@ def interactFromPrompt(command, acl2):
 	prompt = False
 	while not prompt:
 		item = acl2.stdout.read(1)
-		# print(item)
 		buff.append(item)
 		prompt = buff[-2:] == [b'!', b'>']
 
@@ -115,7 +116,7 @@ def interactFromPrompt(command, acl2):
 	return toReturn
 
 def handleRequest(s, acl2):
-	'''
+	"""
 	Take a request from the socket, forward it to the acl2 subprocess, gather
 	the result and send it back to the socket.
 
@@ -126,7 +127,7 @@ def handleRequest(s, acl2):
 		- Bool (True = sucess, False = failure (probably socket close))
 	Effects:
 		- Interacts with socket and subprocess
-	'''
+	"""
 
 	# Receive a command from the socket
 	buff = socketFuncs.reliableRecv(s)
@@ -148,20 +149,28 @@ def handleRequest(s, acl2):
 	return True
 
 def handleManyReqs(s, acl2):
-	'''
-	Wrapper for handleRequest
-	'''
+	"""
+	Wrapper for handleRequest().  Processes requests from the socket and sends
+	the results back until failure.
+
+	Args:
+		- s : socket
+		- acl2 : subprocess
+	Returns:
+		- None
+	Effects:
+		- Interacts with socket and subprocess
+	"""
 	while True:
 		success = handleRequest(s, acl2)
 		if not success:
 			s.close()
 			return
 
-
 if __name__ == '__main__':
-	'''
-	Start the acl2 server
-	'''
+	"""
+	Start the acl2 server.
+	"""
 
 	# Initialise the acl2 subprocess
 	print('Initialising (this may take some time)')
