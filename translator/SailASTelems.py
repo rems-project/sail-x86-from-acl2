@@ -674,16 +674,7 @@ class SailIf(SailASTelem):
 		return set.union(ifSet, thenSet, elseSet, selfSet)
 
 	def pp(self):
-		# Uncomment the following block to remove the check for proc_mode and only translate the 64-bit branch.
-		# TODO: would probably be better doing this in either exclusions or a post-process pass of the AST
-		# if isinstance(self.ifTerm[0], SailApp) and self.ifTerm[0].getFn().getName() == '==':
-		# 	actuals = self.ifTerm[0].getActuals()
-		# 	if isinstance(actuals[0], SailBoundVar) and actuals[0].getName().lower() == 'proc-mode' and \
-		# 		isinstance(actuals[1], SailNumLit) and actuals[1].getNum() == 0:
-		#
-		# 		return self.thenTerm[0].pp()
 
-		# Normal
 		ifPP = self.ifTerm[0].pp()
 		thenPP = self.thenTerm[0].pp()
 		elsePP = self.elseTerm[0].pp()
@@ -850,13 +841,6 @@ class SailMatch(SailASTelem):
 			matches = [e for (p, e) in self.matches if isinstance(p, SailStringLit) and p.getString() == self.var.getString()]
 			if len(matches) != 1: sys.exit("Incorrect number of possible expressions when constant folding a match")
 			return matches[0].pp()
-
-		# Uncomment the following block to remove the check for proc_mode and only translate the 64-bit branch.
-		# TODO: would probably be better doing this in either exclusions or a post-process pass of the AST
-		# if isinstance(self.var, SailBoundVar) and self.var.getName().lower() == 'proc-mode':
-		# 	branch_64_bit = [e for (p,e) in self.matches if isinstance(p, SailNumLit) and p.num == 0]
-		# 	if len(branch_64_bit) != 1: sys.exit(f"Wrong number of 64 bit branches: {len(branch_64_bit)}")
-		# 	return branch_64_bit[0].pp()
 		
 		# If constant folding is not applicable, continue as normal
 		headerLine = f"match {self.var.pp()} {{"
