@@ -1101,7 +1101,7 @@ class SailListLit(SailASTelem):
 	def getType(self):
 		check, subtype = checkTypesMatch(self.members)
 		if not check:
-			sys.exit(f"Error: types of list members don't match in getType() - {members}")
+			sys.exit(f"Error: types of list members don't match in getType() - {self.members}")
 
 		return Sail_t_list(subtype)
 
