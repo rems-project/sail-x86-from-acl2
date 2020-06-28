@@ -2386,7 +2386,46 @@ def tr_member_eq(ACL2ast, env):
 	return [sailAST], env, len(ACL2ast)
 
 
-def filterActuals(ACL2ast, numOfArgs):
+def tr_t(ACL2ast, env):
+	"""
+	Most of the time the token `t` should translate to boolean True.
+	Exceptions to this are handled in manualInterventions.py.
+	"""
+	return [SailBoolLit(True)], env, 1
+
+def tr_nil(ACL2ast, env):
+	"""
+	The token `nil` translates to a SailPlaceholderNil object.  The actual
+	value is resolved later (or in a manual intervention).  If the current
+	type context has been inferred as boolean then translate as resolve to
+	False immediately.
+	"""
+	currentType = env.getCurrentType()
+
+	if currentType is None or currentType == SailPlaceholderNil.DEFAULT:
+		return [SailPlaceholderNil()], env, 1
+	elif currentType == SailPlaceholderNil.BOOL:
+		return [SailPlaceholderNil(SailPlaceholderNil.BOOL)], env, 1
+	else:
+		sys.exit(f"Unknown current type when translating token 'nil`: {currentType}")
+
+
+def _filterActuals(ACL2ast, numOfArgs):
+	"""
+	Given an ACL2 AST representing a function call, this helper function
+	checks that the non-keywords arguments are of a supported type and
+	returns a list of all actual parameters and also the keyword parameters.
+
+	Args:
+		ACL2ast: [ACL2astElem]
+		numOfArgs: int
+
+	Returns:
+		(	Actual parameters : [ACL2astElem],
+			Keyword parameters : { (keyword : str) : (value : [[ACL2astElem]]) }
+		)
+
+	"""
 	# Extract the non-keyword arguments and check they are of an expected type
 	ACL2actuals = ACL2ast[1:numOfArgs+1]
 	for a in ACL2actuals:
