@@ -837,7 +837,6 @@ def translate():
 	folder.
 	"""
 	env = Env()
-	globalEnvironment.globalEnv = env
 	try:
 		# Load, lex, parse and translate
 		thisPath, thisFile = os.path.split(config_files.translatePath)
@@ -863,7 +862,6 @@ def translate():
 def testACL2server():
 	env = Env()
 	try:
-		# env.evalACL2(['cf-spec-gen-fn', '8'])
 		env.evalACL2([':trans', ['GENERAL-PF-SPEC', '8', 'RESULT']], debracket=True)
 	except:
 		env.tidyUp()
