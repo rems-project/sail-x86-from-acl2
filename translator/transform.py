@@ -635,10 +635,15 @@ def transformACL2FiletoSail(file, env):
 	for i in range(3):
 		f.write(f"Still unresolved after {i} pass(es):\n----------------------------------\n")
 
+		print(f"Collecting SailApps with unknown type for file {file} - iteration {i}")
 		predSet = collectSet()
+		if len(predSet) == 0:
+			break
 
+		print("Resolving the unknown types")
 		for e in predSet:
 			e.resolveTypes(f)
+		print()
 
 	f.close()
 
