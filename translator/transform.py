@@ -4,8 +4,11 @@ import manualCode
 import manualTranslations
 from SailASTelems import *
 import socketFuncs
-import exclusions
-import globalEnvironment
+import config_files
+import config_patterns
+import config_function_maps
+import manualInterventions
+import utils
 
 import sys
 import os
@@ -21,18 +24,6 @@ TODO:
 '''
 
 
-def convertLiteral(s):
-	try:
-		int(s)
-		return int(s)
-	except ValueError:
-		try:
-			float(s)
-			return float(s)
-		except:
-			return None
-	except TypeError:
-		return None
 
 
 class Env():
@@ -83,8 +74,22 @@ class Env():
 
 		# Helps to resolve nil
 		self.currentType = None
-		# Contains the list of SailApp and SailLet objects which contain unresolved variables
-		self.unresolvedTypes = []
+
+
+		'''
+		For the most part nested function definitions are impossible in Lisp.
+		In one case, however, due to an unfortunate technicality, we do end up
+		trying to translate a function definition in the middle of translating
+		another.  To handle this, we place this nested translation inside a
+		file called `auxiliary.sail` (we store these definitions in
+		`auxiliaryFns`).  We then need to `$include` auxiliary.sail in the
+		current file (keeping track of these files in `auxiliaryInclude`).
+
+		See the translation function `tr_pe` for more info on this exceptional
+		case.
+		'''
+		self.auxiliaryInclude = set()
+		self.auxiliaryFns = []
 
 		# Setup the connection to the ACL2 server
 		self.s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -160,11 +165,11 @@ class Env():
 		# TODO: translate into Sail hex literals as appropriate
 		if token.startswith('#.*') or (token.startswith('*') and token != '*') or token.startswith('#'): # Used for constants and, for example, hex numbers
 			literal = self.evalACL2([':trans', token], debracket=True)
-			literal = convertLiteral(literal[0].getAST())
+			literal = utils.convertLiteral(literal[0].getAST())
 			return lambda _, env: ([SailNumLit(literal)], env, 1)
 
-		maybeLiteral = convertLiteral(token)
-		if maybeLiteral != None:
+		maybeLiteral = utils.convertLiteral(token)
+		if maybeLiteral is not None:
 			return lambda _, env: ([SailNumLit(maybeLiteral)], env, 1)
 
 		# Then check for automatically/manually defined symbols
@@ -230,9 +235,9 @@ class Env():
 
 		Returns:
 			None
-		'''
-		self.auxillaryInclude.add(sanatiseSymbol(self.getFile()))
-		self.auxillaryFns.extend(fn)
+		"""
+		self.auxiliaryInclude.add(utils.sanitiseSymbol(self.getFile()))
+		self.auxiliaryFns.extend(fn)
 
 	# === Bindings stack
 	def pushToBindings(self, tokens, types=None, customSail=None):
@@ -705,8 +710,16 @@ def test():
 		env.appendToFile(thisFile[:-5])
 		finalAST, _, _ = transformACL2FiletoSail(thisFile, env)
 
-		saveSail(finalAST, exclusions.outputFolder, 'out', env, includeHeaders=True)
-		saveSail(env.auxillaryFns, exclusions.outputFolder, 'auxillary', env, includeHeaders=False)
+		# Save translated output
+		saveSail(finalAST, config_files.outputFolder, 'out', env, includeHeaders=True)
+		saveSail(env.auxiliaryFns, config_files.outputFolder, 'auxiliary', env, includeHeaders=False)
+
+		# Copy handwritten support
+		for file in os.listdir('handwrittenSupport'):
+			if file.endswith('.sail'):
+				copyfile(
+					src=os.path.join('handwrittenSupport', file),
+					dst=os.path.join(config_files.outputFolder, file))
 	except:
 		env.tidyUp()
 		raise
