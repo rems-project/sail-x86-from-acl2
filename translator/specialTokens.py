@@ -948,7 +948,7 @@ def _the_helper(theType, sailTerm):
 							actuals = sailTerm)]
 	elif isinstance(theType, Sail_t_nat):
 		retTerm = [SailApp(	fn = SailHandwrittenFn(	name = "the_nat",
-													typ = Sail_t_fn([Sail_t_int()], Sail_t_nat, {'escape'})),
+													typ = Sail_t_fn([Sail_t_int()], Sail_t_nat(), {'escape'})),
 							actuals = sailTerm)]
 	elif isinstance(theType, Sail_t_range):
 		(low, high) = theType.getRange()
