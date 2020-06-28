@@ -280,17 +280,13 @@ class SailLet(SailASTelem):
 		return set.union(varSet, exprSet, bodySet, selfSet)
 
 	def pp(self):
-		# Return
-		return f"let {self.varName.pp()} = {self.expr[0].pp()} in\n({self.body[0].pp()}) : {self.body[0].getType().generalise().pp()}"
-
-	### Nil resolution ###
-	def resolveNilExpr(self, caller):
-		# Fail
-		sys.exit("Nil resolution reached a let binding")
-
-	def resolveNilBody(self, caller):
-		# Defer to parent
-		return self.resolveNilCB(self)
+		# Force a type annotation of the expression to avoid type variable
+		# escape errors.
+		pp_var = self.varName.pp()
+		pp_expr = f"({self.expr[0].pp()}) : {self.expr[0].getType().generalise().pp()}"
+		pp_body = self.body[0].pp()
+		
+		return f"let {pp_var} = {pp_expr} in\n{pp_body}"
 
 
 class SailPlaceholderNil(SailASTelem):
