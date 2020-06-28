@@ -396,7 +396,7 @@ def _parseNormalFormal(f, env):
 			name = f[0]
 			if isinstance(guardWord, str):
 				types = parseGuard([guardWord, name]).get(name, None)
-			if isinstance(guardWord, list):
+			elif isinstance(guardWord, list):
 				types = parseGuard(guardWord).get(name, None)
 			else:
 				sys.exit(f"Error: invalid guard - {guardWord}")
