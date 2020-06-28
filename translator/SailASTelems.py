@@ -3,6 +3,7 @@ from SailTypes import *
 import utils
 
 import sys
+import os
 
 """
 Each ast element should support:
