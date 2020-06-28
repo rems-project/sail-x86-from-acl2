@@ -1,4 +1,4 @@
-from lex_parse import NewLine, ACL2Comment
+from lex_parse import ACL2Comment
 from SailTypes import *
 import utils
 
