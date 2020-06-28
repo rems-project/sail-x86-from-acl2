@@ -9,9 +9,15 @@ here are collected in config_function_maps.py.
 TODO: this could be done automatically.
 '''
 
-###############################################################################
-# List of handwritten definitions
-###############################################################################
+feature_flag_fn = SailHandwrittenFn(
+	'feature_flag_fn',
+	Sail_t_fn([Sail_t_string(), Sail_t_int()], Sail_t_int())
+)
+
+feature_flags_fn = SailHandwrittenFn(
+	'feature_flags_fn',
+	Sail_t_fn([Sail_t_list(Sail_t_string()), Sail_t_int()], Sail_t_int())
+)
 
 undef_read_logic_fn = SailHandwrittenFn(
 	'undef_read_logic',
