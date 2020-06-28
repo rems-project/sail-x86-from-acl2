@@ -263,7 +263,7 @@ def tr_include_book(ACL2ast, env):
 	# The file may already have been translated
 	isIncluded, ast = env.isIncluded(thisFileRename)
 	if isIncluded:
-		print(f"Returning from `include` of {thisFileRename} to file: {env.getFile()}")
+		print(f"Returning from `include` of {thisFileRename} to file: {env.getFile()} because already translated.")
 		return [ast], env, len(ACL2ast)
 
 	# Skip certain files
@@ -285,8 +285,8 @@ def tr_include_book(ACL2ast, env):
 							   includeHeaders=False,
 							   env=env)
 		env.addToIncluded(thisFileRename, toReturn)
-		print(f"Returning from `include` of {thisFileRename} to file: {env2.getFile()}")
-		return ([toReturn], env, len(ACL2ast))
+		print(f"Returning from `include` of {thisFileRename} to file: {env2.getFile()} because finished translating")
+		return [toReturn], env, len(ACL2ast)
 	else:
 		print(f"Skipping `include`: {thisFileRename}")
 		return [None], env, len(ACL2ast)
@@ -412,6 +412,8 @@ def _parseNormalFormal(f, env):
 				types = parseGuard([guardWord, name]).get(name, None)
 			if isinstance(guardWord, list):
 				types = parseGuard(guardWord).get(name, None)
+			else:
+				sys.exit(f"Error: invalid guard - {guardWord}")
 
 		# Return
 		return name, types
@@ -579,8 +581,9 @@ def tr_define(ACL2ast, env):
 	# If the function body is a quote or quasi quote, do not proceed - we hope
 	# it will be used in a useful way later
 	if type(fnBody) in [ACL2quote, ACL2qq]:
-		print("WARNING: function body is a quote/QQ, ignoring it.")
-		return ([None], env, len(ACL2ast))
+		print(f"WARNING: body of function {fnName} is a quote/QQ, ignoring it.")
+		env.setDefineSlot("")
+		return [None], env, len(ACL2ast)
 
 	# Set the type if we've specified it manually
 	if fnName.lower() in config_patterns.forced_return_types:
@@ -654,7 +657,8 @@ def tr_define(ACL2ast, env):
 		return [None], env, len(ACL2ast)
 
 	# Return
-	return (SailAST, env, len(ACL2ast))
+	env.setDefineSlot("")
+	return SailAST, env, len(ACL2ast)
 
 def tr_make_event(ACL2ast, env):
 	"""
@@ -696,7 +700,6 @@ def tr_defmacro(ACL2ast, env):
 	# Extract the name and perform rudimentary check
 	macroName = ACL2ast[1]
 	if not isinstance(macroName, str): sys.exit("Error: macro name not a symbol")
-	if not isinstance(macroFormals, list): sys.exit("Error: macro formals not a list")
 
 	# Originally `apply_macro_gen` checked it received the expected number of
 	# arguments.  It does not any more, hence why we pass `None`.
@@ -833,7 +836,7 @@ def tr_encapsulate(ACL2ast, env):
 	toReturn = []
 	for acl2Term in body:
 		(sailTerm, env, consumed) = transform.transformACL2asttoSail(acl2Term, env)
-		if consumed != len(acl2Term): print(f"WARNING: not all of an encapsulate event was translated.  Item:\n{acl2Term}")
+		if consumed != len(acl2Term): print(f"WARNING: not all of an encapsulate event was translated.  Consumed = {consumed}; length = {len(acl2Term)}; term: {acl2Term}")
 		toReturn.extend(sailTerm)
 
 	# Return
@@ -1600,7 +1603,7 @@ def tr_xr(ACL2ast, env):
 			actuals=[indexSail[0], x86_dummy]
 		)
 	else:
-		sys.exit(f"Error: not implemented field {fld} in `_xr_fn`")
+		sys.exit(f"Error: {fld} is not listed as implemented in `tr_xr`")
 
 	return [returnAST], env, len(ACL2ast)
 
