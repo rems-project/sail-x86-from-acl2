@@ -194,7 +194,7 @@ class Env:
 
 		# Check if the token is a number literal or a macro which translates into one
 		# TODO: translate into Sail hex literals as appropriate
-		if token.startswith('#.*') or (token.startswith('*') and token != '*') or token.startswith('#'): # Used for constants and, for example, hex numbers
+		if token.startswith(('#.*', '*', '#')) and token != '*': # Used for constants and, for example, hex numbers
 			literal = self.evalACL2([':trans', token], debracket=True)
 			literal = utils.convertLiteral(literal[0].getAST())
 			return lambda _, env: ([SailNumLit(literal)], env, 1)
