@@ -1183,7 +1183,7 @@ def _bstar_helper(bindersRemaining, results, env):
 		return resultsSail, env
 
 	# ===== Helper function to handle leading `!` and `?!` from names ===== #
-	def sanatiseBstarName(name):
+	def sanitiseBstarName(name):
 		# See 'Side Effects and Ignoring Variables' section here:
 		# http://www.cs.utexas.edu/users/moore/acl2/manuals/current/manual/?topic=ACL2____B_A2
 		if name == '-':
@@ -1214,18 +1214,7 @@ def _bstar_helper(bindersRemaining, results, env):
 
 	# b may be a symbol (e.g. '-') or a list - let*
 	if isinstance(b, str):
-		b = sanatiseBstarName(b)
-
-		# TODO: remove this old code
-		# Often we bind `ctx` to a quote, which is awkward so we ignore
-		# if b.lower() == 'ctx':
-		# 	# Recurse on rest of list
-		# 	(recursedSail, env) = _bstar_helper(bindersRemaining[1:], results, env)
-		#
-		# 	# Create sail term
-		# 	toReturn = recursedSail[0]
-		# else:
-
+		b = sanitiseBstarName(b)
 
 		# Translate the body first, find its type, then register name with env and boundNames
 		(exprSail, env, _) = transform.transformACL2asttoSail(binding[1], env)
@@ -1261,13 +1250,13 @@ def _bstar_helper(bindersRemaining, results, env):
 			# Each name we bind may either be a raw symbol (easy) or a list (e.g. `the` - harder)
 			for ident in b[1:]:
 				if type(ident) == str:
-					name = sanatiseBstarName(ident)
+					name = sanitiseBstarName(ident)
 					boundVars.extend(env.pushToBindings([name]))
 					boundNames.append(name)
 				elif type(ident) == list and ident[0].lower() == 'the':
 					# This is a bit of a hack as we can have more general patterns in an mv b* binder
-					name = sanatiseBstarName(ident[2])
-					ident[2] = name # _the_fn needs to be able to look up the sanatised symbol
+					name = sanitiseBstarName(ident[2])
+					ident[2] = name # tr_the needs to be able to look up the sanitised symbol
 					boundVars.extend(env.pushToBindings([name]))
 					boundNames.append(name)
 					(sailThe, env, _) = tr_the(ident, env)
