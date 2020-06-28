@@ -65,137 +65,11 @@ def sanatiseSymbol(symbol, lower=True, includeFnNames=False):
 					.replace(".", "_")\
 					.replace("+", "_plus_")\
 
-	if lower:
-		symbol = symbol.lower()\
-						.replace("*ip", "iptr")\
-						.replace("*sp", "sptr")
-
-	return symbol
-
-def createStructWithDefault(name, fields):
-	"""
-	Args:
-		fields: {str : SailASTelem}
-		env: as per normal
-
-	Returns:
-		(SailStruct, SailFn)
-	"""
-	# Map names to types
-	names_types = {}
-	for n in fields:
-		names_types[n] = fields[n].getType()
-
-	# Create the struct
-	struct = SailStruct(name, names_types, list(fields.items()))
-
-	# Return
-	return struct
-
-def someHelper(item):
-	return SailApp(
-		fn = SailHandwrittenFn(
-			name = 'Some',
-			typ = Sail_t_fn([item.getType()], Sail_t_option(item.getType()))),
-		actuals = [item])
-
-def noneHelper(typ):
-	return SailApp(
-		fn = SailHandwrittenFn(
-			name = 'None',
-			typ = Sail_t_fn([typ], Sail_t_option(typ))),
-		actuals = [])
-
-def unionListOfSets(los):
-	'''
-	Works even when los is empty.  Uses technique here:
-	https://stackoverflow.com/questions/31253109/how-can-i-find-the-union-on-a-list-of-sets-in-python#comment104577400_31253153
-
-	Args:
-		los: [set()]
-
-	Returns:
-		set()
-	'''
-	return set.union(*[set(), *los])
-
-def checkTypesMatch(items):
-	'''
-	Returns either (False, None) indicating types don't match or (True, SailType) with the generalised SailType
-
-	Args:
-		items: [SailASTelem]
-
-	Returns:
-		(bool, SailType)
-	'''
-	expr_t = items[0].getType().generalise()
-	for expr in items[1:]:
-		if expr.getType().generalise() != expr_t:
-			return False, None
-
-	return True, expr_t
-
-def convertToBool(sailAST):
-	'''
-	Conditional expression don't always use a bool as their prredicate.  For example, they sometimes use an option
-	type, in which case it must we wrapped in an is_some().
-
-	Args:
-		sailAST: [SailAST]
-
-	Returns:
-		[SailAST]
-	'''
-	# Get the type of the term
-	try:
-		ifType = sailAST[0].getType()
-	except ValueError:
-		# If we can't get the type, assume it's a bool
-		ifType = Sail_t_bool()
-
-	# Modify the term term based on its type
-	if isinstance(ifType, (Sail_t_bool, Sail_t_unknown)):
-		toReturn = sailAST
-	elif isinstance(ifType, Sail_t_option):
-		toReturn = [SailApp(
-			fn=SailHandwrittenFn(
-				name='is_some',
-				typ=Sail_t_fn([], Sail_t_bool())  # Sort of
-			),
-			actuals=sailAST
-		)]
-	else:
-		sys.exit(f"Error: don't know how to handle term of type {ifType} in `convertToBool`")
-
-	return toReturn
-
-def isStringList(ys):
-	return all(isinstance(y, str) and y.startswith(':') for y in ys)
-
-def convertToStringList(ys, env):
-	'''
-	Returns either (True, [SailASTelems]) or (False, None)
-	'''
-	if not isStringList(ys):
-		return False, None
-
-	ysSail = []
-	for y in ys:
-		ySail, env, _ = transform.transformACL2asttoSail(y, env)
-		ysSail.append(ySail[0])
-
-	return True, ysSail
-
-def resolveNils(exprs):
-	'''
-	If any of the exprs is a nil, attempts to resolve it using the other exprs.  If any of the exprs is a tuples,
-	attempts to resolve nils within it using the other exprs.
-
-	Args:
-		exprs: [SailASTelem]
-
-	Returns:
+Most AST elements should also implement:
+ - getChildrenByPred	Given a predicate function p, will return itself if
+ 						`p(self)` as well as the result of the recursive call
+ 						on its children. 								
+"""
 
 	'''
 
@@ -1055,7 +929,7 @@ class SailInclude(SailASTelem):
 		if not self.savedOut:
 			# Save out the file
 			self.savedOut = True
-			transform.saveSail(self.sailAST, self.path, self.file, self.env, self.includeHeaders)
+			saveSail(self.sailAST, self.path, self.file, self.env, self.includeHeaders)
 
 			return f'$include "{self.file}.sail"'
 
@@ -1489,6 +1363,232 @@ class SailListLit(SailASTelem):
 	def pp(self):
 		return f"[|{', '.join([m.pp() for m in self.members])}|]"
 
-	### Nil resolution ###
-	def setCallBacks(self):
-		sys.exit("Finish implementing nil resolution functions for SailListLit!")
+
+################################################################################
+# Helper and utility functions
+################################################################################
+
+
+def createStructWithDefault(name, fields):
+	"""
+	Given a desired name and map of field name to default value, creates a
+	Sail struct.
+
+	Args:
+		name: str
+		fields: {str : SailASTelem}
+
+	Returns:
+		SailStruct
+	"""
+	# Map names to types
+	names_types = {}
+	for n in fields:
+		names_types[n] = fields[n].getType()
+
+	# Create the struct
+	struct = SailStruct(name, names_types, list(fields.items()))
+
+	# Return
+	return struct
+
+def someHelper(item):
+	"""
+	Given a Sail item, wraps it in a Some().
+
+	Args:
+		item: SailASTelem
+
+	Returns:
+		SailHandwrittenFn implementing Some()
+	"""
+	return SailApp(
+		fn = SailHandwrittenFn(
+			name = 'Some',
+			typ = Sail_t_fn([item.getType()], Sail_t_option(item.getType()))),
+		actuals = [item])
+
+def noneHelper(typ):
+	"""
+	Given a Sail type, creates a None() of that type.
+
+	Args:
+		typ: SailType
+
+	Returns:
+		SailHandwrittenFn implementing None()
+	"""
+	return SailApp(
+		fn = SailHandwrittenFn(
+			name = 'None',
+			typ = Sail_t_fn([typ], Sail_t_option(typ))),
+		actuals = [])
+
+
+def checkTypesMatch(items):
+	"""
+	Given a list of Sail AST elements, returns either (False, None) indicating
+	their types don't match or (True, SailType) with the generalised SailType
+	if they do.
+
+	Args:
+		items: [SailASTelem]
+
+	Returns:
+		(bool, SailType)
+	"""
+	expr_t = items[0].getType().generalise()
+	for expr in items[1:]:
+		if expr.getType().generalise() != expr_t:
+			return False, None
+
+	return True, expr_t
+
+def convertToBool(sailAST):
+	"""
+	Conditional expression don't always use a bool as their predicate.  For
+	example, they sometimes use an option type, in which case it must we
+	wrapped in an is_some().  This function converts items to bools if it is
+	possible for the given item.
+
+	Args:
+		sailAST: [SailAST]
+
+	Returns:
+		[SailAST]
+	"""
+	# Get the type of the term
+	try:
+		ifType = sailAST[0].getType()
+	except ValueError:
+		# If we can't get the type, assume it's a bool
+		ifType = Sail_t_bool()
+
+	# Modify the term term based on its type
+	if isinstance(ifType, (Sail_t_bool, Sail_t_unknown)):
+		toReturn = sailAST
+	elif isinstance(ifType, Sail_t_option):
+		toReturn = [SailApp(
+			fn=SailHandwrittenFn(
+				name='is_some',
+				typ=Sail_t_fn([], Sail_t_bool())  # Sort of
+			),
+			actuals=sailAST
+		)]
+	else:
+		sys.exit(f"Error: don't know how to handle term of type {ifType} in `convertToBool`")
+
+	return toReturn
+
+
+def resolveNils(exprs):
+	"""
+	If any of the exprs is a nil, attempts to resolve it using the other
+	exprs.  If any of the exprs is a tuple, attempts to resolve nils within it
+	using the other exprs.
+
+	Args:
+		exprs: [SailASTelem]
+
+	Returns:
+		None
+
+	Side effects:
+		SailPlaceholderNil objects are resolved.
+	"""
+
+	def resolveNilsInner(otherTypes, theNil):
+		"""
+		Resolve `theNil` based on the types found in `otherTypes`.
+
+		`otherTypes` is a list of types representing the other branches.
+		theNil is the `nil` or `throw` whose type we are setting.  There could
+		be more nils/throws in the other branches, so we must first filter them
+		out of otherTypes.
+
+		Args:
+			otherTypes: [SailType]
+			theNil: SailPlaceholderNil | SaillApp (with a 'throw')
+
+		Returns:
+			None
+
+		Side effects:
+			`theNil` is resolved
+		"""
+		# Filter out nils from the other types
+		otherTypes = [typ for typ in otherTypes if not (isinstance(typ, Sail_t_PlaceholderNil) or isinstance(typ, Sail_t_error))]
+
+		# Check all the other types are the same
+		if any([t != otherTypes[0] for t in otherTypes]):
+			print("Warning: types don't match")
+			return
+
+		# If we've removed averything in otherTypes, can't do much!
+		if not otherTypes:
+			return
+
+		# Resolve
+		theNil.resolve(otherTypes[0])
+
+	#### Onto the actual body of the function
+	# Iterate through the expressions we're given
+	for (i, e) in enumerate(exprs):
+		# Get a list of all expressions but this one
+		otherExprs = exprs[:i] + exprs[i + 1:]
+
+		# If the expression is a nil or a `throw`, resolve directly against the other expressions' types
+		if isinstance(e, SailPlaceholderNil) or (isinstance(e, SailApp) and e.getFn().getName().lower() == 'throw'):
+			# Get the types of the other terms and filter out nils
+			otherTypes = [oe.getType().generalise() for oe in otherExprs]
+			resolveNilsInner(otherTypes, e)
+
+		# If the expression is a tuple, go through it looking for nils to resolve and resolve against the types of the
+		# expressions at the correct index in their tuple if types
+		elif isinstance(e, SailTuple):
+			for (j, sub_e) in enumerate(e.getItems()):
+				if isinstance(sub_e, SailPlaceholderNil):
+					otherTypes = [oe.getType().generalise().getSubTypes()[j] for oe in otherExprs]
+					resolveNilsInner(otherTypes, sub_e)
+
+		# Otherwise we don't know what to do so don't do anything
+		else:
+			pass
+
+def saveSail(SailAST, path, name, env, includeHeaders):
+	"""
+	Given a translated Sail AST, saves it to file.
+
+	Args:
+		- SailAST : [SailASTelems]
+		- path : str - path to output file
+		- name : str - name of file to save, without extension
+		- includeHeaders : bool - whether to include various `$include`s
+	"""
+	print(f"Pretty printing and saving to path: {path}; name: {name}")
+	# Get the pretty printed version
+	pp = "\n".join([elem.pp() for elem in SailAST])
+
+	# Also output into a file
+	with open(os.path.join(path, f"{utils.sanitiseSymbol(name)}.sail"), 'w') as f:
+		if includeHeaders:
+			f.write("$ifndef _DEFAULT_DEC\n")
+			f.write("\tdefault Order dec\n")
+			f.write("$endif\n\n")
+
+		f.write("$include <prelude.sail>\n")
+		f.write("$include <string.sail>\n") # TODO: only include this when we need
+
+		if name in env.auxiliaryInclude:
+			f.write('$include "auxiliary.sail"\n')
+
+		if includeHeaders:
+			f.write('$include "handwritten2.sail"\n')
+			f.write('$include "utils.sail"\n\n')
+
+		f.write(pp)
+
+		# A trailing new line is needed for, for example, file only containing `$include`s.
+		f.write("\n")
+
+		print(f"Successfully saved file path: {path}; name: {name}")
