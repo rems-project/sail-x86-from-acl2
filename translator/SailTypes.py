@@ -91,24 +91,6 @@ class eqSet():
 	def __len__(self):
 		return len(self.set)
 
-def dictExtend(orig, additions):
-	'''
-	For each element in additions, if the key is not in orig, adds the
-	(key, value) pair.  If key is in orig, adds to the Set in orig accordingly
-
-	Args:
-		- orig : {'a : Set('b)}
-		- additions: {'a : Set('b)}
-	Returns:
-		- {'a : Set('b)}
-	'''
-	for (k, v) in additions.items():
-		if k in orig:
-			orig[k].union(v)
-		else:
-			orig[k] = v
-
-	return orig
 
 def dictAddOrInit(d, k, v):
 	"""
