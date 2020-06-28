@@ -1,5 +1,5 @@
 import transform
-from lex_parse import NewLine, ACL2Comment, ACL2String, ASTprinter, ACL2quote, ACL2qq, CodeTopLevel, reverseParse, lexRawLisp, structureLisp
+from lex_parse import ACL2String, ACL2quote, ACL2qq, CodeTopLevel, pp_acl2, lexLispString, parseACL2
 from SailASTelems import *
 from SailTypes import parseGuard, Sail_t_fn, dictAddOrInit, translateType, eqSet, isNumeric
 import manualTranslations
@@ -2130,8 +2130,8 @@ def _pe_fn(ACL2ast, env):
 		if line.startswith(">V d"):
 			response = [line[4:]] + response[i+1:]
 	response = '\n'.join(response)
-	tokens = lexRawLisp(response)
-	(ACL2astFn, finalParseIndex) = structureLisp(tokens, 0, 0)
+	tokens = lexLispString(response)
+	(ACL2astFn, finalParseIndex) = parseACL2(tokens, 0, 0)
 
 	sailASTFn, env, _ = _define_fn(ACL2astFn[0], env)
 	env.addToAuxillary(sailASTFn)
@@ -2190,11 +2190,11 @@ def filterActuals(ACL2ast, numOfArgs):
 	ACL2actuals = ACL2ast[1:numOfArgs+1]
 	for a in ACL2actuals:
 		if type(a) not in [list, str, ACL2String, ACL2quote]:
-			sys.exit(f"Error: unexpected type in ACL2 AST in function application: {reverseParse(ACL2actuals)}")
+			sys.exit(f"Error: unexpected type in ACL2 AST in function application: {pp_acl2(ACL2actuals)}")
 		if isinstance(a, ACL2quote):
 			isStringList = transform.isStringList(a.getAST())
 			if not isStringList:
-				sys.exit(f"Error: unexpected type in ACL2 AST in function application: {reverseParse(ACL2actuals)}")
+				sys.exit(f"Error: unexpected type in ACL2 AST in function application: {pp_acl2(ACL2actuals)}")
 
 	# Extract keyword arguments
 	# Returns: {(keyword : str): (value :[[ACL2astElems] | ACL2astElem])}
@@ -2280,15 +2280,18 @@ def apply_macro_gen(numOfArgs, useTrans1=True):
 
 		# Construct the term to send for evaluation
 		toSend = [':trans' if not useTrans1 else ':trans1', ACL2ast]
-		print(f'Sending this to be macro expanded: {toSend}')
+		if config_files.print_acl2_interactions:
+			print(f'Sending this to be macro expanded: {toSend}')
 
 		# Send to the ACL2server for evaluation
 		newAST = env.evalACL2(toSend, debracket=True)
-		print(f'Recieved this in return: {newAST}')
+		if config_files.print_acl2_interactions:
+			print(f'\nReceived this in return: {newAST}')
 
 		# Deconstruct the newAST to get the result
 		newAST = newAST[0]
-		print(f'As an AST: {newAST}')
+		if config_files.print_acl2_interactions:
+			print(f'\nAs an AST: {newAST}')
 
 		# Translate this generated ast
 		(SailAST, env, _) = transform.transformACL2asttoSail(newAST, env)

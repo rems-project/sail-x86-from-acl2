@@ -196,8 +196,8 @@ def lexRawLisp(rawLisp):
 	# Remove extraneous empty strings
 	return [x for x in nlSplit if x != '']
 
-def lexLisp(file):
-	'''
+def lexLispFile(file):
+	"""
 	Wrapper to lex from a file rather than a string.
 
 	Args:
@@ -206,11 +206,7 @@ def lexLisp(file):
 		- [str] : lisp file split into tokens
 	"""
 	with open(file, 'r') as f:
-		# Read the file
-		rawLisp = f.read()
-
-		return lexRawLisp(rawLisp)
-		
+		return lexLispString(f.read())
 
 def parseACL2Comment(tokens, index):
 	"""
@@ -386,12 +382,9 @@ def consumeSpecialToken(token):
 	else:
 		return False, None
 
-def structureLisp(tokens, index, level):
-	'''
-	TODO: maybe include encapsulation of quotes/QQs in their respective
-	parsing functions, rather than a dedicated pass through the AST.
-
-	Takes the tokens and transforms them into a tree based on bracketting
+def parseACL2(tokens, index, level):
+	"""
+	Takes the tokens and transforms them into an AST based on bracketing
 	and comments.
 
 	Args:
@@ -420,7 +413,7 @@ def structureLisp(tokens, index, level):
 			index = newIndex
 		# Deal with open bracket
 		elif currentToken == "(":
-			(result, newIndex) = structureLisp(tokens, index+1, level+1)
+			(result, newIndex) = parseACL2(tokens, index + 1, level + 1)
 			ast.append(result)
 			index = newIndex
 		# Deal with close bracket
@@ -484,8 +477,8 @@ def ASTprinter(ast, level):
 		else:
 			print(" "*level + x.__str__())
 
-def reverseParse(ACL2ast):
-	'''
+def pp_acl2(ACL2ast):
+	"""
 	Create a concrete string from an AST structure
 
 	Args:
@@ -497,7 +490,7 @@ def reverseParse(ACL2ast):
 		
 	# List (recurse)
 	if isinstance(ACL2ast, list):
-		toJoin.append(f"({' '.join([reverseParse(item) for item in ACL2ast])})")
+		toJoin.append(f"({' '.join([pp_acl2(item) for item in ACL2ast])})")
 	# NewLine (ignore)
 	elif isinstance(ACL2ast, NewLine):
 		toJoin.append('\n')
@@ -513,21 +506,21 @@ def reverseParse(ACL2ast):
 	# Quote
 	elif isinstance(ACL2ast, ACL2quote):
 		toJoin.append("'")
-		toJoin.append(reverseParse(ACL2ast.getAST()))
+		toJoin.append(pp_acl2(ACL2ast.getAST()))
 	# QQ
 	elif isinstance(ACL2ast, ACL2qq):
 		toJoin.append("`")
-		toJoin.append(reverseParse(ACL2ast.getAST()))
+		toJoin.append(pp_acl2(ACL2ast.getAST()))
 	# Otherwise
 	else:
-		print("Error: unexpected type in ACL2 ast in reverseParse(): {}".format(type(acl2Item)))
+		print("Error: unexpected type in ACL2 ast in pp_acl2(): {}".format(type(ACL2ast)))
 		sys.exit(1)
 
 	return ''.join(toJoin)
 
 def test():
-	tokens = lexLisp('x86.lisp')
-	(ast, _) = structureLisp(tokens, 0, 0)
+	tokens = lexLispFile('x86.lisp')
+	(ast, _) = parseACL2(tokens, 0, 0)
 	ASTprinter(ast, 0)
 	return tokens, ast
 

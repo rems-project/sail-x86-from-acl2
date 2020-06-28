@@ -1,4 +1,4 @@
-from lex_parse import lexLisp, lexRawLisp, structureLisp, NewLine, ACL2Comment, ACL2String, reverseParse, ACL2quote, \
+from lex_parse import lexLispFile, lexLispString, parseACL2, NewLine, ACL2Comment, ACL2String, pp_acl2, ACL2quote, \
 	CodeTopLevel
 import manualCode
 import manualTranslations
@@ -398,14 +398,16 @@ class Env():
 			- [ACL2astElem]
 		'''
 		# Convert the AST into a concrete string
-		toSend = reverseParse(expr)
-		print("\n\n")
-		print(f'With brackets: {toSend}')
+		toSend = pp_acl2(expr)
+		if config_files.print_acl2_interactions:
+			print("\n\n")
+			print(f'With brackets: {toSend}')
 
 		# Remove outer brackets if asked
 		if debracket:
 			toSend = toSend[1:-1]
-		print(f"Without brackets: {toSend}")
+			if config_files.print_acl2_interactions:
+				print(f"Without brackets: {toSend}")
 
 		# Send to the server
 		socketFuncs.reliableSend(toSend, self.s)
@@ -418,11 +420,12 @@ class Env():
 		# Convert response from [bytes] -> [str] -> str -> [acl2ASTelem]
 		response = [b.decode("utf-8") for b in response]
 		response = ''.join(response)
-		print(f"String response:\n{response}")
+		if config_files.print_acl2_interactions:
+			print(f"\nString response:\n{response}")
 
 		# Lex and parse the response
-		tokens = lexRawLisp(response)
-		(ACL2ast, finalParseIndex) = structureLisp(tokens, 0, 0)
+		tokens = lexLispString(response)
+		(ACL2ast, finalParseIndex) = parseACL2(tokens, 0, 0)
 		if finalParseIndex != len(tokens):
 			sys.exit("Parse error: did not reach or overran list of tokens in some generated code")
 
@@ -512,9 +515,10 @@ def transformACL2FiletoSail(file, env):
 		- (Sailast : [SailastElem],
 		   env' : Env,
 		   consumed : Int)
-	'''
-	tokens = lexLisp(os.path.join(env.getPath(), file))
-	(ACL2ast, finalParseIndex) = structureLisp(tokens, 0, 0)
+	"""
+	##### Read file, lex and parse #####
+	tokens = lexLispFile(os.path.join(env.getPath(), file))
+	(ACL2ast, finalParseIndex) = parseACL2(tokens, 0, 0)
 	if finalParseIndex != len(tokens):
 		print("Parse error: did not reach or overran list of tokens")
 		sys.exit(1)
