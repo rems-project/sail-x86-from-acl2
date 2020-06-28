@@ -331,20 +331,23 @@ class Env:
 	def getPath(self):
 		return self.path
 
-	def appendToPath(self, toAppend):
-		'''
+	def pushPath(self, toAppend):
+		"""
 		Pushes the current path to the stack and appends the argument
-		'''
+		"""
 		self.pathStack.append(self.path)
 		self.path = os.path.join(self.path, toAppend)
 
 	def popPath(self):
 		self.path = self.pathStack.pop()
 
-	def appendToFile(self, toAppend):
-		'''
+	def getFile(self):
+		return self.fileStack[-1]
+
+	def pushFile(self, toAppend):
+		"""
 		Pushes the current filename to the stack
-		'''
+		"""
 		self.fileStack.append(toAppend)
 
 	def popFile(self):
@@ -720,9 +723,10 @@ def test():
 	env = Env()
 	globalEnvironment.globalEnv = env
 	try:
-		thisPath, thisFile = os.path.split(exclusions.translateFile)
-		env.appendToPath(thisPath)
-		env.appendToFile(thisFile[:-5])
+		# Load, lex, parse and translate
+		thisPath, thisFile = os.path.split(config_files.translatePath)
+		env.pushPath(thisPath)
+		env.pushFile(thisFile[:-5])
 		finalAST, _, _ = transformACL2FiletoSail(thisFile, env)
 
 		# Save translated output

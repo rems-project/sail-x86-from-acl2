@@ -1,9 +1,9 @@
 import transform
 from lex_parse import ACL2String, ACL2quote, ACL2qq, CodeTopLevel, pp_acl2, lexLispString, parseACL2
 from SailASTelems import *
-from SailTypes import parseGuard, Sail_t_fn, dictAddOrInit, translateType, eqSet, isNumeric
-import manualTranslations
-import exclusions
+from SailTypes import parseGuard, Sail_t_fn, translateType, eqSet
+import config_files
+import config_patterns
 
 import os
 import sys
@@ -267,11 +267,11 @@ def tr_include_book(ACL2ast, env):
 		return [ast], env, len(ACL2ast)
 
 	# Skip certain files
-	if thisFileRename not in exclusions.exclusions_files:
-		# Add the path and file to the env
-		env.appendToPath(thisPath)
-		env.appendToFile(thisFileRename)
-		
+	if thisFileRename not in config_patterns.exclusions_files:
+		# Push the path and file to the env, perform the translation, then pop.
+		env.pushPath(thisPath)
+		env.pushFile(thisFileRename)
+
 		print(f"Generating Sail for included file: {thisFileRename}")
 		sailAST, env2, consumed = transform.transformACL2FiletoSail(f'{thisFile}.lisp', env)
 
@@ -280,10 +280,10 @@ def tr_include_book(ACL2ast, env):
 
 		# Add a Sail `include` for the file translated above
 		toReturn = SailInclude(sailAST,
-							 exclusions.outputFolder,
-							 thisFileRename,
-							 includeHeaders=False,
-							 env=env)
+							   config_files.outputFolder,
+							   thisFileRename,
+							   includeHeaders=False,
+							   env=env)
 		env.addToIncluded(thisFileRename, toReturn)
 		print(f"Returning from `include` of {thisFileRename} to file: {env2.getFile()}")
 		return ([toReturn], env, len(ACL2ast))
@@ -583,8 +583,8 @@ def tr_define(ACL2ast, env):
 		return ([None], env, len(ACL2ast))
 
 	# Set the type if we've specified it manually
-	if fnName.lower() in exclusions.forced_return_types:
-		thisSailFn.setForceRHSType(exclusions.forced_return_types[fnName.lower()])
+	if fnName.lower() in config_patterns.forced_return_types:
+		thisSailFn.setForceRHSType(config_patterns.forced_return_types[fnName.lower()])
 
 	# Perform rudimentary checks
 	if not isinstance(fnName, str): sys.exit("Error: function name not a symbol")
@@ -733,8 +733,13 @@ def tr_mbe(ACL2ast, env):
 	if type(logicCode[0]) not in [list, str]: sys.exit(f"Error: Unexpected MBE :logic code type, expected list, got: {type(logicCode[0])}")
 	if type(execCode[0]) not in [list, str]: sys.exit(f"Error: Unexpected MBE :exec code type, expected list or string, got: {type(execCode[0])}")
 
-	# Select the :LOGIC segment
-	(SailAST, env, consumed) = transform.transformACL2asttoSail(logicCode[0], env)
+	# Select which branch
+	if config_files.mbe_branch == ':logic':
+		(SailAST, env, consumed) = transform.transformACL2asttoSail(logicCode[0], env)
+	elif config_files.mbe_branch == ':exec':
+		(SailAST, env, consumed) = transform.transformACL2asttoSail(execCode[0], env)
+	else:
+		sys.exit(f"Error: unexpected mbe_switch value {config_files.mbe_branch}")
 
 	# Return
 	return SailAST, env, len(ACL2ast)
@@ -937,7 +942,10 @@ def _the_helper(theType, sailTerm):
 		- sailTerm : [SailASTelem] | SailASTelem
 	Returns:
 		- [SailAstElem]
-	'''
+	"""
+	if not config_files.translate_the:
+		return sailTerm
+
 	# The sail term should be a symbol or single valued list
 	if type(sailTerm) not in [str, list]: sys.exit(f"Error: `the` term not a string or list - {sailTerm}")
 	if isinstance(sailTerm, list) and len(sailTerm) != 1: sys.exit(f"Error: `the` list not length - {sailTerm}")
@@ -1311,7 +1319,7 @@ def _bstar_helper(bindersRemaining, results, env):
 
 					return returnTerm, [name] + recursedNames, env
 
-			if afters != []:
+			if config_files.translate_the and afters != []:
 				(recursedSail, recursedNames, env) = afters_helper(afters, env)
 				boundNames.extend(recursedNames)
 			else:
