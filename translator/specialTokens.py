@@ -245,8 +245,6 @@ def tr_include_book(ACL2ast, env):
 	if keywordDirs == []:
 		# Extract path/name of file to include
 		thisPath, thisFile = os.path.split(ACL2ast[1].getString())
-	elif len(keywordDirs) > 1:
-		sys.exit("Error: too many :dir keywords specified")
 	else:
 		keywordDir = keywordDirs[0]
 		if keywordDir == ':utils':
@@ -264,7 +262,6 @@ def tr_include_book(ACL2ast, env):
 
 	# The file may already have been translated
 	isIncluded, ast = env.isIncluded(thisFileRename)
-	print(f"Include test: {thisFileRename}, {isIncluded}, {ast}")
 	if isIncluded:
 		print(f"Returning from `include` of {thisFileRename} to file: {env.getFile()}")
 		return [ast], env, len(ACL2ast)
@@ -314,7 +311,6 @@ def tr_local(ACL2ast, env):
 	"""
 	return [None], env, len(ACL2ast)
 
-	printLine()
 
 def tr_defsection(ACL2ast, env):
 	"""
@@ -364,7 +360,7 @@ def tr_defsection(ACL2ast, env):
 		end = (index == len(ACL2astFiltered))
 
 	if len(newTopLevel) == 0:
-		return ([None], env, len(ACL2ast))
+		return [None], env, len(ACL2ast)
 	(SailTopLevel, env, _) = transform.transformACL2asttoSail(CodeTopLevel(newTopLevel), env)
 	SailAST.extend(SailTopLevel)
 
@@ -563,10 +559,8 @@ def tr_define(ACL2ast, env):
 	if '///' in ACL2astRemainder:
 		slashesIndex = ACL2astRemainder.index('///')
 		preSlashes = ACL2astRemainder[:slashesIndex]
-		postSlashes = ACL2astRemainder[slashesIndex+1:]
 	else:
 		preSlashes = ACL2astRemainder
-		postSlashes = []
 
 	# Split pre-/// into component parts
 	# assert preSlashes[0] == 'define'
@@ -576,9 +570,9 @@ def tr_define(ACL2ast, env):
 	fnBody = preSlashes[-1]
 
 	print(f"Name: {fnName}")
-	print(f"Formals: {fnFormals}")
-	print(f"Rest: {fnRest}")
-	print(f"Body: {fnBody}")
+	# print(f"Formals: {fnFormals}")
+	# print(f"Rest: {fnRest}")
+	# print(f"Body: {fnBody}")
 
 	env.setDefineSlot(fnName)
 
@@ -641,7 +635,7 @@ def tr_define(ACL2ast, env):
 	thisSailFn.setFormals(fnFormalsBVs)
 	env.addToAuto(fnName, apply_fn_gen(thisSailFn, numNonKeywordFormals, struct))
 
-	env.addToGlobal(fnName, apply_fn_gen(thisSailFn, numNonKeywordFormals, struct))
+	# === Translate the body
 	# Evaluate the body - no events should take place but use the returned environment anyway
 	(SailItem, env, _) = transform.transformACL2asttoSail(fnBody, env)
 
@@ -656,82 +650,8 @@ def tr_define(ACL2ast, env):
 
 	# Return early if no Sail ast was produced
 	if SailItem == [None]:
-		return ([None], env, len(ACL2ast))
-
-	# Ignore the post-slashes
-	pass
-
-	# =========================================================================
-	# Deal with typing information.  There are various places we can gain this
-	# information
-	# =========================================================================
-
-	# Knowledge of the input type is gained from:
-	# - guards
-	# - the functions which use them
-	# - ':type' annotations in the formal parameters
-	# TODO: implement formal type info extraction by looking at the functions
-	# which use them
-
-	# Set up a list of types for the input type
-	inputType = []
-
-	# 1) Examine the guards to get some information
-	guards = [item[1] for item in extendedOpts if item[0] == ':guard']
-	if len(guards) == 0:
-		guardInfo = {}
-	elif len(guards) == 1:
-		# Get the information from the guards
-		guardInfo = parseGuard(guards[0])
-		print(f"Guard info: {guardInfo}")
-	else:
-		sys.exit(f"Error: more than one guard statement: {guards}")
-
-	# 2) Examine where formals are used to get some information
-	print("WARNING: still need to implement looking at the function which use the formals")
-
-	# 3) Examine ':type' annotations to get some information.
-	# We already did the extraction of this information above
-	print(fnFormalsTyped)
-
-	# 4) Try to square the above information, and hope that it gives us exactly
-	# one solution
-	for name in fnFormalsFiltered:
-		# Gather the possibilities
-		possibilities = eqSet()
-		if name in guardInfo:
-			possibilities.extend(guardInfo[name])
-		if name in fnFormalsTyped:
-			possibilities.extend(fnFormalsTyped[name])
-
-		# Check if the possibilities are all numeric
-		if possibilities.all(isNumeric):
-			inputType.append(Sail_t_int())
-		else:
-			if len(possibilities) != 1:
-				sys.exit(f"Error: non-numeric formal and multiple possibilities for it's type: {possibilities}")
-			inputType.append(possibilities.peek())
-
-		# Do something with them
-		# if len(possibilities) != 1:
-		# 	print(possibilities)
-		# 	sys.exit(f"Too many type possibilities for name '{name}'")
-		# else:
-		# 	typeObject = possibilities.peek()
-		# 	inputType.append(typeObject)
-
-	# # The return type is the type of the top-level function call within this
-	# # function or may be forced manually
-	# if fnName in exclusions.forced_return_types:
-	# 	outputType = exclusions.forced_return_types[fnName]
-	# else:
-	# 	sailBody = filterAST(thisSailFn.getBody(), comments=True)
-	# 	if len(sailBody) != 1:
-	# 		sys.exit(f"Error: couldn't find top level expression in {sailBody}")
-	# 	outputType = sailBody[0].getType()
-	#
-	# # Add the type to the SailFn object
-	# thisSailFn.setType(Sail_t_fn(inputType, outputType))
+		env.setDefineSlot("")
+		return [None], env, len(ACL2ast)
 
 	# Return
 	return (SailAST, env, len(ACL2ast))
@@ -743,17 +663,16 @@ def tr_make_event(ACL2ast, env):
 			'The expression (make-event form) replaces itself with the result
 			of evaluating form, say, ev, as though one had submitted ev
 			instead of the make-event call.'
-	'''
-	printLine()
 
-	# Filter out newlines and extract `form` from `(make-event form)`
-	ACL2astFiltered = filterAST(ACL2ast)
-	form = ACL2astFiltered[1]
+	We thus translate `form` with the caveat that it should be passed through
+	a running instance of ACL2 first to remove quotations.
+	"""
+	_printLine()
 
-	# Send form to the ACL2 server for evaluation
+	# Extract `form` and send to ACL2 server for evaluation before translating
+	# the result
+	form = ACL2ast[1]
 	newAST = env.evalACL2(form)
-
-	# Translate this generated ast
 	(SailAST, env, _) = transform.transformACL2asttoSail(newAST[0], env)
 
 	# Return
@@ -772,16 +691,10 @@ def tr_defmacro(ACL2ast, env):
 
 	Fortunately, we only concern ourselves with the first two items.
 	"""
-	printLine()
+	_printLine()
 
-	# Filter out newlines
-	ACL2astFiltered = filterAST(ACL2ast)
-
-	# Extract the name and formals
-	macroName = ACL2astFiltered[1]
-	macroFormals = ACL2astFiltered[2]
-
-	# Perform rudimentary checks
+	# Extract the name and perform rudimentary check
+	macroName = ACL2ast[1]
 	if not isinstance(macroName, str): sys.exit("Error: macro name not a symbol")
 	if not isinstance(macroFormals, list): sys.exit("Error: macro formals not a list")
 
@@ -792,13 +705,6 @@ def tr_defmacro(ACL2ast, env):
 	# Return
 	return [None], env, len(ACL2ast)
 
-def _add_macro_alias_fn(ACL2ast, env):
-	'''
-	`add-macro-alias` is used only four time throughout the codebase, all in
-	the `rflags-spec` file, and these uses appear extraneous.  Thus, we ignore
-	it for now
-	'''
-	return ([None], env, 3)
 
 def tr_mbe(ACL2ast, env):
 	"""
@@ -811,13 +717,10 @@ def tr_mbe(ACL2ast, env):
 	"""
 	_printLine()
 
-	# Filter out newlines and comments
-	ACL2astFiltered = filterAST(ACL2ast, comments=True)
-
-	# Check we have the right number of elements in the mbe
-	if len(ACL2astFiltered) != 5:
-		print(f"Error: unexpected number of items in `mbe` ast: {len(ACL2astFiltered)} items")
-		print(f"AST:\n{ACL2astFiltered}")
+	# Check we have the expected number of elements in the mbe
+	if len(ACL2ast) != 5:
+		print(f"Error: unexpected number of items in `mbe` ast: {len(ACL2ast)} items")
+		print(f"AST:\n{ACL2ast}")
 		sys.exit(1)
 
 	# Extract elements
@@ -825,9 +728,9 @@ def tr_mbe(ACL2ast, env):
 	execCode  = _getValueOfKeyword(ACL2ast, ':exec')
 
 	# Perform rudimentary checks
-	if len(logicCode) != 1: sys.exit(f'Error: wrong number of :logic keywords in: {ACL2astFiltered}')
-	if len(execCode)  != 1: sys.exit(f'Error: wrong number of :exec keywords in: {ACL2astFiltered}')
-	if not isinstance(logicCode[0], list): sys.exit(f"Error: Unexpected MBE :logic code type, expected list, got: {type(logicCode[0])}")
+	if len(logicCode) != 1: sys.exit(f'Error: wrong number of :logic keywords in: {ACL2ast}')
+	if len(execCode)  != 1: sys.exit(f'Error: wrong number of :exec keywords in: {ACL2ast}')
+	if type(logicCode[0]) not in [list, str]: sys.exit(f"Error: Unexpected MBE :logic code type, expected list, got: {type(logicCode[0])}")
 	if type(execCode[0]) not in [list, str]: sys.exit(f"Error: Unexpected MBE :exec code type, expected list or string, got: {type(execCode[0])}")
 
 	# Select the :LOGIC segment
@@ -940,24 +843,8 @@ def tr_zp(ACL2ast, env):
 	"""
 	_printLine()
 
-	return ([SailMatch(
-				var=otherSail,
-				matches=[(stringLitSail, SailBoolLit(True)),
-						 (SailUnderScoreLit(), SailBoolLit(False))])],
-			env, len(ACL2ast))
-
-def _zp_fn(ACL2ast, env):
-	'''
-	Test for 0
-
-	TODO: generalise to other 1-input infix funcs
-	'''
-	printLine()
-
-	# Filter and extract tlements
-	(operand, ) = filterExtract(ACL2ast, 2, [[list, str]], [None], "`zp`")
-
-	# Translate
+	# Filter and extract elements then translate operand.
+	(operand, ) = _filterExtract(ACL2ast, 2, [[list, str]], [None], "`zp`")
 	(operandSail, env, _) = transform.transformACL2asttoSail([operand], env)
 
 	# Return
@@ -1007,7 +894,6 @@ def num_op_gen(op, resultType, numOfArgs=None, infix=True):
 		for (i, arg) in enumerate(argsSail):
 			typ = typesSail[i]
 			if isinstance(typ, Sail_t_option) and isinstance(resultType, Sail_t_bool):
-				print("Got here")
 				argsSail[i] = [SailApp(
 					fn=SailHandwrittenFn(name='is_some', typ=Sail_t_fn([], Sail_t_bool())),
 					actuals=arg
@@ -1660,8 +1546,6 @@ def tr_def_inst(ACL2ast, env):
 	newAST = filterAST(newAST.getAST())
 	name = filterAST(newAST[1].getAST())
 	args_body = filterAST(newAST[2].getAST())
-	print(f"Name: {name}")
-	print(f"Args and body: {args_body}")
 
 	# Call tr_define
 	(toReturn, env, _) = tr_define(['define'] + [name] + args_body, env)
@@ -1758,12 +1642,9 @@ def tr_cond(ACL2ast, env):
 		cond = c[0]
 		expr = c[1]
 
-		# Bit of a hack if the cond is 't'
-		if isinstance(cond, str) and cond.upper() == 'T':
-			condSail = SailBoolLit(True)
-		else:
-			(condSail, env, _) = transform.transformACL2asttoSail(cond, env)
-			condSail = condSail[0]
+		# Translate the condition and expression
+		(condSail, env, _) = transform.transformACL2asttoSail(cond, env)
+		condSail = condSail[0]
 
 		(exprSail, env, _) = transform.transformACL2asttoSail(expr, env)
 		exprSail = exprSail[0]
@@ -2233,14 +2114,6 @@ def tr_er(ACL2ast, env):
 	if not hard_or_soft.lower().startswith('hard'):
 		sys.exit("Error: unrecognised error type")
 
-	# toReturn = SailApp(
-	# 	fn=SailHandwrittenFn(
-	# 		name='error',
-	# 		typ=Sail_t_fn([Sail_t_string()], Sail_t_error(), effects={'escape'})
-	# 	),
-	# 	actuals=[SailStringLit(f"Error thrown from function: {env.defineSlot}")]
-	# )
-
 	toReturn = errorHelper(f"Error thrown from function: {env.defineSlot}")
 
 	return [toReturn], env, len(ACL2ast)
@@ -2254,16 +2127,8 @@ def tr_ms_fresh(ACL2ast, env):
 	Interpret the first argument as a string to be returned as an error
 	"""
 	(errString, env, _) = transform.transformACL2asttoSail(ACL2ast[1], env)
-
-	# toReturn = SailApp(
-	# 	fn=SailHandwrittenFn(
-	# 		name='error',
-	# 		typ=Sail_t_fn([Sail_t_string()], Sail_t_error(), effects={'escape'})
-	# 	),
-	# 	actuals=[SailStringLit(f"Model state error: {errString[0].getString()}")]
-	# )
-
 	toReturn = errorHelper(f"Model state error: {errString[0].getString()}")
+	return [toReturn], env, len(ACL2ast)
 
 
 def tr_fault_fresh(ACL2ast, env):
@@ -2314,8 +2179,8 @@ def tr_progn(ACL2ast, env):
 	"""
 	events = ACL2ast[1:]
 	(sailAST, env, _) = transform.transformACL2asttoSail(CodeTopLevel(events), env)
+	return sailAST, env, len(ACL2ast)
 
-	print(f"progn ast: {sailAST}")
 
 def _parse1DArrayLiteral(array, env):
 	"""
@@ -2447,7 +2312,6 @@ def tr_minus(ACL2ast, env):
 	else:
 		return num_op_gen('-', Sail_t_int(), 2)(ACL2ast, env)
 
-	sailArg, env, _ = transform.transformACL2asttoSail(ACL2ast[1], env)
 
 def tr_pe(ACL2ast, env):
 	"""
@@ -2503,10 +2367,10 @@ def tr_member_eq(ACL2ast, env):
 	with `x`, or nil otherwise.  Here we chose to return a boolean as it's
 	mostly used in a boolean context.
 
-	http://www.cs.utexas.edu/users/moore/acl2/manuals/current/manual/?topic=COMMON-LISP____MEMBER
+	We also assume the list we are given is a list of string literals.
 
-	Assume the list we are given is a list of string literals.
-	'''
+	See: http://www.cs.utexas.edu/users/moore/acl2/manuals/current/manual/?topic=COMMON-LISP____MEMBER
+	"""
 	x = ACL2ast[1]
 	xSail, env, _ = transform.transformACL2asttoSail(x, env)
 
@@ -2655,130 +2519,3 @@ def apply_macro_gen(numOfArgs, useTrans1=True):
 		return SailAST, env, len(ACL2ast)
 
 	return apply_macro_inner
-
-def loadManualEnv():
-	# These definitions are high-level acl2/lisp keywords and are
-	# implemented using Python code
-	manualDefinitions = {
-		'in-package'.upper() : 		_in_package_fn,
-		'include-book'.upper() : 	_include_book_fn,
-		'local'.upper() : 			_local_fn,
-		'defsection'.upper() :		_defsection_fn,
-		'define'.upper() : 			_define_fn,
-		'make-event'.upper() : 		_make_event_fn,
-		'defmacro'.upper() : 		_defmacro_fn,
-		'add-macro-alias'.upper() : _add_macro_alias_fn,
-		'mbe'.upper() : 			_mbe_fn,	
-		'defthm'.upper() : 			_defthm_fn,
-		'defthmd'.upper() :			_defthm_fn,
-		'defthm-signed-byte-p'.upper():	_defthm_fn,
-		'if'.upper() : 				_if_fn,
-		'encapsulate'.upper() : 	_encapsulate_fn,
-		'the'.upper() :				_the_fn,
-		'+'.upper() :				_num_op_gen('+', Sail_t_int()),
-		'binary-+'.upper() :		_num_op_gen('+', Sail_t_int()),
-		'*'.upper() :				_num_op_gen('*', Sail_t_int()),
-		'-'.upper() :				_minus_fn,
-		'='.upper() :				_num_op_gen('==', Sail_t_bool(), 2, infix=True),
-		'equal'.upper() : 			_num_op_gen('==', Sail_t_bool(), 2, infix=True),
-		'eql'.upper() :				_num_op_gen('==', Sail_t_bool(), 2, infix=True),
-		'int='.upper() :			_num_op_gen('==', Sail_t_bool(), 2, infix=True),
-		'eq'.upper(): 				_num_op_gen('==', Sail_t_bool(), 2, infix=True),
-		'/='.upper() :				_num_op_gen('!=', Sail_t_bool(), 2, infix=True),
-		'<'.upper() :				_num_op_gen('<', Sail_t_bool(), 2),
-		'>'.upper() :				_num_op_gen('>', Sail_t_bool(), 2),
-		'<='.upper() :				_num_op_gen('<=', Sail_t_bool(), 2),
-		'and'.upper() :				_num_op_gen('&', Sail_t_bool(), None, infix=True),
-		'or'.upper() :				_num_op_gen('|', Sail_t_bool(), None, infix=True),
-		'truncate'.upper() :		_num_op_gen('tdiv_int', Sail_t_int(), 2, infix=False),
-		'rem'.upper() :				_num_op_gen('tmod_int', Sail_t_int(), 2, infix=False),
-		'zp'.upper() :				_zp_fn,
-		'part-select'.upper() :		_part_select_fn,
-		'part-install'.upper() :	_part_install_fn,
-		'b*'.upper() : 				_bstar_fn,
-		'mv'.upper() :				_mv_fn,
-		'case'.upper() :			_case_fn,
-		'def-inst'.upper() :		_def_inst_fn,
-		'defrulel'.upper() : 		_defthm_fn,
-		'in-theory'.upper() :		_defthm_fn,
-		'xr'.upper() :				_xr_fn,
-		'cond'.upper() :			_cond_fn,
-		'let'.upper() :				_bstar_fn,
-		'let*'.upper() :			_bstar_fn,
-		'list'.upper() :			_list_fn,
-		'mv-let'.upper() :			_mv_let_fn,
-		'mbt'.upper() :				_mbt_fn,
-		'cons'.upper() :			_cons_fn,
-		'defbitstruct'.upper() :	_defbitstruct_fn,
-		'def-ruleset'.upper() :		_defthm_fn,
-		'er'.upper() :				_er_fn,
-		'!!ms-fresh'.upper() :		_ms_fresh_fn, # `!!ms-fresh` etc. are macros defined in `decoding-and-spec-utils.lisp`
-		'!!fault-fresh'.upper() :	_fault_fresh_fn, # Again, macro defined in `decoding-and-spec-utils.lisp`
-		'ifix'.upper() :			_ifix_fn,
-		'nfix'.upper() :			_nfix_fn,
-		'progn'.upper() :			_progn_fn,
-		'aref1'.upper() :			_aref1_fn,
-		'with-output'.upper() :		_with_output_fn,
-		'consp'.upper() :			_consp_fn,
-		'set-non-linearp'.upper():	_defthm_fn, # I.e. ignore
-		'feature-flag-macro'.upper() :	_feature_flag_fn,
-		'feature-flags-macro'.upper():	_feature_flag_fn,
-		'64-bit-compute-mandatory-prefix-for-two-byte-opcode'.upper() : _pe_fn,
-		'32-bit-compute-mandatory-prefix-for-two-byte-opcode'.upper() : _pe_fn,
-		'member-eq'.upper() :		_member_eq_fn,
-
-		# TODO: these are here as a bit of a hack.  The actual implementations update the RIP incase of restart attempts
-		# so would be worth translating properly at some point
-		'x86-illegal-instruction'.upper() :		_fault_fresh_fn,
-		'x86-step-unimplemented'.upper() :		_ms_fresh_fn,
-		'x86-general-protection'.upper() :		_fault_fresh_fn,
-		'x86-device-not-available'.upper() :	_fault_fresh_fn,
-	}
-
-	# These definitions have been implemented as handwritten Sail code
-	# Maps strings to SailHandwrittenFn
-	handwrittenDefinitions = manualTranslations.generateHandwrittenDefinitions()
-
-	for (name, funcToApply) in handwrittenDefinitions.items():
-		name = name.upper()
-		manualDefinitions[name] = apply_fn_gen(funcToApply, funcToApply.getNumFormals())
-
-	# These are macros.  Note that numOfArgs is now redundant
-	macroNames = [
-		# Name					numOfArgs	useTrans1
-		('1-'.upper(),				1,		True),
-		('1+'.upper(),				1,		True),
-		('cpl'.upper(),				1,		True), # Buried away as `(defabbrev cpl ...)` in `paging.lisp`
-		('ntoi'.upper(),			2,		True), # Defined in `utilities.lisp` - seems approrpiate to palce here given out custom `generateutils.py` file
-	]
-	for (mn, numOfArgs, useTrans1) in macroNames:
-		manualDefinitions[mn] = apply_macro_gen(numOfArgs, useTrans1)
-
-	# These ones have not been implemented, but are registered here
-	# as placeholders
-	specFnType = Sail_t_fn([Sail_t_int()]*3, Sail_t_tuple([Sail_t_int()]*3))
-	unimplementedNames = [
-		# ('vex-decode-and-execute', 7, Sail_t_fn([Sail_t_int()]*7, Sail_t_int(), {'escape'})),
-		('evex-decode-and-execute', 7, Sail_t_fn([Sail_t_int()] * 7, Sail_t_int(), {'escape'})),
-	]
-
-	######
-	# Warning: some things are macros, e.g.s `+`, `<`, `part-select`, `1-`
-	# See some macros here: https://www.cs.utexas.edu/users/moore/acl2/v6-2/ACL2-BUILT-INS.html
-	######
-
-	# And these have not yet been implemented
-	for (name, numOfArgs, typ) in unimplementedNames:
-		manualDefinitions[name.upper()] = apply_fn_gen(
-									manualTranslations.unimplementedFunctionGen(
-										name,
-										numOfArgs,
-										typ),
-									numOfArgs
-									)
-
-	return manualDefinitions
-
-
-
-
