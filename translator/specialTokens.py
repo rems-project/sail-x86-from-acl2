@@ -1594,19 +1594,25 @@ def _cond_helper(sailClauses):
 	# Base case, final element
 	if len(sailClauses) == 1:
 		clause = sailClauses[0]
-		if not (isinstance(clause[0], SailBoolLit) and clause[0].getBool()):
+		cond_expr = clause[0]
+		then_expr = clause[1]
+		# Handle the unusual case of <cond-expr> not being `t` in final clause
+		if not (isinstance(cond_expr, SailBoolLit) and cond_expr.getBool()):
 			print("Warning: final clause in `cond` doesn't have condition 't'")
-			# TODO: this is really a hack to get `chk-exc-fn` working.  See comment in `feature_flags_fn` for why this is OK.
-			return noneHelper(Sail_t_string())
-			# return errorHelper("Error message added during translation - final cond expression not `t`.")
+			return SailIf(
+				ifTerm=[cond_expr],
+				thenTerm=[then_expr],
+				elseTerm=[errorHelper("Translation error: final clause in cond was not `t` and that condition failed")]
+			)
 		else:
 			return clause[1]
 
 	# Recursive case
-	clause = sailClauses[0]
-	elseCase = _cond_helper(sailClauses[1:])
+	else:
+		clause = sailClauses[0]
+		elseCase = _cond_helper(sailClauses[1:])
 
-	return SailIf([clause[0]], [clause[1]], [elseCase])
+		return SailIf([clause[0]], [clause[1]], [elseCase])
 
 def tr_cond(ACL2ast, env):
 	"""
