@@ -1,14 +1,13 @@
 from SailASTelems import *
 from SailTypes import *
-from lex_parse import ACL2Comment
-import generateUtils
 
-"""
-This file is split into two parts:
-1) A list of names and type signatures of hadwritten functions
-2) Collecting these definitions together, along with automatically
-   generating new ones
-"""
+'''
+This file links the handwritten Sail functions in handwritten2.sail to the
+Python framework by specifying their names types and effects.  The definitions
+here are collected in config_function_maps.py.
+
+TODO: this could be done automatically.
+'''
 
 ###############################################################################
 # List of handwritten definitions
@@ -254,11 +253,6 @@ bang_memi_fn = SailHandwrittenFn(
 	Sail_t_fn([Sail_t_int(), Sail_t_int(), Sail_t_int()], Sail_t_int(), {'eamem', 'wmv', 'rreg'})
 )
 
-feature_flags_fn = SailHandwrittenFn(
-	'feature_flags',
-	Sail_t_fn([Sail_t_list(Sail_t_string()), Sail_t_int()], Sail_t_int())
-)
-
 b_xor_fn = SailHandwrittenFn(
 	'b_xor',
 	Sail_t_fn([Sail_t_int(), Sail_t_int()], Sail_t_int(), {'escape'})
@@ -288,85 +282,3 @@ merge_4_u32s_fn = SailHandwrittenFn(
 	'merge_4_u32s',
 	Sail_t_fn([Sail_t_int(), Sail_t_int(), Sail_t_int(), Sail_t_int()], Sail_t_int())
 )
-
-###############################################################################
-# Collect them together and generate new ones
-###############################################################################
-def generateHandwrittenDefinitions():
-	# Collect the list in section 1 here
-	handwrittenDefinitions = {
-		'undef-read-logic'.upper()	: undef_read_logic_fn,
-		'acl2::bool->bit'.upper()	: boolToBit,
-		'bool->bit'.upper()			: boolToBit,
-		'bool->bit'.upper()			: boolToBit,
-		'unsigned-byte-p'.upper()	: unsigned_byte_p,
-		'signed-byte-p'.upper()		: signed_byte_p,
-		'not'.upper()				: not_fn,
-		'loghead'.upper()			: loghead_fn,
-		'logtail'.upper()			: logtail_fn,
-		'logbitp'.upper()			: logbitp_fn,
-		'logbit'.upper()			: logbit_fn,
-		'lognot'.upper()			: lognot_fn,
-		'logcount'.upper()			: logcount_fn,
-		'logand'.upper()			: binary_logand_fn,
-		'logior'.upper()			: binary_logior_fn,
-		'logxor'.upper()			: binary_logxor_fn,
-		'logext'.upper()			: binary_logext_fn,
-		'n-size'.upper()			: n_size_fn,
-		'rflags'.upper()			: r_rflags_fn,
-		'!rflags'.upper()			: write_rflags_fn,
-		'rip'.upper()				: r_rip_fn,
-		'!rip'.upper()				: write_rip_fn,
-		'rgfi'.upper()				: rgfi_fn,
-		'!rgfi'.upper()				: write_rgfi_fn,
-		'msri'.upper()				: msri_fn,
-		'seg-visiblei'.upper()		: seg_visiblei_fn,
-		'!seg-visiblei'.upper()		: write_seg_visible_fn,
-		'!seg-hidden-attri'.upper()	: write_seg_hidden_attri_fn,
-		'!seg-hidden-basei'.upper()	: write_seg_hidden_basei_fn,
-		'!seg-hidden-limiti'.upper(): write_seg_hidden_limiti_fn,
-		'zmmi'.upper()				: zmmi_fn,
-		'!zmmi'.upper()				: write_zmmi_fn,
-		'ctri'.upper()				: ctri_fn,
-		'stri'.upper()				: stri_fn,
-		'!stri'.upper()				: write_stri_fn,
-		'ssr-visiblei'.upper()		: ssr_visiblei_fn,
-		'ssr-hidden-basei'.upper()	: ssr_hidden_basei_fn,
-		'ssr-hidden-limiti'.upper()	: ssr_hidden_limiti_fn,
-		'ssr-hidden-attri'.upper()	: ssr_hidden_attri_fn,
-		'!ssr-visiblei'.upper()		: write_ssr_visiblei_fn,
-		'!ssr-hidden-basei'.upper()	: write_ssr_hidden_basei_fn,
-		'!ssr-hidden-limiti'.upper(): write_ssr_hidden_limiti_fn,
-		'!ssr-hidden-attri'.upper()	: write_ssr_hidden_attri_fn,
-		'app-view'.upper()			: app_view_fn,
-		'memi'.upper()				: memi_fn,
-		'ash'.upper()				: ash_fn,
-		'abs'.upper()				: abs_fn,
-		'floor'.upper()				: floor_fn,
-		'mod'.upper()				: mod_fn,
-		'!memi'.upper()				: bang_memi_fn,
-		'ms'.upper()				: ms_fn,
-		'fault'.upper()				: fault_fn,
-		'feature-flags'.upper()		: feature_flags_fn,
-		'b-xor'.upper()				: b_xor_fn,
-		'fast-rotate-left'.upper()	: rotate_left_fn,
-		'fast-rotate-right'.upper()	: rotate_right_fn,
-		'merge-2-u64s'.upper()		: merge_2_u64s_fn,
-		'merge-2-u32s'.upper()		: merge_2_u32s_fn,
-		'merge-4-u32s'.upper()		: merge_4_u32s_fn,
-
-		# Example from when we bitstructure accessors:
-		#'rflagsBits->cf'.upper()	:  rflagsBits_get_cf_fn
-	}
-
-	# Generate utility functions
-	for (name, handwrittenFn) in generateUtils.generate(False):
-		handwrittenDefinitions[name] = handwrittenFn
-
-	return handwrittenDefinitions
-
-
-def unimplementedFunctionGen(fnName, numOfArgs, typ=None):
-	return SailHandwrittenFn(
-		name=f'unimplemented_{fnName}',
-		typ=typ)
