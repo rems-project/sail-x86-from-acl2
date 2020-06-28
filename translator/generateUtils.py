@@ -1,21 +1,24 @@
-"""
-This file mimics some of the operations of `utilities.lisp`.  We don't bother
-to implement everything in that file as some of it's quite esoteric, but the
-meaning and utility is plain.
-"""
 from SailTypes import *
-from SailASTelems import SailHandwrittenFn
-from exclusions import utilitiesFile
+import SailASTelems
+from config_files import utilitiesFile
+
+"""
+This script creates Sail functions which mimic the operations in
+`utilities.lisp` and saves them in `utilitiesFile` defined in
+`configuration.py`.
+
+This is don't manually because automatic translation would be tricky for not
+much gain.  Not everything is translated as some of it is quite esoteric.
+"""
 
 def generate(includeHeader):
 	numsToGenerate = [1, 2, 3, 4, 5, 6, 8, 9, 11, 12, 16, 17, 18, 20, 21, 22, 24, 25, 26, 27, 28, 30, 32, 33, 35, 43, 44, 45, 47, 48, 49, 51, 52, 55, 59, 60, 64, 65, 80, 112, 120, 128, 256, 512]
 
-	SailCode = []
 	namesGenerated = [] # [(name, SailType)]
 
 	'''
-	nXY.  Names are, for example `N08`, `N32`, `N512`.  All they do is take the
-	use loghead
+	nXY.  Names are, for example `N08`, `N32`, `N512`.  All they do is take use
+	the handwritten function `loghead`.
 	'''
 	code_nXY = []
 	for n in numsToGenerate:
@@ -25,16 +28,17 @@ def generate(includeHeader):
 		together = "\n".join([val, function])
 		code_nXY.append(together)
 		namesGenerated.append((	name.upper(),
-								SailHandwrittenFn(
+								SailASTelems.SailHandwrittenFn(
 									name,
 									Sail_t_fn([Sail_t_int()], Sail_t_int()))))
+
 
 	'''
 	ntoi.  Names are, for example `N08-to-i08`.  Easiest way to understand this
 	function from the `:exec` code snippet in the link below (rather than the 
 	':logic' section which uses `logext` and complicates matters).  It takes an
-	int, and converts into into a signed int of the given size.  The original
-	uses sign extension (not applicabel here), to the only remaining thing to
+	int, and converts into a signed int of the given size.  The original uses
+	sign extension (not applicable here), to the only remaining thing to
 	consider is truncation.
 
 	See: http://www.cs.utexas.edu/users/moore/acl2/manuals/current/manual/index-seo.php/X86ISA____N08-TO-I08?path=3512/28770/10572/30934/30935/381/31043
@@ -53,13 +57,14 @@ function {n_num}_to_{i_num} (x) = {{
 }}"""
 		)
 		namesGenerated.append((	f"{n_num}-to-{i_num}".upper(),
-								SailHandwrittenFn(
+								SailASTelems.SailHandwrittenFn(
 									f"{n_num}_to_{i_num}",
 									Sail_t_fn([Sail_t_int()], Sail_t_int(), {'escape'}))))
 
 	'''
-	iXY.  Names are, for eaxmple, `i64`.  The implementation is a simple application of logext, which sign extends the
-	lower order bits of an int
+	iXY.  Names are, for example, `i64`.  The implementation is a simple
+	application of the handwritten function `logext`, which sign extends the
+	lower order bits of an int.
 	'''
 	code_iXY = []
 	for n in numsToGenerate:
@@ -69,11 +74,13 @@ f"""val {i_num} : int -> int effect {{escape}}
 function {i_num} x = binary_logext ({n}, x)
 """)
 		namesGenerated.append((i_num.upper(),
-							   SailHandwrittenFn(
+							   SailASTelems.SailHandwrittenFn(
 								   i_num.upper(),
 								   Sail_t_fn([Sail_t_int()], Sail_t_int(), {'escape'}))))
 
-	# Output to file
+	'''
+	Output to file
+	'''
 	with open(utilitiesFile, 'w') as f:
 		f.write("$include <prelude.sail>\n")
 		if includeHeader:
