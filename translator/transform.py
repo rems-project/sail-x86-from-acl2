@@ -149,7 +149,7 @@ class Env:
 		'''
 		self.s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 		try:
-			self.s.connect(('localhost', 1159))
+			self.s.connect(('localhost', config_files.acl2Port))
 		except:
 			print("Warning: env could not connect to ACL2 server")
 
@@ -683,9 +683,9 @@ def transformACL2FiletoSail(file, env):
 
 		return predSet
 
-	# TODO: reset this file on each run of the whole program in a nicer way (currently in top level) and thread through.
-	# TODO: or just remove wholsesale
-	f = open(exclusions.unresolvedTypesFile, 'a')
+	# Run the resolution algorithm and log results of each step to the log
+	# file.  Anecdotally running three times is sufficient at the minute.
+	f = open(config_files.unresolvedTypesFile, 'a')
 	f.write(f"{file}\n")
 	f.write(f"{'=' * len(file)}\n\n")
 	for i in range(3):
@@ -717,7 +717,7 @@ def transformACL2asttoSail(ACL2ast, env):
 		   consumed : Int)
 	"""
 	# First check if there are any manual replacements
-	(doReplace, replacement, env) = exclusions.replacePatterns(ACL2ast, env)
+	(doReplace, replacement, env) = manualInterventions.replacePatterns(ACL2ast, env)
 	if doReplace:
 		return replacement, env, 0
 
@@ -737,10 +737,9 @@ def transformACL2asttoSail(ACL2ast, env):
 		translate = True
 		currFile = env.getFile()
 		# We're in a file which is normally excluded ...
-		if currFile in exclusions.include_list:
+		if currFile in config_patterns.only_translate:
 			# ... but we include some functions
-			if not any(listStartsWith(currentItem, inc) for inc in exclusions.include_list[currFile]):
-				print(f"Excluding a function from {currFile}")
+			if not any(listStartsWith(currentItem, inc) for inc in config_patterns.only_translate[currFile]):
 				translate = False
 
 			# ... we also add in some others
@@ -766,9 +765,11 @@ def transformACL2asttoSail(ACL2ast, env):
 	# List
 	elif isinstance(ACL2ast, list):
 		# Test exclusions
-		if any(listStartsWith(ACL2ast, ex) for ex in exclusions.exclusions_list):
-			translate = False
-			ACL2ast = [None]
+		currFile = env.getFile()
+		if currFile in config_patterns.exclude_lisp and \
+		 any(listStartsWith(ACL2ast, ex) for ex in config_patterns.exclude_lisp[currFile]):
+
+				SailAST = [None]
 		# Do translation if necessary
 		else:
 			# Perform the translation - lookup translation function and use to
@@ -871,8 +872,11 @@ def testACL2server():
 
 
 if __name__ == '__main__':
-	# Reset unresolvedtypes file
-	with open(exclusions.unresolvedTypesFile, 'w'):
+	"""
+	Main entry point
+	"""
+	# Reset unresolved types file
+	with open(config_files.unresolvedTypesFile, 'w'):
 		pass
 	# Do main program
 	test()
