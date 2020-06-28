@@ -54,6 +54,8 @@ class eqSet():
 			toAdd = objs.set
 		elif type(objs) == list:
 			toAdd = objs
+		else:
+			sys.exit(f"Error: unsupported typefor eqSet extend - {type(objs)}")
 
 		for obj in toAdd:
 			self.add(obj)
