@@ -159,9 +159,15 @@ class ACL2qq:
 	def getAST(self):
 		return self.ast
 
-def lexRawLisp(rawLisp):
-	'''
-	Use technique here (https://norvig.com/lispy.html) to make lexing easier.
+
+################################################################################
+# Functions
+################################################################################
+
+
+def lexLispString(rawLisp):
+	"""
+	Use technique here (https://norvig.com/lispy.html) as a simple lexer.
 
 	Args:
 		- rawLisp : string
@@ -169,19 +175,21 @@ def lexRawLisp(rawLisp):
 		- [str] : lisp split into tokens
 
 	TODO:
-		- Replace control flow below with regex (esp for comment/string parsing)
-		- Thus also don't pad brackets with spaces in comments or strings
-		- Currently just replace `;;` with ' ;; ' - this may cause problems with inline single ';'
-	'''
-	# Split on spaces
-	spaceSplit = rawLisp.replace('(', ' ( ',) \
-						.replace(')', ' ) ',) \
-						.replace('"', ' " ') \
-						.replace("'", " ' ") \
-						.replace("`", " ` ") \
-						.replace(";;", " ;; ") \
-						.replace("\t", "    ") \
-						.split(' ')
+		- Implement a proper lexer.  The current implementation works but could
+		be more robust and complete.  E.g. handling the presence of \" in
+		strings quoted with quotations.
+	"""
+	padded = rawLisp.replace('(', ' ( ',) \
+					.replace(')', ' ) ',) \
+					.replace("'", " ' ") \
+					.replace('\\"', '\'') \
+					.replace('"', ' " ') \
+					.replace("`", " ` ") \
+					.replace(";;", " ;; ") \
+					.replace("\t", "    ") \
+
+	spaceSplit = padded.split(' ')
+
 	# Also split on newlines, retaining adding in a Newline object to
 	# represent where they were
 	nlSplit = []
@@ -252,7 +260,9 @@ def parseACL2String(tokens, index):
 	Returns:
 		- (string : ACL2String, index' : int).
 		  The parsed string and index into the remaining tokens
-	'''
+
+	TODO: some strings contain \", which is currently handled above when padding during in lexing.
+	"""
 	string = []
 	end = False
 	index += 1
