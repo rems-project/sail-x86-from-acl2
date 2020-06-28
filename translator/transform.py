@@ -619,11 +619,12 @@ def transformACL2FiletoSail(file, env):
 								 (any(a.getType().containsUnknown() for a in e.getActuals()) or
 								  e.getFn().getType().containsUnknown())
 			letPred = lambda e : isinstance(e, SailLet) and\
-								 (e.getVarName().getType().containsUnknown() or e.getExpr()[0].getType().containsUnknown())
-			pred = lambda e : appPred(e) or letPred(e)
+								 (e.getVarName().getType().containsUnknown() or
+								  e.getExpr()[0].getType().containsUnknown())
+			overallPred = lambda e : appPred(e) or letPred(e)
 
 			# Collect such apps and lets
-			predSet = predSet.union(item.getChildrenByPred(pred))
+			predSet = predSet.union(item.getChildrenByPred(overallPred))
 
 		return predSet
 
