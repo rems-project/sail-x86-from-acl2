@@ -77,17 +77,56 @@ class Env:
 		self.auxillaryInclude = set()
 		self.auxillaryFns = []
 
-		# TODO: merge these into a single stack
+		'''
+		These fields track the path and file of the current Lisp file being
+		translated.  It is necessary to record the history for when we return
+		from translating one file to the file which called `include-book`.  
+		'''
 		self.path = ''
 		self.pathStack = []
 		self.fileStack = []
 
-		# Contains a list of the files included thus far
+		'''
+		A dictionary mapping the name of the Lisp files translated thus far
+		to their translated ASTs.
+		'''
 		self.included = {}
 
+
+		'''
+		Stores the stack of Lisp tokens currently being translated.  Consider
+		the following example:
+		
+		File-A.lisp:
+			(include-book "File-B.lisp")
+		
+		File-B.lisp:
+			(define mult (x y) 
+				(if (eq y 1) x (+ x (mult x (- y 1))))
+			)
+			
+		If we set the translator translating file A and the translator is
+		currently translating the `(+ ...)` form, currentStack will contain:
+		
+			['include-book', 'define', 'if', '+']
+		
+		This is useful for debugging and for constraining manual interventions.
+		'''
 		self.contextStack = []
 
-		# Helps to resolve nil
+		'''
+		`tr_define` sets this variable with the name of the function it is
+		translating.  Tracking this information is useful for debugging and
+		for constraining manual interventions. 
+		'''
+		self.defineSlot = ""
+
+		'''
+		The Lisp token `nil` cannot be translated unambiguously.  Sometimes,
+		however, translation functions can infer a boolean context (e.g. the
+		conditional of an `if`).  In these cases they can set this variable to
+		inform translation of `nil`.
+		'''
 		self.currentType = None
 
 
@@ -106,7 +145,10 @@ class Env:
 		self.auxiliaryInclude = set()
 		self.auxiliaryFns = []
 
-		# Setup the connection to the ACL2 server
+
+		'''
+		Setup the socket connection to the running ACL2 instance.
+		'''
 		self.s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 		try:
 			self.s.connect(('localhost', 1159))
@@ -132,9 +174,26 @@ class Env:
 			print(name)
 
 	def lookup(self, token, ignoreBindings=False):
-		'''
+		"""
+		Given a token, this function looks up the translation function (TF)
+		which allows the translator to actually consume the it.  In order:
+
+		 -  If the token is a keyword (starts with a colon) return a
+		 	TF which translates it as a string.
+		 -  Search for the token in the local bindings, return a TF which
+		 	simply returns the binding itself.
+		 -  If the token is likely to be a number literal, return a TF which
+		 	gives this literal.
+		 -  Search through the automatic then manual dictionaries for a TF.
+
+		Sometimes a built-in function can be used as the name for a bound
+		variable.  Whilst this binding is valid, the symbol can still be used
+		as a function.  Thus, there is the option to not search through the
+		binding stack.
+
 		Args:
-			token : str.
+			token : str
+			ignoreBindings : bool
 		Returns:
 			fn : as above
 		'''
@@ -192,8 +251,7 @@ class Env:
 			if token in e:
 				return e[token]
 
-		# If lookup fails, inform the user and ask if we want to do something
-		# about it
+		# If lookup fails, abort and print debug information.
 		print()
 		print("Token lookup failed: {}".format(token))
 		print(f"Current file: {self.fileStack[-1]}")
@@ -226,15 +284,15 @@ class Env:
 			sys.exit(1)
 
 	# === Environment manipulation
-	def addToGlobal(self, token, fn):
-		'''
-		Adds value to global environment
-		TODO: maybe make the function call explicit here (i.e. it's always going to be the __apply_fn)
+	def addToAuto(self, token, fn):
+		"""
+		Register a defined function with the automatic dictionary so a call to
+		it can be translated later.
 
 		Args:
 			- token : str
 			- fn : as above
-		'''
+		"""
 		token = token.upper()
 
 		if token in self.autoEnv:
@@ -256,7 +314,10 @@ class Env:
 
 	# === Bindings stack
 	def pushToBindings(self, tokens, types=None, customSail=None):
-		'''
+		"""
+		Push a list of bound names and, optionally, their types or some
+		custom Sail code, to the binding stack.
+
 		The local environment handles formal function parameters and
 		`b*`/`let` bindings.  In most cases we're really just checking the
 		current symbol has actually been bound, but sometimes we want to
@@ -270,24 +331,24 @@ class Env:
 			- customSail : [SailASTelem] | None
 		Returns:
 			- [SailBoundVar] - only if customSail is None
-		'''
+		"""
 		# Check inputs
-		if types != None and len(tokens) != len(types): sys.exit(
+		if types is not None and len(tokens) != len(types): sys.exit(
 			f"Error: length of tokens doesn't equal length of types when pushing a binding - {tokens} and {types}")
-		if customSail != None and len(tokens) != len(customSail): sys.exit(
+		if customSail is not None and len(tokens) != len(customSail): sys.exit(
 			f"Error: length of tokens doesn't equal length of customSail when pushing a binding - {tokens} and {customSail}")
-		if types != None and customSail != None: sys.exit(
-			"Error: only one of `tokens` and `customSail` sould be not None when pushing a binding")
+		if types is not None and customSail is not None: sys.exit(
+			"Error: only one of `tokens` and `customSail` should be not None when pushing a binding")
 
 		# Add to the stack
 		toReturn = []
 		for (i, token) in enumerate(tokens):
 			token = token.upper()
 
-			if types != None:
+			if types is not None:
 				boundVar = SailBoundVar(token, types[i])
 				self.bindStack.append((token, boundVar))
-			elif customSail != None:
+			elif customSail is not None:
 				self.bindStack.append((token, customSail[i]))
 				boundVar = None
 			else:
@@ -314,10 +375,13 @@ class Env:
 		sailItem.setType(typ)
 
 	def popWithCheck(self, tokens):
-		'''
+		"""
+		Pop the list of names from the bind stack.  To help avoid programmer
+		error, we check `tokens` really is the the tail of self.bindStack.
+
 		Args:
 			- tokens: [str]
-		'''
+		"""
 		# We don't want to reverse in place so copy() first
 		tokens = tokens.copy()
 		tokens.reverse()
@@ -328,6 +392,10 @@ class Env:
 			self.bindStack.pop()
 
 	# === Current path functions
+	'''
+	As explained above, these paths and files are the current and historical
+	paths and files to Lisp files being translated.
+	'''
 	def getPath(self):
 		return self.path
 
@@ -358,13 +426,20 @@ class Env:
 
 	def addToIncluded(self, file, ast):
 		if file in self.included:
-			sys.exit("Error: trying to add aready included file")
+			sys.exit("Error: trying to add already included file")
 		self.included[file] = ast
 
 	def isIncluded(self, file):
-		return (file in self.included, self.included.get(file, None))
+		"""
+		Tests if `file` has been translated on this run.
+		"""
+		return file in self.included, self.included.get(file, None)
 
 	# === Current context functions
+	'''
+	As explained above, the context stack given the current path of Lisp
+	tokens.
+	'''
 	def pushContext(self, ctx):
 		self.contextStack.append(ctx)
 
@@ -375,6 +450,11 @@ class Env:
 		return self.contextStack[-1]
 
 	def peekContext2(self):
+		"""
+		The second last item in the context stack is often more useful than
+		the current item (which simply gives the current token being
+		translated).
+		"""
 		if len(self.contextStack) >= 2:
 			return self.contextStack[-2]
 		else:
@@ -389,12 +469,15 @@ class Env:
 	def getDefineSlot(self):
 		return self.defineSlot
 
-	# === Current type functions - used for resolveing some PlaceholderNil instances
+	# === Current type functions
+	'''
+	As explained above, this context helps resolve some Lisp `nil` instances 
+	'''
 	def setCurrentType(self, typ):
-		'''
+		"""
 		Args:
 			typ - should be one of the enums defined in SailPlaceholderNil
-		'''
+		"""
 		self.currentType = typ
 
 	def clearCurrentType(self):
@@ -408,18 +491,20 @@ class Env:
 
 	# === Request an evaluation from the ACL2 server
 	def evalACL2(self, expr, debracket=False):
-		'''
+		"""
 		Takes an acl2 expression, sends it to the acl2 server for evaluation
 		there, and returns the lexed and parsed result, leaving the caller to
 		deal with the actual translation.
 
-		For example, from `rflags-spec.lisp`: `(cf-spec-gen-fn  8)`
+		Sometimes brackets are appropriate round the whole expression,
+		sometimes they are not, hence the debracket parameter.
 
 		Args:
 			- expr : [ACL2astElem]
+			- debracket : bool
 		Returns:
 			- [ACL2astElem]
-		'''
+		"""
 		# Convert the AST into a concrete string
 		toSend = pp_acl2(expr)
 		if config_files.print_acl2_interactions:
@@ -455,6 +540,9 @@ class Env:
 		return ACL2ast
 
 	def evalACL2raw(self, toSend):
+		"""
+		Like evalACAL2() but does not lex or parse the result.
+		"""
 		socketFuncs.reliableSend(toSend, self.s)
 		response = socketFuncs.reliableRecv(self.s)
 		response = [b.decode("utf-8") for b in response]
@@ -462,6 +550,10 @@ class Env:
 		return response
 
 	def tidyUp(self):
+		"""
+		Run at the end of the program - closes the connection to the running
+		ACL2 instance.
+		"""
 		self.s.close()
 		self.errorFile.close()
 
@@ -508,12 +600,18 @@ def saveSail(SailAST, path, name, env, includeHeaders):
 
 
 def listStartsWith(l, pattern, convertCase=True):
-	'''
-	Tests if `pattern` is the start of `l`
+	"""
+	Tests if `pattern` is the start of `l`.  Intended for lists of strings but
+	is used on other datatypes (most notably `ACL2String`s in
+	config_patterns.py)
+
 	Args:
-		- l : list
-		- pattern : list
-	'''
+		l: list
+		pattern: list
+		convertCase: bool
+	Returns:
+		bool
+	"""
 	if len(l) < len(pattern):
 		return False
 
@@ -530,7 +628,14 @@ def listStartsWith(l, pattern, convertCase=True):
 
 
 def transformACL2FiletoSail(file, env):
-	'''
+	"""
+	Reads, lexes, parses, translates and post-processes an ACL2 file and the
+	tree of files required by `include-book`s.  The returned AST includes
+	these extra files.  (In reality the behaviour of `include-book`
+	translation is dictated by tr_include_book()).
+
+	Here, post processing the AST means that unknown types are resolved.
+
 	Args:
 		- file : string
 		- env  : Env.
@@ -548,13 +653,14 @@ def transformACL2FiletoSail(file, env):
 	ACL2ast = CodeTopLevel(ACL2ast)
 	print("Parsed file: {}".format(file))
 
+	##### Translate #####
 	(SailAST, env, length) = transformACL2asttoSail(ACL2ast, env)
 
-	##### Post-process the AST #####
+	##### Post-process the AST - resolve unknown types#####
 	# Filter out 'None's
-	SailAST = [item for item in SailAST if item != None]
+	SailAST = [item for item in SailAST if item is not None]
 
-	# Collect apps and lets
+	# Collect apps and lets with unknown types
 	def collectSet():
 		predSet = set()
 		for item in SailAST:
@@ -564,7 +670,7 @@ def transformACL2FiletoSail(file, env):
 
 			# Predicates which get apps and lets with unknown types in either their formals or actuals
 			appPred = lambda e : isinstance(e, SailApp) and\
-								 (any(a.getType().containsUnknown() for a in e.getActuals()) or\
+								 (any(a.getType().containsUnknown() for a in e.getActuals()) or
 								  e.getFn().getType().containsUnknown())
 			letPred = lambda e : isinstance(e, SailLet) and\
 								 (e.getVarName().getType().containsUnknown() or e.getExpr()[0].getType().containsUnknown())
@@ -594,7 +700,12 @@ def transformACL2FiletoSail(file, env):
 
 
 def transformACL2asttoSail(ACL2ast, env):
-	'''
+	"""
+	Translates a lexed/parsed ACL2 AST into Sail.  Switches on the type of
+	Lisp syntax of the AST, most often taking the 'list' route which indicates
+	some sort of function application.  In this case, the lookup() function in
+	Env provides a translation function which translates the list.
+
 	Args:
 		- ACL2ast : [ACL2astElem] | str
 		- env : Env.
@@ -602,7 +713,7 @@ def transformACL2asttoSail(ACL2ast, env):
 		- (Sailast : [SailastElem],
 		   env' : Env,
 		   consumed : Int)
-	'''
+	"""
 	# First check if there are any manual replacements
 	(doReplace, replacement, env) = exclusions.replacePatterns(ACL2ast, env)
 	if doReplace:
@@ -658,33 +769,32 @@ def transformACL2asttoSail(ACL2ast, env):
 			ACL2ast = [None]
 		# Do translation if necessary
 		else:
-			# Perform the translation - switch on the first item
+			# Perform the translation - lookup translation function and use to
+			# translate
 			firstItem = ACL2ast[0]
 			fn = env.lookup(firstItem, ignoreBindings=len(ACL2ast) > 1)
 			env.pushContext(firstItem)
 			(SailItem, env, _) = fn(ACL2ast, env)
 			env.popContext()
 			SailAST.extend(SailItem)
-	# NewLine (ignore)
+	# NewLine (ignore - these should have been filtered out)
 	elif isinstance(ACL2ast, NewLine):
 		pass
-	# ACL2Comment
+	# ACL2Comment - in reality these should have been filtered out
 	elif isinstance(ACL2ast, ACL2Comment):
 		SailAST.append(ACL2ast)
 	# ACL2String
 	elif isinstance(ACL2ast, ACL2String):
 		return [SailStringLit(ACL2ast.getString())], env, 1
-		# print("Error: unexpected ACL2String: {}".format(ACL2ast.__str__()))
-		# sys.exit(1)
-	# Symbol (i.e. str)
-	# TODO: make this more aligned to actual symbol translation as opposed to functions
+	# Symbol - translates as string.  Never executes because we wrap strings
+	# in lists above.
 	elif isinstance(ACL2ast, str):
 		fn = env.lookup(ACL2ast)
 		env.pushContext(ACL2ast)
 		(SailItem, env, _) = fn(ACL2ast, env)
 		env.popContext()
 		SailAST.extend(SailItem)
-	# Quote - attempt to translate the contents / return as string
+	# Quote - attempt to translate the contents
 	elif isinstance(ACL2ast, ACL2quote):
 		# Test if the contents is a number literal
 		innerAST = ACL2ast.getAST()
@@ -707,19 +817,25 @@ def transformACL2asttoSail(ACL2ast, env):
 			return [SailListLit(stringList)], env, 1
 
 		SailAST.extend(SailItem)
-		return (SailAST, env, 1)
+		return SailAST, env, 1
 	# Otherwise
 	else:
 		print("Error: unexpected type in ACL2 ast: {}".format(type(ACL2ast)))
 		sys.exit()
 
-	return (SailAST, env, len(ACL2ast))
+	return SailAST, env, len(ACL2ast)
 
 # def resolveNils(Sailast):
 # 	# Go through the tree assigning parent pointers and collecting NILs along the way
 # 	pass
 
-def test():
+def translate():
+	"""
+	Creates the environment and initiates translation of the file specified in
+	config_files.py  Saves resulting ASTs to Sail files - output folder
+	specified in config_files.py.  Copies handwritten support files to output
+	folder.
+	"""
 	env = Env()
 	globalEnvironment.globalEnv = env
 	try:
