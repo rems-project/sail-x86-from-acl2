@@ -1,7 +1,5 @@
 from lex_parse import lexLispFile, lexLispString, parseACL2, NewLine, ACL2Comment, ACL2String, pp_acl2, ACL2quote, \
 	CodeTopLevel
-import manualCode
-import manualTranslations
 from SailASTelems import *
 import socketFuncs
 import config_files
@@ -12,6 +10,7 @@ import utils
 
 import sys
 import os
+from shutil import copyfile
 import socket
 
 '''
