@@ -74,8 +74,6 @@ class Env:
 		'''
 		self.bindStack = []
 
-		self.auxillaryInclude = set()
-		self.auxillaryFns = []
 
 		'''
 		These fields track the path and file of the current Lisp file being
@@ -301,8 +299,12 @@ class Env:
 		else:
 			self.autoEnv[token] = fn
 
-	def addToAuxillary(self, fn):
-		'''
+	def addToAuxiliary(self, fn):
+		"""
+		Add a function definition to the list of function to be placed in the
+		auxiliary file.  Add the name of the current file to the list of files
+		which must include the auxiliary file.
+
 		Args:
 			fn: [SailASTelem]
 

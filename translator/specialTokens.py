@@ -2332,8 +2332,8 @@ def tr_pe(ACL2ast, env):
 	tokens = lexLispString(response)
 	(ACL2astFn, finalParseIndex) = parseACL2(tokens, 0, 0)
 
-	sailASTFn, env, _ = _define_fn(ACL2astFn[0], env)
-	env.addToAuxillary(sailASTFn)
+	sailASTFn, env, _ = tr_define(ACL2astFn[0], env)
+	env.addToAuxiliary(sailASTFn)
 
 	# Finally pass the overall AST through the new function
 	if isinstance(sailASTFn[0], ACL2Comment):
