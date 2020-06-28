@@ -520,13 +520,7 @@ class SailNumLit(SailASTelem):
 
 	### Required methods ###
 	def getType(self):
-		'''
-		TODO: return something more specific and implement some more sophisticated checking
-		'''
-		if self.num > 0:
-			return Sail_t_int()
-		else:
-			return Sail_t_int()
+		return Sail_t_int()
 
 	def getEffects(self, ctx):
 		return set([])
