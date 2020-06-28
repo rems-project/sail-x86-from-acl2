@@ -9,60 +9,90 @@ import os
 import sys
 
 '''
-As per Env class in transform.py, each function here must have the type:
+Most functions here implement the translation of 'special tokens'.  The first
+element of each Lisp list indicates how it should be translated and how the
+tail elements should be interpreted.  For example, consider the following
+Lisp form:
+
+	(if t (+ 1 5) (- 6 2))
+
+the first element indicates we should translate this the the Sail code:
+
+	if X then Y else Z
+	
+where X, Y and Z are the recursively translated expressions for `t`,
+`(+ 1 5)` and `(- 6 2)` respectively.  I.e.
+
+	X := `true`
+	Y := `(1 + 5)`
+	Z := `(6 - 2)`.
+	
+Some special tokens are built in to Lisp/ACL2 and so must be translated such
+(`if` is a good example).  Others are expedient to translate like this.
+
+Each function below has the following type:
 
 	(ACL2ast : [ACL2astElem], env : Env)
 	-> (Sailast' : [SailastElem],
 		env' : Env,
 		consumed : int)
+		
+In other words, it takes an ACL2 AST and the current environment and returns
+the translated Sail AST, the updated environment and the number of tokens
+consumed.  ACL2astElem represents the classes defined in lex_parse.py.
 
-Where:
-	* ACL2astElem ::= 	ACL2Comment
-					|	ACL2String
-					|	[ACL2astElem]
-					|	str
-					|	NewLine
-	* `ACL2ast` is the ast rooted at the current symbol
-	* The first element of ACL2ast is a symbol (i.e. str type)
+The functions are collected in `config_function_maps.loadManualEnv()`.  It is
+expected that most functions will call the environment in order to translate
+their subexpressions.
 
-Register each function defined here with the function at the bottom which is
-returned to the environment on setup.
+The rest of this file is split into two parts:
+ 1. Helper functions
+ 2. Special token functions and other helper functions
 '''
 
-def printLine():
+
+def _printLine():
 	print("-"*80)
 
-def hasKeyword(ACL2ast, keyword):
-	'''
+
+################################################################################
+# Helper functions
+################################################################################
+def _hasKeyword(ACL2ast, keyword):
+	"""
+	Tests if the ACL2 AST contains the keyword parameter `keyword`.
+	Automatic case converstion.
+
 	Args:
 		ACL2ast: [ACL2astElem]
 		keyword: str
 
 	Returns:
 		bool
-	'''
+	"""
 	for elem in ACL2ast:
 		if isinstance(elem, str) and elem.upper() == keyword.upper():
 			return True
 
 	return False
 
-def getValueOfKeyword(ACL2ast, keyword, errorOnMoreThanOne=False):
-	'''
+def _getValueOfKeyword(ACL2ast, keyword, errorOnMoreThanOne=False):
+	"""
 	Some ACL2 terms have extra information in the form of keywords: symbols
 	which begin with a colon, e.g. ':guard'.  The value associated with each
 	keyword is the next term along.  This function extracts the values for the
 	given keywords (values plural in case the keyword appears more than once).
 
 	Args:
-		- ACL2ast : [ACL2astElem] - incuding the colon
-		- keyword : str (including the colon)
+		- ACL2ast : [ACL2astElem]
+		- keyword : str - including the colon e.g. ':guard' not 'guard'
+		- errorOnMoreThanOne : bool - throw exception if a keyword is used more
+									  than once
 	Returns:
 		- [ [ACL2astElem] | ACL2astElem ]
-	'''
-	# Filter out newlines and comments
-	ACL2ast = [item for item in ACL2ast if type(item) not in [NewLine, ACL2Comment]]
-
+	"""
+	# Iterates through the top level of ACL2ast finding instances of the
+	# keyword
 	toReturn = []
 	for i in range(len(ACL2ast)):
 		if isinstance(ACL2ast[i], str) and  ACL2ast[i].upper() == keyword.upper():
@@ -72,22 +102,27 @@ def getValueOfKeyword(ACL2ast, keyword, errorOnMoreThanOne=False):
 			toReturn.append(toAppend)
 
 	if errorOnMoreThanOne and len(toReturn) > 1:
-		sys.exit(f"Error: more than one instance of keywork {keyword} found in {ACL2ast}")
+		sys.exit(f"Error: more than one instance of keyword {keyword} found in {ACL2ast}")
 
 	return toReturn
 
-def extractAllKeywords(ACL2ast, failOnRedef):
-	'''
+def _extractAllKeywords(ACL2ast, failOnRedef):
+	"""
+	Searches through the top level of the given ACL2 AST for keywords and
+	extracts the value of each.  Returns a dictionary of keywords and their
+	values as well as the original AST with keywords stripped out.
+	Keywords are converted to uppercase.
+
 	Args:
-		- ACL2ast : [ACL2astElems]
-		- failOnRedef : bool - throw exception if a keyword is used twice
+		- ACL2ast : [ACL2astElem]
+		- failOnRedef : bool - throw exception if a keyword is used more than once
 
 	Returns:
 		(
-			{(keyword : str) : (value : [[ACL2astElems] | ACL2astElem])},
+			{ (keyword : str) : (value : [[ACL2astElems] | ACL2astElem]) },
 			[ACL2astElems] - without keywords
 		)
-	'''
+	"""
 	i = 0
 	keywords = {} # {(keyword : str) : (value : [[ACL2astElems] | ACL2astElem])}
 	remainder = []
@@ -108,27 +143,40 @@ def extractAllKeywords(ACL2ast, failOnRedef):
 			inc = 1
 		i += inc
 
-	return (keywords, remainder)
+	return keywords, remainder
 
-def filterExtract(ACL2ast, numOfElems, subTypes, subLengths, debugName, comments=False):
-	'''
-	Filter the ast, extract the elements and perform checks that they are of
-	the correct length and type
+def _filterExtract(ACL2ast, numOfElems, subTypes, subLengths, debugName, comments=False):
+	"""
+	Remove newlines (and optionally comments) from ACL2ast then perform checks.
+	Checks are:
+	 -  Whether the filtered AST is the correct length
+	 -  The types of sub items of the filtered AST
+	 -  The size of sub items of the filtered AST
 
 	Args:
-		- ACL2ast : [ACL2elem]
-		- numOfElems : int | None - including the first element
-		- subTypes : [[type] | [None] ] - permitted types of each of the numOfElems sub items
-		- subLengths : [[int] | [None]] - permitted lengths of each of the numOfElems sub items which are lists
-		- comments : bool - whether to filter comments from the top level of not
+		- ACL2ast 	 : [ACL2astElem]
+
+		- numOfElems : int | None			Expected number of items in
+											ACL2ast list.
+
+		- subTypes 	 : [[type] | [None] ]	Permitted types of each of the
+											numOfElems sub items.
+
+		- subLengths : [[int] | [None]]		Permitted lengths of each of the.
+											numOfElems sub items which are
+											lists.
+
+		- debugName  : str					Name to print in error messages.
+
+		- comments 	 : bool					Whether to filter comments from
+											the top level or not.
 	Returns:
-		Depends on if numOfElems is None or not
-		TODO: flesh out this description
-	'''
+		- tuple ( ACL2astElem )
+	"""
 	# Filter out newlines and comments
 	ACL2astFiltered = filterAST(ACL2ast, comments=comments)
 
-	if numOfElems == None:
+	if numOfElems is None:
 		numOfElems = len(ACL2astFiltered)		
 	else:
 		# Check overall length
@@ -139,19 +187,19 @@ def filterExtract(ACL2ast, numOfElems, subTypes, subLengths, debugName, comments
 		if len(subLengths) != numOfElems - 1: sys.exit(f"Error: Expected {numOfElems - 1} items in lengths formal in {debugName}, got {subLengths}")
 		if len(subTypes) != numOfElems - 1: sys.exit(f"Error: Expected {numOfElems - 1} items in types formal in {debugName}, got {subTypes}")
 
-	# Check types (and if neccessary lengths) of sub items
+	# Check types (and if necessary lengths) of sub items
 	for (item, length, types) in zip(ACL2astFiltered[1:], subLengths, subTypes):
-		if types != None and type(item) not in types: sys.exit(f"Error: {item} not in permitted types {types} whilst decoding {debugName}")
-		if length != None and isinstance(item, list) and len(item) != length: sys.exit(f"Error: {item} not of length {length} whilst decoding {debugName}")
+		if types is not None and type(item) not in types: sys.exit(f"Error: {item} not in permitted types {types} whilst decoding {debugName}")
+		if length is not None and isinstance(item, list) and len(item) != length: sys.exit(f"Error: {item} not of length {length} whilst decoding {debugName}")
 
 	# Return
 	return tuple(ACL2astFiltered[1:])
 
 def filterAST(ACL2ast, comments=False):
-	'''
+	"""
 	Filter out NewLines and optionally comments from the top level of a
 	Sail AST
-	'''
+	"""
 	if isinstance(ACL2ast, str):
 		return ACL2ast
 
@@ -160,14 +208,40 @@ def filterAST(ACL2ast, comments=False):
 	else:
 		return [item for item in ACL2ast if type(item) not in [NewLine]]
 
-def _in_package_fn(ACL2ast, env):
-	return ([None], env, len(ACL2ast))
+################################################################################
+# Special token functions and other helper functions
+################################################################################
 
-def _include_book_fn(ACL2ast, env):
-	printLine()
+
+def tr_in_package(ACL2ast, env):
+	"""
+	We can simply ignore `in-package` forms as they are ACL2 'events' and have
+	no translation.
+	"""
+	return [None], env, len(ACL2ast)
+
+
+def tr_include_book(ACL2ast, env):
+	"""
+	Roughly, `include-book` forms translate as `$include` expressions in Sail.
+	This function triggers the translation of the file being included if it
+	hasn't been translated already.
+
+	Caveats include:
+	 -  Handling `:dir` keywords which specify the location of the book
+	 -  The Sail files are not translated hierarchically, so sometimes name
+	 	collisions must be avoided.
+	 -  Skipping certain files defined in configuration.py.
+
+	TODO:
+	 -  Handle `:dir :utils` in a more reliable way
+	 -  Handle name collisions propery by having the translated Sail match the
+	   	ACL2 hierarchy.
+	"""
+	_printLine()
 
 	# If a ':dir' keyword is specified, use that, otherwise just use the specified path/name
-	keywordDirs = getValueOfKeyword(ACL2ast, ':dir')
+	keywordDirs = _getValueOfKeyword(ACL2ast, ':dir', errorOnMoreThanOne=True)
 	if keywordDirs == []:
 		# Extract path/name of file to include
 		thisPath, thisFile = os.path.split(ACL2ast[1].getString())
@@ -176,13 +250,12 @@ def _include_book_fn(ACL2ast, env):
 	else:
 		keywordDir = keywordDirs[0]
 		if keywordDir == ':utils':
-			thisPath = '../utils' # TODO: make this more correct
+			thisPath = '../utils'
 			thisFile = ACL2ast[1].getString()
 		else:
-			sys.exit(f"Error: unknow :dir - {keywordDir}")
+			sys.exit(f"Error: unknown :dir - {keywordDir}")
 
-	# Hack to avoid collision of the two segmentation files
-	# TODO: handle this properly, probably by having a better file structure (with an 'instructions/' folder).
+	# Hack to avoid collision of the two `segmentation` and `top` files.
 	thisFileRename = thisFile
 	if thisFile.lower() == 'segmentation' and env.getFile() == 'top':
 		thisFileRename = 'segmentationInst'
@@ -203,12 +276,8 @@ def _include_book_fn(ACL2ast, env):
 		env.appendToFile(thisFileRename)
 		
 		print(f"Generating Sail for included file: {thisFileRename}")
-
-		# Perform the translation on the new file
-		# TODO: maybe catch and ignore errors here?
 		sailAST, env2, consumed = transform.transformACL2FiletoSail(f'{thisFile}.lisp', env)
 
-		# Pop the path/file from the end
 		env2.popPath()
 		env2.popFile()
 
@@ -223,33 +292,52 @@ def _include_book_fn(ACL2ast, env):
 		return ([toReturn], env, len(ACL2ast))
 	else:
 		print(f"Skipping `include`: {thisFileRename}")
+		return [None], env, len(ACL2ast)
 
-		# Simply return nothing
-		return ([None], env, len(ACL2ast))
+def tr_local(ACL2ast, env):
+	"""
+	Local events are only processed when checking admissibility in ACL2
+	`:logic` mode and are not exported by the encapsulation or book.
+	We can ignore local events in the translation.
 
-def _local_fn(ACL2ast, env):
-	# TODO: we probably don't want to just peek, but to search through the context stack
-	ctx = env.peekContext2()
-	if ctx == None:
-		print("Warning: you really should include local books when in the top-level context")
-		return ([None], env, len(ACL2ast))
-	if ctx.lower() not in ['include-book', 'defsection', 'encapsulate']:
-		# TODO: fill this in for when we do need to eval `local` events
-		sys.exit(f"Error: non-implemented handling of local event in an unknown context.  Context stack: {env.getFullContext()}")
-	else: # Context is 'include-book', 'defsection' or 'encapsulate'
-		return ([None], env, len(ACL2ast))
+	If we do need to use local events in the future, we can check the
+	current context by using
 
-def _defsection_fn(ACL2ast, env):
-	# http://www.cs.utexas.edu/users/moore/acl2/manuals/current/manual/index-seo.php/ACL2____DEFSECTION
-	# We ignore these fields: name, parents, autodoc, extension
-	# TODO: maybe make 'name' field a comment in Sail
+		ctx = env.peekContext2()
+
+	Examples of values `ctx` can take:
+	 -  'include-book'
+	 -  'defsection'
+	 -  'encapsulate'
+
+	See: http://www.cs.utexas.edu/users/moore/acl2/manuals/current/manual/index-seo.php/ACL2____LOCAL
+	"""
+	return [None], env, len(ACL2ast)
 
 	printLine()
 
-	# Remove newlines and the first items ('defsection name')
-	ACL2astFiltered = filterAST(ACL2ast)
-	ACL2astFiltered = ACL2astFiltered[2:]
+def tr_defsection(ACL2ast, env):
+	"""
+	Technically, `defsection` is used to introduce a new scope for `local`
+	events.  They are used more frequently for documentation.
+	In particular, we translate the following keyword parameters as comments
+	in Sail (before translating the body as per normal):
 
+	 -  `:short`
+	 -  `:long`
+
+	We ignore the following keyword parameters:
+
+	 -  ':name`
+	 -  `:parents`
+	 -  `autodoc`
+	 -  `extension`
+
+	See: http://www.cs.utexas.edu/users/moore/acl2/manuals/current/manual/index-seo.php/ACL2____DEFSECTION
+	"""
+	_printLine()
+
+	# Extract keyword arguments and add those representing comments to the AST.
 	SailAST = []
 
 	newTopLevel = []
@@ -280,18 +368,16 @@ def _defsection_fn(ACL2ast, env):
 	(SailTopLevel, env, _) = transform.transformACL2asttoSail(CodeTopLevel(newTopLevel), env)
 	SailAST.extend(SailTopLevel)
 
-	# If we consumed more symbols than we have, we threw an error
-	# If we consumed less, we'd still be in the loop
-	# Thus, by getting to here, we consumed exactly the right number
-	# We actually 'consume' the number in the non-filtered list
-	return (SailAST, env, len(ACL2ast))
+	return SailAST, env, len(ACL2ast)
 
-def parseNormalFormal(f, env):
+def _parseNormalFormal(f, env):
 	"""
-	Parses a `Formal` as per the syntax here: http://www.cs.utexas.edu/users/moore/acl2/manuals/current/manual/?topic=STD____EXTENDED-FORMALS
+	Parses a `Formal` as per the syntax for extended formals found here:
+	http://www.cs.utexas.edu/users/moore/acl2/manuals/current/manual/?topic=STD____EXTENDED-FORMALS
 
 	Args:
-		f: a formal
+		f : a formal
+		env : Env
 
 	Returns:
 		(name : str,
@@ -309,9 +395,9 @@ def parseNormalFormal(f, env):
 		name = f[0]
 
 		# Extract type information
-		if hasKeyword(f, ':type'):
+		if _hasKeyword(f, ':type'):
 			# Use ':type' keyword if it exists
-			possibleTypes = getValueOfKeyword(f, ':type')
+			possibleTypes = _getValueOfKeyword(f, ':type')
 			types = eqSet()
 			for pt in possibleTypes:
 				# The type spec may may be a list or a string
@@ -336,13 +422,14 @@ def parseNormalFormal(f, env):
 	else:
 		sys.exit("Error: item in formals not a symbol or list")
 
-def parseKeywordFormal(f, env):
+def _parseKeywordFormal(f, env):
 	"""
-	Parses an `OptFormal` as per the syntax here: http://www.cs.utexas.edu/users/moore/acl2/manuals/current/manual/?topic=STD____EXTENDED-FORMALS
+	Parses an `OptFormal` as per the syntax for extended formals found here:
+	http://www.cs.utexas.edu/users/moore/acl2/manuals/current/manual/?topic=STD____EXTENDED-FORMALS
 
 	Args:
 		f: a formal
-		env: as above
+		env: Env
 
 	Returns:
 		(name : str,
@@ -350,16 +437,16 @@ def parseKeywordFormal(f, env):
 		default: SailASTelem,
 		env)
 	"""
-	if isinstance(f, str): # I.e. just the name
-		name, typ = parseNormalFormal(f, env)
+	if isinstance(f, str): 						# I.e. just the name
+		name, typ = _parseNormalFormal(f, env)
 		default = SailPlaceholderNil()
-	elif isinstance(f, list) and len(f) == 1: # I.e. (varname Item*) where Item can be xdoc, guard, :key val
-		name, typ = parseNormalFormal(f, env)
+	elif isinstance(f, list) and len(f) == 1: 	# I.e. (varname Item*) where Item can be xdoc, guard, :key val
+		name, typ = _parseNormalFormal(f, env)
 		default = SailPlaceholderNil()
-	elif isinstance(f, list) and len(f) == 2: # I.e. (Formal, 'val) - a default value is given
+	elif isinstance(f, list) and len(f) == 2: 	# I.e. (Formal, 'val) - a default value is given
 		if isinstance(f[1], ACL2quote): toTranslate = f[1].getAST()
 		else: toTranslate = f[1]
-		name, typ = parseNormalFormal(f[0], env)
+		name, typ = _parseNormalFormal(f[0], env)
 		if typ is not None and isinstance(typ.resolve(), Sail_t_bool):
 			env.setCurrentType(SailPlaceholderNil.BOOL)
 		default, env, _ = transform.transformACL2asttoSail([toTranslate], env)
@@ -370,8 +457,11 @@ def parseKeywordFormal(f, env):
 
 	return name, typ, default, env
 
-def parseFormals(fnFormals, mode, env):
+def _parseFormals(fnFormals, mode, env):
 	"""
+	Parses extended formals as per a partial implementation of the syntax
+	found here:
+	http://www.cs.utexas.edu/users/moore/acl2/manuals/current/manual/?topic=STD____EXTENDED-FORMALS
 
 	Args:
 		fnFormals: [str | [ACL2astElem]]
@@ -384,8 +474,7 @@ def parseFormals(fnFormals, mode, env):
 		keyDefaults : {str : SailASTelem},
 		env)
 	"""
-	# Partial implementation of syntax described here: http://www.cs.utexas.edu/users/moore/acl2/manuals/current/manual/?topic=STD____EXTENDED-FORMALS
-	### Base case: none left
+	### Base case: no formals left to parse
 	if fnFormals == []:
 		return [], {}, {}, env
 
@@ -397,14 +486,14 @@ def parseFormals(fnFormals, mode, env):
 	# Start of keyword/optional
 	if isinstance(head, str):
 		if head.lower() == '&optional':
-			return parseFormals(tail, 'optional', env)
+			return _parseFormals(tail, 'optional', env)
 		if head.lower() == '&key':
-			return parseFormals(tail, 'key', env)
+			return _parseFormals(tail, 'key', env)
 
 	# Parse a normal formal
 	if mode == 'normal':
-		name, types = parseNormalFormal(head, env)
-		tailNames, tailTypes, tailKeyDefaults, env = parseFormals(tail, 'normal', env)
+		name, types = _parseNormalFormal(head, env)
+		tailNames, tailTypes, tailKeyDefaults, env = _parseFormals(tail, 'normal', env)
 		if name in tailNames: sys.exit(f"Error: name '{name}' already parsed, mode='normal'")
 		if types != None:
 			tailTypes[name] = types
@@ -416,8 +505,8 @@ def parseFormals(fnFormals, mode, env):
 
 	# Parse a keyword formal
 	elif mode == 'key':
-		name, types, keyDefault, env = parseKeywordFormal(head, env)
-		tailNames, tailTypes, tailKeyDefaults, env = parseFormals(tail, 'key', env)
+		name, types, keyDefault, env = _parseKeywordFormal(head, env)
+		tailNames, tailTypes, tailKeyDefaults, env = _parseFormals(tail, 'key', env)
 		if name in tailNames: sys.exit(f"Error: name '{name}' already parsed, mode='key'")
 		tailKeyDefaults[name] = keyDefault
 		return tailNames, tailTypes, tailKeyDefaults, env
@@ -426,29 +515,40 @@ def parseFormals(fnFormals, mode, env):
 	else:
 		sys.exit(f"Error: unrecognised formal parsing mode {mode}")
 
-	sys.exit("Reached end of parseFormals function")
 
-def _define_fn(ACL2ast, env):
-	printLine()
+def tr_define(ACL2ast, env):
+	"""
+	Function definitions (via `define` or `defun`) are one of the more
+	complex pieces of ACL2 code.  At a high level, this function
+	performs the following actions:
 
-	# Extract extended options first as per: http://www.cs.utexas.edu/users/moore/acl2/manuals/current/manual/?topic=ACL2____DEFINE
-	extendedOpts = [] # Type: [(:name, value)]
-	ACL2astRemainder = []
+	 -  Splits the `define` into constituent parts (name, formals, body)
+	 -  Ignores functions whose bodies are quotes or QQs in the hope they
+	 	will be expanded later.
+	 -  Parse formals and extracts type info using above helper functions
+	 	_parseFormals(), _parseKeywordFormal() and _parseNormalFormal().
+	 -	Handles keyword arguments by creating the relevant structs.
+	 -  Ensures correct binding/unbinding order of names and types of
+	 	parameters in order to allow recursion.
 
-	index = 0
-	while index < len(ACL2ast):
-		item = ACL2ast[index]
-		if isinstance(item, str) and item.startswith(':'):
-			extendedOpts.append((item, ACL2ast[index+1]))
-			index += 2
-		else:
-			ACL2astRemainder.append(item)
-			index += 1
+	Sail functions require a type annotation so, when translating, the types
+	of formal parameters and the return type must be inferred.  The latter is
+	done as a class method in SailFn and performs normal type inference over
+	the Sail AST.  We can gain information for the former in three places:
 
-	# Setup the return value and remaining ACL2 AST
+	 1. Function and parameter guards.  Function guards aren't used currently,
+		parameter guards are used in _parseFormals()
+	 2. `:type` annotations are used in _parseFormals().
+	 3. We can gain information about parameter types by examining where they
+	 	are used.  This is implemented as a post-translation pass of the AST
+	 	elsewhere.
+
+	See: http://www.cs.utexas.edu/users/moore/acl2/manuals/current/manual/?topic=ACL2____DEFINE
+	"""
+	_printLine()
+
+	# Setup dummy return values,
 	SailAST = []
-
-	# Create a dummy SailFn object with no content 
 	thisSailFn = SailFn()
 
 	# Deal with comments in the extended options
@@ -459,7 +559,7 @@ def _define_fn(ACL2ast, env):
 			SailAST.append(ACL2Comment(value))
 
 	# Split the rest into pre- and post-///
-	# We use the content before ///, but ignore the stuff after
+	# We use the content before ///, but ignore the content after
 	if '///' in ACL2astRemainder:
 		slashesIndex = ACL2astRemainder.index('///')
 		preSlashes = ACL2astRemainder[:slashesIndex]
@@ -499,15 +599,13 @@ def _define_fn(ACL2ast, env):
 		if type(f) not in [str, list]: sys.exit(f"Error: item in formals not a symbol or list, found: {type(f)}")
 	if not isinstance(fnBody, list): sys.exit("Error: function body not a list")
 
-	# === Translate the formals and create associated struct/struct function if needed.  Mutate the formals arguments
-	# to take account of the new struct
+	# === Parse and extract type information from the formals.
 	# 		(fnFormalsFiltered : [str],
 	# 		fnFormalsTyped : {str: eqSet(SailType},
 	# 		keyDefaults : {str : SailASTelem},
-	fnFormalsFiltered, fnFormalsTyped, keyDefaults, env = parseFormals(fnFormals, 'normal', env)
+	fnFormalsFiltered, fnFormalsTyped, keyDefaults, env = _parseFormals(fnFormals, 'normal', env)
 	numNonKeywordFormals = len(fnFormalsFiltered)
 
-	# === Translate the body
 	# Add the formal parameter bindings to the stack with their types if we have them
 	fnFormalsBVs = []
 	for f in fnFormalsFiltered:
@@ -517,7 +615,9 @@ def _define_fn(ACL2ast, env):
 		else:
 			bv = env.pushToBindings([f], [Sail_t_unknown()])
 		fnFormalsBVs.append(bv[0])
-	# Deal with keyword arguments
+
+	# Deal with keyword arguments by creating a struct and registering it in
+	# the relevant places
 	struct = None
 	keywordsToPop = []
 	if len(keyDefaults) != 0:
@@ -532,27 +632,28 @@ def _define_fn(ACL2ast, env):
 		fnFormalsBVs.append(keywordBV)
 		keywordsToPop = []
 		for (kd, sailKd) in keyDefaults.items():
-			# TODO: pushToBindings can take lists - make this for loop into list comprehensions
 			env.pushToBindings(tokens=[kd], customSail=[SailStructProject(keywordBV, kd)])
 			keywordsToPop.append(kd)
-	# Add the name and formals to the dummy SailFn and register in the global
+
+	# Add the name and formals to the dummy SailFn and register in the auto
 	# environment in order to allow recursion
 	thisSailFn.setName(fnName)
-
 	thisSailFn.setFormals(fnFormalsBVs)
 	# thisSailFn.setFormals(fnFormalsFiltered)
 
 	env.addToGlobal(fnName, apply_fn_gen(thisSailFn, numNonKeywordFormals, struct))
 	# Evaluate the body - no events should take place but use the returned environment anyway
-	# TODO: add an equality check to Env to make sure passed and returned environments are the same.  This may be hard because the Env references will actualy point to the same object, so a copy might need to be taken
-	# TODO: check this recursive call does actually consumer all of the function definition (i.e. are all comments consumed?)
 	(SailItem, env, _) = transform.transformACL2asttoSail(fnBody, env)
-	# Ammend the SailFn object to contain the body definition and add to the AST
+
+	# Amend the SailFn object to contain the body definition and add to the AST
 	thisSailFn.setBody(SailItem)
 	SailAST.append(thisSailFn)
+
+	# === Tidy up
 	# Pop the formal parameter bindings
 	env.popWithCheck(keywordsToPop)
 	env.popWithCheck(fnFormalsFiltered)
+
 	# Return early if no Sail ast was produced
 	if SailItem == [None]:
 		return ([None], env, len(ACL2ast))
@@ -635,8 +736,8 @@ def _define_fn(ACL2ast, env):
 	# Return
 	return (SailAST, env, len(ACL2ast))
 
-def _make_event_fn(ACL2ast, env):
-	'''
+def tr_make_event(ACL2ast, env):
+	"""
 	From here: http://www.cs.utexas.edu/users/moore/acl2/v6-3/MAKE-EVENT.html
 
 			'The expression (make-event form) replaces itself with the result
@@ -656,21 +757,20 @@ def _make_event_fn(ACL2ast, env):
 	(SailAST, env, _) = transform.transformACL2asttoSail(newAST[0], env)
 
 	# Return
-	return (SailAST, env, len(ACL2ast))
+	return SailAST, env, len(ACL2ast)
 
-def _defmacro_fn(ACL2ast, env):
+def tr_defmacro(ACL2ast, env):
 	"""
-	We do not attempt to translate macro bodies, instead expanding macros
-	at their use site by querying the ACL2 server.  Do do this, however, we
-	do need to record the name and number of arguments each macro takes.
+	When a macro is used we query the ACL2 server to find its expansion.
+	A `defmacro`, however, is the definition of a macro, and so we need to
+	register that it exists.  This is so, when we encountered it later, we
+	know how to handle it.  Thus, we do not need to examine the macro body
+	here.
 
 	General Form:
 	(defmacro name macro-args doc-string dcl ... dcl body)
 
-	Fortunately, we only concern ourselves with the first three items.
-
-	The calculation for numOfFormals is incorrect: we may have complicating factors such as `&key` keyword arguments.
-	This does not matter as apply_macro_gen no longer checks this value.
+	Fortunately, we only concern ourselves with the first two items.
 	"""
 	printLine()
 
@@ -691,7 +791,7 @@ def _defmacro_fn(ACL2ast, env):
 	env.addToGlobal(macroName, apply_macro_gen(numOfArgs))
 
 	# Return
-	return ([None], env, len(ACL2ast))
+	return [None], env, len(ACL2ast)
 
 def _add_macro_alias_fn(ACL2ast, env):
 	'''
@@ -701,13 +801,16 @@ def _add_macro_alias_fn(ACL2ast, env):
 	'''
 	return ([None], env, 3)
 
-def _mbe_fn(ACL2ast, env):
-	'''
-	Selects either the logic or exec part of the mbs (curently the :logic part)
+def tr_mbe(ACL2ast, env):
+	"""
+	`mbe` forms allow different forms to be used for theorem proving (the
+	`:logic` branch) vs. execution (the `:exec` branch).  Both branches must
+	be proved to be equal so we can chose which to used.  The branch to
+	translate is set in configuration.py.
 
-	TODO: make this switch a global parameter
-	'''
-	printLine()
+	See: http://www.cs.utexas.edu/users/moore/acl2/manuals/current/manual/index.html?topic=ACL2____MBE
+	"""
+	_printLine()
 
 	# Filter out newlines and comments
 	ACL2astFiltered = filterAST(ACL2ast, comments=True)
@@ -719,8 +822,8 @@ def _mbe_fn(ACL2ast, env):
 		sys.exit(1)
 
 	# Extract elements
-	logicCode = getValueOfKeyword(ACL2astFiltered, ':logic')
-	execCode  = getValueOfKeyword(ACL2astFiltered, ':exec')
+	logicCode = _getValueOfKeyword(ACL2ast, ':logic')
+	execCode  = _getValueOfKeyword(ACL2ast, ':exec')
 
 	# Perform rudimentary checks
 	if len(logicCode) != 1: sys.exit(f'Error: wrong number of :logic keywords in: {ACL2astFiltered}')
@@ -732,25 +835,31 @@ def _mbe_fn(ACL2ast, env):
 	(SailAST, env, consumed) = transform.transformACL2asttoSail(logicCode[0], env)
 
 	# Return
-	return (SailAST, env, len(ACL2ast))
+	return SailAST, env, len(ACL2ast)
 
-def _defthm_fn(ACL2ast, env):
-	'''
-	We skip defthms because there is no concept of them in Sail
+def tr_ignore(ACL2ast, env):
+	"""
+	There are some forms we can ignore wholesale.  E.g. `defthm`.  See
+	`loadManualEnv` for a complete list and descriptions.
+	"""
+	return [None], env, len(ACL2ast)
 
-	NOTE: also used as a general ignoring function
+def tr_if(ACL2ast, env):
+	"""
+	Translates an `(if <cond-form> <then-form> <else-form>)` form.
 
-	TODO: OTOH, they may contain useful typing information
-	'''
-	return ([None], env, len(ACL2ast)) # So much information... just... gone
+	Various optimisations are performed here:
+	 -  When testing for `app-view` only the then branch is translated to avoid
+	 	handling system level view.
+	 -  In `(if _ t nil)` force `t` and `nil` to be booleans.
 
-def _if_fn(ACL2ast, env):
-	'''
-	Translates an `if` statement
-	'''
-	printLine()
+	TODO:
+		For the `app-view` hack, translate the else branch as a translation
+		error rather than simply ignoring it.
+	"""
+	_printLine()
 
-	# Check we have the right number of elements
+	# Check we have the expected number of elements
 	if len(ACL2ast) != 4:
 		sys.exit(f"Error: unexpected number of items in `if` ast: {len(ACL2ast)} items")
 
@@ -767,16 +876,17 @@ def _if_fn(ACL2ast, env):
 
 	# Translate subterms.  Hacks:
 	# - Avoid handling system-view for now.
-	# - Also optimise for `true` constant
 	# - If we have just `if _ t nil` then force t and nil to both be bools (don't just return the predicate as it
 	#	might not be a bool.
-	# TODO: should probably check that the environment does not change on each translation check consumed values
-	# TODO: for the app-view hack, maybe make the `elseTerm` a failure instead (i.e. `assert(false)`).
 	if (isinstance(ifTerm, list) and ifTerm[0].lower() == 'app-view') or\
-			(isinstance(ifTerm, list) and isinstance(ifTerm[0], SailBoolLit) and ifTerm[0].getBool()):
+			(isinstance(ifTerm, list) and isinstance(ifTerm[0], SailBoolLit) and
+			ifTerm[0].getBool()):
+
 		(thenTermSail, env, _) = transform.transformACL2asttoSail(thenTerm, env)
 		toReturn = thenTermSail
-	elif isinstance(thenTerm, str) and thenTerm.lower() == 't' and isinstance(elseTerm, str) and elseTerm.lower() == 'nil':
+	elif isinstance(thenTerm, str) and thenTerm.lower() == 't' and \
+			isinstance(elseTerm, str) and elseTerm.lower() == 'nil':
+
 		(ifTermSail, env, _) = transform.transformACL2asttoSail(ifTerm, env)
 		toReturn = [SailIf(ifTermSail, [SailBoolLit(True)], [SailBoolLit(False)])]
 	else:
@@ -786,30 +896,33 @@ def _if_fn(ACL2ast, env):
 		toReturn = [SailIf(ifTermSail, thenTermSail, elseTermSail)]
 
 	# Construct the Sail ast `if` element and return
-	return (toReturn, env, len(ACL2ast))
+	return toReturn, env, len(ACL2ast)
 
-def _encapsulate_fn(ACL2ast, env):
-	'''
-	See here for detailed info: http://www.cs.utexas.edu/users/moore/acl2/manuals/current/manual/index-seo.php/ACL2____ENCAPSULATE
-
-	Encapsulates come in two forms, indicated by the first symbol after `encapsulate`:
-	1) First symbol is nil: a 'trival' encapsulate
+def tr_encapsulate(ACL2ast, env):
+	"""
+	Encapsulates come in two forms, indicated by the first symbol after
+	`encapsulate`:
+	1) First symbol is nil: a 'trivial' encapsulate
 	2) Second symbol is non-nul: a 'non-trivial' encapsulate
 
-	Here we implement only the former.  There is only a single instance of the latter, and I suspect
-	we wil want to deal with it manually as it's to do with undefined behaviour.
-	'''
-	printLine()
+	We translate both using the same method but the second case should be
+	handled manually.  There are only two instances of the second case
+	(in 'register-readers-and-writers.lisp' and 'cpuid.lisp)', which
+	the former relates to undefined behaviour.
+
+	See: http://www.cs.utexas.edu/users/moore/acl2/manuals/current/manual/index-seo.php/ACL2____ENCAPSULATE
+	"""
+	_printLine()
 
 	# Filter and extract elements
-	filtered = filterExtract(ACL2ast, None, [[list]], [None], f"`encapsulate`", comments=True)
+	filtered = _filterExtract(ACL2ast, None, [[list]], [None], f"`encapsulate`", comments=True)
 	trivialp = filtered[0]
 	body = filtered[1:]
 
 	# Perform rudimentary checks
 	if trivialp != []: print("WARNING: non-trivial encapsulate not implemented, treating as trivial")
 
-	# For each further element, just translate it - `_local_fn` handles whether it should be included or not
+	# For each further element, just translate it - `tr_local` handles whether it should be included or not
 	toReturn = []
 	for acl2Term in body:
 		(sailTerm, env, consumed) = transform.transformACL2asttoSail(acl2Term, env)
@@ -817,35 +930,16 @@ def _encapsulate_fn(ACL2ast, env):
 		toReturn.extend(sailTerm)
 
 	# Return
-	return (toReturn, env, len(ACL2ast))
+	return toReturn, env, len(ACL2ast)
 
-def _general_equal_fn(ACL2ast, env):
+
+def tr_zp(ACL2ast, env):
 	"""
-	Mostly just using '==' works fine, but sometimes we need to do something else.  For instance, when testing
-	strings, we must use a match expression.
+	Test for 0.  Translate as `x == 0` in Sail.  In reality `(zp x)` returns
+	`t` if `x` is 0 or is not a natural number.  The translation is thus an
+	approximation.
 	"""
-	printLine()
-
-	# Extract the arguments
-	(lhs, rhs) = filterExtract(ACL2ast, 3, [[list, str], [list, str]], [None, None], f"`==`")
-
-	# If either the lhs or rhs start with a colon, we know we will compare strings
-	if (isinstance(lhs, str) and lhs.startswith(':')):
-		stringLit = lhs
-		other = rhs
-	elif (isinstance(rhs, str) and rhs.startswith(':')):
-		stringLit = rhs
-		other = lhs
-	# Otherwise just use '=='
-	else:
-		fn = _num_op_gen('==', Sail_t_bool(), 2, infix=True)
-		return fn(ACL2ast, env)
-
-	# Generate the match expression if we're matching on strings
-	(otherSail, env, _) 	= transform.transformACL2asttoSail(other, env)
-	(stringLitSail, env, _) = transform.transformACL2asttoSail(stringLit, env)
-	otherSail = otherSail[0]
-	stringLitSail = stringLitSail[0]
+	_printLine()
 
 	return ([SailMatch(
 				var=otherSail,
@@ -874,23 +968,25 @@ def _zp_fn(ACL2ast, env):
 				infix = True)],
 			env, len(ACL2ast))
 
-def _num_op_gen(op, resultType, numOfArgs=None, infix=True):
-	'''
+def num_op_gen(op, resultType, numOfArgs=None, infix=True):
+	"""
+	Generates a function which conforms to the spec described at the start of
+	this file and which can be applied to an ACL2 AST to generate a simple
+	operation such as `+` or `<`.
+
 	Args:
 		- op : str - e.g. '+'
 		- resultType : SailType - e.g. Sail_t_int()
 		- numOfArgs : int | None
-	'''
-	def _num_op(ACL2ast, env):
-		# Filter and extract arguments
-		args = [item for item in ACL2ast if not isinstance(item, NewLine)]
-		args = args[1:]
-
-		# Perform checks on the args
+		- infix : bool
+	"""
+	def tr_num_op(ACL2ast, env):
+		# Extract the arguments and perform rudimentary checks
+		args = ACL2ast[1:]
 		if not all(type(item) in [list, str, ACL2quote] for item in args): sys.exit(f"Error: type of num op argument not permitted: {ACL2ast}")
-		if numOfArgs != None and len(args) != numOfArgs: sys.exit(f"Error: incorrect number of args to num op {ACL2ast}")
+		if numOfArgs is not None and len(args) != numOfArgs: sys.exit(f"Error: incorrect number of args to num op {ACL2ast}")
 
-		# Translate the elements and get their types
+		# Translate the arguments and get their types
 		argsSail = []
 		typesSail = []
 		for i in args:
@@ -908,7 +1004,7 @@ def _num_op_gen(op, resultType, numOfArgs=None, infix=True):
 		# Check we have at least 2 elements for the num op
 		if len(argsSail) < 2: sys.exit(f"Error: not enough arguments for num op {ACL2ast}")
 
-		# # TODO: hack - if we're returning a bool but testing option types, wrap in is_some
+		# Hack - if we're returning a bool but testing option types, wrap in is_some
 		for (i, arg) in enumerate(argsSail):
 			typ = typesSail[i]
 			if isinstance(typ, Sail_t_option) and isinstance(resultType, Sail_t_bool):
@@ -919,7 +1015,7 @@ def _num_op_gen(op, resultType, numOfArgs=None, infix=True):
 				)]
 				typesSail[i] = Sail_t_bool()
 
-		# Contruct the base AST and remove those elements from the args/types lists
+		# Construct the base AST and remove those elements from the args/types lists
 		currentType = Sail_t_fn([typesSail[-2], typesSail[-1]], resultType)
 		currentAST = [SailApp(
 						fn = SailHandwrittenFn(op, typ = currentType),
@@ -941,12 +1037,16 @@ def _num_op_gen(op, resultType, numOfArgs=None, infix=True):
 
 
 		# Return
-		return (currentAST, env, len(ACL2ast))
+		return currentAST, env, len(ACL2ast)
 
-	return _num_op
+	return tr_num_op
 
 def _the_helper(theType, sailTerm):
-	'''
+	"""
+	Helper for `tr_the`.  See documentation in `tr_the` for details on `the`.
+	The correct wrapper function from handwritten2.sail is chosen based on the
+	`theType`.
+
 	Args:
 		- theType : SailType
 		- sailTerm : [SailASTelem] | SailASTelem
@@ -976,11 +1076,17 @@ def _the_helper(theType, sailTerm):
 
 	return retTerm
 
-def _the_fn(ACL2ast, env):
-	'''
-	`the` allows the forcing of a type.
-	'''
-	(typeSpec, rest) = filterExtract(ACL2ast, 3, [[list], [list, str]], [None, None], "`the`")
+
+def tr_the(ACL2ast, env):
+	"""
+	In ACL2, `(the <type-spec> <form>)` indicates that `form` has type
+	`type-spec`.  In ACL2 this is proved statically, it is translated as a
+	dynamic type check in Sail.  Also ee `the_int`, `the_nat` and `the_range`
+	in handwritten2.sail.
+
+	See: http://www.cs.utexas.edu/users/moore/acl2/manuals/current/manual/?topic=COMMON-LISP____THE
+	"""
+	(typeSpec, rest) = _filterExtract(ACL2ast, 3, [[list], [list, str]], [None, None], "`the`")
 
 	# Decode typespec
 	theType = translateType(env, typeSpec[0], typeSpec[1:])
@@ -988,16 +1094,29 @@ def _the_fn(ACL2ast, env):
 	# Decode the rest
 	(sailTerm, env, _) = transform.transformACL2asttoSail(rest, env)
 
-	# Get the return ast
+	# Get the return ast from the helper function
 	retTerm = _the_helper(theType, sailTerm)
 
 	# Encapsulate and return	
-	return (retTerm, env, len(ACL2ast))
-
+	return retTerm, env, len(ACL2ast)
 
 def _parts_helper(lowAST, hiAST, widAST, env):
 	"""
-	Used for both _part_select_fn and _part_install_fn
+	Used for both tr_part_select and tr_part_install.
+
+	Implements translation of logic found here:
+	http://www.cs.utexas.edu/users/moore/acl2/manuals/current/manual/?topic=ACL2____PART-SELECT
+
+	Valid keyword combinations are
+
+		`:low` and `:high`
+		`:low` and `:width`
+
+	Note that the `:high` and `:width` combination is not valid.  This function
+	translates these keyword options and returns a common interface by
+	specifying low and width (which plays well with get_slice_int()).  Thus,
+	if `:low` and `:high` are both specified, we need to translate a
+	subtraction.
 
 	Args:
 		lowAST: [ACL2astElem]
@@ -1006,7 +1125,11 @@ def _parts_helper(lowAST, hiAST, widAST, env):
 		env: As above
 
 	Returns:
-		(size : SailNumLit, sizeLit : Int | None, lowASTsail : [SailASTelem, env : as above)
+		( sizeASTsail	: SailNumLit,
+		 size			: Int | None,
+		 lowASTsail		: [SailASTelem],
+		 env			: Env
+		)
 	"""
 	# If :high and :width defined, fail
 	if hiAST != [] and widAST != []:
@@ -1049,22 +1172,23 @@ def _parts_helper(lowAST, hiAST, widAST, env):
 
 	return (size, sizeLit, lowASTsail, env)
 
-def _part_select_fn(ACL2ast, env):
+def tr_part_select(ACL2ast, env):
 	"""
-	See: http://www.cs.utexas.edu/users/moore/acl2/manuals/current/manual/index.html?topic=ACL2____PART-SELECT
+	`part-select` selects a portion of bits from an integer that represents a
+	bitvector.  Translate as a call to get_slice_int().
 
-	TODO: Possible problem if the `target` argument comes after keywords - assumed it's the first argument here
+	See: http://www.cs.utexas.edu/users/moore/acl2/manuals/current/manual/index.html?topic=ACL2____PART-SELECT
 	"""
 	# Get keyword values
-	lowAST = getValueOfKeyword(ACL2ast, ':low')
-	hiAST  = getValueOfKeyword(ACL2ast, ':high')
-	widAST = getValueOfKeyword(ACL2ast, ':width')
+	lowAST = _getValueOfKeyword(ACL2ast, ':low')
+	hiAST  = _getValueOfKeyword(ACL2ast, ':high')
+	widAST = _getValueOfKeyword(ACL2ast, ':width')
 
 	# Convert keywords to a size and start index
 	(size, sizeLit, lowASTsail, env) = _parts_helper(lowAST, hiAST, widAST, env)
 
 	# Translate the target of the part_select
-	(target, _, _, _, _) = filterExtract(ACL2ast, 6, [None] * 5, [None] * 5, "`part_select`")
+	(target, _, _, _, _) = _filterExtract(ACL2ast, 6, [None] * 5, [None] * 5, "`part_select`")
 	(targetSail, env, _) = transform.transformACL2asttoSail(target, env)
 
 	# Create the get_slice_int function application
@@ -1074,6 +1198,7 @@ def _part_select_fn(ACL2ast, env):
 	else:
 		innerRetType = Sail_t_int()
 		outerRetType = Sail_t_int()
+
 	inner = SailApp(fn = SailHandwrittenFn(
 							name = 'get_slice_int',
 							typ = Sail_t_fn([Sail_t_int(), Sail_t_int(), Sail_t_int()], innerRetType)),
@@ -1085,22 +1210,26 @@ def _part_select_fn(ACL2ast, env):
 							typ = Sail_t_fn([], outerRetType)),
 					actuals = [inner])
 
-	return ([outer], env, len(ACL2ast))
+	return [outer], env, len(ACL2ast)
 
-def _part_install_fn(ACL2ast, env):
-	'''
+def tr_part_install(ACL2ast, env):
+	"""
+	`part-install` sets a portion of bits of an integer to some value.
+	Translate as a call to the handwritten function `changeBits` which calls
+	set_slice_int() and get_slice_int() under the hood.
+
 	See: http://www.cs.utexas.edu/users/moore/acl2/manuals/current/manual/index.html?topic=ACL2____PART-INSTALL
-	'''
+	"""
 	# Get keyword values
-	lowAST = getValueOfKeyword(ACL2ast, ':low')
-	hiAST = getValueOfKeyword(ACL2ast, ':high')
-	widAST = getValueOfKeyword(ACL2ast, ':width')
+	lowAST = _getValueOfKeyword(ACL2ast, ':low')
+	hiAST = _getValueOfKeyword(ACL2ast, ':high')
+	widAST = _getValueOfKeyword(ACL2ast, ':width')
 
 	# Convert keywords to a size and start index
 	(size, _, lowASTsail, env) = _parts_helper(lowAST, hiAST, widAST, env)
 
 	# Translate the target and value of the part_install
-	(val, x, _, _, _, _) = filterExtract(ACL2ast, 7, [None] * 6, [None] * 6, "`part_install`")
+	(val, x, _, _, _, _) = _filterExtract(ACL2ast, 7, [None] * 6, [None] * 6, "`part_install`")
 	(valSail, env, _) = transform.transformACL2asttoSail(val, env)
 	(xSail, env, _) = transform.transformACL2asttoSail(x, env)
 
@@ -1111,21 +1240,51 @@ def _part_install_fn(ACL2ast, env):
 			typ=Sail_t_fn([Sail_t_int(), Sail_t_int(), Sail_t_int(), Sail_t_int()], Sail_t_int())),
 		actuals=[xSail[0], lowASTsail[0], size, valSail[0]])
 
-	return ([inner], env, len(ACL2ast))
+	return [inner], env, len(ACL2ast)
 
 def _bstar_helper(bindersRemaining, results, env):
-	'''
+	"""
+	Along with `define`, `b*` forms are another class of complex Lisp
+	expressions.
+
+	General form is:
+
+		(b* <list-of-bindings> . <list-of-result-forms)
+
+	This function translates the list-of-bindings (`bindersRemaining`) and,
+	as a base case `results`.  A binder has the form:
+
+		(<binder-form> [<expression>])
+
+	The binder-form tells us how to translate each binding.  Implemented
+	forms are:
+
+	 -  ((mv a b ...) <expr>)
+	 -  (x <expr>) - let*-like binding
+	 -  (- <expr>) - no binding (implementation does not evaluate `body`)
+	 -  ((the <type-spec> x) <expr>)
+	 -  ((when x) <expr>)
+	 -  ((if x) <expr>)
+	 -  ((unless x) <expr>)
+	 -  Ignoring of variable `&`
+	 -  Handling of variables starting with '?'
+
+	When implementing a new binder, it should register any names it binds,
+	in order, by appending them to the `boundNames` list - the names in this
+	list are then de-registered from the environment when the stack unwinds
+	and the function returns.
+
 	Args:
 		bindersRemaining : [[ACL2astElem] | ACL2astElem] - assume filtered
 		results : [ACL2astElem] | ACL2astElem
 		env : Env
 	Returns:
 		- ([ACL2astElem], env')
-	'''
+	"""
 	# ===== Base case: no binders remaining, translate the result ===== #
 	if len(bindersRemaining) == 0:
 		(resultsSail, env, _) = transform.transformACL2asttoSail(results, env)
-		return (resultsSail, env)
+		return resultsSail, env
 
 	# ===== Helper function to handle leading `!` and `?!` from names ===== #
 	def sanatiseBstarName(name):
@@ -1215,7 +1374,7 @@ def _bstar_helper(bindersRemaining, results, env):
 					ident[2] = name # _the_fn needs to be able to look up the sanatised symbol
 					boundVars.extend(env.pushToBindings([name]))
 					boundNames.append(name)
-					(sailThe, env, _) = _the_fn(ident, env)
+					(sailThe, env, _) = tr_the(ident, env)
 					afters.append((name, sailThe[0]))
 				else:
 					sys.exit(f"Unknown type of mv binder - {ident}")
@@ -1229,7 +1388,10 @@ def _bstar_helper(bindersRemaining, results, env):
 					# TODO: make exception more specific
 					boundVars[i].setType(t)
 
-			# Apply necessary transformations to deal with structure inside the mv
+			# Sometimes there is structure within the mv (e.g. a `the`
+			# expression).  We need to insert such type checks between this
+			# binding and the next binding (or the result form).  This
+			# function help us do that.
 			def afters_helper(afters, env):
 				# Failure case - no items
 				if afters == []: sys.exit("Error: no items in afters")
@@ -1246,7 +1408,7 @@ def _bstar_helper(bindersRemaining, results, env):
 						body=recursedSail
 					)]
 
-					return (returnTerm, [name], env)
+					return returnTerm, [name], env
 
 				# Recursive case
 				else:
@@ -1262,7 +1424,7 @@ def _bstar_helper(bindersRemaining, results, env):
 						body=recursedTerm
 					)]
 
-					return (returnTerm, [name] + recursedNames, env)
+					return returnTerm, [name] + recursedNames, env
 
 			if afters != []:
 				(recursedSail, recursedNames, env) = afters_helper(afters, env)
@@ -1281,8 +1443,8 @@ def _bstar_helper(bindersRemaining, results, env):
 		# `the` binder
 		elif bindType.lower() == 'the':
 			# Extract typeSpec and name
-			(typeSpec, name) = filterExtract(b, 3, [[list], [str]], [None, None], "`the`")
-			name = sanatiseBstarName(name)
+			(typeSpec, name) = _filterExtract(b, 3, [[list], [str]], [None, None], "`the`")
+			name = sanitiseBstarName(name)
 
 			# Translate the type		
 			theType = translateType(env, typeSpec[0], typeSpec[1:])
@@ -1307,7 +1469,7 @@ def _bstar_helper(bindersRemaining, results, env):
 		# `when`, `if` and `unless` binders
 		elif bindType.lower() in ['when', 'if', 'unless']:
 			# Extract and translate the conditional expression
-			cond, = filterExtract(b, 2, [[list, str]], [None], "`when`")
+			cond, = _filterExtract(b, 2, [[list, str]], [None], "`when`")
 			condSail, env, _ = transform.transformACL2asttoSail(cond, env)
 
 			# Negate the condition if we are an 'unless'
@@ -1341,41 +1503,57 @@ def _bstar_helper(bindersRemaining, results, env):
 		sys.exit(f"Error: b* binder not a symbol or list - {bindersRemaining}")
 
 
-	# De-registed names bound in this call from env
+	# De-registered names bound in this call from env
 	env.popWithCheck(boundNames)
 
 	# Return
-	return ([toReturn], env)
+	return [toReturn], env
 
-def _bstar_fn(ACL2ast, env):
-	'''
+def tr_bstar(ACL2ast, env):
+	"""
 	We could use the macro expander to expand the b* macro, but this gives us
 	some really low-level garbage which, when translated to Sail, would likely
 	be pretty horrible.
+
+	Most of the work in translating b* is done in _bstar_helper - this function
+	is just a wrapper.  The result is a series of nested `let` bindings with
+	the translated Sail form at the bottom.
+
 	See here: http://www.cs.utexas.edu/users/moore/acl2/manuals/current/manual/index-seo.php/ACL2____B_A2
-	'''
-	printLine()
+	"""
+	_printLine()
 
 	# Filter and extract
-	(binders, results) = filterExtract(ACL2ast, 3, [[list], None], [None, None], '`b*`')
-
-	# Filter binders and results
-	binders = filterAST(binders)
-	if isinstance(results, list):
-		results = filterAST(results)
+	(binders, results) = _filterExtract(ACL2ast, 3, [[list], None], [None, None], '`b*`')
 
 	# If result is a quote, we don't want to deal with it
 	if type(results) in [ACL2quote, ACL2qq]:
-		return ([None], env, len(ACL2ast))
+		return [None], env, len(ACL2ast)
 
 	# Use helper
 	(toReturn, env) = _bstar_helper(binders, results, env)
 
 	# Return
-	return (toReturn, env, len(ACL2ast))
+	return toReturn, env, len(ACL2ast)
 
 
-def _mv_fn(ACL2ast, env):
+def tr_mv(ACL2ast, env):
+	"""
+	Functions can return multiple values by using the `mv` expression.
+	This translates as a tuple in Sail.
+
+	Errors in the model are often reported by lists which begin with a short
+	string descriptor followed by some optional data.  These are problematic
+	in Sail because an empty error is represented by `nil`, which automatically
+	translates as `false`.  In reality, we want error strings to translate as
+	type `option(string)` and empty errors as `none()`.  A heuristic in this
+	translation function implements this.
+
+	We interpret an `mv` as reporting an error, and thus translate its first
+	item as type `option(string)` when the first item or only item is either:
+	 1. a string or
+	 2. already an `option(string)`.
+	"""
 	# Extract things to return and translate them one by one
 	args = ACL2ast[1:]
 	sailArgs = []
@@ -1384,43 +1562,38 @@ def _mv_fn(ACL2ast, env):
 		if len(sa) > 1: sys.exit(f"Error: length of argument to mv not 1 - {sa}")
 		sailArgs.extend(sa)
 
-	'''
-	Errors in the model are reported by lists with a short string descriptor and optionally some associated data.
-	These are problematic in Sail, and, for now, we replace them with an Option type representing the presence or
-	absence of an error.
-
-	Assumptions:
-	1.	That error lists are the first item to be returned in an `mv`
-	2.	That the first item in an error list is a string or option(string)
-	'''
-	# The error list is a real list
+	# Hack: interpret error lists
+	# Option 1: the error list is actually a list
 	if isinstance(sailArgs[0], SailTuple):
 		errorString = sailArgs[0].getItems()[0]
 		if isinstance(errorString.getType(), Sail_t_string):
 			sailArgs = [someHelper(errorString)] + sailArgs[1:]
 		if isinstance(errorString.getType(), Sail_t_option) and isinstance(errorString.getType().getTyp(), Sail_t_string):
 			sailArgs = [errorString] + sailArgs[1:]
-	# The error list is a single item
+	# The error 'list' is actually single item
 	if isinstance(sailArgs[0], SailStringLit):
 		sailArgs = [someHelper(sailArgs[0])] + sailArgs[1:]
 
-	return ([SailTuple(sailArgs)], env, len(ACL2ast))
+	return [SailTuple(sailArgs)], env, len(ACL2ast)
 
-def _case_fn(ACL2ast, env):
-	# Filter comments and newlines and extract top-level elements
-	ACL2astFiltered = filterAST(ACL2ast, comments=True)
+def tr_case(ACL2ast, env):
+	"""
+	An ACL2 case expression translates to a Sail `match` expression.
+	Translate the ACL2 form `otherwise` to the underscore in Sail.
+	"""
+	# Split into constituent parts
+	var = filterAST(ACL2ast[1], comments=True)
+	cases = ACL2ast[2:]
 
-	var = filterAST(ACL2astFiltered[1], comments=True)
-	cases = ACL2astFiltered[2:]
-
-	# Translate the var expression
+	# Translate the var expression and perform rudimentary checks
 	(varSail, env, _) = transform.transformACL2asttoSail(var, env)
 	if len(varSail) != 1: sys.exit(f"Error: incorrect length of variable to match on in `case` - {varSail}")
 	varSail = varSail[0]
 
-	# The `cases` list is a list of (pattern, expr) pairs.  However, some patterns may themselves be lists.  This
-	# indicates that if the variable matches *any* of the items in that list, the expression is evaluated.  Here, we
-	# explode such lists so we can translate to Sail.
+	# The `cases` list is a list of (pattern, expr) pairs.  However, some
+	# patterns may themselves be lists.  This indicates that if the variable
+	# matches *any* of the items in that list, the expression is evaluated.
+	# Here, we explode such lists so we can translate to Sail.
 	originalCases = cases
 	cases = []
 	for (p, e) in originalCases:
@@ -1432,8 +1605,7 @@ def _case_fn(ACL2ast, env):
 	# For each of the case statements...
 	matches = [] # [(pattern : SailNumLit, expr : SailASTelems)]
 	for case in cases:
-		# ... filter newlines and comments and extract pattern and expression
-		case = filterAST(case, comments=True)
+		# ... extract pattern and expression
 		if len(case) != 2: sys.exit(f"Error: case statement length incorrect - {ACL2ast}")
 		pattern = case[0]
 		expr = case[1]
@@ -1458,16 +1630,22 @@ def _case_fn(ACL2ast, env):
 	# Construct the return Sail AST
 	toReturn = SailMatch(varSail, matches)
 
-	return ([toReturn], env, len(ACL2ast))
+	return [toReturn], env, len(ACL2ast)
 
-def _def_inst_fn(ACL2ast, env):
+def tr_def_inst(ACL2ast, env):
+	"""
+	`def-inst` is really a macro and is specific to the x86 model.  This
+	function expands the macro using the running ACL2 instance but then picks
+	important parts of the expansion before deferring to tr_define for the
+	main translation.
+	"""
 	# Construct the term to send for evaluation
 	toSend = [':trans', ACL2ast]
 
 	# Send to the ACL2server for evaluation
 	newAST = env.evalACL2(toSend, debracket=True)
 
-	# Remove top level newlines
+	# Remove top level newlines from the result
 	newAST = filterAST(newAST)
 
 	# Result is of the form 
@@ -1478,7 +1656,7 @@ def _def_inst_fn(ACL2ast, env):
 	newAST = newAST[1] # quote define-fn
 
 	# `define-fn` has the form `define-fn name args world` - we ignore the
-	# world here, just passing `name` and `args` to our _define_fn,
+	# world here, just passing `name` and `args` to our tr_define,
 	# effectively
 	newAST = filterAST(newAST.getAST())
 	name = filterAST(newAST[1].getAST())
@@ -1486,21 +1664,25 @@ def _def_inst_fn(ACL2ast, env):
 	print(f"Name: {name}")
 	print(f"Args and body: {args_body}")
 
-	# Call _define_fn
-	(toReturn, env, _) = _define_fn(['define'] + [name] + args_body, env)
+	# Call tr_define
+	(toReturn, env, _) = tr_define(['define'] + [name] + args_body, env)
 
-	return (toReturn, env, len(ACL2ast))
+	return toReturn, env, len(ACL2ast)
 
-def _xr_fn(ACL2ast, env):
-	'''
+def tr_xr(ACL2ast, env):
+	"""
 	XR is the register accessor function (rw is the updater).
 	Format is (xr fld index x86)
 		- fld is what we switch on
 		- index is used by some fields
-		- we ignore the x86 object because it is represented by global state in Sail
+		- we ignore the x86 object because it is represented by global state
+		  in Sail.
+
+	The lists `implementedWithoutIndex` and `implementedWithIndex` specify
+	which values of `fld` use the `index` parameter and which do not.
 
 	See: https://www.cs.utexas.edu/users/moore/acl2/manuals/current/manual/index-seo.php/X86ISA____XR
-	'''
+	"""
 	fld = ACL2ast[1]
 	index = ACL2ast[2]
 	x86_dummy = SailNumLit(0)
@@ -1529,9 +1711,17 @@ def _xr_fn(ACL2ast, env):
 	else:
 		sys.exit(f"Error: not implemented field {fld} in `_xr_fn`")
 
-	return ([returnAST], env, len(ACL2ast))
+	return [returnAST], env, len(ACL2ast)
 
 def _cond_helper(sailClauses):
+	"""
+	Helper function for tr_cond.
+
+	Takes a list of translated clauses of the form (<cond-expr> <then-expr>)
+	and creates a nested 'if then else' structure.
+
+	See: http://www.cs.utexas.edu/users/moore/acl2/manuals/current/manual/index.html?topic=COMMON-LISP____COND
+	"""
 	# Base case, final element
 	if len(sailClauses) == 1:
 		clause = sailClauses[0]
@@ -1549,12 +1739,16 @@ def _cond_helper(sailClauses):
 
 	return SailIf([clause[0]], [clause[1]], [elseCase])
 
-def _cond_fn(ACL2ast, env):
-	'''
-	See: http://www.cs.utexas.edu/users/moore/acl2/manuals/current/manual/index-seo.php/COMMON-LISP____COND
+def tr_cond(ACL2ast, env):
+	"""
+	Cond has form `(cond clause1 ... clausen)`.  Clauses can be of length 1 or
+	2, but only translation of clauses of length 2 is implemented here.  In
+	this case, the clause has the form `(<cond-form> <then-form>)`.  The
+	contents of these clauses is translated before being placed in a nested
+	'if then else' structure by _cond_helper().
 
-	Cond has form `cond clause1 ... clausen`
-	'''
+	See: http://www.cs.utexas.edu/users/moore/acl2/manuals/current/manual/index-seo.php/COMMON-LISP____COND
+	"""
 	clauses = ACL2ast[1:]
 	clausesSail = []
 
@@ -1580,10 +1774,14 @@ def _cond_fn(ACL2ast, env):
 	# Construct nested if then else (if...)
 	toReturn = _cond_helper(clausesSail)
 
-	return ([toReturn], env, len(ACL2ast))
+	return [toReturn], env, len(ACL2ast)
 
 
 def _list_helper(elems, env):
+	"""
+	Helper for tr_list.  Translates the elements in `elems` and creates a
+	nested tuples structure.
+	"""
 	# Failure case, no items
 	if elems == []: sys.exit("No elements in list constructor")
 
@@ -1593,47 +1791,63 @@ def _list_helper(elems, env):
 
 	# Base case, one element, create a singleton tuple
 	if len(elems) == 1:
-		return (SailTuple(subItems=headSail), env)
+		return SailTuple(subItems=headSail), env
 
 	# Recursive case: translate the rest and cons head element
 	else:
 		tail = elems[1:]
 		(tailSail, env) = _list_helper(tail, env)
 		headSail.append(tailSail)
-		return (SailTuple(subItems=headSail), env)
+		return SailTuple(subItems=headSail), env
 
 
-def _list_fn(ACL2ast, env):
-	'''
-	For now we represent heterogeneous lists as nested tuples
-	'''
+def tr_list(ACL2ast, env):
+	"""
+	We represent heterogeneous lists as nested tuples.  This is a wrapper
+	function round _list_helper().  In general we try to avoid translating
+	lists representing data.
+	"""
 	elems = ACL2ast[1:]
 	(sailList, env) = _list_helper(elems, env)
 
-	return ([sailList], env, len(ACL2ast))
+	return [sailList], env, len(ACL2ast)
 
-def _mv_let_fn(ACL2ast, env):
-	'''
-	Massage into a form amenable to using b*
+def tr_mv_let(ACL2ast, env):
+	"""
+	`mv-let` binds multiple variables to the result of an expression which
+	returns multiple values.  Its operation is entirely encompassed by `b*`,
+	so all this function does is massage into a form where we can call
+	tr_bstar().
 
 	See here for the syntax: http://www.cs.utexas.edu/users/moore/acl2/manuals/current/manual/?topic=ACL2____MV-LET
-	'''
+	"""
 	varNames = ACL2ast[1]
 	mvExpr   = ACL2ast[2]
 	body     = ACL2ast[-1]
 
 	bstarExpr = ['b*', [[['mv'] + varNames, mvExpr]], body]
 
-	return _bstar_fn(bstarExpr, env)
+	return tr_bstar(bstarExpr, env)
 
-def _mbt_fn(ACL2ast, env):
+def tr_mbt(ACL2ast, env):
+	"""
+	In `(mbt <val>)` the form `val` must to proved to be true.  We can thus
+	translate as `true` (having translated `val` anyway in case it modifies
+	the environment.
+
+	See: http://www.cs.utexas.edu/users/moore/acl2/manuals/current/manual/?topic=ACL2____MBT
+	"""
 	# We'd better translate the body just in case it modifies the env in some way
 	(_, env, _) = transform.transformACL2asttoSail(ACL2ast[1], env)
 
 	# Other that than, just return true
-	return ([SailBoolLit(True)], env, len(ACL2ast))
+	return [SailBoolLit(True)], env, len(ACL2ast)
 
-def _cons_fn(ACL2ast, env):
+def tr_cons(ACL2ast, env):
+	"""
+	Heterogeneous data lists are translated as nested tuples.  This translates
+	a cons of two items.
+	"""
 	(sail1, env, _) = transform.transformACL2asttoSail(ACL2ast[1], env)
 	(sail2, env, _) = transform.transformACL2asttoSail(ACL2ast[2], env)
 
@@ -1641,13 +1855,16 @@ def _cons_fn(ACL2ast, env):
 
 
 def _change_helper(keywordsOrder, changeFn):
-	printLine()
+	"""
+	Creates the translation function which can be used to translate calls to
+	a changer function from a `defbitstruct`.  It takes a list keyword names
+	and the top level `let` expression generated by _parseBitstructFields().
+	Further details can be found in the comment for _parseBitstructFields().
+	"""
+	_printLine()
 
 	def innerFn(ACL2ast, env):
-		# This function was originally a standalone function specified for change_rflagsBits.  It has now been
-		# generalised
-
-		# Filter and extract
+		# Extract parts
 		change_name = ACL2ast[0]
 		change_input = ACL2ast[1]
 		keywords = ACL2ast[2:]
@@ -1661,7 +1878,7 @@ def _change_helper(keywordsOrder, changeFn):
 
 		# Extract each of the keyword values and translate
 		# failOnRedef asserted so each list in return dict contains exactly 1 item
-		(keywordsMap, _) = extractAllKeywords(keywords, failOnRedef=True)
+		(keywordsMap, _) = _extractAllKeywords(keywords, failOnRedef=True)
 
 		# Check all keywords are known
 		# The order of items in this list matters as it corresponds to the expected
@@ -1698,8 +1915,24 @@ def _change_helper(keywordsOrder, changeFn):
 
 
 def _generateBitstructFieldAccessorAndUpdater(typeName, field, currentLow, env):
+	"""
+	Generates the accessor and updater functions for a particualr field of a
+	`defbitstruct` as described in `_parseBitstructFields()`.
+
+	Args:
+		- typeName: string - name of the bitstruct
+		- field: [ACL2astElem] - of form `(<field-name> <field-type>)`
+		- currentLow: int - how many bits have been used so far in the bitstruct
+		- env: Env
+	Returns:
+		(	Accessor function : SailFn,
+			Updater function  : SailFn,
+			New bit index     : int,
+			env				  : Env
+		)
+	"""
 	# Constant - basically copied from basic-structs.lisp
-	# TODO: make this automatic
+	# TODO: find this automatically
 	typeWidths = {
 		'bitp' : 1,
 		'2bits': 2,
@@ -1782,20 +2015,91 @@ def _generateBitstructFieldAccessorAndUpdater(typeName, field, currentLow, env):
 	env.addToGlobal(ACL2updater, apply_fn_gen(funcToApply=updaterFn, numOfArgs=2))
 
 	# Return the function and the new width
-	return (accessorFn, updaterFn, currentLow + width, env)
+	return accessorFn, updaterFn, currentLow + width, env
 
 
 def _parseBitstructFields(typeName, fieldsList, currentLow, previousBoundVar, env):
+	"""
+	Creates the 'accessor', 'updater' and 'changer' functions for
+	`defbitstruct`.
+
+	Here is an example ACL2 bitstructure:
+
+		(defbitstruct vex-prefixes
+			((byte0  8bits "Can either be #xC4 or #xC5")
+			 (byte1  8bits "Byte 1 of VEX prefixes")
+			 (byte2  8bits "Relevant only for 3-byte VEX prefixes")))
+
+	We refer to `byte0`, `byte1` and `byte2` as the 'fields' of this
+	bitstructure.
+
+	And accessor and updater function is generated for each field.  They are
+	relatively simple.  An accessor takes an int representing the bitstructure
+	and returns the value of a particular field, for example, in Sail:
+
+		val vex_prefixes_get_byte0 : (int) -> int
+		function vex_prefixes_get_byte0 (inputbits) =
+			genericBitstructAccessor(8, inputbits, 0)
+
+	Updators are similar but take and int and a new value and return an int
+	representing the bitstructure with a certain field updated.
+
+	A 'changer' is created for each bitstructure.  It takes a series of
+	option(int) and returns thus allows multiple fields to be updated at once.
+	It is implemented as a series of nested `let` expressions.  For example:
+
+		val change_vex_prefixes : (int, option(int), option(int), option(int)) -> int
+		function change_vex_prefixes (input_bits, input_byte0, input_byte1, input_byte2) =
+			let output_byte0 = match input_byte0 {
+				Some(input_byte0) => set_vex_prefixes_get_byte0(input_byte0, input_bits),
+				_ => input_bits
+			} in
+			let output_byte1 = match input_byte1 {
+				Some(input_byte1) => set_vex_prefixes_get_byte1(input_byte1, output_byte0),
+				_ => output_byte0
+			}in
+			let output_byte2 = match input_byte2 {
+				Some(input_byte2) => set_vex_prefixes_get_byte2(input_byte2, output_byte1),
+				_ => output_byte1
+			} in
+			output_byte2
+
+			Etc.
+
+	The recursive implementation means that the bound variables input_byte0,
+	input_byte1 and input_byte_2 must be returned in a list to the top level
+	caller to be used in the function.  The output_byte must also be
+	accessible from the next level down (hence `previousBoundVar`).
+
+	Args:
+		typeName: string - the name of the bitstruct.
+		fieldsList: [ACL2astElem] - describes the widths of each element of the bitstruct.
+		currentLow: int - how many bits have been used so far (i.e. sum of previous widths)
+		previousBoundVar: SailBoundVar - as described above.
+		env: Env
+
+	Returns:
+		(	List of accessor functions,
+			List of updater functions,
+			Top level `let` expression for the changer function,
+			List in input SailBoundVars for the changer functions,
+			env : Env
+		)
+
+	TODO:
+		bitstructures would be better represented in Sail by bitvectors.
+	"""
 	##### Base case: no more fields
 	if fieldsList == []:
-		return ([], [], previousBoundVar, [], env)
+		return [], [], previousBoundVar, [], env
 
 	##### Recursive case
 	# Get the accessor and updater fns for the current field
 	hd = fieldsList[0]
 	(accessorFn, updaterFn, newLow, env) = _generateBitstructFieldAccessorAndUpdater(typeName, hd, currentLow, env)
 
-	# Get the accessor and updater fns and the let expression for the change_ function for the remainder of the fields
+	# Recursive call.  Get the accessor and updater fns and the let expression
+	# for the change_ function for the remainder of the fields
 	fieldName = hd[0]
 	inputBV = SailBoundVar(f"input_{fieldName}", typ=Sail_t_option(Sail_t_int()))
 	outputBV = SailBoundVar(f"output_{fieldName}", typ=Sail_t_int())
@@ -1827,17 +2131,21 @@ def _parseBitstructFields(typeName, fieldsList, currentLow, previousBoundVar, en
 			env)
 
 
-def _defbitstruct_fn(ACL2ast, env):
-	'''
+def tr_defbitstruct(ACL2ast, env):
+	"""
+	Bitstructures are represented as int in ACL2 and are translated as such in
+	Sail.  Calls to helper functions _parseBitstructFields() and
+	_change_helper() implement most of the functionality.  Details of
+	bitstructs can be found in the docstring for _parseBitstructFields().
+
+	Overall this function generates accessor, updater and changer functions for
+	bitstruct definitions and thus substantially changes the environment.
+
 	See here for syntax: http://www.cs.utexas.edu/users/moore/acl2/manuals/current/manual/?topic=FTY____DEFBITSTRUCT
+	"""
+	_printLine()
 
-	TODO: handle keywords
-
-	This function returns lots of function definitions as well as substantially changing the env
-	'''
-	printLine()
-
-	(_, ACL2ast) = extractAllKeywords(ACL2ast, False)
+	(_, ACL2ast) = _extractAllKeywords(ACL2ast, False)
 
 	typeName = ACL2ast[1]
 	fields_or_width = ACL2ast[2]
@@ -1862,9 +2170,42 @@ def _defbitstruct_fn(ACL2ast, env):
 		env.addToGlobal(token=f'change-{typeName}', fn=_change_helper(keywordsOrder=[kw.upper() for (kw, _) in changeOrder],
 																	  changeFn=changeFn))
 
-	return (accessors + updaters + [changeFn], env, len(ACL2ast))
+	return accessors + updaters + [changeFn], env, len(ACL2ast)
 
 def errorHelper(msg):
+	"""
+	The ACL2 model distinguishes between:
+	 -  'model state' (ms) errors, which are exceptions an actual processor
+	 	might encounter such as division by zero, and
+	 -  'faults', which are errors caused by the model (e.g. not implementing
+	 	a certain instruction).
+
+	Additionally, a new 'translation' error is introduced.
+
+	Translation of errors is not particularly sophisticated.  All errors use
+	the `EMsg` exception defined in handwriten2.sail.  The ACL2 model adheres
+	to the informal discipline of representing errors as a list where the first
+	item is a descriptive string and any remaining items are additional
+	information.  This additional information is mostly discarded here - we
+	only print the string message.
+
+	Errors are translated as inline exceptions.  They are not translated as
+	function calls because this would not type check.
+
+	In the ACL2 model the idea is that, certainly after an ms error, the
+	simulation could be resumed - that is not the case in the translation.
+
+	Args:
+		- msg: str
+	Returns:
+		`throw(Emsg(<msg>))` for use inline.
+
+	TODO:
+		Make exceptions more sophisticated.  E.g.:
+		- Different exceptions for ms, fault and translation error.
+		- Generated different exception types to represent
+		  the additional information.
+	"""
 	return SailApp(
 		fn=SailHandwrittenFn(
 			name='throw',
@@ -1879,10 +2220,14 @@ def errorHelper(msg):
 		)]
 	)
 
-def _er_fn(ACL2ast, env):
-	'''
+
+def tr_er(ACL2ast, env):
+	"""
+	Translate `er` as an inline exception.  See errorHelper() docstring for
+	more information.
+
 	See: http://www.cs.utexas.edu/users/moore/acl2/manuals/current/manual/?topic=ACL2____ER
-	'''
+	"""
 	hard_or_soft = ACL2ast[1]
 	if hard_or_soft.lower() == 'soft':
 		sys.exit("Error: not yet implemented soft errors")
@@ -1899,15 +2244,16 @@ def _er_fn(ACL2ast, env):
 
 	toReturn = errorHelper(f"Error thrown from function: {env.defineSlot}")
 
-	return ([toReturn], env, len(ACL2ast))
+	return [toReturn], env, len(ACL2ast)
 
-def _ms_fresh_fn(ACL2ast, env):
-	'''
-	A macro defined in 'decoding-and-spec-utils.lisp` which, for now, we handle manually
+
+def tr_ms_fresh(ACL2ast, env):
+	"""
+	Translate `ms-fresh` as an inline exception.  See errorHelper() docstring
+	for more information.
+
 	Interpret the first argument as a string to be returned as an error
-
-	TODO: maybe merge with _er_fn above
-	'''
+	"""
 	(errString, env, _) = transform.transformACL2asttoSail(ACL2ast[1], env)
 
 	# toReturn = SailApp(
@@ -1920,64 +2266,67 @@ def _ms_fresh_fn(ACL2ast, env):
 
 	toReturn = errorHelper(f"Model state error: {errString[0].getString()}")
 
-	return ([toReturn], env, len(ACL2ast))
 
-def _fault_fresh_fn(ACL2ast, env):
-	'''
-	TODO: make this more useful, e.g. at least specifying file and line number
-	'''
-	# toReturn = SailApp(
-	# 	fn=SailHandwrittenFn(
-	# 		name='error',
-	# 		typ=Sail_t_fn([Sail_t_string()], Sail_t_error(), effects={'escape'})
-	# 	),
-	# 	actuals=[SailStringLit(f"A fault occurred.  Original ACL2 AST:\n{ACL2ast}")]
-	# )
-
+def tr_fault_fresh(ACL2ast, env):
+	"""
+	Translate `fault-fresh` as an inline exception.  See errorHelper()
+	docstring for more information.
+	"""
 	toReturn = errorHelper(f"A fault occurred.  Original ACL2 AST:\n{ACL2ast}")
+	return [toReturn], env, len(ACL2ast)
 
-	return ([toReturn], env, len(ACL2ast))
 
-def _ifix_fn(ACL2ast, env):
-	'''
-	To 'coerce to an integer' we use Sail type checking, levereging `the_int`
-	'''
+def tr_ifix(ACL2ast, env):
+	"""
+	Technically `ifix x` returns x if x is an integer, otherwise 0.  We
+	simply assert statically that it should be an int using `the_int` in
+	handwritten2.sail.
+
+	See: http://www.cs.utexas.edu/users/moore/acl2/manuals/current/manual/?topic=ACL2____IFIX
+	"""
 	(sailArg, env, _) = transform.transformACL2asttoSail(ACL2ast[1], env)
 	toReturn = _the_helper(Sail_t_int(), sailArg)
-	return (toReturn, env, len(ACL2ast))
+	return toReturn, env, len(ACL2ast)
 
-def _nfix_fn(ACL2ast, env):
-	'''
-	See description for `_ifix_fn`
+
+def tr_nfix(ACL2ast, env):
+	"""
+	As per `tr_ifix` but we use `the_nat` instead.
+
+	See: http://www.cs.utexas.edu/users/moore/acl2/manuals/current/manual/?topic=ACL2____NFIX
 
 	TODO: make this function return 0 when the value is negative in line with the spec at:
-	http://www.cs.utexas.edu/users/moore/acl2/manuals/current/manual/?topic=ACL2____NFIX
-	'''
+	"""
 	(sailArg, env, _) = transform.transformACL2asttoSail(ACL2ast[1], env)
 	toReturn = _the_helper(Sail_t_int(), sailArg)
-	return (toReturn, env, len(ACL2ast))
+	return toReturn, env, len(ACL2ast)
 
 
-def _progn_fn(ACL2ast, env):
-	'''
-	E.g. in `top-level-memory.lisp` where functions including `rme08` are defined.  We simply evaluate each
-	event in turn.  A little like `_defsection_fn` we wrap the arguments in CodeTopLevel.
+def tr_progn(ACL2ast, env):
+	"""
+	`(progn event1 event2 ...)` evaluates each of the events in turn.  In our
+	case, an even is most often a function definition so we simply call the
+	translator recursively on this list.
+
+	An example of `progn` in use can be foundin `top-level-memory.lisp` where
+	functions including `rme08` are defined.
 
 	See: http://www.cs.utexas.edu/users/moore/acl2/manuals/current/manual/?topic=COMMON-LISP____PROGN
-	'''
+	"""
 	events = ACL2ast[1:]
 	(sailAST, env, _) = transform.transformACL2asttoSail(CodeTopLevel(events), env)
 
 	print(f"progn ast: {sailAST}")
 
-	return (sailAST, env, len(ACL2ast))
+def _parse1DArrayLiteral(array, env):
+	"""
+	Although Lisp is well-known for its use of (heterogeneous) lists,
+	homogeneous arrays are sometimes used, especially in the ACL2 model, for
+	storing 'tables' of data.  This function parses such list literals and
+	produces a Sail array.
 
-
-def parse1DArrayLiteral(array, env):
-	'''
-	For arrays in general see:
-	http://www.cs.utexas.edu/users/moore/acl2/manuals/current/manual/index.html?topic=ACL2____ARRAYS
-	'''
+	See: http://www.cs.utexas.edu/users/moore/acl2/manuals/current/manual/index.html?topic=ACL2____ARRAYS
+	"""
 	header = array[0]
 	rest = array[1:]
 
@@ -1987,7 +2336,7 @@ def parse1DArrayLiteral(array, env):
 	# Default (optional) - if ommitted then nil
 	# Name (optional) - probably ignore
 	# Order (optional) - will affect direction.  `<` is the default; `>`; `:none`/nil (no reordering by compress1)
-	dimension = getValueOfKeyword(header, ':dimensions', errorOnMoreThanOne=True)[0]
+	dimension = _getValueOfKeyword(header, ':dimensions', errorOnMoreThanOne=True)[0]
 	dimension = dimension[0]
 	try:
 		dimension = int(dimension)
@@ -1995,16 +2344,16 @@ def parse1DArrayLiteral(array, env):
 		raise ValueError(f"Error parsing array header, dimensions not an integer literal - {header}")
 
 	sailDefault = SailPlaceholderNil()
-	if hasKeyword(header, ':default'):
-		maybeDefault = getValueOfKeyword(header, ':default', errorOnMoreThanOne=True)
+	if _hasKeyword(header, ':default'):
+		maybeDefault = _getValueOfKeyword(header, ':default', errorOnMoreThanOne=True)
 		maybeDefault = maybeDefault[0]
 		if maybeDefault != 'X' and maybeDefault.lower()[-3:] != 'nil':
 			(sailDefault, env, _) = transform.transformACL2asttoSail(maybeDefault, env)
 			sailDefault = sailDefault[0]
 
 	asc = True
-	if hasKeyword(header, ':order'):
-		maybeOrder = getValueOfKeyword(header, ':order', errorOnMoreThanOne=True)
+	if _hasKeyword(header, ':order'):
+		maybeOrder = _getValueOfKeyword(header, ':order', errorOnMoreThanOne=True)
 		maybeOrder = maybeOrder[0]
 		if maybeOrder == '>':
 			asc = False
@@ -2016,7 +2365,7 @@ def parse1DArrayLiteral(array, env):
 	# The dot will register as an item from the lexer so length with be either 3 or 1
 	# Use default if no entry exists for the given index.  I think this should not happen given how the contant arrays
 	# are defined in the model
-	# Check indicies are consecutive through 0..dim-1
+	# Check indices are consecutive through 0..dim-1
 	sailItems = []
 	if not asc:
 		rest = reversed(rest)
@@ -2037,18 +2386,22 @@ def parse1DArrayLiteral(array, env):
 	return dimension, sailDefault, asc, sailItems, env
 
 
-def _aref1_fn(ACL2ast, env):
-	'''
-	For aref1 see:
-	http://www.cs.utexas.edu/users/moore/acl2/manuals/current/manual/?topic=ACL2____AREF1
+def tr_aref1(ACL2ast, env):
+	"""
+	Retrieves an item at a given index from an array.
 
 	General form: `(aref1 name alist index)`
-	 - `name` has no effect on the semantics of the list and we can safely ignore it
-	 - We assume that `alist` is a list literal.  In the model they are often represnted by contants which we can
-	   expand into their literal form.
-	'''
+	 -  `name` has no effect on the semantics of the list and we can safely
+		ignore it
+	 -  We assume that `alist` is a list literal.  In the model they are often
+	 	represented by constants which we can expand into their literal form.
+
+	Care must be taken to respect the correct Sail ordering (inc or dec).
+
+	See: http://www.cs.utexas.edu/users/moore/acl2/manuals/current/manual/?topic=ACL2____AREF1
+	"""
 	alist = env.evalACL2(ACL2ast[2])[0]
-	dimension, sailDefault, asc, sailItems, env = parse1DArrayLiteral(alist, env)
+	dimension, sailDefault, asc, sailItems, env = _parse1DArrayLiteral(alist, env)
 
 	# If each item is either nil or T then replace the nils with False
 	if all(isinstance(i, (SailBoolLit, SailPlaceholderNil)) for i in sailItems):
@@ -2066,20 +2419,23 @@ def _aref1_fn(ACL2ast, env):
 
 	return [vectorProject], env, len(ACL2ast)
 
-def _with_output_fn(ACL2ast, env):
-	'''
-	See: http://www.cs.utexas.edu/users/moore/acl2/manuals/current/manual/?topic=ACL2____WITH-OUTPUT
 
+def tr_with_output(ACL2ast, env):
+	"""
 	We just ignore this and evaluate its contents
 
-	TODO: read the manual properly and check this is correct
-	'''
+	See: http://www.cs.utexas.edu/users/moore/acl2/manuals/current/manual/?topic=ACL2____WITH-OUTPUT
+
+	TODO: check this is a sensible implementation
+	"""
 	return transform.transformACL2asttoSail(ACL2ast[-1], env)
 
-def _minus_fn(ACL2ast, env):
-	'''
-	The minus symbol (-) can be used in unary or binary (or n-ary, as it happens) form.
-	'''
+
+def tr_minus(ACL2ast, env):
+	"""
+	The minus symbol (-) can be used in unary or binary (or n-ary) form.  This
+	function handles these differences.
+	"""
 	if len(ACL2ast) == 2:
 		sailArg, env, _ = transform.transformACL2asttoSail(ACL2ast[1], env)
 		return [SailApp(
@@ -2090,38 +2446,26 @@ def _minus_fn(ACL2ast, env):
 			actuals=sailArg,
 		)], env, len(ACL2ast)
 	else:
-		return _num_op_gen('-', Sail_t_int(), 2)(ACL2ast, env)
-
-def _consp_fn(ACL2ast, env):
-	'''
-	TODO: this will liekly need fixing to deal with more cases
-	TODO: remove as currently not used
-	'''
-	if len(ACL2ast) != 2: sys.exit("Error: expected AST of length 2 in consp")
+		return num_op_gen('-', Sail_t_int(), 2)(ACL2ast, env)
 
 	sailArg, env, _ = transform.transformACL2asttoSail(ACL2ast[1], env)
 
-	return convertToBool(sailArg), env, _
+def tr_pe(ACL2ast, env):
+	"""
+	The function `64-bit-compute-mandatory-prefix-for-two-byte-opcode` is
+	generated using a make-event.  Normally, in `(make-event <form>)` we would
+	simply translate what <form> evaluates to.  Here we cannot because it's
+	local, so we do send the following form to the running ACL2 instance:
 
-def _feature_flag_fn(ACL2ast, env):
-	'''
-	`feature-flags` has the guard that its argument is a subset of the support features.  It checks that all features
-	in its arguemnt are enabled by checking by passing each one to `feature-flag` (not plural).  In turn,
-	`feature-flag` uses `cpuid-flag` macro which uses `cpuid-flag-fn`... which is always 1 because all features are
-	enabled by default.  Thus, translate this simple as '1'.
+		:pe 64-bit-compute-mandatory-prefix-for-two-byte-opcode
 
-	'''
-	newAST = env.evalACL2(ACL2ast)
-	sailAST, env, _ = transform.transformACL2asttoSail(newAST, env)
+	Where `:pe` stands for 'print event'.  We then search for ">V d", which
+	seems to precede the printing of the event.
 
-	return sailAST, env, len(ACL2ast)
-
-def _pe_fn(ACL2ast, env):
-	'''
-	E.g. the function `64-bit-compute-mandatory-prefix-for-two-byte-opcode` is generated using a make-event.  Normally
-	we would just translate the code that the thing the make-event calls generates.  here we cannot because it's local,
-	so we use a :pe instead.
-	'''
+	This ends up defining a new function.  Unfortunately, we are currently
+	translating its application!  We thus add the translated definition to
+	the auxiliary file, which is then `$included`.
+	"""
 	# Translate the required function
 	fnName = ACL2ast[0]
 	response = env.evalACL2raw(f':pe {fnName}')
@@ -2150,13 +2494,15 @@ def _pe_fn(ACL2ast, env):
 		sailFn = sailASTpruned[1]
 		sailast, env, _ = apply_fn_gen(sailFn, len(sailFn.getFormals()), sailStruct)(ACL2ast, env)
 	else:
-		sys.exit("Error: unexpected number of items in return from _define_fn")
+		sys.exit("Error: unexpected number of items in return from tr_define")
 
 	return sailast, env, len(ACL2ast)
 
-def _member_eq_fn(ACL2ast, env):
-	'''
-	We choose to return this as a bool even through technically, the spec says it should be a list
+def tr_member_eq(ACL2ast, env):
+	"""
+	In reality `(member-eq x lst)` is the longest tail of `lst` that begins
+	with `x`, or nil otherwise.  Here we chose to return a boolean as it's
+	mostly used in a boolean context.
 
 	http://www.cs.utexas.edu/users/moore/acl2/manuals/current/manual/?topic=COMMON-LISP____MEMBER
 
@@ -2197,30 +2543,37 @@ def filterActuals(ACL2ast, numOfArgs):
 				sys.exit(f"Error: unexpected type in ACL2 AST in function application: {pp_acl2(ACL2actuals)}")
 
 	# Extract keyword arguments
-	# Returns: {(keyword : str): (value :[[ACL2astElems] | ACL2astElem])}
-	(ACL2keywords, _) = extractAllKeywords(ACL2ast[numOfArgs+1:], failOnRedef=True)
+	(ACL2keywords, _) = _extractAllKeywords(ACL2ast[numOfArgs + 1:], failOnRedef=True)
 
-	return (ACL2actuals, ACL2keywords)
+	return ACL2actuals, ACL2keywords
 
 def apply_fn_gen(funcToApply, numOfArgs, keywordStruct=None):
-	'''
-	Generates a function which can be registered with the environment given a
-	translated function to execute and the number of arguments it takes.
+	"""
+	The ACL2 model defines its own functions and macros (using, for example,
+	`(define <name> <formal-args> <body>)`).  When <name> is called using
+	`(<name> <actual-args>)`, we need to translate this to a function call in
+	Sail.  To do this, for each generated function we must also generate a
+	Python translator function which can handle it - the purpose of this.
+	This function generates such functions and registers them with the
+	environment so that function call can be translated.
+
+	Specifically, it generates functions with the same type as the translation
+	function above: taking an ACL2 AST and the environment and returning the
+	translated Sail, the new environment and the number of tokens processed.
 
 	Args:
-		- funcToApply : SailFn | SailHandwrittenFn
-		- numOfArgs : int
-		- keywordStruct : SailStruct
+		- funcToApply : SailFn | SailHandwrittenFn - the function to apply
+		- numOfArgs : int - number of arguments `funcToApply` expects
+		- keywordStruct : SailStruct - if `funcToApply` takes keyword arguments
 	Returns:
 		- fn : as above
-	'''
+	"""
 	def apply_fn_inner(ACL2ast, env):
 		# Filter out the newlines and comments from the actuals
 		# ACL2keywords : {(keyword : str): (value :[[ACL2astElems] | ACL2astElem])}
-		(ACL2actuals, ACL2keywords) = filterActuals(ACL2ast, numOfArgs)
+		(ACL2actuals, ACL2keywords) = _filterActuals(ACL2ast, numOfArgs)
 
-		# Translate the non-keyword actuals.  Env should not change but don't test for that.
-		# TODO: maybe test for env changing.  See comment in `_define_fn` for detail.
+		# Translate the non-keyword actuals.  Env should not change but don't translate for that.
 		SailActuals = []
 		for (i, a) in enumerate(ACL2actuals):
 			# Bit of a hack: if symbol is NIL and the arg is a boolean translate to False
@@ -2233,7 +2586,7 @@ def apply_fn_gen(funcToApply, numOfArgs, keywordStruct=None):
 			SailActuals.extend(aSail)
 
 		# Translate keyword actuals and form the appropriate struct
-		if keywordStruct != None:
+		if keywordStruct is not None:
 			defaults = dict(keywordStruct.getDefaults().copy())
 			for (kw, ACL2val) in ACL2keywords.items():
 				kw = kw[1:].lower()
@@ -2251,21 +2604,24 @@ def apply_fn_gen(funcToApply, numOfArgs, keywordStruct=None):
 			SailActuals.append(defaultLit)
 
 		# Construct the Sail AST and return the number of ACL2 AST items consumed
-		return ([SailApp(funcToApply, SailActuals)], env, len(ACL2ast))
+		return [SailApp(funcToApply, SailActuals)], env, len(ACL2ast)
 
 	return apply_fn_inner
 
 def apply_macro_gen(numOfArgs, useTrans1=True):
-	'''
-	Generates a function which can be registered with the environment which
-	will, given a macro name, expand it using the ACL2 server and translate the
-	resulting code
+	"""
+	Similar to `apply_fn_gen`, this function generates another function which
+	can be registered with the environment and which will, when given a macro
+	name, expand it using the ACL2 server and translate the resulting code.
 
 	Args:
-		- numOfArgs : int | None
+		- numOfArgs : int | None - unused
+		- useTrans1 : bool - 	Lisp can fully expand macros using `:trans` or
+								expand one level only using `:trans1`.  The
+								latter tends to give better results.
 	Returns:
 		- fn : as above
-	'''
+	"""
 	def apply_macro_inner(ACL2ast, env):
 
 		# DO NOT check the number of arguments presented as it may be wrong (e.g. in the presence of `&key` keyword
@@ -2297,7 +2653,7 @@ def apply_macro_gen(numOfArgs, useTrans1=True):
 		(SailAST, env, _) = transform.transformACL2asttoSail(newAST, env)
 
 		# Return
-		return (SailAST, env, len(ACL2ast))
+		return SailAST, env, len(ACL2ast)
 
 	return apply_macro_inner
 
