@@ -1,35 +1,38 @@
 import socket
 
 """
-Uses format:
-	- 6 bytes of length
+Low level functions for sending and receiving data to/from the ACL2 instance
+via sockets.  Roughly follows the techniques from here:
+https://docs.python.org/3/howto/sockets.html.
+
+Message structure is:
+	- 6 bytes of length.  6 bytes seems enough to cope with longest response
+	  from ACL2 instance (although 5 bytes is not).
 	- Payload of length bytes
 """
 
 def reliableSend(toSend, s):
-	'''
+	"""
 	Args:
 		- toSend : str
 		- s : socket
-	'''
+	"""
 	toSend = "{:06d}{}".format(len(toSend), toSend)
 	toSend = bytes(toSend, "utf-8")
-	# print(f"Sending this: {toSend}")
 
 	sent = 0
 	numToSend = len(toSend)
 	while sent < numToSend:
 		thisSent = s.send(toSend[sent:])
-		# print(f"thisSent: {thisSent}")
 		sent += thisSent
 
 def reliableRecv(s):
-	'''
+	"""
 	Args:
 		- s : socket
 	Returns:
 		- [bytes] - [] if there was an error
-	'''
+	"""
 	# Read the length of the packet
 	recvd = 0
 	lengthBytes = []
