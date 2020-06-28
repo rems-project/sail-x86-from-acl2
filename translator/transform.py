@@ -477,7 +477,6 @@ class Env:
 		ACL2 instance.
 		"""
 		self.s.close()
-		self.errorFile.close()
 
 
 def isStringList(ys):
