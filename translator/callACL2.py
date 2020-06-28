@@ -1,4 +1,5 @@
 import socketFuncs
+from config_files import acl2Process, acl2Port
 
 import subprocess
 import socket
@@ -49,7 +50,7 @@ def initialiseExternal():
 		- s : socket
 	"""
 	s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-	s.bind(('localhost', 1159))
+	s.bind(('localhost', acl2Port))
 
 	return s
 
