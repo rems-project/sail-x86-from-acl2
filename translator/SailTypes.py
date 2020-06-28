@@ -1,5 +1,5 @@
 from lex_parse import NewLine
-import transform
+import utils
 
 import sys
 
@@ -118,18 +118,18 @@ def translateType(env, typeSymbol, args=None):
 		- SailType
 	'''
 	# Translate any problematic args
-	argsSanatised = []
-	if args != None:
+	argsSanitised = []
+	if args is not None:
 		for a in args:
-			if transform.convertLiteral(a) != None or a == '*':
-				argsSanatised.append(a)
+			if utils.convertLiteral(a) is not None or a == '*':
+				argsSanitised.append(a)
 			else:
 				# Hope it's a macro translated to a quoted literal
 				# TODO: go via env.lookup instead
 				newA = env.evalACL2([':trans', a], debracket=True)
 				newA = newA[0].getAST()
-				argsSanatised.append(newA)
-		args = argsSanatised
+				argsSanitised.append(newA)
+		args = argsSanitised
 
 	# Tranlate the type
 	typeSymbol = typeSymbol.upper()
@@ -152,7 +152,7 @@ def translateType(env, typeSymbol, args=None):
 			return ( Sail_t_range(low, high) )
 	elif typeSymbol == 'member'.upper():
 		# Make sure each member is an int or each member is a keyword
-		maybeNums = [transform.convertLiteral(a) for a in args]
+		maybeNums = [utils.convertLiteral(a) for a in args]
 		if all(isinstance(i, int) for i in maybeNums):
 			return Sail_t_member(maybeNums)
 		elif all(a.startswith(':') for a in args):
@@ -186,7 +186,7 @@ def parseGuard(guard):
 	switch = guard[0]
 	if switch.lower() == 'and':
 		for subGuard in guard[1:]:
-			possibilities = dictExtend(possibilities, parseGuard(subGuard))
+			possibilities = utils.dictExtend(possibilities, parseGuard(subGuard))
 	elif switch.lower() == 'natp':
 		if len(guard) != 2: sys.exit(f"Error: guard for natp has unexpected number of elements: {guard}")
 		name = guard[1]
@@ -198,8 +198,8 @@ def parseGuard(guard):
 	elif switch.lower() == 'unsigned-byte-p':
 		if len(guard) != 3: sys.exit(f"Error: guard for unsigned-byte-p has unexpected number of elements: {guard}")
 		name = guard[2]
-		hiBits = transform.convertLiteral(guard[1])
-		if hiBits == None or isinstance(hiBits, float) or hiBits < 0:
+		hiBits = utils.convertLiteral(guard[1])
+		if hiBits is None or isinstance(hiBits, float) or hiBits < 0:
 			print(f"Warning: none-integer value supplied for unsigned-byte-p argument: {guard}")
 		else:
 			dictAddOrInit(possibilities, name, Sail_t_range(0, 2 ^ hiBits - 1))
