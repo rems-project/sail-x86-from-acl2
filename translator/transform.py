@@ -177,37 +177,13 @@ class Env:
 			ignoreBindings : bool
 		Returns:
 			fn : as above
-		'''
-		# If 't', return True and hope for the best
-		if token.lower() == 't':
-			return lambda _, env: ([SailBoolLit(True)], env, 1)
-			# if self.currentType == SailPlaceholderNil.LIST:
-			# 	return lambda _, env: ([manualCode.someHelper(SailStringLit("Empty error"))], env, 1)
-			# elif self.currentType == None or self.currentType == SailPlaceholderNil.UNKNOWN or self.currentType == SailPlaceholderNil.BOOL:
-			# 	return lambda _, env: ([SailBoolLit(True)], env, 1)
-			# else:
-			# 	sys.exit(f"Unknown current type when translating token 't`: {self.currentType}")
-
-		# If 'nil' then return placeholder nil
-		if token.lower() == 'nil':
-			if self.currentType == None or self.currentType == SailPlaceholderNil.DEFAULT:
-				return lambda _, env: ([SailPlaceholderNil()], env, 1)
-			elif self.currentType == SailPlaceholderNil.BOOL:
-				return lambda _, env: ([SailPlaceholderNil(SailPlaceholderNil.BOOL)], env, 1)
-			else:
-				sys.exit(f"Unknown current type when translating token 'nil`: {self.currentType}")
-
-		# If 'x86' then return 0 as a placeholder because we want to ignore it
-		if token.lower() == 'x86':
-			return lambda _, env: ([SailNumLit(0)], env, 1)
-
-		# If the token is a keyword (i.e. starts with a colon) return a string and hope for the best
-		# TODO: use enums instead
-		if token.startswith(':'):
-			return lambda _, env: ([SailStringLit(token.upper())], env, 1)
-
+		"""
 		# Convert the token to uppercase
 		token = token.upper()
+
+		# If the token is a keyword (i.e. starts with a colon) return a string
+		if token.startswith(':'):
+			return lambda _, env: ([SailStringLit(token)], env, 1)
 
 		# Check the local bindings - pick the last one to cope with re-binding
 		if not ignoreBindings:
