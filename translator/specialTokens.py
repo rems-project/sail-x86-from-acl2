@@ -535,12 +535,14 @@ def tr_define(ACL2ast, env):
 	SailAST = []
 	thisSailFn = SailFn()
 
-	# Deal with comments in the extended options
-	# Ignore: parents, inline, no-function
-	# We deal with typeing (and hence the ':guard' option) later
-	for (name, value) in extendedOpts:
-		if name in [':long', ':short']:
-			SailAST.append(ACL2Comment(value))
+	# Extract and filter out extended options, adding comments to the return
+	# AST but ignoring `:parents`, `:inline`, `no-function` etc.  Handle typing
+	# using `:guard` later.
+	extendedOpts, ACL2astRemainder = _extractAllKeywords(ACL2ast, failOnRedef=False)
+
+	for kw in [':short', ':long']:
+		if kw.upper() in extendedOpts:
+			SailAST.extend([ACL2Comment(comment.getString()) for comment in extendedOpts[kw.upper()]])
 
 	# Split the rest into pre- and post-///
 	# We use the content before ///, but ignore the content after
