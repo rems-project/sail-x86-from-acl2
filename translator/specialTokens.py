@@ -639,7 +639,7 @@ def tr_define(ACL2ast, env):
 	# environment in order to allow recursion
 	thisSailFn.setName(fnName)
 	thisSailFn.setFormals(fnFormalsBVs)
-	# thisSailFn.setFormals(fnFormalsFiltered)
+	env.addToAuto(fnName, apply_fn_gen(thisSailFn, numNonKeywordFormals, struct))
 
 	env.addToGlobal(fnName, apply_fn_gen(thisSailFn, numNonKeywordFormals, struct))
 	# Evaluate the body - no events should take place but use the returned environment anyway
@@ -785,10 +785,9 @@ def tr_defmacro(ACL2ast, env):
 	if not isinstance(macroName, str): sys.exit("Error: macro name not a symbol")
 	if not isinstance(macroFormals, list): sys.exit("Error: macro formals not a list")
 
-	# Add a function to the global environment which will deal with this macro
-	# if it appears in the rest of the code
-	numOfArgs = len(macroFormals)
-	env.addToGlobal(macroName, apply_macro_gen(numOfArgs))
+	# Originally `apply_macro_gen` checked it received the expected number of
+	# arguments.  It does not any more, hence why we pass `None`.
+	env.addToAuto(macroName, apply_macro_gen(numOfArgs=None))
 
 	# Return
 	return [None], env, len(ACL2ast)
@@ -2010,9 +2009,9 @@ def _generateBitstructFieldAccessorAndUpdater(typeName, field, currentLow, env):
 
 	# Register with the environment
 	ACL2accessor = f"{typeName}->{fieldName}".upper()
-	env.addToGlobal(ACL2accessor, apply_fn_gen(funcToApply=accessorFn, numOfArgs=1))
+	env.addToAuto(ACL2accessor, apply_fn_gen(funcToApply=accessorFn, numOfArgs=1))
 	ACL2updater = f"!{typeName}->{fieldName}".upper()
-	env.addToGlobal(ACL2updater, apply_fn_gen(funcToApply=updaterFn, numOfArgs=2))
+	env.addToAuto(ACL2updater, apply_fn_gen(funcToApply=updaterFn, numOfArgs=2))
 
 	# Return the function and the new width
 	return accessorFn, updaterFn, currentLow + width, env
@@ -2167,8 +2166,8 @@ def tr_defbitstruct(ACL2ast, env):
 			formals=[change_input] + [f for (_, f) in changeOrder],
 			body=[changeLet]
 		)
-		env.addToGlobal(token=f'change-{typeName}', fn=_change_helper(keywordsOrder=[kw.upper() for (kw, _) in changeOrder],
-																	  changeFn=changeFn))
+		env.addToAuto(token=f'change-{typeName}', fn=_change_helper(keywordsOrder=[kw.upper() for (kw, _) in changeOrder],
+																	changeFn=changeFn))
 
 	return accessors + updaters + [changeFn], env, len(ACL2ast)
 
