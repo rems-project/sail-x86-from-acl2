@@ -1026,16 +1026,15 @@ def _parts_helper(lowAST, hiAST, widAST, env):
 		(hiASTsail, env, _) = transform.transformACL2asttoSail(hiAST[0], env)
 
 		# Create size AST
-		size = SailApp(fn=SailHandwrittenFn('-', typ=Sail_t_fn([Sail_t_int(), Sail_t_int()], Sail_t_int())),
+		sizeASTsail = SailApp(fn=SailHandwrittenFn('-', typ=Sail_t_fn([Sail_t_int(), Sail_t_int()], Sail_t_int())),
 					   actuals=[hiASTsail[0], lowASTsail[0]],
 					   infix=True)
 
 		# Create size literal
 		if not isinstance(hiASTsail[0], SailNumLit) or not isinstance(lowASTsail[0], SailNumLit):
-			print(f"Warning: expected :low and :high to be number literals for easy type conversation, instead got {lowASTsail[0]} and {hiASTsail[0]} respectively")
-			sizeLit = None
+			size = None
 		else:
-			sizeLit = hiASTsail[0].getNum() - lowASTsail[0].getNum()
+			size = hiASTsail[0].getNum() - lowASTsail[0].getNum()
 
 	elif len(lowAST) == 1 and len(widAST) == 1:
 		# Translate
@@ -1043,18 +1042,17 @@ def _parts_helper(lowAST, hiAST, widAST, env):
 		(widASTsail, env, _) = transform.transformACL2asttoSail(widAST[0], env)
 
 		# Create size AST
-		size = widASTsail[0]
+		sizeASTsail = widASTsail[0]
 
 		# Create size literal
-		if not isinstance(size, SailNumLit):
-			print(f"Warning: expected :width to be a literal for simple type conversation, instead got {size}")
-			sizeLit = None
+		if not isinstance(sizeASTsail, SailNumLit):
+			size = None
 		else:
-			sizeLit = size.getNum()
+			size = sizeASTsail.getNum()
 	else:
 		sys.exit(f"Error: incorrect keywords in this `_part_helper`")
 
-	return (size, sizeLit, lowASTsail, env)
+	return sizeASTsail, size, lowASTsail, env
 
 def tr_part_select(ACL2ast, env):
 	"""
@@ -1069,16 +1067,16 @@ def tr_part_select(ACL2ast, env):
 	widAST = _getValueOfKeyword(ACL2ast, ':width')
 
 	# Convert keywords to a size and start index
-	(size, sizeLit, lowASTsail, env) = _parts_helper(lowAST, hiAST, widAST, env)
+	(sizeASTsail, size, lowASTsail, env) = _parts_helper(lowAST, hiAST, widAST, env)
 
 	# Translate the target of the part_select
 	(target, _, _, _, _) = _filterExtract(ACL2ast, 6, [None] * 5, [None] * 5, "`part_select`")
 	(targetSail, env, _) = transform.transformACL2asttoSail(target, env)
 
 	# Create the get_slice_int function application
-	if sizeLit != None:
-		innerRetType = Sail_t_bits(sizeLit)
-		outerRetType = Sail_t_range(0, 2^sizeLit - 1)
+	if size is not None:
+		innerRetType = Sail_t_bits(size)
+		outerRetType = Sail_t_range(0, 2^size - 1)
 	else:
 		innerRetType = Sail_t_int()
 		outerRetType = Sail_t_int()
@@ -1086,7 +1084,7 @@ def tr_part_select(ACL2ast, env):
 	inner = SailApp(fn = SailHandwrittenFn(
 							name = 'get_slice_int',
 							typ = Sail_t_fn([Sail_t_int(), Sail_t_int(), Sail_t_int()], innerRetType)),
-					actuals = [size, targetSail[0] , lowASTsail[0]])
+					actuals = [sizeASTsail, targetSail[0] , lowASTsail[0]])
 
 	# And convert the resulting bits to a range
 	outer = SailApp(fn = SailHandwrittenFn(
@@ -1110,7 +1108,7 @@ def tr_part_install(ACL2ast, env):
 	widAST = _getValueOfKeyword(ACL2ast, ':width')
 
 	# Convert keywords to a size and start index
-	(size, _, lowASTsail, env) = _parts_helper(lowAST, hiAST, widAST, env)
+	(sizeASTsail, _, lowASTsail, env) = _parts_helper(lowAST, hiAST, widAST, env)
 
 	# Translate the target and value of the part_install
 	(val, x, _, _, _, _) = _filterExtract(ACL2ast, 7, [None] * 6, [None] * 6, "`part_install`")
@@ -1122,7 +1120,7 @@ def tr_part_install(ACL2ast, env):
 		fn=SailHandwrittenFn(
 			name='changeBits',
 			typ=Sail_t_fn([Sail_t_int(), Sail_t_int(), Sail_t_int(), Sail_t_int()], Sail_t_int())),
-		actuals=[xSail[0], lowASTsail[0], size, valSail[0]])
+		actuals=[xSail[0], lowASTsail[0], sizeASTsail, valSail[0]])
 
 	return [inner], env, len(ACL2ast)
 
