@@ -480,45 +480,39 @@ class Env:
 		self.errorFile.close()
 
 
-def saveSail(SailAST, path, name, env, includeHeaders):
-	'''
+def isStringList(ys):
+	"""
+	Helper function: tests if a list comprises only keywords (strings
+	beginning with a colon).
+
 	Args:
-		- SailAST : [SailASTelems]
-		- path : str
-		- name : str - without extension
-		- includeHeaders : bool
-	'''
-	print(f"Pretty printing and saving to path: {path}; name: {name}")
-	# Get the pretty printed version
-	pp = "\n".join([elem.pp() for elem in SailAST])
+		ys: list
+	Returns:
+		bool
+	"""
+	return all(isinstance(y, str) and y.startswith(':') for y in ys)
 
-	# Print it
-	# print('-' * 80)
-	# print(pp)
 
-	# Also output into a file
-	with open(os.path.join(path, f"{sanatiseSymbol(name)}.sail"), 'w') as f:
-		if includeHeaders:
-			f.write("$ifndef _DEFAULT_DEC\n")
-			f.write("\tdefault Order dec\n")
-			f.write("$endif\n\n")
+def convertToStringList(ys, env):
+	"""
+	If ys is comprises only keywords, converts to a Python list of strings.
+	Indicates success/failure in its first return value.
 
-		f.write("$include <prelude.sail>\n")
-		f.write("$include <string.sail>\n") # TODO: only include this when we need
+	Args:
+		ys: list
+		env: Env
+	Returns:
+		Either (True, [SailASTelem]) or (False, None)
+	"""
+	if not isStringList(ys):
+		return False, None
 
-		if name in env.auxillaryInclude:
-			f.write('$include "auxillary.sail"\n')
+	ysSail = []
+	for y in ys:
+		ySail, env, _ = transformACL2asttoSail(y, env)
+		ysSail.append(ySail[0])
 
-		if includeHeaders:
-			f.write('$include "handwritten2.sail"\n')
-			f.write('$include "utils.sail"\n\n')
-
-		f.write(pp)
-
-		# A trailing new line is needed for, for example, file only containing `$include`s.
-		f.write("\n")
-
-		print(f"Successfully saved file path: {path}; name: {name}")
+	return True, ysSail
 
 
 def listStartsWith(l, pattern, convertCase=True):
