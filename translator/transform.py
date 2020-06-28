@@ -13,50 +13,66 @@ import os
 from shutil import copyfile
 import socket
 
-'''
-TODO:
-	* Deal with collisions in environment (e.g. trying to add a symbol which
-	  already exists)
-	* Deal with converting to upppercase (i.e. when to do so)
-	* Deal with replacing problematic stuff with underscores
-	* How to deal with non-trivial coments (e.g. at the end of lines; interleaved with other lines)
-'''
+
+"""
+Top level file for the translator.  Defines the environment, which is threaded
+through most code, and top level translation functions.
+"""
 
 
+class Env:
+	"""
+	The environment is threaded through most of the translation and gives us
+	the ability to: lookup translation functions for a Lisp token; register
+	new translation functions when Lisp functions are defined; lookup and
+	register current bindings (for functions and `let`); lookup and register
+	other pieces of context such as the current function and Lisp file being
+	translated.
 
-
-class Env():
-	"""Running environment for AST transformation"""
+	Most methods are simply getters and setters, although lookup() and
+	evalACL2() are worth looking at.
+	"""
 
 	def __init__(self):
+		"""
+		Initialise the environment state.
+		"""
+
+
 		'''
-		The functions contained in each environment must have the type:
+		The manual and automatic environments map Sail tokens (of type str) to
+		the appropriate translation function.  Such a translation function
+		takes an AST beginning with that token and translates it to Sail
+		(recursively translating sub-expressions as necessary).  Thus, each
+		translation function has the following type.  
 
 			(ACL2ast : [ACL2astElem],
 			env : Env)
 			-> (Sailast' : [SailastElem],
 				env' : Env,
 				consumed : int)
-
-		Where:
-			ACL2astElem ::= 	ACL2Comment
-							|	ACL2String
-							|	[ACL2astElem]
-							|	str
-							|	NewLine
-							|	ACL2quote
-							|	ACL2qq
-			`ast` is the ast rooted at the current symbol
-
-		When an ACL2astElem is looked up, the environments are tested in the
-		order below.
-
-		TODO: it's more like manual vs auto envs than manual vs global
+				
+		The `manualEnv` is a dictionary of manually-defined translation
+		functions listed in config_function_maps and represents special tokens,
+		handwritten functions, utility functions and some macros.
+		
+		The `autoEnv` is a dictionary of translation functions generated over
+		the course of the translation.  For instance, if a function definition
+		was encountered (a `define`), `autoEnv` allows us to translate its
+		application to arguments elsewhere.
 		'''
-		self.globalEnv = {}
-		self.manualEnv = manualCode.loadManualEnv()
+		self.manualEnv = config_function_maps.loadManualEnv()
+		self.autoEnv = {}
 
-		self.bindStack = []  # [(acl2token, sailtoken)]
+		'''
+		The `bindStack` tracks the current bound variables.  It is a list
+		because order matters: more recent bindings are near the end.  It
+		maps Lisp tokens (str) to a Sail AST list (although most often just
+		a SailBoundVar).
+		
+		I.e. [ (str, SailBoundVar) ] or [ (str, [SailASTelem]) ] 
+		'''
+		self.bindStack = []
 
 		self.auxillaryInclude = set()
 		self.auxillaryFns = []
@@ -172,7 +188,7 @@ class Env():
 			return lambda _, env: ([SailNumLit(maybeLiteral)], env, 1)
 
 		# Then check for automatically/manually defined symbols
-		for e in [self.globalEnv, self.manualEnv]:
+		for e in [self.autoEnv, self.manualEnv]:
 			if token in e:
 				return e[token]
 
@@ -221,11 +237,11 @@ class Env():
 		'''
 		token = token.upper()
 
-		if token in self.globalEnv:
+		if token in self.autoEnv:
 			print(f"Error: overwriting token: {token}")
 			sys.exit(1)
 		else:
-			self.globalEnv[token] = fn
+			self.autoEnv[token] = fn
 
 	def addToAuxillary(self, fn):
 		'''
