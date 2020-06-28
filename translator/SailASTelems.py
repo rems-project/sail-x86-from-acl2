@@ -253,7 +253,7 @@ class SailLet(SailASTelem):
 	### Required methods ###
 	def getType(self):
 		# Filter and check length
-		bodyFiltered = manualCode.filterAST(self.body, comments=True)
+		bodyFiltered = self.body
 		if len(bodyFiltered) != 1: sys.exit(f"Error: incorrect body length in `let` - {bodyFiltered}")
 
 		return bodyFiltered[0].getType()
