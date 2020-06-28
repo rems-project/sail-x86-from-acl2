@@ -1,6 +1,6 @@
 from lex_parse import NewLine, ACL2Comment
 from SailTypes import *
-import manualCode
+import utils
 
 import sys
 
@@ -302,7 +302,7 @@ class SailFn(SailASTelem):
 		if name == None:
 			self.name = None
 		else:
-			self.name = sanatiseSymbol(name)
+			self.name = utils.sanitiseSymbol(name)
 
 	def getName(self):
 		return self.name
@@ -357,7 +357,7 @@ class SailFn(SailASTelem):
 		return toReturn
 
 	def getChildrenByPred(self, p):
-		formalsSet = unionListOfSets(f.getChildrenByPred(p) for f in self.formals)
+		formalsSet = utils.unionListOfSets(f.getChildrenByPred(p) for f in self.formals)
 		bodySet = self.body[0].getChildrenByPred(p)
 
 		selfSet = super().getChildrenByPred(p)
@@ -365,7 +365,7 @@ class SailFn(SailASTelem):
 		return set.union(formalsSet, bodySet, selfSet)
 
 	def pp(self):
-		sanatisedName = sanatiseSymbol(self.name)
+		sanitisedName = utils.sanitiseSymbol(self.name)
 
 		# Only construct an effects string if there are any effects
 		if len(self.getEffects([])) != 0:
@@ -375,8 +375,8 @@ class SailFn(SailASTelem):
 			effectsString = ""
 
 		# Combine
-		typeSig = f"val {sanatisedName} : {self.getType().generalise().pp()}{effectsString}"
-		header = f"function {sanatisedName} ({', '.join([sanatiseSymbol(item.getName(), includeFnNames=True) for item in self.formals])}) ="
+		typeSig = f"val {sanitisedName} : {self.getType().generalise().pp()}{effectsString}"
+		header = f"function {sanitisedName} ({', '.join([utils.sanitiseSymbol(item.getName(), includeFnNames=True) for item in self.formals])}) ="
 		body = "\n".join([elem.pp() for elem in self.body])
 
 		return "\n".join([typeSig, header, body]) + "\n"
@@ -405,8 +405,9 @@ class SailHandwrittenFn(SailASTelem):
 		Args:
 			- name : str
 			- typ : Sail_t_fn
-		'''
-		self.name = sanatiseSymbol(name, lower=False)
+		"""
+		super().__init__()
+		self.name = utils.sanitiseSymbol(name, lower=False)
 		self.typ  = typ
 
 	### Custom methods ###
@@ -616,10 +617,10 @@ class SailBoundVar(SailASTelem):
 	def pp(self):
 		# BIG HACK
 		# TODO: remove printing the type for as many cases as possible
-		if sanatiseSymbol(self.binding) in ['les_lds_distinguishing_byte', 'max_offset']:
-			return f"{sanatiseSymbol(self.binding, includeFnNames=True)} : {self.getType().pp()}"
+		if utils.sanitiseSymbol(self.binding) in ['les_lds_distinguishing_byte', 'max_offset']:
+			return f"{utils.sanitiseSymbol(self.binding, includeFnNames=True)} : {self.getType().pp()}"
 		else:
-			return sanatiseSymbol(self.binding, includeFnNames=True)
+			return utils.sanitiseSymbol(self.binding, includeFnNames=True)
 
 	### Nil resolution ###
 	# Not required
@@ -711,7 +712,7 @@ class SailApp(SailASTelem):
 		else:
 			fnSet = set()
 
-		actualsSet = unionListOfSets([a.getChildrenByPred(p) for a in self.actuals])
+		actualsSet = utils.unionListOfSets([a.getChildrenByPred(p) for a in self.actuals])
 
 		selfSet = super().getChildrenByPred(p)
 
@@ -733,7 +734,7 @@ class SailApp(SailASTelem):
 		# Hack - reduce printing of type as much as possible
 		if self.fn.getName() == '==' and \
 				isinstance(self.actuals[0], SailApp) and \
-				sanatiseSymbol(self.actuals[0].getFn().getName()) in ['vex3_byte1_get_m_mmmm']:
+				utils.sanitiseSymbol(self.actuals[0].getFn().getName()) in ['vex3_byte1_get_m_mmmm']:
 
 			return f"({ppString}) : {self.getType().generalise().pp()}"
 		else:
@@ -1032,7 +1033,7 @@ class SailInclude(SailASTelem):
 		'''
 		self.sailAST = sailAST
 		self.path = path
-		self.file = sanatiseSymbol(file)
+		self.file = utils.sanitiseSymbol(file)
 		self.includeHeaders = includeHeaders
 		self.savedOut = False
 		self.env = env
@@ -1044,7 +1045,7 @@ class SailInclude(SailASTelem):
 	def getChildrenByPred(self, p):
 		# We probably still want to calculate sailASTset even if self.saveOut is true as we may be analysing
 		# a file which hasn't had this included already.
-		sailASTset = unionListOfSets(i.getChildrenByPred(p) for i in self.sailAST if not isinstance(i, ACL2Comment))
+		sailASTset = utils.unionListOfSets(i.getChildrenByPred(p) for i in self.sailAST if not isinstance(i, ACL2Comment))
 
 		selfSet = super().getChildrenByPred(p)
 
@@ -1092,7 +1093,7 @@ class SailTuple(SailASTelem):
 			return set.union(*effects)
 
 	def getChildrenByPred(self, p):
-		itemsSet = unionListOfSets(i.getChildrenByPred(p) for i in self.subItems)
+		itemsSet = utils.unionListOfSets(i.getChildrenByPred(p) for i in self.subItems)
 
 		selfSet = super().getChildrenByPred(p)
 
@@ -1183,7 +1184,7 @@ class SailMatch(SailASTelem):
 
 	def getChildrenByPred(self, p):
 		varSet = self.var.getChildrenByPred(p)
-		matchesSet = unionListOfSets(set.union(pat.getChildrenByPred(p), e.getChildrenByPred(p)) for (pat,e) in self.matches)
+		matchesSet = utils.unionListOfSets(set.union(pat.getChildrenByPred(p), e.getChildrenByPred(p)) for (pat,e) in self.matches)
 
 		selfSet = super().getChildrenByPred(p)
 
@@ -1233,7 +1234,8 @@ class SailStruct(SailASTelem):
 
 		TODO: replace `name` and `fields` with a single list of boundvars
 		"""
-		self.name = sanatiseSymbol(name)
+		super().__init__()
+		self.name = utils.sanitiseSymbol(name)
 		self.fields = fields
 		self.defaults = defaults
 
@@ -1259,7 +1261,7 @@ class SailStruct(SailASTelem):
 		sys.exit("Should not try to get effect of SailStruct")
 
 	def getChildrenByPred(self, p):
-		exprsSet = unionListOfSets(e.getChildrenByPred(p) for (_, e) in self.defaults)
+		exprsSet = utils.unionListOfSets(e.getChildrenByPred(p) for (_, e) in self.defaults)
 
 		selfSet = super().getChildrenByPred(p)
 
@@ -1268,7 +1270,7 @@ class SailStruct(SailASTelem):
 	def pp(self):
 		names_types = []
 		for (n, t) in self.fields.items():
-			names_types.append(f"{sanatiseSymbol(n)} : {t.pp()}")
+			names_types.append(f"{utils.sanitiseSymbol(n)} : {t.pp()}")
 		names_types_str = ",\n\t".join(names_types)
 		structDefInner = f"{{\n\t{names_types_str}\n}}"
 		structDef = f"struct {self.name} = {structDefInner}"
@@ -1312,8 +1314,8 @@ class SailStructLit(SailASTelem):
 	def getChildrenByPred(self, p):
 		# Ignore struct in the expectation that it has been included when the struct was defined
 		# Do include the actuals though.  Sure, they may have been been included as the defaults, but they also
-		# May not have been.
-		exprSet = unionListOfSets(e.getChildrenByPred(p) for (_, e) in self.exprs)
+		# may not have been.
+		exprSet = utils.unionListOfSets(e.getChildrenByPred(p) for (_, e) in self.exprs)
 
 		selfSet = super().getChildrenByPred(p)
 
@@ -1322,7 +1324,7 @@ class SailStructLit(SailASTelem):
 	def pp(self):
 		names_exprs = []
 		for (n, e) in self.exprs:
-			names_exprs.append(f"{sanatiseSymbol(n)} = {e.pp()}")
+			names_exprs.append(f"{utils.sanitiseSymbol(n)} = {e.pp()}")
 
 		names_exprs = ", ".join(names_exprs)
 		structLitInner = f"{names_exprs}"
@@ -1365,11 +1367,7 @@ class SailStructProject(SailASTelem):
 		return set.union(elemsSet, selfSet)
 
 	def pp(self):
-		return f"({self.sailASTelem.pp()}).{sanatiseSymbol(self.fieldName)}"
-
-	### Nil resolution ###
-	def setCallBacks(self):
-		sys.exit("Finish implementing nil resolution functions for SailStructProject!")
+		return f"({self.sailASTelem.pp()}).{utils.sanitiseSymbol(self.fieldName)}"
 
 
 class SailVectorLit(SailASTelem):
@@ -1400,7 +1398,7 @@ class SailVectorLit(SailASTelem):
 			return set.union(*effects)
 
 	def getChildrenByPred(self, p):
-		itemsSet = unionListOfSets(i.getChildrenByPred(p) for i in self.items)
+		itemsSet = utils.unionListOfSets(i.getChildrenByPred(p) for i in self.items)
 
 		selfSet = super().getChildrenByPred(p)
 
@@ -1479,10 +1477,10 @@ class SailListLit(SailASTelem):
 		return Sail_t_list(subtype)
 
 	def getEffects(self, ctx):
-		return unionListOfSets([m.getEffects(ctx) for m in self.members])
+		return utils.unionListOfSets([m.getEffects(ctx) for m in self.members])
 
 	def getChildrenByPred(self, p):
-		memberSet = unionListOfSets([m.getChildrenByPred(p) for m in self.members])
+		memberSet = utils.unionListOfSets([m.getChildrenByPred(p) for m in self.members])
 
 		selfSet = super().getChildrenByPred(p)
 
