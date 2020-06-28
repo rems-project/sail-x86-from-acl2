@@ -335,30 +335,16 @@ def tr_defsection(ACL2ast, env):
 
 	# Extract keyword arguments and add those representing comments to the AST.
 	SailAST = []
+	keywords, remainder = _extractAllKeywords(ACL2ast, failOnRedef=False)
+	for kw in [':short', ':long']:
+		if kw.upper() in keywords:
+			SailAST.extend([ACL2Comment(comment.getString()) for comment in keywords[kw.upper()]])
 
-	newTopLevel = []
-	index = 0
-	end = False
-	while not end:
-		acl2Item = ACL2astFiltered[index]
-		if acl2Item in [':short', ':long']:
-			# Add as a comment to the translated AST
-			SailAST.append(ACL2Comment(ACL2astFiltered[index+1]))
-			consumed = 2
-		elif acl2Item in [':parents', ':autodoc', ':extension']:
-			# Ignore
-			consumed = 2
-		else:
-			# Defer to main translator
-			newTopLevel.append(acl2Item)
-			consumed = 1
+	# Remove the first two items ('defsection name') from the AST with
+	# keywords removed
+	newTopLevel = remainder[2:]
 
-		index += consumed
-		if index > len(ACL2astFiltered):
-			print("Error: defsection transformer consumed too many tokens")
-			sys.exit(1)
-		end = (index == len(ACL2astFiltered))
-
+	# Translate the body of the `defsection`
 	if len(newTopLevel) == 0:
 		return [None], env, len(ACL2ast)
 	(SailTopLevel, env, _) = transform.transformACL2asttoSail(CodeTopLevel(newTopLevel), env)
