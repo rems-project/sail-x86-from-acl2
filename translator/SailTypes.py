@@ -4,34 +4,49 @@ import utils
 import sys
 
 """
-Contains the classes which represent types in Sail, and some utility functions
+This file is split into two sections:
 
-Types must implement certain functions.  Namely:
- - generalise()
- - containsUnknown()
- - pp()
+ 1. Utility functions
+ 2. Classes which represent types in Sail
+
+Of the utility function, `translateType` and `parseGuard`, which translate
+type-specs and guards respectively, are of the most note.
+
+Classes representing types must implement the following functions:
+ - generalise()			Numeric types are represented as ints.  So, despite
+ 						types such as `range` being implemented below, they
+ 						generalise to `int`s via this function.
+ - containsUnknown()	Sometimes types cannot be inferred directly.  Thus a
+ 						pass at the translated AST resolves unknown types.
+ 						This function returns true if the type contains any
+ 						types which are unknown.
+ - pp()					Pretty print the type.
 """
 
-# =============================================================================
+################################################################################
 # Utility functions
-# =============================================================================
+################################################################################
 
 class eqSet():
 	def __init__(self, init = None):
-		'''
+		"""
+		A set where the equality translate is done via __eq__() rather than the
+		__hash__() of the builtin Set.  This allows us to reliably store
+		Sail types in it without two of the same type being repeated.
+
 		TODO: extend set instead?
 
 		Args:
 			- init : list
-		'''
+		"""
 		self.set = []
 
-		if init != None:
+		if init is not None:
 			for i in init:
 				self.add(i)
 
 	def add(self, obj):
-		if obj not in self.set: # Uses __eq__ not __hash__ (I hope)
+		if obj not in self.set: # Uses __eq__ not __hash__
 			self.set.append(obj)
 
 	def extend(self, objs):
@@ -47,19 +62,19 @@ class eqSet():
 		return self.set[0]
 
 	def all(self, pred):
-		'''
+		"""
 		https://stackoverflow.com/questions/10666163/how-to-check-if-all-elements-of-a-list-matches-a-condition
-		
+
 		Args:
 			- pred : SailType -> bool
-		'''
+		"""
 		return all(pred(item) for item in self.set)
 
 	def resolve(self):
-		'''
+		"""
 		Check if all items in a set are consistent with some overarching type
-		'''
-		# Check we can resolve to a single overarchign type
+		"""
+		# Check we can resolve to a single overarching type
 		genType = self.set[0].generalise()
 		for t in self.set[1:]:
 			if t.generalise() != genType:
@@ -94,20 +109,23 @@ def dictExtend(orig, additions):
 	return orig
 
 def dictAddOrInit(d, k, v):
-	'''
+	"""
 	If k in d
-	then add v to set d[k]
-	else initialise d[k] to set(v)
-	'''
+	then add v to eqSet d[k]
+	else initialise d[k] to eqSet(v)
+	"""
 	if k in d:
 		d[k].add(v)
 	else:
 		d[k] = eqSet([v])
 
+
 def translateType(env, typeSymbol, args=None):
-	'''
-	Given an acl2 symbol `typeSymbol`, and optional arguments to it, returns
-	a Python class representing the type, or None on failure.
+	"""
+	Translates ACL2 type-specs.  Given an acl2 symbol `typeSymbol`, and
+	possible arguments to it, returns a Python class representing the type,
+	or None on failure.  Trying to translate an unimplemented type will error
+	(unlike parseGuard()).
 
 	See here: http://www.cs.utexas.edu/users/moore/acl2/manuals/current/manual/?topic=ACL2____TYPE-SPEC
 
@@ -116,7 +134,7 @@ def translateType(env, typeSymbol, args=None):
 		- args : [ACL2astElem] e.g. `['9']`
 	Returns:
 		- SailType
-	'''
+	"""
 	# Translate any problematic args
 	argsSanitised = []
 	if args is not None:
@@ -125,31 +143,30 @@ def translateType(env, typeSymbol, args=None):
 				argsSanitised.append(a)
 			else:
 				# Hope it's a macro translated to a quoted literal
-				# TODO: go via env.lookup instead
 				newA = env.evalACL2([':trans', a], debracket=True)
 				newA = newA[0].getAST()
 				argsSanitised.append(newA)
 		args = argsSanitised
 
-	# Tranlate the type
+	# Translate the type
 	typeSymbol = typeSymbol.upper()
 
 	if typeSymbol == 'unsigned-byte'.upper():
-		return ( Sail_t_range(0, 2**int(args[0]) - 1) )
+		return Sail_t_range(0, 2 ** int(args[0]) - 1)
 	elif typeSymbol == 'signed-byte'.upper():
 		halfBits = int(args[0]) - 1
-		return ( Sail_t_range(-2**(halfBits), 2**halfBits - 1) )
+		return Sail_t_range(- 2 ** halfBits, 2 ** halfBits - 1)
 	elif typeSymbol == 'integer'.upper():
-		if args == None:
-			return ( Sail_t_int() )
+		if args is None:
+			return Sail_t_int()
 		if args[0] == '0' and args[1] == '*':
-			return ( Sail_t_nat() )
+			return Sail_t_nat()
 		elif '*' in args:
-			return ( Sail_t_int() )
+			return Sail_t_int()
 		else:
 			low = int(args[0])
 			high = int(args[1])
-			return ( Sail_t_range(low, high) )
+			return Sail_t_range(low, high)
 	elif typeSymbol == 'member'.upper():
 		# Make sure each member is an int or each member is a keyword
 		maybeNums = [utils.convertLiteral(a) for a in args]
@@ -168,14 +185,16 @@ def translateType(env, typeSymbol, args=None):
 	else:
 		sys.exit(f"Error: translation of type '{typeSymbol}' not implemented")
 
+
 def parseGuard(guard):
-	'''
+	"""
 	Takes a guard ACL2 expression and tries to extract type information from it
+
 	Args:
 		- guard : [ACL2astElem]
 	Returns:
-		- {str : eqSet(SailType)}
-	'''
+		- {str : eqSet(SailType)}	Possible types the guard may represent.
+	"""
 	# `possibilities` is a {str : eqSet(SailType)} mapping names to possible types
 	possibilities = {}
 
@@ -221,35 +240,37 @@ def parseGuard(guard):
 	return possibilities
 
 def isNumeric(st):
-	'''
+	"""
+	Tests if SailType `st` is numeric.
+
 	Args:
-		- st : SailType
+		st : SailType
 	Returns:
-		- bool
-	'''
+		bool
+	"""
 	return isinstance(st.generalise(), Sail_t_int)
 
 def isString(st):
+	"""
+	Tests if SailType `st` is a string.
+
+	Args:
+		st: : SailType
+
+	Returns:
+		bool
+	"""
 	return isinstance(st.generalise(), Sail_t_string)
 
-def isSetPred(sts, p):
-	'''
-	Args:
-		sts: eqSet(SailType)
-		p: SailType -> bool
 
-	Returns: bool
-
-	TODO: do we really need this function?
-	'''
-	return sts.all(p)
-
-# =============================================================================
+################################################################################
 # Types
-# =============================================================================
-class SailType():
+################################################################################
+
+
+class SailType:
 	"""
-	Stub class representing Sail types
+	Super class for Sail types.  Note the default containsUnknown() method.
 	"""
 	def __init__(self):
 		self.effects = set([])  # Has type set(Str)
@@ -316,12 +337,16 @@ class Sail_t_unknown(SailType):
 		return True
 
 	def pp(self):
+		"""
+		If this is actually called then type resolution failed and so will
+		trying to type check the output Sail.
+		"""
 		return "unknown"
-		# sys.exit("Error: Tried to pp an unknwon type - these should have all been resolved")
 
 class Sail_t_error(SailType):
 	"""
-	A 'throw' may take on any value.  This class represents that value, but it should be resolved at translate-time.
+	A 'throw' may take on any value.  This class represents that value, but
+	it should be resolved at translate-time.
 	"""
 	def __init__(self):
 		super(Sail_t_error, self).__init__()
@@ -339,6 +364,10 @@ class Sail_t_error(SailType):
 		return id(self)
 
 	def pp(self):
+		"""
+		If this is actually called trying to type check the output Sail will
+		fail.
+		"""
 		print("WARNING: printing Sail_t_error() type")
 		return "error"
 
@@ -402,7 +431,7 @@ class Sail_t_range(SailType):
 		self.high = high
 
 	def getRange(self):
-		return (self.low, self.high)
+		return self.low, self.high
 
 	def __eq__(self, other):
 		return type(self) == type(other) and \
@@ -423,12 +452,12 @@ class Sail_t_fn(SailType):
 			lhs -> rhs
 	"""
 	def __init__(self, lhs : [SailType], rhs : SailType, effects=set()):
-		'''
+		"""
 		Args:
 			- lhs : [SailType]
 			- rhs : SailType
 			- effects : set(Str) - should only be used for handwritten functions
-		'''
+		"""
 		super(Sail_t_fn, self).__init__()
 		self.lhs = lhs
 		self.rhs = rhs
@@ -469,7 +498,8 @@ class Sail_t_fn(SailType):
 
 class Sail_t_member(SailType):
 	"""
-	Represents a Sail type of form {|...|} e.g. {|8, 16, 32, 64|}
+	Represents a Sail type of form {|...|} e.g. {|8, 16, 32, 64|}.  Supports
+	members of type string or int.
 	"""
 	INT = 0
 	STR = 1
@@ -479,8 +509,9 @@ class Sail_t_member(SailType):
 		Args:
 			- members : [int] | [keyword : str]
 
-		TODO: maybe use sets instead
-		TODO: make string representation in Sail explicit rather than using Python strings
+		TODO:
+			- Maybe use sets instead
+			- Make string representation in Sail explicit rather than using Python strings
 		'''
 		super(Sail_t_member, self).__init__()
 
@@ -492,7 +523,7 @@ class Sail_t_member(SailType):
 		else:
 			sys.exit(f"Error: Sail_t_member argument not homogeneous ints or keywords - {members}")
 
-		# Set the memebers themselves
+		# Set the members themselves
 		self.members = members
 
 	def __eq__(self, other):
@@ -543,10 +574,10 @@ class Sail_t_option(SailType):
 	TODO: redefine in terms of more general structs
 	"""
 	def __init__(self, typ):
-		'''
+		"""
 		Args:
 			- type : SailType - the inner type of the maybe
-		'''
+		"""
 		super(Sail_t_option, self).__init__()
 		self.typ = typ
 
@@ -573,10 +604,10 @@ class Sail_t_tuple(SailType):
 	Represents a Sail tuple
 	"""
 	def __init__(self, subTypes):
-		'''
+		"""
 		Args:
 			- subTypes : [SailType]
-		'''
+		"""
 		super(Sail_t_tuple, self).__init__()
 		self.subTypes = subTypes
 
@@ -646,11 +677,11 @@ class Sail_t_vector(SailType):
 	Represents a Sail vector
 	"""
 	def __init__(self, length, subType):
-		'''
+		"""
 		Args:
 			length: int
 			subType: SailType
-		'''
+		"""
 		super(Sail_t_vector, self).__init__()
 		self.length = length
 		self.subType = subType
@@ -687,10 +718,10 @@ class Sail_t_list(SailType):
 	Represents a Sail list
 	"""
 	def __init__(self, subType):
-		'''
+		"""
 		Args:
 			subType: SailType
-		'''
+		"""
 		super(Sail_t_list, self).__init__()
 		self.subType = subType
 
