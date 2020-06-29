@@ -2,7 +2,7 @@
 
 *Patrick Taylor, pjht2, 26.06.20*
 
-Although much of the code is well structured, there do exist certain special cases and hacks which may at first cause confusion.  This files is intended as an index - more information can be found in the comments in the relevant code files.
+Although much of the code is well structured, there do exist certain special cases and hacks which may at first cause confusion.  This file is intended as an index - more information can be found in the comments in the relevant code files.
 
 Translation functions begin with `tr_`.
 
@@ -11,22 +11,23 @@ Translation functions begin with `tr_`.
 * The translations of the files `instructions/segmentation.lisp` and `instructions/fp/top.lisp` are called `segmentationInst.sail` and `topFP.sail` respectively to avoid name collisions.
 * Translation of `utilities.lisp` is done manually with `generateUtils.py`.
 * Lisp functions `feature-flag` and `feature-flags` are translated manually in `handwritten.sail `.  They assume all 'features' are available.  See comment there for information.
+* VEX and EVEX dispatch translation is disabled because it greatly increases translation time.  To re-enable: remove the two relevant lines in `unimplemented()` in `config_function_maps.py` and uncomment the two relevant lines in `only_translate()` in `config_patterns.py`.
 
 **In Translation Functions**
 
 * In `tr_if` if the conditional is `app-view` then just translate the 'then' branch because we do not translate system view.
-* Translation function `tr_mv` implements recognition and translation of error lists.
+* Translation function `tr_mv` implements recognition and translation of error lists by translating only the descriptive string.
 * `tr_def_inst` is quite fragile and not robust to change.
 * `tr_xr` contains a list of registers whose getters/setters have been implemented in `handwritten.sail` - this list should be found automatically.
 * Inspection of the result of a `:pe` command in `tr_pe` is likely to be fragile.
 
 **In AST Elements (`SailASTelems.py`)**
 
-* In `SailLet.__init__()`, when binding `let <var> = <expr> in <body`: if `<expr>` is either `check-alignment?` or `inst-ac?` and `<expr>` is `nil` we force the `nil` to a boolean `False`.
+* In `SailLet.__init__()`, when binding `let <var> = <expr> in <body>`: if `<expr>` is either `check-alignment?` or `inst-ac?` and `<expr>` is `nil` we force the `nil` to a boolean `False`.
 
 * In `SailBoundVar`:
 
-  * In `setType()`: force type of variables called `x86` to `int` - this variable represents model state and in Sail is global, so we ignore use a dummy integer in the translation.
+  * In `setType()`: force type of variables called `x86` to `int` - this variable represents model state in ACL2 which is global state in Sail, so we use a dummy integer in the translation.
   * In `pp()`: if the variable is called `les_lds_distinguishing_byte` or `max_offset` then provide a type annotation.
 
 * In `SailApp.pp()`: if we have a test of the form ``vex3_byte1_get_m_mmmm(...) == ...` then provide a type annotation.
@@ -34,8 +35,7 @@ Translation functions begin with `tr_`.
 * In `SailIf`:
 
   * In `__init_()`: convert a string to a maybe string in error messages
-  * In `getType()`: 
-
+  
 * In `SailTuple.pp()`: provide a type annotation for number literals.
 
 * In `SailMatch.pp()`: some constant folding to remove instances like the following (the product of macro expansions):
