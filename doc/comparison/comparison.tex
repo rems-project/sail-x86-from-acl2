@@ -45,9 +45,9 @@
 
 \section{Example of Translation}
 
-This document serves two purposes: to show a side by side example of ACL2 code and its Sail translation; to give a brief introduction to the ACL2 model itself.  The functions demonstrate a simple call trace of the instruction \texttt{add \$0x1\$, \%eax}, which increments the register \texttt{eax}.  A diagramatic summary can be found in Figure 2.1 of the dissertation.
+This document serves two purposes: to show a side by side example of ACL2 code and its Sail translation; and to give a brief introduction to the ACL2 model itself.  The functions demonstrate a simple call trace of the instruction \texttt{add \$0x1, \%eax}, which increments the register \texttt{eax}.  A diagrammatic summary can be found in Figure 2.1 of the dissertation.
 
-Note that etraneous keyword parameters (e.g.~from \texttt{define}) and comments are elided to save space.  The indentation in the Sail column is mine and some brackets have been removed manually---hopefully this has a similar effect to pretty printing.
+Note that extraneous keyword parameters (e.g.~from \texttt{define}) and comments are elided to save space.  The indentation in the Sail column is mine and some brackets have been removed manually---hopefully this has a similar effect to pretty printing.
 
 \subsection{Navigating the x86 ISA model}
 
@@ -62,9 +62,9 @@ This is a quick example of one way to navigate the ACL2 model without grepping t
 
 Let's say we want to find out more about the function \texttt{rme08-opt} (encountered below).  One way would be to run something like \texttt{rg rme08-opt} from a terminal and find this is a macro defined in \texttt{machine/top-level-memory.lisp}.  Once we open that file, look at its contents and decide to explore more about one of the functions it calls, \texttt{rme08}, we become stuck: \texttt{rg rme08} only shows calls to it, but no definition!
 
-To solve this we can run \texttt{:pe rme08} from the ACL2 shell.  This immediately gives us the file in which it is defined (we can narrow down where the code generation occurs) and its actualy definition.
+To solve this we can run \texttt{:pe rme08} from the ACL2 shell.  This immediately gives us the file in which it is defined (we can narrow down where the code generation occurs) and its actual definition.
 
-Running \texttt{:pe rme08-opt} does not seem as helpful at first: it gives us a huge mess of nested conses of quoted code---it is a macro.  If, however, we have a use of the macro, we can translate it with actual arguemnts.  For instance, using an example from below: \texttt{:trans1 (rme08-opt proc-mode temp-rip \#.*cs* :x x86)} gives us some very reasonable code:
+Running \texttt{:pe rme08-opt} does not seem as helpful at first: it gives us a huge mess of nested conses of quoted code---it is a macro.  If, however, we have a use of the macro, we can translate it with actual arguments.  For instance, using an example from below: \texttt{:trans1 (rme08-opt proc-mode temp-rip \#.*cs* :x x86)} gives us some very reasonable code:
 
 \begin{lstlisting}[language=lisp]
 (MBE :LOGIC (RME08 PROC-MODE TEMP-RIP 1 :X X86)
@@ -126,13 +126,13 @@ This is the beginning of the top-level step function which simulates one process
 \begin{itemize}
   \item The Lisp \texttt{b*} binder simulates control flow, binding many variables one after the other and occasionally escaping when there is an error (\texttt{when}).  This is translated as a series of nested \texttt{let} expressions with an occasional \texttt{if} when escaping.
   \item In \texttt{let <var> = <expr> in <body>} the \texttt{<expr>} always has a type annotation.  This is to avoid some type checking errors---see \texttt{FutureWork.md} for more information.
-  \item We see the first example of \texttt{the\_range}: a dynamic type check.  The large numbers are the result of macro-expanding \texttt{\#.*max-linear-address-size*}.  See \texttt{FutureWork.md} for more information.
+  \item We see an example of \texttt{the\_range} in Sail: a dynamic type check.  The large numbers are the result of macro-expanding \texttt{\#.*max-linear-address-size*}.  See \texttt{FutureWork.md} for more information.
 \end{itemize}
 
 \noindent
 \textbf{Operation}
 \begin{itemize}
-  \item Overall, this snippet first binds the curent \texttt{ctx}, occasionally used for debugging, before checking for if there is a model state (\texttt{ms}) error or \texttt{fault}.  If this is OK, it finds the processor mode, and if 64-bit mode is active before retrieving the current instruction pointer.
+  \item Overall, this snippet first binds the current \texttt{ctx}, occasionally used for debugging, before checking if there is a model state (\texttt{ms}) error or \texttt{fault}.  If this is OK, it finds the processor mode, and if 64-bit mode is active before retrieving the current instruction pointer.
 \end{itemize}
   
 \end{tcolorbox}
@@ -241,12 +241,12 @@ This is the beginning of the top-level step function which simulates one process
 \colplacechunks
 \end{parcolumns}
 
-This is the next part of the top level step function.
+This is the rest of the top level step function.
 
 \noindent
 \textbf{Translation Notes}
 \begin{itemize}
-  \item This is an example of the result when compiling with the \texttt{translate\_the} flag in \texttt{config\_files.py} set to \texttt{False}.  We no longer have the \texttt{the} dynamic type check.  This improves readability but risks errors in handwrittn support functions going undetected for longer.
+  \item This is an example of the result when compiling with the \texttt{translate\_the} flag in \texttt{config\_files.py} set to \texttt{False}.  We no longer have the \texttt{the} dynamic type check.  This improves readability but risks errors in handwritten support functions going undetected for longer.
 
   \item The control flow pattern of escaping when there is an error is seen multiple times (\texttt{(when flg)} in ACL2 and \texttt{if is\_some(flg)} in Sail).  In ACL2 \texttt{flg} is either \texttt{nil} or a descriptive string---we translate as an \texttt{option} type in Sail.
 \end{itemize}
@@ -254,9 +254,9 @@ This is the next part of the top level step function.
 \noindent
 \textbf{Operation}
 \begin{itemize}
-  \item x86 instructions may have a number of prefixes, each on indicated by a certain bitpattern.  These prefixes are gathered first in \texttt{get\_prefix} (a complex function in itself) before we extract the number of prefixes and the next byte following them: the opcode.  Information about prefixes is encoded in an integer in ACL2 and translated as such in Sail---it would be better to store this information in a struct.
+  \item x86 instructions may have a number of prefixes, each one indicated by a certain bitpattern.  These prefixes are gathered first in \texttt{get\_prefix} (a complex function in itself) before we extract the number of prefixes and the next byte following them: the opcode.  Information about prefixes is encoded in an integer in ACL2 and translated as such in Sail---it would be better to store this information in a struct.
 
-  \item VEX/EVEX (SIMD ISA extensions) decoding and dispatch is performed here (but not shown).  Assuming the instruction is not VEX/EVEX then the \texttt{modR/M} byte is decoded, if found, if present.  This byte changes how certain instructions regard certain registers, specifically modifying their size.  This uses \texttt{rme08-opt} to read a byte from effective (hence the `e') memory.  This represents a stack of complex functions as address translation from effective to linear is required.
+  \item VEX/EVEX (SIMD ISA extensions) decoding and dispatch is performed here (but not shown).  Assuming the instruction is not VEX/EVEX then the \texttt{modR/M} byte is decoded if present.  This byte changes how certain instructions regard certain registers, specifically modifying their size.  \texttt{rme08-opt} is used to read single bytes from effective memory (hence the `e' in \texttt{rme}) and represents a stack of complex functions as address translation from effective to linear address is required.
 
   \item A \texttt{SIB} byte (which specifies how to calculate operand addresses) is also found if it exists for this instruction.  Not shown here.
 
@@ -353,11 +353,11 @@ function one_byte_opcode_execute (proc_mode, start_rip, temp_rip, prefixes, rex_
 
 \textbf{Translation Notes}
 
-Here we see the use of more macros expansions which decrease readability.  For instance, whereas in ACL2 we have \texttt{UD-LOCK-USED-DEST-NOT-MEMORY-OP}, which at least us a hint about its meaning, this expands and translates in Sail to \texttt{modr\_m\_get\_mod(modr\_m) == 3) \& (240 == prefixes\_get\_lck(prefixes)}.
+Here we see the use of more macro expansions which decrease readability.  For instance, whereas in ACL2 we have \texttt{UD-LOCK-USED-DEST-NOT-MEMORY-OP}, which at least gives us a hint about its meaning, this expands and translates in Sail to \texttt{(modr\_m\_get\_mod(modr\_m) == 3) \& (240 == prefixes\_get\_lck(prefixes))}.
 
 \textbf{Operation}
 
-This Lisp on the right hand side is actually the result of a large macro expansion.  Here, two cases are shown which dispatch opcodes \texttt{0} and \texttt{15}.  The \texttt{0} branch is the one we follow, dispatching to the operation specification function \texttt{x86\_add\_adc\_sub\_sbb\_or\_and\_xor\_cmp\_test\_e\_g}.  The \texttt{15} branch shows how control escapes to the two-byte opcode dispatch table (which can then escape a second time to three-byte opcodes if needed).
+The Lisp on the left hand side is actually the result of a large macro expansion.  Here, two cases are shown which dispatch opcodes \texttt{0} and \texttt{15}.  The \texttt{0} branch is the one we follow, dispatching to the operation specification function \texttt{X86-ADD/ADC/SUB/SBB/OR/AND/XOR/CMP/TEST-E-G}.  The \texttt{15} branch shows how control escapes to the two-byte opcode dispatch table (which can then escape a second time to three-byte opcodes if needed).
 
 \end{tcolorbox}
 
@@ -481,7 +481,7 @@ function x86_add_adc_sub_sbb_or_and_xor_cmp_test_e_g (operation, proc_mode, star
 \textbf{Translation Notes and Operation}
 
 \begin{itemize}
-  \item The upper section performs more decoding---most of the binders are not shown because they follow the patterns whoen above of nested \texttt{let} expressions.  Two important binders, \texttt{G} and \texttt{E} are shown: these are the operands to the instruction.  \texttt{G} and \texttt{E} represent different addressing modes.  There are other variants of this function with different addressing modes (e.g.~\texttt{E-G}, or \texttt{E-I}), but their content is very similar.
+  \item The upper section performs more decoding---most of the binders are not shown because they follow the patterns shown above of nested \texttt{let} expressions.  Two important binders, \texttt{G} and \texttt{E} are shown: these are the operands to the instruction.  They are called as such because \texttt{G} and \texttt{E} represent different addressing modes.  There are other variants of this function with different addressing modes (e.g.~\texttt{E-G}, or \texttt{E-I}), but their content is very similar.
 
   \item The lower part of the function performs the computation (seen in the next section).  Note the macro \texttt{gpr-arith/logic-spec} has expanded to a Sail \texttt{match} expression which dispatches to a function of the appropriate data-width.  Once the results have been computed, it saves them back to the model state.
 
@@ -632,16 +632,16 @@ function gpr_add_spec_4 (dst, src, input_rflags) =
 \begin{itemize}
   \item The ACL2 and Sail for the top two functions look similar - perhaps unsurprisingly as they simply dispatch to the correct instruction specification function based on the opcode.  Note the type annotation in the \texttt{match} expression in Sail: this is to avoid a type error (see \texttt{FutureWork.md} for more details.)
 
-  \item The entirety of the ACL2 instruction specification function is shown for comparison with the size of the Sail translation.  It is so much larger mostly because of the use of \texttt{mbe}s, which allow different implementations for logical reasoning vs.~execution, which are proved equivalent statically.  In Sail we only translate one branch: the \texttt{:logic} branch, translated here, produces clean code.
+  \item The entirety of the ACL2 instruction specification function is shown for comparison with the size of the Sail translation.  It is so much larger mostly because of the use of \texttt{mbe}s, which allow different implementations for logical reasoning vs.~execution.  The two branches are proved equivalent statically in ACL2 so we can choose which to translate into Sail: the \texttt{:logic} branch, translated here, produces clean code.
 
   \item One downside of the Sail code is the \texttt{change\_rflagsbits()} function.  In ACL2 keywords are used to pass values to this function.  This could be mimicked in Sail by passing a struct instead.
 
-  \item The \texttt{-4} at the end of both function indicates these functions handle 4-byte (32 bit) operands.  Code generation is used to create functions for different data widths (\texttt{-1}, \texttt{-2} and \texttt{-8}).  It would be good to combine these into a single function which uses Sail's dependent type system (see \texttt{FutureWork.md} for deatils).
+  \item The \texttt{-4} at the end of both function names indicates these functions handle 4-byte (32 bit) operands.  Code generation is used to create functions for different data widths (\texttt{-1}, \texttt{-2} and \texttt{-8}).  It would be good to combine these into a single function which uses Sail's dependent type system (see \texttt{FutureWork.md} for details).
 \end{itemize}
 
 \textbf{Operation}
 \begin{itemize}
-  \item The instruction specification function takes produces the result from the operands and calculates the updated flags.
+  \item The instruction specification function produces the result from the operands and calculates the updated flags.
 \end{itemize}
 
 \end{tcolorbox}
