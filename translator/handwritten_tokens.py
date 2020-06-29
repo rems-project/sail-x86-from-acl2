@@ -2,7 +2,7 @@ from SailASTelems import *
 from SailTypes import *
 
 '''
-This file links the handwritten Sail functions in handwritten2.sail to the
+This file links the handwritten Sail functions in handwritten.sail to the
 Python framework by specifying their names types and effects.  The definitions
 here are collected in config_function_maps.py.
 

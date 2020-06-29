@@ -84,7 +84,7 @@ function {i_num} x = binary_logext ({n}, x)
 	with open(utilitiesFile, 'w') as f:
 		f.write("$include <prelude.sail>\n")
 		if includeHeader:
-			f.write('$include "handwritten2.sail"\n')
+			f.write('$include "handwritten.sail"\n')
 		f.write("\n")
 		f.write("\n\n".join(code_nXY))
 		f.write("\n\n")

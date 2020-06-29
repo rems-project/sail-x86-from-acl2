@@ -1338,7 +1338,7 @@ def saveSail(SailAST, path, name, env, includeHeaders):
 			f.write('$include "auxiliary.sail"\n')
 
 		if includeHeaders:
-			f.write('$include "handwritten2.sail"\n')
+			f.write('$include "handwritten.sail"\n')
 			f.write('$include "utils.sail"\n\n')
 
 		f.write(pp)

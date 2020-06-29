@@ -10,13 +10,13 @@ translation functions related to a different type of token.  Namely:
  	built in (and thus we must, e.g. `if`) or because it is expedient to do so
  	(e.g. `define`).
  -  Handwritten Token: these tokens link to the handwritten Sail functions in
- 	handwritten2.sail.
+ 	handwritten.sail.
  -  Utilities: utilities.lisp is translated using generateUtils.py.  The
  	generated functions are registered here.
  -  Macros: these tokens are registered as macros and are expanded at
  	translate-time.
  -  Unimplemented: these tokens also link to the handwritten Sail functions in
- 	handwritten2.sail but indicate that the function has no implementation.
+ 	handwritten.sail but indicate that the function has no implementation.
 
 Each function below returns the same type of data structure, a dictionary
 mapping a string representing a Lisp token to a function which can translate
@@ -132,7 +132,7 @@ def specialTokens():
 def handwritten():
 	"""
 	The functions referenced are defined in handwritten_tokens.py and their
-	handwritten Sail implementations are in handwritten2.sail.  These functions
+	handwritten Sail implementations are in handwritten.sail.  These functions
 	mostly represent low-level bitwise operations and register reads/writes.
 	"""
 	handwrittenDefinitions = {

@@ -925,7 +925,7 @@ def num_op_gen(op, resultType, numOfArgs=None, infix=True):
 def _the_helper(theType, sailTerm):
 	"""
 	Helper for `tr_the`.  See documentation in `tr_the` for details on `the`.
-	The correct wrapper function from handwritten2.sail is chosen based on the
+	The correct wrapper function from handwritten.sail is chosen based on the
 	`theType`.
 
 	Args:
@@ -966,7 +966,7 @@ def tr_the(ACL2ast, env):
 	In ACL2, `(the <type-spec> <form>)` indicates that `form` has type
 	`type-spec`.  In ACL2 this is proved statically, it is translated as a
 	dynamic type check in Sail.  Also ee `the_int`, `the_nat` and `the_range`
-	in handwritten2.sail.
+	in handwritten.sail.
 
 	See: http://www.cs.utexas.edu/users/moore/acl2/manuals/current/manual/?topic=COMMON-LISP____THE
 	"""
@@ -2136,7 +2136,7 @@ def tr_ifix(ACL2ast, env):
 	"""
 	Technically `ifix x` returns x if x is an integer, otherwise 0.  We
 	simply assert statically that it should be an int using `the_int` in
-	handwritten2.sail.
+	handwritten.sail.
 
 	See: http://www.cs.utexas.edu/users/moore/acl2/manuals/current/manual/?topic=ACL2____IFIX
 	"""

@@ -147,7 +147,7 @@ Exceptions:
 
 ### Registers
 
-Currently register definitions and their getters and setters are written by hand in `handwritten2.sail`.  It would be better to automatically generate these using information in `concrete-state.lisp` and/or `abstract-state.lisp`.  It would probably be prudent to do this using some custom code, similar to how `utilities.lisp` is partially translated in `generateUtils.py`.
+Currently register definitions and their getters and setters are written by hand in `handwritten.sail`.  It would be better to automatically generate these using information in `concrete-state.lisp` and/or `abstract-state.lisp`.  It would probably be prudent to do this using some custom code, similar to how `utilities.lisp` is partially translated in `generateUtils.py`.
 
 ### Linking Handwritten Functions
 

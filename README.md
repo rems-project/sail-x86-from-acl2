@@ -57,8 +57,8 @@ The following diagram shows the general structure of the translator.  Each file 
 
 **Translation Functions**
 
-* `specialTokens.py` contains translation functions 'special tokens' (i.e. built-in Lisp forms or forms which are convenient to translation manually).
-* `handwritten_tokens.py` contains the names and types of the handwritten functions contained in `handwritten2.sail`.
+* `specialTokens.py` contains translation functions for 'special tokens' (i.e. built-in Lisp forms or forms which are convenient to translate manually).
+* `handwritten_tokens.py` contains the names and types of the handwritten functions contained in `handwritten.sail`.
 * `generateUtils.py` provides a custom translation for `utilities.lisp`.
 * `manualInterventions.py` contains the code for Lisp forms which do not conform to the assumptions made in the translation functions and where a special case is required.
 
@@ -85,7 +85,7 @@ Think about where the extension should go:
 
 ### Handwritten Function
 
-1. Write the handwritten Sail function in `handwritten2.sail`.
+1. Write the handwritten Sail function in `handwritten.sail`.
 2. Register its name and type in `handwritten_tokens.py`.
 3. Register the lisp token to handwritten function mapping in `handwritten()` in `config_function_maps.py`.
 
