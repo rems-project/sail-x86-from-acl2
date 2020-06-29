@@ -10,14 +10,14 @@ Translation functions begin with `tr_`.
 
 * The translations of the files `instructions/segmentation.lisp` and `instructions/fp/top.lisp` are called `segmentationInst.sail` and `topFP.sail` respectively to avoid name collisions.
 * Translation of `utilities.lisp` is done manually with `generateUtils.py`.
-* Lisp functions `feature-flag` and `feature-flags` are translated manually in `handwritten2.sail `.  They assume all 'features' are available.  See comment there for information.
+* Lisp functions `feature-flag` and `feature-flags` are translated manually in `handwritten.sail `.  They assume all 'features' are available.  See comment there for information.
 
 **In Translation Functions**
 
 * In `tr_if` if the conditional is `app-view` then just translate the 'then' branch because we do not translate system view.
 * Translation function `tr_mv` implements recognition and translation of error lists.
 * `tr_def_inst` is quite fragile and not robust to change.
-* `tr_xr` contains a list of registers whose getters/setters have been implemented in `handwritten2.sail` - this list should be found automatically.
+* `tr_xr` contains a list of registers whose getters/setters have been implemented in `handwritten.sail` - this list should be found automatically.
 * Inspection of the result of a `:pe` command in `tr_pe` is likely to be fragile.
 
 **In AST Elements (`SailASTelems.py`)**
