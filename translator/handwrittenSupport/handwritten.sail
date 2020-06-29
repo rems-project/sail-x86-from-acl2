@@ -1,6 +1,7 @@
-/*
-This file contains the handwritten functions for the ACL2 translation - as far as possible it uses very general types in the hope that `the`s in the ACL2 will constrain the results as appropriate.
-*/
+/*-----------------------------------------------------------------*/
+This file contains the handwritten functions for the ACL2
+translation.
+/*-----------------------------------------------------------------*/
 
 $ifndef _DEFAULT_DEC
 	default Order dec
@@ -16,12 +17,13 @@ overload operator ^ = {concat_str, and_bool}
 /*-----------------------------------------------------------------*/
 // Misc
 /*-----------------------------------------------------------------*/
+
 /*
 The `feature-flags` function in cpuid.lisp takes an argument
 `features`.  The guard specifies `features` must be a subset of the
-supported features, and so this is proved statically.  It checks that
-all features in its argument are enabled by passing each one to
-`feature-flag` (not plural). In turn, `feature-flag` uses
+supported features, and so this is proved statically.  The function
+checks that all features in its argument are enabled by passing each
+one to `feature-flag` (not plural). In turn, `feature-flag` uses
 `cpuid-flag` macro which uses `cpuid-flag-fn`... which is always 1
 because all features are enabled by default.  Thus, translate
 `feature-flag` simply as `1`.
@@ -34,6 +36,7 @@ TODO: avoidance of shadowing should be done elsewhere.
 
 val feature_flag_fn : (string, int) -> int
 function feature_flag_fn (feature, x86_dummy) = 1
+
 
 val feature_flags_fn : (list(string), int) -> int
 function feature_flags_fn (features, x86_dummy) =
@@ -52,6 +55,7 @@ union exception = {
 	Emsg : string
 }
 
+
 /*-----------------------------------------------------------------*/
 // Undefined behaviour
 //
@@ -59,6 +63,7 @@ union exception = {
 // return zero.  Here we use Sail's builtin `undefined`, which
 // actually does the same.
 /*-----------------------------------------------------------------*/
+
 val undef_read_logic : int -> (nat, int) effect {undef}
 function undef_read_logic (x86_dummy) = (undefined, 0)
 
@@ -69,12 +74,12 @@ function undef_read_logic (x86_dummy) = (undefined, 0)
 /*
 pow2 taken from sail-riscv/model/prelude.sail
 */
+
 val pow2 = "pow2" : forall 'n. atom('n) -> atom(2 ^ 'n)
 
 /*
 TODO: is there a utility function for this
 TODO: make bool_to_bit and bit_to_bool a mapping?
-`bool_to_bits` in sail/test/c/cheri_capreg.sail and `cast_bool_bit` in sail/aarch64_small/prelude.sail both seem to confirm this is a sensible type.
 
 We use `int` as return type to link in with the rest of the framework
 */
@@ -127,8 +132,9 @@ function in_list (x, xs) = match xs {
 }
 
 /*-----------------------------------------------------------------*/
-// Unsigned and signed byte_p
+// Unsigned and signed byte_p - recognisers
 /*-----------------------------------------------------------------*/
+
 /*
 http://www.cs.utexas.edu/users/moore/acl2/manuals/current/manual/index-seo.php/ACL2____UNSIGNED-BYTE-P
 */
@@ -148,8 +154,9 @@ function signed_byte_p (bits, x) = {
 }
 
 /*-----------------------------------------------------------------*/
-// logx functions
+// Logic functions
 /*-----------------------------------------------------------------*/
+
 /*
 `loghead size i` returns size low-order bits of i.
 In C-like languages: `i & ((1 << size) - 1)`
@@ -157,6 +164,7 @@ If size = 0, then return = 0
 
 See: http://www.cs.utexas.edu/users/moore/acl2/manuals/current/manual/index-seo.php/ACL2____LOGHEAD
 */
+
 val loghead : (int, int) -> int
 function loghead (size, i) =
 	if size == 0
@@ -168,7 +176,6 @@ function loghead (size, i) =
 
 
 /*-----------------------------------------------------------------*/
-
 /*
 `logtail pos i` returns high-order part of i starting at bit pos
 
@@ -180,9 +187,12 @@ function logtail (pos, x) =
 
 /*-----------------------------------------------------------------*/
 /*
-"For a nonnegative integer i and an integer j, (logbitp i j) is a Boolean, which is t if and only if the value of the ith bit is 1 in the two's complement representation of j.
+"For a nonnegative integer i and an integer j, (logbitp i j) is a
+Boolean, which is t if and only if the value of the ith bit is 1 in
+the two's complement representation of j.
 
-(Logbitp i j) has a guard that i is a nonnegative integer and j is an integer."
+(Logbitp i j) has a guard that i is a nonnegative integer and j is
+an integer."
 
 See: http://www.cs.utexas.edu/users/moore/acl2/manuals/current/manual/index-seo.php/COMMON-LISP____LOGBITP
 */
@@ -195,7 +205,9 @@ function logbitp (i, j)={
 }
 
 /*
-Also `logbit` which "is just like the Common Lisp function (logbitp pos i), except that we return 1 or 0 (instead of t or nil)."
+Also `logbit` which "is just like the Common Lisp function
+`(logbitppos i)`, except that we return 1 or 0 (instead of t or
+nil)."
 
 See: http://www.cs.utexas.edu/users/moore/acl2/manuals/current/manual/?topic=ACL2____LOGBIT
 */
@@ -207,12 +219,15 @@ function logbit (pos, j) = {
 
 /*-----------------------------------------------------------------*/
 /*
-See: http://www.cs.utexas.edu/users/moore/acl2/manuals/current/manual/index-seo.php/COMMON-LISP____LOGCOUNT
+The function lognot is used in the definition of logcount.  It is
+simply a bitwise not.
 
-The function lognot is used in the definition of logcount.  It is simply a bitwise not.
-See: http://www.cs.utexas.edu/users/moore/acl2/manuals/current/manual/index-seo.php/COMMON-LISP____LOGNOT
+See (logcount): http://www.cs.utexas.edu/users/moore/acl2/manuals/current/manual/index-seo.php/COMMON-LISP____LOGCOUNT
+See (lognot): http://www.cs.utexas.edu/users/moore/acl2/manuals/current/manual/index-seo.php/COMMON-LISP____LOGNOT
 
-TODO: why do we take the lognot?  This does a bitwise not and seems to change the number of on bits?  Maybe 'on' bits means 0 when negative.
+TODO: why do we take the lognot?  This does a bitwise not and seems
+to change the number of on bits?  Maybe 'on' bits means 0 when
+negative.
 */
 
 val lognot : (int) -> int
@@ -229,11 +244,10 @@ function logcount(x) =
 /*
 floor
 
-See: http://www.cs.utexas.edu/users/moore/acl2/manuals/current/manual/?topic=COMMON-LISP____FLOOR
-
 This implementation passes the tests mentioned in the spec above.
-
 An old implementation, used conversion to and from real numbers.
+
+See: http://www.cs.utexas.edu/users/moore/acl2/manuals/current/manual/?topic=COMMON-LISP____FLOOR
 */
 val floor2 : (int, int) -> int
 function floor2 (i, j) = {
@@ -248,12 +262,16 @@ function floor2 (i, j) = {
 /*
 logand
 
-See: http://www.cs.utexas.edu/users/moore/acl2/manuals/current/manual/index-seo.php/COMMON-LISP____LOGAND
+Wikipedia: "Shifting right by n bits on a two's complement signed
+binary number has the effect of dividing it by 2n, but it always
+rounds down (towards negative infinity)."
 
-Wikipedia: "Shifting right by n bits on a two's complement signed binary number has the effect of dividing it by 2n, but it always rounds down (towards negative infinity)."
 This is what we want when replacing the `floor` function
 
-NOTE: at first tried using tdiv_int instead of floor2, but this does not have the same behaviour as floor in the ACL2 spec.
+NOTE: at first tried using tdiv_int instead of floor2, but this does
+not have the same behaviour as floor in the ACL2 spec.
+
+See: http://www.cs.utexas.edu/users/moore/acl2/manuals/current/manual/index-seo.php/COMMON-LISP____LOGAND
 */
 
 val binary_logand : (int, int) -> int
@@ -271,11 +289,10 @@ function binary_logand (i, j) =
 /*
 logior
 
+Here only the binary version is implemented.  It's basically a
+copy/paste job from the docs by this stage.
+
 See: http://www.cs.utexas.edu/users/moore/acl2/manuals/current/manual/?topic=COMMON-LISP____LOGIOR
-
-Here only the binary version is implemented.  It's basically a copy/paste job from the
-docs by this stage.
-
 */
 val binary_logior : (int, int) -> int
 function binary_logior (i, j) =
@@ -285,12 +302,12 @@ function binary_logior (i, j) =
 /*
 logxor
 
+Here only the binary version is implemented.
+
 See:
 	logxor: http://www.cs.utexas.edu/users/moore/acl2/manuals/current/manual/index-seo.php/COMMON-LISP____LOGXOR
 	logeqv: http://www.cs.utexas.edu/users/moore/acl2/manuals/current/manual/index-seo.php/COMMON-LISP____LOGEQV
 	logorc1:http://www.cs.utexas.edu/users/moore/acl2/manuals/current/manual/index-seo.php/COMMON-LISP____LOGORC1
-Here only the binary version is implemented.
-
 */
 val binary_logorc1 : (int, int) -> int
 function binary_logorc1 (i, j) = binary_logior(lognot(i), j)
@@ -311,7 +328,6 @@ logext
 See:
 http://www.cs.utexas.edu/users/moore/acl2/manuals/current/manual/?topic=ACL2____LOGEXT
 http://www.cs.utexas.edu/users/moore/acl2/manuals/current/manual/?topic=ACL2____LOGAPP
-
 */
 val binary_logapp : (int, int, int) -> int
 function binary_logapp (size, i, j) =
@@ -330,13 +346,14 @@ function binary_logext (size, i) = {
 
 /*-----------------------------------------------------------------*/
 /*
-n-size.  Defined in `utilities.lisp` and simply generates, for example
-`(n08 x)` from `n-size 8 x`.  We find that `n08 x` is, under `:logic`
-simply `loghead 8 x`.
+n-size.  Defined in `utilities.lisp` and simply generates, for
+example `(n08 x)` from `n-size 8 x`.  We find that `n08 x` is, under
+`:logic` simply `loghead 8 x`.
 
 See: http://www.cs.utexas.edu/users/moore/acl2/manuals/current/manual/index-seo.php/X86ISA____N08
 
-TODO: maybe do this automatically by evaluating `np-def-n` in `utilities.lisp`
+TODO: maybe do this automatically by evaluating `np-def-n` in
+`utilities.lisp`
 */
 val n_size : (int, int) -> int
 function n_size (n, x) = loghead (n, x)
@@ -349,7 +366,6 @@ See: http://www.cs.utexas.edu/users/moore/acl2/manuals/current/manual/?topic=COM
 
 TODO: check this implementation matches the spec
 */
-
 val ash : (int, int) -> int
 function ash (i, c) =
 	if c == 0 then i else
@@ -362,7 +378,6 @@ abs
 
 See: http://www.cs.utexas.edu/users/moore/acl2/manuals/current/manual/?topic=COMMON-LISP____ABS
 */
-
 val abs : (int) -> int
 function abs x = if x < 0 then negate(x) else x
 
@@ -370,9 +385,9 @@ function abs x = if x < 0 then negate(x) else x
 /*
 mod
 
-See: http://www.cs.utexas.edu/users/moore/acl2/manuals/current/manual/?topic=COMMON-LISP____MOD
+This implementation passes the examples in the spec below.
 
-This implementation passes the examples in the spec above.
+See: http://www.cs.utexas.edu/users/moore/acl2/manuals/current/manual/?topic=COMMON-LISP____MOD
 
 TODO: is there an inbuilt for this?
 */
@@ -384,11 +399,13 @@ function mod (x, y) =
 /*
 rotate-left.
 
+rotates-spec.lisp uses `fast-rotate-left` in
+`centaur/bitops/fast-rotate`.  Apparently this is logically
+equivalent to `rotate-left`, so we implement our own here.
+
 Based loosely on:
 	* http://www.cs.utexas.edu/users/moore/acl2/manuals/current/manual/?topic=ACL2____ROTATE-LEFT
 	* http://www.cs.utexas.edu/users/moore/acl2/manuals/current/manual/?topic=ACL2____ROTATE-RIGHT
-
-rotates-spec.lisp uses `fast-rotate-left` in `centaur/bitops/fast-rotate`.  Apparently this is logically equivalent to `rotate-left`, so we implement our own here.
 */
 val rotate_left : (int, int, int) -> int effect {escape}
 function rotate_left (x, width, places) = {
@@ -413,10 +430,10 @@ function rotate_right (x, width, places) = {
 /*
 MERGE-2-U64S etc.
 
+"Concatenate 2 64-bit numbers together to form an 128-bit result."
+
 See: http://www.cs.utexas.edu/users/moore/acl2/manuals/current/manual/?topic=ACL2____MERGE-2-U64S
 OR: `:pe MERGE-2-U64S` etc.
-
-"Concatenate 2 64-bit numbers together to form an 128-bit result."
 
 TODO: implement `the`s shown in the original functions.
 */
@@ -446,8 +463,8 @@ function changeBits (x, low, width, v) =
 	set_slice_int(width, x, low, get_slice_int(width, v, 0))
 
 
-
-// Although one would expect rflags to be 64 bits, the ACL2 models it as 32 bits
+// Although one would expect rflags to be 64 bits, the ACL2 models
+// it as 32 bits
 register rflags : bits(32)
 
 val r_rflags : int -> int effect {rreg}
@@ -467,7 +484,7 @@ val genericBitstructUpdater : (int, int, int, int) -> int
 function genericBitstructUpdater (width, spliceBits, low, inputBits) =
 	set_slice_int(width, inputBits, low, get_slice_int(width, spliceBits, 0))
 
-// Example registers
+// Registers
 register rip : bits(64)
 val ripi : int -> int effect {rreg}
 function ripi (x86_dummy) = unsigned(rip)
@@ -480,6 +497,7 @@ function write_rip (toSet, x86_dummy) = {
 
 // See here for some hints on rgfi:
 // http://www.cs.utexas.edu/users/moore/acl2/manuals/current/manual/index-seo.php/X86ISA____GPRS-READS-AND-WRITES?path=3532/29063/10660/6710/25183
+
 register gprs : vector(16, dec, bits(64)) // 16 gprs in 64 bit mode, as per table 5.1 in thesis
 
 val rgfi : (int, int) -> int effect {escape, rreg}
@@ -498,9 +516,10 @@ function write_rgfi (regNum, v, x86_dummy) = {
 /*
 Model Specific Registers
 
-Footnote b in section 5.1 of Goel thesis says only 6 MSR registers (I think they mean 7) are
-thusfar defined in the model.  For now, we enumerate some of them explicitely here.  Fortuantely,
-the indexes range from 0..6, and we can lump them into a vector of registers
+Footnote b in section 5.1 of Goel thesis says only 6 MSR registers
+(I think they mean 7) are thus far defined in the model.  For now,
+we enumerate some of them explicitely here.  Fortuantely, the indexes
+range from 0..6, and we can lump them into a vector of registers
 
 TODO: make this enumeration automatic
 */
@@ -520,13 +539,14 @@ function write_msri(regNum, v, x86_dummy) = {
 }
 
 /*
-seg-visible registers etc..  From `concrete-state.lisp` we find there are 6 x 16bit registers
+seg-visible registers etc..  From `concrete-state.lisp` we find
+there are 6 x 16bit registers
 
-TODO: make this automatic (including the number 6, which is a global constant but subject
-to change)
+TODO: make this automatic (including the number 6, which is a global
+constant but subject to change)
 
-TODO: in `xr` in ACL2 we have things like seg_hidden_attri* (i.e. with a trailing asterisk).
-Why is this?
+TODO: in `xr` in ACL2 we have things like seg_hidden_attri* (i.e.
+with a trailing asterisk). Why is this?
 */
 register seg_visibles : vector(6, dec, bits(16))
 val seg_visiblei : (int, int) -> int effect {escape, rreg}
@@ -587,10 +607,11 @@ function write_seg_hidden_limiti (regNum, v, x86_dummy) = {
 
 
 /*
-zmm registers.  From `concrete-state.lisp` we find there are 32 x 512bit registers
+zmm registers.  From `concrete-state.lisp` we find there are
+32 x 512bit registers
 
-TODO: make this automatic (including the number 32, which is a global constant but subject
-to change)
+TODO: make this automatic (including the number 32, which is a global
+constant but subject to change)
 */
 register zmms : vector (32, dec, bits(512))
 val zmmi : (int, int) -> int effect {escape, rreg}
@@ -607,10 +628,11 @@ function write_zmmi (regNum, v, x86_dummy) = {
 }
 
 /*
-Control registers.  From `concrete-state.lisp` we find there are 17 x 64bit registers
+Control registers.  From `concrete-state.lisp` we find there are
+17 x 64bit registers
 
-TODO: make this automatic (including the number 17, which is a global constant but subject
-to change)
+TODO: make this automatic (including the number 17, which is a global
+constant but subject to change)
 */
 register ctrs : vector (17, dec, bits(64))
 val ctri : (int, int) -> int effect {escape, rreg}
@@ -620,7 +642,7 @@ function ctri (regNum, x86_dummy) = {
 }
 
 /*
-We can do a string of `:pe ...` from `stri` and find we need the following.
+We can ise `:pe ...` from `stri` and find we need the following.
 */
 register strs : vector(2, dec, bits(80))
 val stri : (int, int) -> int effect {escape, rreg}
