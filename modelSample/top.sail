@@ -15,13 +15,13 @@ $include "signextend.sail"
 $include "string.sail"
 $include "subroutine.sail"
 $include "topfp.sail"
-val x86_hlt : (int, int, int, int, int, int, int, int, int) -> int effect {rreg, wreg, escape}
+val x86_hlt : (int, int, int, int, int, int, int, int, int) -> int effect {wreg, escape, rreg}
 function x86_hlt (proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode, modr_m, sib, x86) =
 let ctx = ("X86-HLT") : string in
 let x86 = (write_iptr(proc_mode, temp_rip, 0)) : int in
 throw(Emsg("Model state error: :LEGAL-HALT"))
 
-val x86_cmc_clc_stc_cld_std : (int, int, int, int, int, int, int, int, int) -> int effect {rreg, wreg, escape}
+val x86_cmc_clc_stc_cld_std : (int, int, int, int, int, int, int, int, int) -> int effect {rreg, escape, wreg}
 function x86_cmc_clc_stc_cld_std (proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode, modr_m, sib, x86) =
 let ctx = ("X86-CMC/CLC/STC/CLD/STD") : string in
 let x86 = ((match opcode {
@@ -49,7 +49,7 @@ write_rflags(new_rflags, 0)
 let x86 = (write_iptr(proc_mode, temp_rip, 0)) : int in
 0
 
-val x86_sahf : (int, int, int, int, int, int, int, int, int) -> int effect {rreg, wreg, escape}
+val x86_sahf : (int, int, int, int, int, int, int, int, int) -> int effect {rreg, escape, wreg}
 function x86_sahf (proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode, modr_m, sib, x86) =
 let ctx = ("X86-SAHF") : string in
 let ax = (rr16(0, 0)) : int in
@@ -65,7 +65,7 @@ let x86 = (write_rflags(new_rflags, 0)) : int in
 let x86 = (write_iptr(proc_mode, temp_rip, 0)) : int in
 0
 
-val x86_lahf : (int, int, int, int, int, int, int, int, int) -> int effect {rreg, wreg, escape}
+val x86_lahf : (int, int, int, int, int, int, int, int, int) -> int effect {rreg, escape, wreg}
 function x86_lahf (proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode, modr_m, sib, x86) =
 let ctx = ("X86-LAHF") : string in
 let rflags_var = (r_rflags(0)) : int in

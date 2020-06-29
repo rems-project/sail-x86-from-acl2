@@ -11,13 +11,13 @@ val canonical_address_p : (int) -> bool effect {escape}
 function canonical_address_p (lin_addr) =
 signed_byte_p(48, lin_addr)
 
-val rvm08 : (int, int) -> (option(string), int, int) effect {rreg, rmem, escape}
+val rvm08 : (int, int) -> (option(string), int, int) effect {rreg, escape, rmem}
 function rvm08 (addr, x86) =
 if canonical_address_p(addr)
 then (None() : option(string), memi(n48(addr), 0), 0 : int)
 else (Some("rvm08"), 0 : int, 0 : int)
 
-val wvm08 : (int, int, int) -> (option(string), int) effect {rreg, wmv, eamem, escape}
+val wvm08 : (int, int, int) -> (option(string), int) effect {wmv, escape, eamem, rreg}
 function wvm08 (addr, sailval, x86) =
 if canonical_address_p(addr)
 then let x86 = (bang_memi(n48(addr), n08(sailval), 0)) : int in

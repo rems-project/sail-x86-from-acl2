@@ -1,7 +1,7 @@
 $include <prelude.sail>
 $include <string.sail>
 
-val x86_near_jmp_op_en_d : (int, int, int, int, int, int, int, int, int) -> int effect {rreg, wreg, rmem, escape}
+val x86_near_jmp_op_en_d : (int, int, int, int, int, int, int, int, int) -> int effect {rreg, escape, rmem, wreg}
 function x86_near_jmp_op_en_d (proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode, modr_m, sib, x86) =
 let ctx = ("X86-NEAR-JMP-OP/EN-D") : string in
 let byte_operand? = ((opcode) == (235)) : bool in
@@ -25,7 +25,7 @@ else temp_rip) : int in
 let x86 = (write_iptr(proc_mode, temp_rip, 0)) : int in
 0
 
-val x86_near_jmp_op_en_m : (int, int, int, int, int, int, int, int, int) -> int effect {rreg, wreg, rmem, escape}
+val x86_near_jmp_op_en_m : (int, int, int, int, int, int, int, int, int) -> int effect {rreg, escape, rmem, wreg}
 function x86_near_jmp_op_en_m (proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode, modr_m, sib, x86) =
 let ctx = ("X86-NEAR-JMP-OP/EN-M") : string in
 let r_m = (modr_m_get_r_m(modr_m)) : int in
@@ -92,7 +92,7 @@ else let x86 = (write_iptr(proc_mode, jmp_addr, 0)) : int in
  instruction at the offset specified in the call gate. No stack switch 
  occurs. The target operand specifies the far address of the call gate 
  indirectly with a memory location ( m16:16 or m16:32 or m16:64 ) .</p>*/
-val x86_far_jmp_op_en_d : (int, int, int, int, int, int, int, int, int) -> int effect {rreg, wreg, rmem, escape}
+val x86_far_jmp_op_en_d : (int, int, int, int, int, int, int, int, int) -> int effect {rreg, escape, rmem, wreg}
 function x86_far_jmp_op_en_d (proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode, modr_m, sib, x86) =
 let ctx = ("X86-FAR-JMP-OP/EN-D") : string in
 let r_m = (modr_m_get_r_m(modr_m)) : int in
@@ -271,7 +271,7 @@ let x86 = (write_iptr(proc_mode, jmp_addr, 0)) : int in
 else throw(Emsg("A fault occurred.  Original ACL2 AST:
 ['!!FAULT-FRESH', ':GP', 'SEL-INDEX', ':EITHER-BOTH-CODE-SEGMENT-OR-CALL-GATE-ARE-ABSENT-OR-SOME-OTHER-DESCRIPTOR-IS-PRESENT', ['CONS', 'REASON2', 'DESCRIPTOR']]"))
 
-val x86_loop : (int, int, int, int, int, int, int, int, int) -> int effect {rreg, wreg, rmem, escape}
+val x86_loop : (int, int, int, int, int, int, int, int, int) -> int effect {rreg, escape, rmem, wreg}
 function x86_loop (proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode, modr_m, sib, x86) =
 let ctx = ("X86-LOOP") : string in
 let badlength? = (check_instruction_length(start_rip, temp_rip, 1)) : option(int) in

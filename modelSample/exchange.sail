@@ -2,7 +2,7 @@ $include <prelude.sail>
 $include <string.sail>
 
 
-val x86_xchg : (int, int, int, int, int, int, int, int, int) -> int effect {rreg, wreg, wmv, rmem, eamem, escape}
+val x86_xchg : (int, int, int, int, int, int, int, int, int) -> int effect {rreg, wreg, eamem, escape, rmem, wmv}
 function x86_xchg (proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode, modr_m, sib, x86) =
 let ctx = ("X86-XCHG") : string in
 let r_m = (modr_m_get_r_m(modr_m)) : int in
@@ -42,7 +42,7 @@ else write_rgfi_size(reg_mem_size, reg_index(reg, rex_byte, 2), val1, rex_byte, 
 let x86 = (write_iptr(proc_mode, temp_rip, 0)) : int in
 0
 
-val x86_cmpxchg : (int, int, int, int, int, int, int, int, int) -> int effect {rreg, undef, wmv, wreg, rmem, eamem, escape}
+val x86_cmpxchg : (int, int, int, int, int, int, int, int, int) -> int effect {rreg, undef, eamem, wreg, escape, rmem, wmv}
 function x86_cmpxchg (proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode, modr_m, sib, x86) =
 let ctx = ("X86-CMPXCHG") : string in
 let r_m = (modr_m_get_r_m(modr_m)) : int in
@@ -83,7 +83,7 @@ then throw(Emsg("Model state error: :X86-OPERAND-TO-REG/MEM-ERROR"))
 else let x86 = (write_iptr(proc_mode, temp_rip, 0)) : int in
 0
 
-val x86_two_byte_nop : (int, int, int, int, int, int, int, int, int) -> int effect {rreg, wreg, rmem, escape}
+val x86_two_byte_nop : (int, int, int, int, int, int, int, int, int) -> int effect {rreg, escape, rmem, wreg}
 function x86_two_byte_nop (proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode, modr_m, sib, x86) =
 let ctx = ("X86-TWO-BYTE-NOP") : string in
 let r_m = (modr_m_get_r_m(modr_m)) : int in

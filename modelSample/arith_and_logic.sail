@@ -22,7 +22,7 @@ $include "decoding_and_spec_utils.sail"
  30, 31: XOR p z s ( o and c cleared, a undefined ) <br/> 
  38, 39: CMP c p a z s o<br/> 
  84, 85: TEST p z s ( o and c cleared, a undefined ) <br/>*/
-val x86_add_adc_sub_sbb_or_and_xor_cmp_test_e_g : (int, int, int, int, int, int, int, int, int, int) -> int effect {rreg, undef, wmv, wreg, rmem, eamem, escape}
+val x86_add_adc_sub_sbb_or_and_xor_cmp_test_e_g : (int, int, int, int, int, int, int, int, int, int) -> int effect {rreg, undef, eamem, wreg, escape, rmem, wmv}
 function x86_add_adc_sub_sbb_or_and_xor_cmp_test_e_g (operation, proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode, modr_m, sib, x86) =
 let ctx = ("X86-ADD/ADC/SUB/SBB/OR/AND/XOR/CMP/TEST-E-G") : string in
 let r_m = (modr_m_get_r_m(modr_m)) : int in
@@ -80,7 +80,7 @@ let x86 = (write_iptr(proc_mode, temp_rip, 0)) : int in
  2A, 2B: SUB c p a z s o<br/> 
  32, 33: XOR p z s ( o and c cleared, a undefined ) <br/> 
  3A, 3B: CMP c p a z s o <br/>*/
-val x86_add_adc_sub_sbb_or_and_xor_cmp_g_e : (int, int, int, int, int, int, int, int, int, int) -> int effect {rreg, wreg, undef, rmem, escape}
+val x86_add_adc_sub_sbb_or_and_xor_cmp_g_e : (int, int, int, int, int, int, int, int, int, int) -> int effect {rreg, escape, undef, wreg, rmem}
 function x86_add_adc_sub_sbb_or_and_xor_cmp_g_e (operation, proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode, modr_m, sib, x86) =
 let ctx = ("X86-ADD/ADC/SUB/SBB/OR/AND/XOR/CMP-G-E") : string in
 let r_m = (modr_m_get_r_m(modr_m)) : int in
@@ -139,7 +139,7 @@ let x86 = (write_iptr(proc_mode, temp_rip, 0)) : int in
  80-83 ( 110 ) : XOR p z s ( o and c cleared, a undefined ) <br/> 
  80-83 ( 111 ) : CMP c p a z s o<br/> 
  F6-F7 ( 000 ) : TEST p z s ( o and c cleared, a undefined ) <br/>*/
-val x86_add_adc_sub_sbb_or_and_xor_cmp_test_e_i : (int, int, int, int, int, int, int, int, int, int) -> int effect {rreg, undef, wmv, wreg, rmem, eamem, escape}
+val x86_add_adc_sub_sbb_or_and_xor_cmp_test_e_i : (int, int, int, int, int, int, int, int, int, int) -> int effect {rreg, undef, eamem, wreg, escape, rmem, wmv}
 function x86_add_adc_sub_sbb_or_and_xor_cmp_test_e_i (operation, proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode, modr_m, sib, x86) =
 let ctx = ("X86-ADD/ADC/SUB/SBB/OR/AND/XOR/CMP-TEST-E-I") : string in
 let r_m = (modr_m_get_r_m(modr_m)) : int in
@@ -205,7 +205,7 @@ let x86 = (write_iptr(proc_mode, temp_rip, 0)) : int in
  34, 35: XOR p z s ( o and c cleared, a undefined ) <br/> 
  3C, 3D: CMP c p a z s o<br/> 
  A8, A9: TEST p z s ( o and c cleared, a undefined ) <br/>*/
-val x86_add_adc_sub_sbb_or_and_xor_cmp_test_rax_i : (int, int, int, int, int, int, int, int, int, int) -> int effect {rreg, wreg, undef, rmem, escape}
+val x86_add_adc_sub_sbb_or_and_xor_cmp_test_rax_i : (int, int, int, int, int, int, int, int, int, int) -> int effect {rreg, escape, undef, wreg, rmem}
 function x86_add_adc_sub_sbb_or_and_xor_cmp_test_rax_i (operation, proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode, modr_m, sib, x86) =
 let ctx = ("X86-ADD/ADC/SUB/SBB/OR/AND/XOR/CMP-TEST-RAX-I") : string in
 let byte_operand? = ((0) == (binary_logand(1, opcode))) : bool in
@@ -241,7 +241,7 @@ let x86 = (write_user_rflags(output_rflags, undefined_flags, 0)) : int in
 let x86 = (write_iptr(proc_mode, temp_rip, 0)) : int in
 0
 
-val x86_inc_dec_fe_ff : (int, int, int, int, int, int, int, int, int) -> int effect {rreg, undef, wmv, wreg, rmem, eamem, escape}
+val x86_inc_dec_fe_ff : (int, int, int, int, int, int, int, int, int) -> int effect {rreg, undef, eamem, wreg, escape, rmem, wmv}
 function x86_inc_dec_fe_ff (proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode, modr_m, sib, x86) =
 let ctx = ("X86-INC/DEC-FE-FF") : string in
 let r_m = (modr_m_get_r_m(modr_m)) : int in
@@ -287,7 +287,7 @@ then throw(Emsg("Model state error: :X86-OPERAND-TO-REG/MEM"))
 else let x86 = (write_iptr(proc_mode, temp_rip, 0)) : int in
 0
 
-val x86_inc_dec_4x : (int, int, int, int, int, int, int, int, int) -> int effect {rreg, undef, escape, wreg}
+val x86_inc_dec_4x : (int, int, int, int, int, int, int, int, int) -> int effect {rreg, escape, undef, wreg}
 function x86_inc_dec_4x (proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode, modr_m, sib, x86) =
 let ctx = ("X86-INC/DEC-4X") : string in
 let operand_size = (select_operand_size(proc_mode, false, 0, false, prefixes, false, false, false, 0)) : int in
@@ -319,7 +319,7 @@ let x86 = (write_rgfi_size(operand_size, reg, result, 0, 0)) : int in
 let x86 = (write_iptr(proc_mode, temp_rip, 0)) : int in
 0
 
-val x86_not_neg_f6_f7 : (int, int, int, int, int, int, int, int, int) -> int effect {rreg, undef, wmv, wreg, rmem, eamem, escape}
+val x86_not_neg_f6_f7 : (int, int, int, int, int, int, int, int, int) -> int effect {rreg, undef, eamem, wreg, escape, rmem, wmv}
 function x86_not_neg_f6_f7 (proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode, modr_m, sib, x86) =
 let ctx = ("X86-NOT/NEG-F6-F7") : string in
 let r_m = (modr_m_get_r_m(modr_m)) : int in

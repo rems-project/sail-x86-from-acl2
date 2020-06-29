@@ -48,7 +48,7 @@ rflagsbits_get_of(rflags_var))),
 _ => false
 }) : bool
 
-val x86_one_byte_jcc : (int, int, int, int, int, int, int, int, int) -> int effect {rreg, wreg, rmem, escape}
+val x86_one_byte_jcc : (int, int, int, int, int, int, int, int, int) -> int effect {rreg, escape, rmem, wreg}
 function x86_one_byte_jcc (proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode, modr_m, sib, x86) =
 let ctx = ("X86-ONE-BYTE-JCC") : string in
 let badlength? = (check_instruction_length(start_rip, temp_rip, 1)) : option(int) in
@@ -71,7 +71,7 @@ then throw(Emsg("Model state error: :RIP-INCREMENT-ERROR"))
 else let x86 = (write_iptr(proc_mode, next_rip, 0)) : int in
 0
 
-val x86_two_byte_jcc : (int, int, int, int, int, int, int, int, int) -> int effect {rreg, wreg, rmem, escape}
+val x86_two_byte_jcc : (int, int, int, int, int, int, int, int, int) -> int effect {rreg, escape, rmem, wreg}
 function x86_two_byte_jcc (proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode, modr_m, sib, x86) =
 let ctx = ("X86-TWO-BYTE-JCC") : string in
 let offset_size = (select_operand_size(proc_mode, false, rex_byte, false, prefixes, false, true, true, 0)) : int in
@@ -95,7 +95,7 @@ then throw(Emsg("Model state error: :RIP-INCREMENT-ERROR"))
 else let x86 = (write_iptr(proc_mode, next_rip, 0)) : int in
 0
 
-val x86_jrcxz : (int, int, int, int, int, int, int, int, int) -> int effect {rreg, wreg, rmem, escape}
+val x86_jrcxz : (int, int, int, int, int, int, int, int, int) -> int effect {rreg, escape, rmem, wreg}
 function x86_jrcxz (proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode, modr_m, sib, x86) =
 let ctx = ("X86-JRCXZ") : string in
 let badlength? = (check_instruction_length(start_rip, temp_rip, 1)) : option(int) in
@@ -120,7 +120,7 @@ then throw(Emsg("Model state error: :RIP-INCREMENT-ERROR"))
 else let x86 = (write_iptr(proc_mode, next_rip, 0)) : int in
 0
 
-val x86_cmovcc : (int, int, int, int, int, int, int, int, int) -> int effect {rreg, wreg, rmem, escape}
+val x86_cmovcc : (int, int, int, int, int, int, int, int, int) -> int effect {rreg, escape, rmem, wreg}
 function x86_cmovcc (proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode, modr_m, sib, x86) =
 let ctx = ("X86-CMOVCC") : string in
 let r_m = (modr_m_get_r_m(modr_m)) : int in
@@ -148,7 +148,7 @@ else 0) : int in
 let x86 = (write_iptr(proc_mode, temp_rip, 0)) : int in
 0
 
-val x86_setcc : (int, int, int, int, int, int, int, int, int) -> int effect {rreg, wreg, wmv, rmem, eamem, escape}
+val x86_setcc : (int, int, int, int, int, int, int, int, int) -> int effect {rreg, wreg, eamem, escape, rmem, wmv}
 function x86_setcc (proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode, modr_m, sib, x86) =
 let ctx = ("X86-SETCC") : string in
 let r_m = (modr_m_get_r_m(modr_m)) : int in

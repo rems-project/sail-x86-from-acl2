@@ -10,7 +10,7 @@ $include <string.sail>
  <p>PUSH does not have a separate instruction semantic function, unlike other 
  opcodes like ADD, SUB, etc. The decoding is coupled with the execution in 
  this case.</p>*/
-val x86_push_general_register : (int, int, int, int, int, int, int, int, int) -> int effect {rreg, wreg, wmv, eamem, escape}
+val x86_push_general_register : (int, int, int, int, int, int, int, int, int) -> int effect {rreg, escape, eamem, wreg, wmv}
 function x86_push_general_register (proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode, modr_m, sib, x86) =
 let ctx = ("X86-PUSH-GENERAL-REGISTER") : string in
 let operand_size = (select_operand_size(proc_mode, false, rex_byte, false, prefixes, true, true, false, 0)) : int in
@@ -44,7 +44,7 @@ let x86 = (write_iptr(proc_mode, temp_rip, 0)) : int in
  
  <p>This opcode belongs to Group 5, and it has an opcode 
  extension ( ModR/m.reg = 6 ) .</p>*/
-val x86_push_ev : (int, int, int, int, int, int, int, int, int) -> int effect {rreg, wreg, wmv, rmem, eamem, escape}
+val x86_push_ev : (int, int, int, int, int, int, int, int, int) -> int effect {rreg, wreg, eamem, escape, rmem, wmv}
 function x86_push_ev (proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode, modr_m, sib, x86) =
 let ctx = ("X86-PUSH-EV") : string in
 let r_m = (modr_m_get_r_m(modr_m)) : int in
@@ -92,7 +92,7 @@ let x86 = (write_iptr(proc_mode, temp_rip, 0)) : int in
  <p>PUSH doesn ' t have a separate instruction semantic function, unlike other 
  opcodes like ADD, SUB, etc. The decoding is coupled the decoding with the 
  execution in this case.</p>*/
-val x86_push_i : (int, int, int, int, int, int, int, int, int) -> int effect {rreg, wreg, wmv, rmem, eamem, escape}
+val x86_push_i : (int, int, int, int, int, int, int, int, int) -> int effect {rreg, wreg, eamem, escape, rmem, wmv}
 function x86_push_i (proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode, modr_m, sib, x86) =
 let ctx = ("X86-PUSH-I") : string in
 let byte_imm? = ((opcode) == (106)) : bool in
@@ -147,7 +147,7 @@ let x86 = (write_iptr(proc_mode, temp_rip, 0)) : int in
  <p>PUSH doesn ' t have a separate instruction semantic function, unlike other 
  opcodes like ADD, SUB, etc. The decoding is coupled with the execution in 
  this case.</p>*/
-val x86_push_segment_register : (int, int, int, int, int, int, int, int, int) -> int effect {rreg, wreg, wmv, eamem, escape}
+val x86_push_segment_register : (int, int, int, int, int, int, int, int, int) -> int effect {rreg, escape, eamem, wreg, wmv}
 function x86_push_segment_register (proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode, modr_m, sib, x86) =
 let ctx = ("X86-PUSH-SEGMENT-REGISTER") : string in
 let operand_size = (select_operand_size(proc_mode, false, rex_byte, false, prefixes, true, true, false, 0)) : int in
@@ -182,7 +182,7 @@ let x86 = (write_iptr(proc_mode, temp_rip, 0)) : int in
  <p>POP does not have a separate instruction semantic function, unlike other 
  opcodes like ADD, SUB, etc. The decoding is coupled with the execution in 
  this case.</p>*/
-val x86_pop_general_register : (int, int, int, int, int, int, int, int, int) -> int effect {rreg, wreg, rmem, escape}
+val x86_pop_general_register : (int, int, int, int, int, int, int, int, int) -> int effect {rreg, escape, rmem, wreg}
 function x86_pop_general_register (proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode, modr_m, sib, x86) =
 let ctx = ("X86-POP-GENERAL-REGISTER") : string in
 let operand_size = (select_operand_size(proc_mode, false, rex_byte, false, prefixes, true, true, false, 0)) : int in
@@ -216,7 +216,7 @@ let x86 = (write_iptr(proc_mode, temp_rip, 0)) : int in
  
  <p>This opcode belongs to Group 1A, and it has an opcode 
  extension ( ModR/m.reg = 0 ) .</p>*/
-val x86_pop_ev : (int, int, int, int, int, int, int, int, int) -> int effect {rreg, wreg, wmv, rmem, eamem, escape}
+val x86_pop_ev : (int, int, int, int, int, int, int, int, int) -> int effect {rreg, wreg, eamem, escape, rmem, wmv}
 function x86_pop_ev (proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode, modr_m, sib, x86) =
 let ctx = ("X86-POP-EV") : string in
 let r_m = (modr_m_get_r_m(modr_m)) : int in
@@ -255,7 +255,7 @@ then throw(Emsg("Model state error: :X86-OPERAND-TO-REG/MEM"))
 else let x86 = (write_iptr(proc_mode, temp_rip, 0)) : int in
 0
 
-val x86_pushf : (int, int, int, int, int, int, int, int, int) -> int effect {rreg, wreg, wmv, eamem, escape}
+val x86_pushf : (int, int, int, int, int, int, int, int, int) -> int effect {rreg, escape, eamem, wreg, wmv}
 function x86_pushf (proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode, modr_m, sib, x86) =
 let ctx = ("X86-PUSHF") : string in
 let operand_size = (select_operand_size(proc_mode, false, rex_byte, false, prefixes, true, true, false, 0)) : int in
@@ -276,7 +276,7 @@ else let x86 = (write_sptr(proc_mode, new_rsp, 0)) : int in
 let x86 = (write_iptr(proc_mode, temp_rip, 0)) : int in
 0
 
-val x86_popf : (int, int, int, int, int, int, int, int, int) -> int effect {rreg, wreg, rmem, escape}
+val x86_popf : (int, int, int, int, int, int, int, int, int) -> int effect {rreg, escape, rmem, wreg}
 function x86_popf (proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode, modr_m, sib, x86) =
 let ctx = ("X86-POPF") : string in
 let operand_size = (select_operand_size(proc_mode, false, rex_byte, false, prefixes, true, true, false, 0)) : int in
@@ -333,7 +333,7 @@ let x86 = (write_iptr(proc_mode, temp_rip, 0)) : int in
  We use some simple and repetitive code to write the registers into the stack. 
  It may be possible to optimize it by pushing all the registers in one shot. 
  </p>*/
-val x86_pusha : (int, int, int, int, int, int, int, int, int) -> int effect {rreg, wreg, wmv, eamem, escape}
+val x86_pusha : (int, int, int, int, int, int, int, int, int) -> int effect {rreg, escape, wreg, eamem, wmv}
 function x86_pusha (proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode, modr_m, sib, x86) =
 let ctx = ("X86-PUSHA") : string in
 let operand_size = (select_operand_size(proc_mode, false, 0, false, prefixes, false, false, false, 0)) : int in
@@ -423,7 +423,7 @@ let x86 = (write_iptr(proc_mode, temp_rip, 0)) : int in
  We use some simple and repetitive code to read the registers from the stack. 
  It may be possible to optimize it by popping all the registers in one shot. 
  </p>*/
-val x86_popa : (int, int, int, int, int, int, int, int, int) -> int effect {rreg, wreg, rmem, escape}
+val x86_popa : (int, int, int, int, int, int, int, int, int) -> int effect {rreg, escape, rmem, wreg}
 function x86_popa (proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode, modr_m, sib, x86) =
 let ctx = ("X86-POPA") : string in
 let operand_size = (select_operand_size(proc_mode, false, 0, false, prefixes, false, false, false, 0)) : int in

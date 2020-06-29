@@ -2,7 +2,7 @@ $include <prelude.sail>
 $include <string.sail>
 
 
-val x86_movs : (int, int, int, int, int, int, int, int, int) -> int effect {rreg, wreg, wmv, rmem, eamem, escape}
+val x86_movs : (int, int, int, int, int, int, int, int, int) -> int effect {rreg, escape, wreg, eamem, rmem, wmv}
 function x86_movs (proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode, modr_m, sib, x86) =
 let ctx = ("X86-MOVS") : string in
 let r_m = (modr_m_get_r_m(modr_m)) : int in
@@ -87,7 +87,7 @@ _ => write_rgfi(7, dst_addr, 0)
 }) : int) : int in
 0
 
-val x86_cmps : (int, int, int, int, int, int, int, int, int) -> int effect {rreg, undef, wreg, rmem, escape}
+val x86_cmps : (int, int, int, int, int, int, int, int, int) -> int effect {rreg, escape, undef, wreg, rmem}
 function x86_cmps (proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode, modr_m, sib, x86) =
 let ctx = ("X86-CMPS") : string in
 let r_m = (modr_m_get_r_m(modr_m)) : int in
@@ -179,7 +179,7 @@ _ => write_rgfi(7, dst_addr, 0)
 }) : int) : int in
 0
 
-val x86_stos : (int, int, int, int, int, int, int, int, int) -> int effect {rreg, wreg, wmv, eamem, escape}
+val x86_stos : (int, int, int, int, int, int, int, int, int) -> int effect {rreg, escape, eamem, wreg, wmv}
 function x86_stos (proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode, modr_m, sib, x86) =
 let ctx = ("X86-STOS") : string in
 let group_1_prefix = (prefixes_get_seg(prefixes)) : int in

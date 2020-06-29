@@ -20,7 +20,7 @@ _ => unsigned(get_slice_int((127) - (64), x, 64))
 /*Shuffle packed single-precision floating-point values*/
 /*<h3>Op/En = RMI: [OP XMM, XMM/M, IMM]</h3> 
  0F C6: SHUFPS xmm1, xmm2/m128, imm8<br/>*/
-val x86_shufps_op_en_rmi : (int, int, int, int, int, int, int, int, int) -> int effect {rreg, wreg, rmem, escape}
+val x86_shufps_op_en_rmi : (int, int, int, int, int, int, int, int, int) -> int effect {rreg, escape, rmem, wreg}
 function x86_shufps_op_en_rmi (proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode, modr_m, sib, x86) =
 let ctx = ("X86-SHUFPS-OP/EN-RMI") : string in
 let r_m = (modr_m_get_r_m(modr_m)) : int in
@@ -64,7 +64,7 @@ let x86 = (write_iptr(proc_mode, temp_rip, 0)) : int in
 /*Shuffle packed double-precision floating-point values*/
 /*<h3>Op/En = RMI: [OP XMM, XMM/M, IMM]</h3> 
  66 0F C6: SHUFPD xmm1, xmm2/m128, imm8<br/>*/
-val x86_shufpd_op_en_rmi : (int, int, int, int, int, int, int, int, int) -> int effect {rreg, wreg, rmem, escape}
+val x86_shufpd_op_en_rmi : (int, int, int, int, int, int, int, int, int) -> int effect {rreg, escape, rmem, wreg}
 function x86_shufpd_op_en_rmi (proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode, modr_m, sib, x86) =
 let ctx = ("X86-SHUFPD-OP/EN-RMI") : string in
 let r_m = (modr_m_get_r_m(modr_m)) : int in
@@ -106,7 +106,7 @@ let x86 = (write_iptr(proc_mode, temp_rip, 0)) : int in
 /*<h3>Op/En = RM: [OP XMM, XMM/M]</h3> 
  0F 14: UNPCKLPS xmm1, xmm2/m128<br/> 
  0F 15: UNPCKHPS xmm1, xmm2/m128<br/>*/
-val x86_unpck?ps_op_en_rm : (int, int, int, int, int, int, int, int, int, int) -> int effect {rreg, wreg, rmem, escape}
+val x86_unpck?ps_op_en_rm : (int, int, int, int, int, int, int, int, int, int) -> int effect {rreg, escape, rmem, wreg}
 function x86_unpck?ps_op_en_rm (high_low, proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode, modr_m, sib, x86) =
 let ctx = ("X86-UNPCK?PS-OP/EN-RM") : string in
 let r_m = (modr_m_get_r_m(modr_m)) : int in
@@ -150,7 +150,7 @@ let x86 = (write_iptr(proc_mode, temp_rip, 0)) : int in
 /*<h3>Op/En = RM: [OP XMM, XMM/M]</h3> 
  66 0F 14: UNPCKLPD xmm1, xmm2/m128<br/> 
  66 0F 15: UNPCKHPD xmm1, xmm2/m128<br/>*/
-val x86_unpck?pd_op_en_rm : (int, int, int, int, int, int, int, int, int, int) -> int effect {rreg, wreg, rmem, escape}
+val x86_unpck?pd_op_en_rm : (int, int, int, int, int, int, int, int, int, int) -> int effect {rreg, escape, rmem, wreg}
 function x86_unpck?pd_op_en_rm (high_low, proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode, modr_m, sib, x86) =
 let ctx = ("X86-UNPCK?PD-OP/EN-RM") : string in
 let r_m = (modr_m_get_r_m(modr_m)) : int in

@@ -114,7 +114,7 @@ n64(rgfi(reg, 0))
  of certain instructions for certain flags. The switching from 32-bit mode 
  to 64-bit mode ( when modeled ) will set the high 32 bits of general-purpose 
  registers to undefined values.</p>*/
-val wr08 : (int, int, int, int) -> int effect {rreg, wreg, escape}
+val wr08 : (int, int, int, int) -> int effect {rreg, escape, wreg}
 function wr08 (reg, rex, byte, x86) =
 if (not_bool((rex) == (0))) | ((reg) < (4))
 then let qword = (rgfi(reg, 0)) : int in
@@ -151,7 +151,7 @@ write_rgfi(index, n64_to_i64(changeBits(unsigned(get_slice_int(64, qword, 0)), 8
  semantic functions of certain instructions for certain flags. The switching 
  from 32-bit mode to 64-bit mode ( when modeled ) will set the high 32 bits of 
  general-purpose registers to undefined values.</p>*/
-val wr16 : (int, int, int) -> int effect {rreg, wreg, escape}
+val wr16 : (int, int, int) -> int effect {rreg, escape, wreg}
 function wr16 (reg, sailval, x86) =
 let qword = (rgfi(reg, 0)) : int in
 write_rgfi(reg, n64_to_i64(changeBits(unsigned(get_slice_int(64, qword, 0)), 0, 16, sailval)), 0)
@@ -208,7 +208,7 @@ _ => 0
 
 /*Write to byte, word, doubleword, or quadword 
  general-purpose register*/
-val write_rgfi_size : (int, int, int, int, int) -> int effect {rreg, wreg, escape}
+val write_rgfi_size : (int, int, int, int, int) -> int effect {rreg, escape, wreg}
 function write_rgfi_size (nbytes, index, sailval, rex, x86) =
 (match nbytes {
 1 => wr08(index, rex, sailval, 0),
@@ -321,7 +321,7 @@ n128(zmmi(reg, 0))
 struct struct_wz32 = {
 	regtype : int
 }
-val wz32 : (int, int, int, struct_wz32) -> int effect {rreg, wreg, escape}
+val wz32 : (int, int, int, struct_wz32) -> int effect {rreg, escape, wreg}
 function wz32 (reg, sailval, x86, keywords) =
 let data = (zmmi(reg, 0)) : int in
 let regtype = ((keywords).regtype) : int in
@@ -342,7 +342,7 @@ write_zmmi(reg, changeBits(data, 0, 32, sailval), 0)
 struct struct_wz64 = {
 	regtype : int
 }
-val wz64 : (int, int, int, struct_wz64) -> int effect {rreg, wreg, escape}
+val wz64 : (int, int, int, struct_wz64) -> int effect {rreg, escape, wreg}
 function wz64 (reg, sailval, x86, keywords) =
 let data = (zmmi(reg, 0)) : int in
 let regtype = ((keywords).regtype) : int in
@@ -363,7 +363,7 @@ write_zmmi(reg, changeBits(data, 0, 64, sailval), 0)
 struct struct_wz128 = {
 	regtype : int
 }
-val wz128 : (int, int, int, struct_wz128) -> int effect {rreg, wreg, escape}
+val wz128 : (int, int, int, struct_wz128) -> int effect {rreg, escape, wreg}
 function wz128 (reg, sailval, x86, keywords) =
 let data = (zmmi(reg, 0)) : int in
 let regtype = ((keywords).regtype) : int in
@@ -417,19 +417,19 @@ rz128(reg, 0)
 
 /*Write @ ( ' val ' ) to low 32 bits of a ZMM register; upper 
  bits are preserved.*/
-val wx32 : (int, int, int) -> int effect {rreg, wreg, escape}
+val wx32 : (int, int, int) -> int effect {rreg, escape, wreg}
 function wx32 (reg, sailval, x86) =
 wz32(reg, sailval, 0, struct {regtype = 1})
 
 /*Write @ ( ' val ' ) to low 64 bits of a ZMM register; upper 
  bits are preserved.*/
-val wx64 : (int, int, int) -> int effect {rreg, wreg, escape}
+val wx64 : (int, int, int) -> int effect {rreg, escape, wreg}
 function wx64 (reg, sailval, x86) =
 wz64(reg, sailval, 0, struct {regtype = 1})
 
 /*Write @ ( ' val ' ) to low 128 bits of a ZMM register; upper 
  bits are preserved.*/
-val wx128 : (int, int, int) -> int effect {rreg, wreg, escape}
+val wx128 : (int, int, int) -> int effect {rreg, escape, wreg}
 function wx128 (reg, sailval, x86) =
 wz128(reg, sailval, 0, struct {regtype = 1})
 
@@ -444,7 +444,7 @@ _ => 0
 
 /*Write @ ( ' val ' ) to low @ ( ' nbytes ' ) of an XMM register; 
  upper bits of the ZMM register are preserved.*/
-val write_xmmi_size : (int, int, int, int) -> int effect {rreg, wreg, escape}
+val write_xmmi_size : (int, int, int, int) -> int effect {rreg, escape, wreg}
 function write_xmmi_size (nbytes, index, sailval, x86) =
 (match nbytes {
 4 => wx32(index, sailval, 0),
@@ -483,7 +483,7 @@ let (sailval, x86) = (undef_flg_logic(0)) : (int, int) in
  including undefined ones, to the x86 state*/
 /*<p>We set the undefined flags, which are indicated by 
  @ ( ' mask ' ) , to the value returned by @ ( see undef-read ) .</p>*/
-val write_user_rflags : (int, int, int) -> int effect {rreg, undef, escape, wreg}
+val write_user_rflags : (int, int, int) -> int effect {rreg, escape, undef, wreg}
 function write_user_rflags (user_flags_vector, undefined_mask, x86) =
 let user_flags_vector = (n32(user_flags_vector)) : int in
 let undefined_mask = (n32(undefined_mask)) : int in

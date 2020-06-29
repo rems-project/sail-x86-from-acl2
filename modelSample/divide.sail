@@ -10,7 +10,7 @@ $include "divide_spec.sail"
  DIV r/m16: ( DX:AX div r/m16 ) , DX := Remainder, AX := Quotient<br/> 
  DIV r/m32: ( EDX:EAX div r/m8 ) , EDX := Remainder, EAX := Quotient<br/> 
  DIV r/m64: ( RDX:RAX div r/m8 ) , RDX := Remainder, RAX := Quotient<br/></p>*/
-val x86_div : (int, int, int, int, int, int, int, int, int) -> int effect {rreg, wreg, undef, rmem, escape}
+val x86_div : (int, int, int, int, int, int, int, int, int) -> int effect {rreg, escape, undef, wreg, rmem}
 function x86_div (proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode, modr_m, sib, x86) =
 let ctx = ("X86-DIV") : string in
 let r_m = (modr_m_get_r_m(modr_m)) : int in
@@ -91,7 +91,7 @@ let x86 = (write_iptr(proc_mode, temp_rip, 0)) : int in
  IDIV r/m16: ( DX:AX div r/m16 ) , DX := Remainder, AX := Quotient <br/> 
  IDIV r/m32: ( EDX:EAX div r/m8 ) , EDX := Remainder, EAX := Quotient <br/> 
  IDIV r/m64: ( RDX:RAX div r/m8 ) , RDX := Remainder, RAX := Quotient</p>*/
-val x86_idiv : (int, int, int, int, int, int, int, int, int) -> int effect {rreg, wreg, undef, rmem, escape}
+val x86_idiv : (int, int, int, int, int, int, int, int, int) -> int effect {rreg, escape, undef, wreg, rmem}
 function x86_idiv (proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode, modr_m, sib, x86) =
 let ctx = ("X86-IDIV") : string in
 let r_m = (modr_m_get_r_m(modr_m)) : int in

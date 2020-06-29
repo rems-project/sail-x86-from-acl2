@@ -1,7 +1,7 @@
 $include <prelude.sail>
 $include <string.sail>
 
-val x86_call_e8_op_en_m : (int, int, int, int, int, int, int, int, int) -> int effect {rreg, wreg, wmv, rmem, eamem, escape}
+val x86_call_e8_op_en_m : (int, int, int, int, int, int, int, int, int) -> int effect {rreg, wreg, eamem, escape, rmem, wmv}
 function x86_call_e8_op_en_m (proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode, modr_m, sib, x86) =
 let ctx = ("X86-CALL-E8-OP/EN-M") : string in
 let offset_size = (select_operand_size(proc_mode, false, rex_byte, false, prefixes, false, true, true, 0)) : int in
@@ -35,7 +35,7 @@ else let x86 = (write_iptr(proc_mode, call_rip, 0)) : int in
 let x86 = (write_sptr(proc_mode, new_rsp, 0)) : int in
 0
 
-val x86_call_ff_2_op_en_m : (int, int, int, int, int, int, int, int, int) -> int effect {rreg, wreg, wmv, rmem, eamem, escape}
+val x86_call_ff_2_op_en_m : (int, int, int, int, int, int, int, int, int) -> int effect {rreg, wreg, eamem, escape, rmem, wmv}
 function x86_call_ff_2_op_en_m (proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode, modr_m, sib, x86) =
 let ctx = ("X86-CALL-FF/2-OP/EN-M") : string in
 let r_m = (modr_m_get_r_m(modr_m)) : int in
@@ -80,7 +80,7 @@ else let x86 = (write_iptr(proc_mode, call_rip, 0)) : int in
 let x86 = (write_sptr(proc_mode, new_rsp, 0)) : int in
 0
 
-val x86_ret : (int, int, int, int, int, int, int, int, int) -> int effect {rreg, wreg, rmem, escape}
+val x86_ret : (int, int, int, int, int, int, int, int, int) -> int effect {rreg, escape, rmem, wreg}
 function x86_ret (proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode, modr_m, sib, x86) =
 let ctx = ("X86-RET") : string in
 let rsp = (read_sptr(proc_mode, 0)) : int in
@@ -119,7 +119,7 @@ else let x86 = (write_sptr(proc_mode, new_rsp, 0)) : int in
 let x86 = (write_rip(tos, 0)) : int in
 0
 
-val x86_leave : (int, int, int, int, int, int, int, int, int) -> int effect {rreg, wreg, rmem, escape}
+val x86_leave : (int, int, int, int, int, int, int, int, int) -> int effect {rreg, escape, rmem, wreg}
 function x86_leave (proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode, modr_m, sib, x86) =
 let ctx = ("X86-LEAVE") : string in
 let operand_size = (select_operand_size(proc_mode, false, rex_byte, false, prefixes, true, true, false, 0)) : int in

@@ -11,7 +11,7 @@ $include "multiply_spec.sail"
  MUL r/m16: DX:AX := AX * r/m16<br/> 
  MUL r/m32: EDX:EAX := EAX * r/m32<br/> 
  MUL r/m64: RDX:RAX := RAX * r/m64<br/></p>*/
-val x86_mul : (int, int, int, int, int, int, int, int, int) -> int effect {rreg, wreg, undef, rmem, escape}
+val x86_mul : (int, int, int, int, int, int, int, int, int) -> int effect {rreg, escape, undef, wreg, rmem}
 function x86_mul (proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode, modr_m, sib, x86) =
 let ctx = ("X86-MUL") : string in
 let r_m = (modr_m_get_r_m(modr_m)) : int in
@@ -101,7 +101,7 @@ let x86 = (write_iptr(proc_mode, temp_rip, 0)) : int in
  IMUL r/m16: DX:AX := AX * r/m16<br/> 
  IMUL r/m32: EDX:EAX := EAX * r/m32<br/> 
  IMUL r/m64: RDX:RAX := RAX * r/m64<br/></p>*/
-val x86_imul_op_en_m : (int, int, int, int, int, int, int, int, int) -> int effect {rreg, wreg, undef, rmem, escape}
+val x86_imul_op_en_m : (int, int, int, int, int, int, int, int, int) -> int effect {rreg, escape, undef, wreg, rmem}
 function x86_imul_op_en_m (proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode, modr_m, sib, x86) =
 let ctx = ("X86-IMUL-OP/EN-M") : string in
 let r_m = (modr_m_get_r_m(modr_m)) : int in
@@ -164,7 +164,7 @@ let x86 = (write_iptr(proc_mode, temp_rip, 0)) : int in
  IMUL r16, r/m16: r16 := r16 * r/m16 <br/> 
  IMUL r32, r/m32: r32 := r32 * r/m32 <br/> 
  IMUL r64, r/m64: r64 := r64 * r/m64 <br/> </p>*/
-val x86_imul_op_en_rm : (int, int, int, int, int, int, int, int, int) -> int effect {rreg, wreg, undef, rmem, escape}
+val x86_imul_op_en_rm : (int, int, int, int, int, int, int, int, int) -> int effect {rreg, escape, undef, wreg, rmem}
 function x86_imul_op_en_rm (proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode, modr_m, sib, x86) =
 let ctx = ("X86-IMUL-OP/EN-RM") : string in
 let r_m = (modr_m_get_r_m(modr_m)) : int in
@@ -225,7 +225,7 @@ let x86 = (write_iptr(proc_mode, temp_rip, 0)) : int in
  IMUL r16, r/m16, imm16 <br/> 
  IMUL r32, r/m32, imm32 <br/> 
  IMUL r64, r/m64, imm32 <br/> </p>*/
-val x86_imul_op_en_rmi : (int, int, int, int, int, int, int, int, int) -> int effect {rreg, undef, wreg, rmem, escape}
+val x86_imul_op_en_rmi : (int, int, int, int, int, int, int, int, int) -> int effect {rreg, escape, undef, wreg, rmem}
 function x86_imul_op_en_rmi (proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode, modr_m, sib, x86) =
 let ctx = ("X86-IMUL-OP/EN-RMI") : string in
 let r_m = (modr_m_get_r_m(modr_m)) : int in

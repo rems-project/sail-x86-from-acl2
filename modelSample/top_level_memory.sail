@@ -54,7 +54,7 @@ else (binary_logand(addr, (operand_size) - (1))) == (0)
  read access is attempted on an execute-only code segment, in 32-bit 
  mode. In 64-bit mode, the R bit of the code segment descriptor is 
  ignored ( see Atmel manual, Dec ' 17, Volume 2, Section 4.8.1 ) .</p>*/
-val rme08 : (int, int, int, string, int) -> (option(string), int, int) effect {rreg, rmem, escape}
+val rme08 : (int, int, int, string, int) -> (option(string), int, int) effect {rreg, escape, rmem}
 function rme08 (proc_mode, eff_addr, seg_reg, r_x, x86) =
 if ((proc_mode) != (0)) & (((seg_reg) == (1)) & (((r_x) == (":R")) & (let attr = (loghead(16, seg_hidden_attri(seg_reg, 0))) : int in
 let r = (code_segment_descriptor_attributesbits_get_r(attr)) : int in
@@ -75,7 +75,7 @@ else rml08(lin_addr, r_x, 0)
  read access is attempted on an execute-only code segment, in 32-bit 
  mode. In 64-bit mode, the R bit of the code segment descriptor is 
  ignored ( see Atmel manual, Dec ' 17, Volume 2, Section 4.8.1 ) .</p>*/
-val rime08 : (int, int, int, string, int) -> (option(string), int, int) effect {rreg, rmem, escape}
+val rime08 : (int, int, int, string, int) -> (option(string), int, int) effect {rreg, escape, rmem}
 function rime08 (proc_mode, eff_addr, seg_reg, r_x, x86) =
 if ((proc_mode) != (0)) & (((seg_reg) == (1)) & (((r_x) == (":R")) & (let attr = (loghead(16, seg_hidden_attri(seg_reg, 0))) : int in
 let r = (code_segment_descriptor_attributesbits_get_r(attr)) : int in
@@ -96,7 +96,7 @@ else riml08(lin_addr, r_x, 0)
  read access is attempted on an execute-only code segment, in 32-bit 
  mode. In 64-bit mode, the R bit of the code segment descriptor is 
  ignored ( see Atmel manual, Dec ' 17, Volume 2, Section 4.8.1 ) .</p>*/
-val rme16 : (int, int, int, string, bool, int) -> (option(string), int, int) effect {rreg, rmem, escape}
+val rme16 : (int, int, int, string, bool, int) -> (option(string), int, int) effect {rreg, escape, rmem}
 function rme16 (proc_mode, eff_addr, seg_reg, r_x, check_alignment?, x86) =
 if ((proc_mode) != (0)) & (((seg_reg) == (1)) & (((r_x) == (":R")) & (let attr = (loghead(16, seg_hidden_attri(seg_reg, 0))) : int in
 let r = (code_segment_descriptor_attributesbits_get_r(attr)) : int in
@@ -119,7 +119,7 @@ else rml16(lin_addr, r_x, 0)
  read access is attempted on an execute-only code segment, in 32-bit 
  mode. In 64-bit mode, the R bit of the code segment descriptor is 
  ignored ( see Atmel manual, Dec ' 17, Volume 2, Section 4.8.1 ) .</p>*/
-val rime16 : (int, int, int, string, bool, int) -> (option(string), int, int) effect {rreg, rmem, escape}
+val rime16 : (int, int, int, string, bool, int) -> (option(string), int, int) effect {rreg, escape, rmem}
 function rime16 (proc_mode, eff_addr, seg_reg, r_x, check_alignment?, x86) =
 if ((proc_mode) != (0)) & (((seg_reg) == (1)) & (((r_x) == (":R")) & (let attr = (loghead(16, seg_hidden_attri(seg_reg, 0))) : int in
 let r = (code_segment_descriptor_attributesbits_get_r(attr)) : int in
@@ -145,7 +145,7 @@ else riml16(lin_addr, r_x, 0)
 struct struct_rme32 = {
 	mem_ptr? : bool
 }
-val rme32 : (int, int, int, string, bool, int, struct_rme32) -> (option(string), int, int) effect {rreg, rmem, escape}
+val rme32 : (int, int, int, string, bool, int, struct_rme32) -> (option(string), int, int) effect {rreg, escape, rmem}
 function rme32 (proc_mode, eff_addr, seg_reg, r_x, check_alignment?, x86, keywords) =
 if ((proc_mode) != (0)) & (((seg_reg) == (1)) & (((r_x) == (":R")) & (let attr = (loghead(16, seg_hidden_attri(seg_reg, 0))) : int in
 let r = (code_segment_descriptor_attributesbits_get_r(attr)) : int in
@@ -171,7 +171,7 @@ else rml32(lin_addr, r_x, 0)
 struct struct_rime32 = {
 	mem_ptr? : bool
 }
-val rime32 : (int, int, int, string, bool, int, struct_rime32) -> (option(string), int, int) effect {rreg, rmem, escape}
+val rime32 : (int, int, int, string, bool, int, struct_rime32) -> (option(string), int, int) effect {rreg, escape, rmem}
 function rime32 (proc_mode, eff_addr, seg_reg, r_x, check_alignment?, x86, keywords) =
 if ((proc_mode) != (0)) & (((seg_reg) == (1)) & (((r_x) == (":R")) & (let attr = (loghead(16, seg_hidden_attri(seg_reg, 0))) : int in
 let r = (code_segment_descriptor_attributesbits_get_r(attr)) : int in
@@ -194,7 +194,7 @@ else riml32(lin_addr, r_x, 0)
  read access is attempted on an execute-only code segment, in 32-bit 
  mode. In 64-bit mode, the R bit of the code segment descriptor is 
  ignored ( see Atmel manual, Dec ' 17, Volume 2, Section 4.8.1 ) .</p>*/
-val rme48 : (int, int, int, string, bool, int) -> (option(string), int, int) effect {rreg, rmem, escape}
+val rme48 : (int, int, int, string, bool, int) -> (option(string), int, int) effect {rreg, escape, rmem}
 function rme48 (proc_mode, eff_addr, seg_reg, r_x, check_alignment?, x86) =
 if ((proc_mode) != (0)) & (((seg_reg) == (1)) & (((r_x) == (":R")) & (let attr = (loghead(16, seg_hidden_attri(seg_reg, 0))) : int in
 let r = (code_segment_descriptor_attributesbits_get_r(attr)) : int in
@@ -217,7 +217,7 @@ else rml48(lin_addr, r_x, 0)
  read access is attempted on an execute-only code segment, in 32-bit 
  mode. In 64-bit mode, the R bit of the code segment descriptor is 
  ignored ( see Atmel manual, Dec ' 17, Volume 2, Section 4.8.1 ) .</p>*/
-val rme64 : (int, int, int, string, bool, int) -> (option(string), int, int) effect {rreg, rmem, escape}
+val rme64 : (int, int, int, string, bool, int) -> (option(string), int, int) effect {rreg, escape, rmem}
 function rme64 (proc_mode, eff_addr, seg_reg, r_x, check_alignment?, x86) =
 if ((proc_mode) != (0)) & (((seg_reg) == (1)) & (((r_x) == (":R")) & (let attr = (loghead(16, seg_hidden_attri(seg_reg, 0))) : int in
 let r = (code_segment_descriptor_attributesbits_get_r(attr)) : int in
@@ -240,7 +240,7 @@ else rml64(lin_addr, r_x, 0)
  read access is attempted on an execute-only code segment, in 32-bit 
  mode. In 64-bit mode, the R bit of the code segment descriptor is 
  ignored ( see Atmel manual, Dec ' 17, Volume 2, Section 4.8.1 ) .</p>*/
-val rime64 : (int, int, int, string, bool, int) -> (option(string), int, int) effect {rreg, rmem, escape}
+val rime64 : (int, int, int, string, bool, int) -> (option(string), int, int) effect {rreg, escape, rmem}
 function rime64 (proc_mode, eff_addr, seg_reg, r_x, check_alignment?, x86) =
 if ((proc_mode) != (0)) & (((seg_reg) == (1)) & (((r_x) == (":R")) & (let attr = (loghead(16, seg_hidden_attri(seg_reg, 0))) : int in
 let r = (code_segment_descriptor_attributesbits_get_r(attr)) : int in
@@ -263,7 +263,7 @@ else riml64(lin_addr, r_x, 0)
  read access is attempted on an execute-only code segment, in 32-bit 
  mode. In 64-bit mode, the R bit of the code segment descriptor is 
  ignored ( see Atmel manual, Dec ' 17, Volume 2, Section 4.8.1 ) .</p>*/
-val rme80 : (int, int, int, string, bool, int) -> (option(string), int, int) effect {rreg, rmem, escape}
+val rme80 : (int, int, int, string, bool, int) -> (option(string), int, int) effect {rreg, escape, rmem}
 function rme80 (proc_mode, eff_addr, seg_reg, r_x, check_alignment?, x86) =
 if ((proc_mode) != (0)) & (((seg_reg) == (1)) & (((r_x) == (":R")) & (let attr = (loghead(16, seg_hidden_attri(seg_reg, 0))) : int in
 let r = (code_segment_descriptor_attributesbits_get_r(attr)) : int in
@@ -286,7 +286,7 @@ else rml80(lin_addr, r_x, 0)
  read access is attempted on an execute-only code segment, in 32-bit 
  mode. In 64-bit mode, the R bit of the code segment descriptor is 
  ignored ( see Atmel manual, Dec ' 17, Volume 2, Section 4.8.1 ) .</p>*/
-val rme128 : (int, int, int, string, bool, int) -> (option(string), int, int) effect {rreg, rmem, escape}
+val rme128 : (int, int, int, string, bool, int) -> (option(string), int, int) effect {rreg, escape, rmem}
 function rme128 (proc_mode, eff_addr, seg_reg, r_x, check_alignment?, x86) =
 if ((proc_mode) != (0)) & (((seg_reg) == (1)) & (((r_x) == (":R")) & (let attr = (loghead(16, seg_hidden_attri(seg_reg, 0))) : int in
 let r = (code_segment_descriptor_attributesbits_get_r(attr)) : int in
@@ -312,7 +312,7 @@ else rml128(lin_addr, r_x, 0)
 struct struct_rme_size = {
 	mem_ptr? : bool
 }
-val rme_size : (int, int, int, int, string, bool, int, struct_rme_size) -> (option(string), int, int) effect {rreg, rmem, escape}
+val rme_size : (int, int, int, int, string, bool, int, struct_rme_size) -> (option(string), int, int) effect {rreg, escape, rmem}
 function rme_size (proc_mode, nbytes, eff_addr, seg_reg, r_x, check_alignment?, x86, keywords) =
 if ((proc_mode) != (0)) & (((seg_reg) == (1)) & (((r_x) == (":R")) & (let attr = (loghead(16, seg_hidden_attri(seg_reg, 0))) : int in
 let r = (code_segment_descriptor_attributesbits_get_r(attr)) : int in
@@ -338,7 +338,7 @@ else rml_size(nbytes, lin_addr, r_x, 0)
 struct struct_rime_size = {
 	mem_ptr? : bool
 }
-val rime_size : (int, int, int, int, string, bool, int, struct_rime_size) -> (option(string), int, int) effect {rreg, rmem, escape}
+val rime_size : (int, int, int, int, string, bool, int, struct_rime_size) -> (option(string), int, int) effect {rreg, escape, rmem}
 function rime_size (proc_mode, nbytes, eff_addr, seg_reg, r_x, check_alignment?, x86, keywords) =
 if ((proc_mode) != (0)) & (((seg_reg) == (1)) & (((r_x) == (":R")) & (let attr = (loghead(16, seg_hidden_attri(seg_reg, 0))) : int in
 let r = (code_segment_descriptor_attributesbits_get_r(attr)) : int in
@@ -366,7 +366,7 @@ else riml_size(nbytes, lin_addr, r_x, 0)
  analogy, we allow write access to the code segment as well. 
  These checks may be slightly optimized using the invariant that 
  SS.W must be 1 when SS is loaded.</p>*/
-val wme08 : (int, int, int, int, int) -> (option(string), int) effect {rreg, wmv, eamem, escape}
+val wme08 : (int, int, int, int, int) -> (option(string), int) effect {rreg, escape, eamem, wmv}
 function wme08 (proc_mode, eff_addr, seg_reg, sailval, x86) =
 if ((proc_mode) != (0)) & (((seg_reg) == (1)) | (let attr = (loghead(16, seg_hidden_attri(seg_reg, 0))) : int in
 let w = (data_segment_descriptor_attributesbits_get_w(attr)) : int in
@@ -392,7 +392,7 @@ else wml08(lin_addr, sailval, 0)
  analogy, we allow write access to the code segment as well. 
  These checks may be slightly optimized using the invariant that 
  SS.W must be 1 when SS is loaded.</p>*/
-val wime08 : (int, int, int, int, int) -> (option(string), int) effect {rreg, wmv, eamem, escape}
+val wime08 : (int, int, int, int, int) -> (option(string), int) effect {rreg, escape, eamem, wmv}
 function wime08 (proc_mode, eff_addr, seg_reg, sailval, x86) =
 if ((proc_mode) != (0)) & (((seg_reg) == (1)) | (let attr = (loghead(16, seg_hidden_attri(seg_reg, 0))) : int in
 let w = (data_segment_descriptor_attributesbits_get_w(attr)) : int in
@@ -418,7 +418,7 @@ else wiml08(lin_addr, sailval, 0)
  analogy, we allow write access to the code segment as well. 
  These checks may be slightly optimized using the invariant that 
  SS.W must be 1 when SS is loaded.</p>*/
-val wme16 : (int, int, int, int, bool, int) -> (option(string), int) effect {rreg, wmv, eamem, escape}
+val wme16 : (int, int, int, int, bool, int) -> (option(string), int) effect {rreg, escape, eamem, wmv}
 function wme16 (proc_mode, eff_addr, seg_reg, sailval, check_alignment?, x86) =
 if ((proc_mode) != (0)) & (((seg_reg) == (1)) | (let attr = (loghead(16, seg_hidden_attri(seg_reg, 0))) : int in
 let w = (data_segment_descriptor_attributesbits_get_w(attr)) : int in
@@ -446,7 +446,7 @@ else wml16(lin_addr, sailval, 0)
  analogy, we allow write access to the code segment as well. 
  These checks may be slightly optimized using the invariant that 
  SS.W must be 1 when SS is loaded.</p>*/
-val wime16 : (int, int, int, int, bool, int) -> (option(string), int) effect {rreg, wmv, eamem, escape}
+val wime16 : (int, int, int, int, bool, int) -> (option(string), int) effect {rreg, escape, eamem, wmv}
 function wime16 (proc_mode, eff_addr, seg_reg, sailval, check_alignment?, x86) =
 if ((proc_mode) != (0)) & (((seg_reg) == (1)) | (let attr = (loghead(16, seg_hidden_attri(seg_reg, 0))) : int in
 let w = (data_segment_descriptor_attributesbits_get_w(attr)) : int in
@@ -477,7 +477,7 @@ else wiml16(lin_addr, sailval, 0)
 struct struct_wme32 = {
 	mem_ptr? : bool
 }
-val wme32 : (int, int, int, int, bool, int, struct_wme32) -> (option(string), int) effect {rreg, wmv, eamem, escape}
+val wme32 : (int, int, int, int, bool, int, struct_wme32) -> (option(string), int) effect {rreg, escape, eamem, wmv}
 function wme32 (proc_mode, eff_addr, seg_reg, sailval, check_alignment?, x86, keywords) =
 if ((proc_mode) != (0)) & (((seg_reg) == (1)) | (let attr = (loghead(16, seg_hidden_attri(seg_reg, 0))) : int in
 let w = (data_segment_descriptor_attributesbits_get_w(attr)) : int in
@@ -508,7 +508,7 @@ else wml32(lin_addr, sailval, 0)
 struct struct_wime32 = {
 	mem_ptr? : bool
 }
-val wime32 : (int, int, int, int, bool, int, struct_wime32) -> (option(string), int) effect {rreg, wmv, eamem, escape}
+val wime32 : (int, int, int, int, bool, int, struct_wime32) -> (option(string), int) effect {rreg, escape, eamem, wmv}
 function wime32 (proc_mode, eff_addr, seg_reg, sailval, check_alignment?, x86, keywords) =
 if ((proc_mode) != (0)) & (((seg_reg) == (1)) | (let attr = (loghead(16, seg_hidden_attri(seg_reg, 0))) : int in
 let w = (data_segment_descriptor_attributesbits_get_w(attr)) : int in
@@ -536,7 +536,7 @@ else wiml32(lin_addr, sailval, 0)
  analogy, we allow write access to the code segment as well. 
  These checks may be slightly optimized using the invariant that 
  SS.W must be 1 when SS is loaded.</p>*/
-val wme48 : (int, int, int, int, bool, int) -> (option(string), int) effect {rreg, wmv, eamem, escape}
+val wme48 : (int, int, int, int, bool, int) -> (option(string), int) effect {rreg, escape, eamem, wmv}
 function wme48 (proc_mode, eff_addr, seg_reg, sailval, check_alignment?, x86) =
 if ((proc_mode) != (0)) & (((seg_reg) == (1)) | (let attr = (loghead(16, seg_hidden_attri(seg_reg, 0))) : int in
 let w = (data_segment_descriptor_attributesbits_get_w(attr)) : int in
@@ -564,7 +564,7 @@ else wml48(lin_addr, sailval, 0)
  analogy, we allow write access to the code segment as well. 
  These checks may be slightly optimized using the invariant that 
  SS.W must be 1 when SS is loaded.</p>*/
-val wme64 : (int, int, int, int, bool, int) -> (option(string), int) effect {rreg, wmv, eamem, escape}
+val wme64 : (int, int, int, int, bool, int) -> (option(string), int) effect {rreg, escape, eamem, wmv}
 function wme64 (proc_mode, eff_addr, seg_reg, sailval, check_alignment?, x86) =
 if ((proc_mode) != (0)) & (((seg_reg) == (1)) | (let attr = (loghead(16, seg_hidden_attri(seg_reg, 0))) : int in
 let w = (data_segment_descriptor_attributesbits_get_w(attr)) : int in
@@ -592,7 +592,7 @@ else wml64(lin_addr, sailval, 0)
  analogy, we allow write access to the code segment as well. 
  These checks may be slightly optimized using the invariant that 
  SS.W must be 1 when SS is loaded.</p>*/
-val wime64 : (int, int, int, int, bool, int) -> (option(string), int) effect {rreg, wmv, eamem, escape}
+val wime64 : (int, int, int, int, bool, int) -> (option(string), int) effect {rreg, escape, eamem, wmv}
 function wime64 (proc_mode, eff_addr, seg_reg, sailval, check_alignment?, x86) =
 if ((proc_mode) != (0)) & (((seg_reg) == (1)) | (let attr = (loghead(16, seg_hidden_attri(seg_reg, 0))) : int in
 let w = (data_segment_descriptor_attributesbits_get_w(attr)) : int in
@@ -620,7 +620,7 @@ else wiml64(lin_addr, sailval, 0)
  analogy, we allow write access to the code segment as well. 
  These checks may be slightly optimized using the invariant that 
  SS.W must be 1 when SS is loaded.</p>*/
-val wme80 : (int, int, int, int, bool, int) -> (option(string), int) effect {rreg, wmv, eamem, escape}
+val wme80 : (int, int, int, int, bool, int) -> (option(string), int) effect {rreg, escape, eamem, wmv}
 function wme80 (proc_mode, eff_addr, seg_reg, sailval, check_alignment?, x86) =
 if ((proc_mode) != (0)) & (((seg_reg) == (1)) | (let attr = (loghead(16, seg_hidden_attri(seg_reg, 0))) : int in
 let w = (data_segment_descriptor_attributesbits_get_w(attr)) : int in
@@ -648,7 +648,7 @@ else wml80(lin_addr, sailval, 0)
  analogy, we allow write access to the code segment as well. 
  These checks may be slightly optimized using the invariant that 
  SS.W must be 1 when SS is loaded.</p>*/
-val wme128 : (int, int, int, int, bool, int) -> (option(string), int) effect {rreg, wmv, eamem, escape}
+val wme128 : (int, int, int, int, bool, int) -> (option(string), int) effect {rreg, escape, eamem, wmv}
 function wme128 (proc_mode, eff_addr, seg_reg, sailval, check_alignment?, x86) =
 if ((proc_mode) != (0)) & (((seg_reg) == (1)) | (let attr = (loghead(16, seg_hidden_attri(seg_reg, 0))) : int in
 let w = (data_segment_descriptor_attributesbits_get_w(attr)) : int in
@@ -679,7 +679,7 @@ else wml128(lin_addr, sailval, 0)
 struct struct_wme_size = {
 	mem_ptr? : bool
 }
-val wme_size : (int, int, int, int, int, bool, int, struct_wme_size) -> (option(string), int) effect {rreg, wmv, eamem, escape}
+val wme_size : (int, int, int, int, int, bool, int, struct_wme_size) -> (option(string), int) effect {rreg, escape, eamem, wmv}
 function wme_size (proc_mode, nbytes, eff_addr, seg_reg, sailval, check_alignment?, x86, keywords) =
 if ((proc_mode) != (0)) & (((seg_reg) == (1)) | (let attr = (loghead(16, seg_hidden_attri(seg_reg, 0))) : int in
 let w = (data_segment_descriptor_attributesbits_get_w(attr)) : int in
@@ -710,7 +710,7 @@ else wml_size(nbytes, lin_addr, sailval, 0)
 struct struct_wime_size = {
 	mem_ptr? : bool
 }
-val wime_size : (int, int, int, int, int, bool, int, struct_wime_size) -> (option(string), int) effect {rreg, wmv, eamem, escape}
+val wime_size : (int, int, int, int, int, bool, int, struct_wime_size) -> (option(string), int) effect {rreg, escape, eamem, wmv}
 function wime_size (proc_mode, nbytes, eff_addr, seg_reg, sailval, check_alignment?, x86, keywords) =
 if ((proc_mode) != (0)) & (((seg_reg) == (1)) | (let attr = (loghead(16, seg_hidden_attri(seg_reg, 0))) : int in
 let w = (data_segment_descriptor_attributesbits_get_w(attr)) : int in
