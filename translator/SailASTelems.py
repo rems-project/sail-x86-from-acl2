@@ -154,8 +154,9 @@ class SailFn(SailASTelem):
 		sanitisedName = utils.sanitiseSymbol(self.name)
 
 		# Only construct an effects string if there are any effects
+		# Print effects in order to help with version control
 		if len(self.getEffects([])) != 0:
-			effectsInner = ", ".join(self.getEffects([]))
+			effectsInner = ", ".join(sorted(self.getEffects([])))
 			effectsString = f" effect {{{effectsInner}}}"
 		else:
 			effectsString = ""
