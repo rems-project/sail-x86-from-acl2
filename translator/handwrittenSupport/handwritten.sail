@@ -1,6 +1,6 @@
 /*-----------------------------------------------------------------*/
-This file contains the handwritten functions for the ACL2
-translation.
+// This file contains the handwritten functions for the ACL2
+// translation.
 /*-----------------------------------------------------------------*/
 
 $ifndef _DEFAULT_DEC
