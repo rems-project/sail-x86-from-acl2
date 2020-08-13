@@ -96,7 +96,7 @@ def dispatch_creator(ACL2ast, env):
 	"""
 	if env.getFile() in ['x86', 'two-byte-opcodes-dispatch'] and isinstance(ACL2ast, list) and \
 			isinstance(ACL2ast[0], str) and ACL2ast[0].lower() == 'make-event':
-		env.evalACL2(['include-book', '"dispatch-creator"'])
+		env.evalACL2(['include-book', '"projects/x86isa/machine/dispatch-creator"', ':dir', ':system'])
 		sailAST, env, _ = specialTokens.tr_make_event(ACL2ast, env)
 
 		return True, sailAST, env
