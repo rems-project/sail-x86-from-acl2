@@ -29,7 +29,7 @@ $include "register_readers_and_writers.sail"
  but the IA32_EFER register consists of 12 bits. 
  So we use @ ( tsee n12 ) to make @ ( ' ia32_eferBits ' ) functions applicable. 
  </p>*/
-val n64_bit_modep : (int) -> bool effect {rreg, escape}
+val n64_bit_modep : (int) -> bool effect {escape, rreg}
 function n64_bit_modep (x86) =
 let ia32_efer = (n12(msri(0, 0))) : int in
 let ia32_efer_lma = (ia32_eferbits_get_lma(ia32_efer)) : int in
@@ -40,7 +40,7 @@ let cs_l = (code_segment_descriptor_attributesbits_get_l(cs_attr)) : int in
 /*Returns the current mode of operation of the x86 machine*/
 /*<p>We only support 64-bit, Compatibility, and 32-bit Protected Modes 
  for now.</p>*/
-val x86_operation_mode : (int) -> int effect {rreg, escape}
+val x86_operation_mode : (int) -> int effect {escape, rreg}
 function x86_operation_mode (x86) =
 if n64_bit_modep(0)
 then 0

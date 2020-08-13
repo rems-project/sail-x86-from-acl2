@@ -1,6 +1,6 @@
 $include <prelude.sail>
 $include <string.sail>
-val chk_exc_fn : (string, string, list(string), int, int, int, int, int, int, int) -> option(string) effect {rreg, escape}
+val chk_exc_fn : (string, string, list(string), int, int, int, int, int, int, int) -> option(string) effect {escape, rreg}
 function chk_exc_fn (decode_context, type_id, feature_flags, proc_mode, prefixes, rex_byte, opcode, modr_m, sib, x86) =
 if ((decode_context) == (":VEX")) & ((((243) == (prefixes_get_rep(prefixes))) | ((242) == (prefixes_get_rep(prefixes)))) | (((102) == (prefixes_get_opr(prefixes))) | ((not_bool((rex_byte) == (0))) | (not_bool(((proc_mode) == (0)) | (((proc_mode) == (1)) | ((proc_mode) == (2))))))))
 then Some(":ud")

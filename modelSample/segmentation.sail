@@ -75,7 +75,7 @@ $include "linear_memory.sail"
  this function returns 0 as the upper bound; 
  the caller must ignore this result in 64-bit mode. 
  </p>*/
-val segment_base_and_bounds : (int, int, int) -> (int, int, int) effect {rreg, escape}
+val segment_base_and_bounds : (int, int, int) -> (int, int, int) effect {escape, rreg}
 function segment_base_and_bounds (proc_mode, seg_reg, x86) =
 (match proc_mode {
 0 => if (seg_reg) == (4)
@@ -233,7 +233,7 @@ _ => (0 : int, 0 : int, 0 : int)
  The null segment selector check is skipped in 64-bit mode 
  ( see Intel manual, May ' 18, Volume 3, Section 5.4.1.1 ) . 
  </p>*/
-val ea_to_la : (int, int, int, int, int) -> (option(string), int) effect {rreg, escape}
+val ea_to_la : (int, int, int, int, int) -> (option(string), int) effect {escape, rreg}
 function ea_to_la (proc_mode, eff_addr, seg_reg, nbytes, x86) =
 (match proc_mode {
 0 => let lin_addr = (if ((seg_reg) == (4)) | ((seg_reg) == (5))

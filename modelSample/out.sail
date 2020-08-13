@@ -90,7 +90,7 @@ $include "two_byte_opcodes_dispatch.sail"
  @ ( ' :num-prefixes ' ) field includes a count of the REX prefixes encountered. 
  This is because adding an 8-bit field to the prefixes structure to store a 
  REX byte will make it a bignum, thereby impacting execution efficiency.</p>*/
-val get_prefixes : (int, int, int, int, int, int) -> (option(string), int, int, int) effect {rreg, escape, rmem}
+val get_prefixes : (int, int, int, int, int, int) -> (option(string), int, int, int) effect {escape, rmem, rreg}
 function get_prefixes (proc_mode, start_rip, prefixes, rex_byte, cnt, x86) =
 if (cnt) == (0)
 then (Some("This error was 't' in ACL2 but a Some(string) in Sail"), prefixes, rex_byte, 0 : int)
@@ -135,7 +135,7 @@ _ => (Some("This error was 't' in ACL2 but a Some(string) in Sail"), prefixes, r
 /*Top-level dispatch function.*/
 /*<p>@ ( ' one-byte-opcode-execute ' ) is the doorway to all the opcode 
  maps ( for non-AVX/AVX512 instructions ) .</p>*/
-val one_byte_opcode_execute : (int, int, int, int, int, int, int, int, int) -> int effect {rreg, undef, eamem, wreg, escape, rmem, wmv}
+val one_byte_opcode_execute : (int, int, int, int, int, int, int, int, int) -> int effect {eamem, escape, rmem, rreg, undef, wmv, wreg}
 function one_byte_opcode_execute (proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode, modr_m, sib, x86) =
 (match opcode {
 0 => let fault_var = (if ((modr_m_get_mod(modr_m)) == (3)) & ((240) == (prefixes_get_lck(prefixes)))
@@ -3974,7 +3974,7 @@ _ => throw(Emsg("Translation error: invalid one-byte opcode"))
  interpreter. It fetches one instruction by looking up the memory address 
  indicated by the instruction pointer @ ( ' rip ' ) , decodes that instruction, and 
  dispatches control to the appropriate instruction semantic function.</p>*/
-val x86_fetch_decode_execute : (int) -> int effect {rreg, undef, eamem, wreg, escape, rmem, wmv}
+val x86_fetch_decode_execute : (int) -> int effect {eamem, escape, rmem, rreg, undef, wmv, wreg}
 function x86_fetch_decode_execute (x86) =
 let ctx = ("x86-fetch-decode-execute") : string in
 if (ms(0)) | (fault(0))

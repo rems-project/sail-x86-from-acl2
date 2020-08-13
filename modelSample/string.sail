@@ -2,7 +2,7 @@ $include <prelude.sail>
 $include <string.sail>
 
 
-val x86_movs : (int, int, int, int, int, int, int, int, int) -> int effect {rreg, escape, wreg, eamem, rmem, wmv}
+val x86_movs : (int, int, int, int, int, int, int, int, int) -> int effect {eamem, escape, rmem, rreg, wmv, wreg}
 function x86_movs (proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode, modr_m, sib, x86) =
 let ctx = ("X86-MOVS") : string in
 let r_m = (modr_m_get_r_m(modr_m)) : int in
@@ -87,7 +87,7 @@ _ => write_rgfi(7, dst_addr, 0)
 }) : int) : int in
 0
 
-val x86_cmps : (int, int, int, int, int, int, int, int, int) -> int effect {rreg, escape, undef, wreg, rmem}
+val x86_cmps : (int, int, int, int, int, int, int, int, int) -> int effect {escape, rmem, rreg, undef, wreg}
 function x86_cmps (proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode, modr_m, sib, x86) =
 let ctx = ("X86-CMPS") : string in
 let r_m = (modr_m_get_r_m(modr_m)) : int in
@@ -179,7 +179,7 @@ _ => write_rgfi(7, dst_addr, 0)
 }) : int) : int in
 0
 
-val x86_stos : (int, int, int, int, int, int, int, int, int) -> int effect {rreg, escape, eamem, wreg, wmv}
+val x86_stos : (int, int, int, int, int, int, int, int, int) -> int effect {eamem, escape, rreg, wmv, wreg}
 function x86_stos (proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode, modr_m, sib, x86) =
 let ctx = ("X86-STOS") : string in
 let group_1_prefix = (prefixes_get_seg(prefixes)) : int in
@@ -199,9 +199,9 @@ if (not_bool(counter_addr_size_2_4?)) & (not_bool(canonical_address_p(dst_addr))
 then throw(Emsg("Model state error: :DST-ADDR-NOT-CANONICAL"))
 else let select_byte_operand = ((170) == (opcode)) : bool in
 let operand_size = (select_operand_size(proc_mode, select_byte_operand, rex_byte, false, prefixes, false, false, false, 0)) : int in
-let rax = (rgfi_size(operand_size, 0, rex_byte, 0)) : int in
+let rax_var = (rgfi_size(operand_size, 0, rex_byte, 0)) : int in
 let inst_ac? = (alignment_checking_enabled_p(0)) : bool in
-let (flg0, x86) = (wme_size(proc_mode, operand_size, dst_addr, 0, rax, inst_ac?, 0, struct {mem_ptr? = false})) : (option(string), int) in
+let (flg0, x86) = (wme_size(proc_mode, operand_size, dst_addr, 0, rax_var, inst_ac?, 0, struct {mem_ptr? = false})) : (option(string), int) in
 if is_some(flg0)
 then throw(Emsg("Model state error: :WME-SIZE-ERROR"))
 else let dst_addr = ((match operand_size {

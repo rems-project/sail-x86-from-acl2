@@ -1,7 +1,7 @@
 $include <prelude.sail>
 $include <string.sail>
 
-val x86_call_e8_op_en_m : (int, int, int, int, int, int, int, int, int) -> int effect {rreg, wreg, eamem, escape, rmem, wmv}
+val x86_call_e8_op_en_m : (int, int, int, int, int, int, int, int, int) -> int effect {eamem, escape, rmem, rreg, wmv, wreg}
 function x86_call_e8_op_en_m (proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode, modr_m, sib, x86) =
 let ctx = ("X86-CALL-E8-OP/EN-M") : string in
 let offset_size = (select_operand_size(proc_mode, false, rex_byte, false, prefixes, false, true, true, 0)) : int in
@@ -18,9 +18,9 @@ then throw(Emsg("A fault occurred.  Original ACL2 AST:
 else let (flg, call_rip) = (add_to_iptr(proc_mode, next_rip, rel16_32, 0)) : (option(string), int) in
 if is_some(flg)
 then throw(Emsg("Model state error: :CALL-RIP-INVALID"))
-else let rsp = (read_sptr(proc_mode, 0)) : int in
+else let rsp_var = (read_sptr(proc_mode, 0)) : int in
 let addr_size = (select_address_size(proc_mode, false, 0)) : int in
-let (flg, new_rsp) = (add_to_sptr(proc_mode, rsp, negate(addr_size), 0)) : (option(string), int) in
+let (flg, new_rsp) = (add_to_sptr(proc_mode, rsp_var, negate(addr_size), 0)) : (option(string), int) in
 if is_some(flg)
 then throw(Emsg("A fault occurred.  Original ACL2 AST:
 ['!!FAULT-FRESH', ':SS', '0', ':CALL', 'FLG']"))
@@ -35,7 +35,7 @@ else let x86 = (write_iptr(proc_mode, call_rip, 0)) : int in
 let x86 = (write_sptr(proc_mode, new_rsp, 0)) : int in
 0
 
-val x86_call_ff_2_op_en_m : (int, int, int, int, int, int, int, int, int) -> int effect {rreg, wreg, eamem, escape, rmem, wmv}
+val x86_call_ff_2_op_en_m : (int, int, int, int, int, int, int, int, int) -> int effect {eamem, escape, rmem, rreg, wmv, wreg}
 function x86_call_ff_2_op_en_m (proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode, modr_m, sib, x86) =
 let ctx = ("X86-CALL-FF/2-OP/EN-M") : string in
 let r_m = (modr_m_get_r_m(modr_m)) : int in
@@ -64,36 +64,36 @@ then canonical_address_p(call_rip)
 else ((0) <= (call_rip)) & ((call_rip) <= (seg_hidden_limiti(1, 0))))
 then throw(Emsg("A fault occurred.  Original ACL2 AST:
 ['!!FAULT-FRESH', ':GP', '0', ':BAD-RETURN-ADDRESS', 'CALL-RIP']"))
-else let rsp = (read_sptr(proc_mode, 0)) : int in
+else let rsp_var = (read_sptr(proc_mode, 0)) : int in
 let addr_size = (select_address_size(proc_mode, false, 0)) : int in
-let (flg, new_rsp) = (add_to_sptr(proc_mode, rsp, negate(addr_size), 0)) : (option(string), int) in
+let (flg, new_rsp) = (add_to_sptr(proc_mode, rsp_var, negate(addr_size), 0)) : (option(string), int) in
 if is_some(flg)
 then throw(Emsg("A fault occurred.  Original ACL2 AST:
 ['!!FAULT-FRESH', ':SS', '0', ':CALL', 'FLG']"))
 else let check_alignment? = (alignment_checking_enabled_p(0)) : bool in
 let (flg, x86) = (if (operand_size) == (8)
-then wime_size(proc_mode, operand_size, rsp, 2, call_rip, check_alignment?, 0, struct {mem_ptr? = false})
-else wme_size(proc_mode, operand_size, rsp, 2, call_rip, check_alignment?, 0, struct {mem_ptr? = false})) : (option(string), int) in
+then wime_size(proc_mode, operand_size, rsp_var, 2, call_rip, check_alignment?, 0, struct {mem_ptr? = false})
+else wme_size(proc_mode, operand_size, rsp_var, 2, call_rip, check_alignment?, 0, struct {mem_ptr? = false})) : (option(string), int) in
 if is_some(flg)
 then throw(Emsg("Model state error: :STACK-WRITING-ERROR"))
 else let x86 = (write_iptr(proc_mode, call_rip, 0)) : int in
 let x86 = (write_sptr(proc_mode, new_rsp, 0)) : int in
 0
 
-val x86_ret : (int, int, int, int, int, int, int, int, int) -> int effect {rreg, escape, rmem, wreg}
+val x86_ret : (int, int, int, int, int, int, int, int, int) -> int effect {escape, rmem, rreg, wreg}
 function x86_ret (proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode, modr_m, sib, x86) =
 let ctx = ("X86-RET") : string in
-let rsp = (read_sptr(proc_mode, 0)) : int in
+let rsp_var = (read_sptr(proc_mode, 0)) : int in
 let operand_size = (select_operand_size(proc_mode, false, rex_byte, false, 0, true, true, true, 0)) : int in
 let (flg, new_rsp, x86) = (if (opcode) == (195)
-then let (flg1, new_rsp) = (add_to_sptr(proc_mode, rsp, operand_size, 0)) : (option(string), int) in
+then let (flg1, new_rsp) = (add_to_sptr(proc_mode, rsp_var, operand_size, 0)) : (option(string), int) in
 if is_some(flg1)
 then (flg1, 0 : int, 0 : int)
 else (None() : option(string), new_rsp, 0 : int)
 else let (flg1, imm16, x86) = (rme16(proc_mode, temp_rip, 1, ":X", false, 0)) : (option(string), int, int) in
 if is_some(flg1)
 then (flg1, 0 : int, 0 : int)
-else let (flg1, new_rsp) = (add_to_sptr(proc_mode, rsp, (operand_size) + (imm16), 0)) : (option(string), int) in
+else let (flg1, new_rsp) = (add_to_sptr(proc_mode, rsp_var, (operand_size) + (imm16), 0)) : (option(string), int) in
 if is_some(flg1)
 then (flg1, 0 : int, 0 : int)
 else (None() : option(string), new_rsp, 0 : int)) : (option(string), int, int) in
@@ -105,8 +105,8 @@ then throw(Emsg("A fault occurred.  Original ACL2 AST:
 ['!!FAULT-FRESH', ':GP', '0', ':INSTRUCTION-LENGTH', 'BADLENGTH?']"))
 else let check_alignment? = (alignment_checking_enabled_p(0)) : bool in
 let (flg, tos, x86) = (if (operand_size) == (8)
-then rime_size(proc_mode, operand_size, rsp, 2, ":R", check_alignment?, 0, struct {mem_ptr? = false})
-else rme_size(proc_mode, operand_size, rsp, 2, ":R", check_alignment?, 0, struct {mem_ptr? = false})) : (option(string), int, int) in
+then rime_size(proc_mode, operand_size, rsp_var, 2, ":R", check_alignment?, 0, struct {mem_ptr? = false})
+else rme_size(proc_mode, operand_size, rsp_var, 2, ":R", check_alignment?, 0, struct {mem_ptr? = false})) : (option(string), int, int) in
 if is_some(flg)
 then throw(Emsg("This error is generated by the translator and represents a more detailed error that occurred in `push-and-pop.lisp`"))
 else if not_bool(if (proc_mode) == (0)
@@ -119,7 +119,7 @@ else let x86 = (write_sptr(proc_mode, new_rsp, 0)) : int in
 let x86 = (write_rip(tos, 0)) : int in
 0
 
-val x86_leave : (int, int, int, int, int, int, int, int, int) -> int effect {rreg, escape, rmem, wreg}
+val x86_leave : (int, int, int, int, int, int, int, int, int) -> int effect {escape, rmem, rreg, wreg}
 function x86_leave (proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode, modr_m, sib, x86) =
 let ctx = ("X86-LEAVE") : string in
 let operand_size = (select_operand_size(proc_mode, false, rex_byte, false, prefixes, true, true, false, 0)) : int in

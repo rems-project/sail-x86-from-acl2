@@ -1,7 +1,7 @@
 $include <prelude.sail>
 $include <string.sail>
 
-val jcc_cmovcc_setcc_spec : (int, int) -> bool effect {rreg, escape}
+val jcc_cmovcc_setcc_spec : (int, int) -> bool effect {escape, rreg}
 function jcc_cmovcc_setcc_spec (opcode, x86) =
 let low_nibble = (binary_logand(opcode, 15)) : int in
 (match low_nibble {
@@ -48,7 +48,7 @@ rflagsbits_get_of(rflags_var))),
 _ => false
 }) : bool
 
-val x86_one_byte_jcc : (int, int, int, int, int, int, int, int, int) -> int effect {rreg, escape, rmem, wreg}
+val x86_one_byte_jcc : (int, int, int, int, int, int, int, int, int) -> int effect {escape, rmem, rreg, wreg}
 function x86_one_byte_jcc (proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode, modr_m, sib, x86) =
 let ctx = ("X86-ONE-BYTE-JCC") : string in
 let badlength? = (check_instruction_length(start_rip, temp_rip, 1)) : option(int) in
@@ -71,7 +71,7 @@ then throw(Emsg("Model state error: :RIP-INCREMENT-ERROR"))
 else let x86 = (write_iptr(proc_mode, next_rip, 0)) : int in
 0
 
-val x86_two_byte_jcc : (int, int, int, int, int, int, int, int, int) -> int effect {rreg, escape, rmem, wreg}
+val x86_two_byte_jcc : (int, int, int, int, int, int, int, int, int) -> int effect {escape, rmem, rreg, wreg}
 function x86_two_byte_jcc (proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode, modr_m, sib, x86) =
 let ctx = ("X86-TWO-BYTE-JCC") : string in
 let offset_size = (select_operand_size(proc_mode, false, rex_byte, false, prefixes, false, true, true, 0)) : int in
@@ -95,7 +95,7 @@ then throw(Emsg("Model state error: :RIP-INCREMENT-ERROR"))
 else let x86 = (write_iptr(proc_mode, next_rip, 0)) : int in
 0
 
-val x86_jrcxz : (int, int, int, int, int, int, int, int, int) -> int effect {rreg, escape, rmem, wreg}
+val x86_jrcxz : (int, int, int, int, int, int, int, int, int) -> int effect {escape, rmem, rreg, wreg}
 function x86_jrcxz (proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode, modr_m, sib, x86) =
 let ctx = ("X86-JRCXZ") : string in
 let badlength? = (check_instruction_length(start_rip, temp_rip, 1)) : option(int) in
@@ -120,7 +120,7 @@ then throw(Emsg("Model state error: :RIP-INCREMENT-ERROR"))
 else let x86 = (write_iptr(proc_mode, next_rip, 0)) : int in
 0
 
-val x86_cmovcc : (int, int, int, int, int, int, int, int, int) -> int effect {rreg, escape, rmem, wreg}
+val x86_cmovcc : (int, int, int, int, int, int, int, int, int) -> int effect {escape, rmem, rreg, wreg}
 function x86_cmovcc (proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode, modr_m, sib, x86) =
 let ctx = ("X86-CMOVCC") : string in
 let r_m = (modr_m_get_r_m(modr_m)) : int in
@@ -148,7 +148,7 @@ else 0) : int in
 let x86 = (write_iptr(proc_mode, temp_rip, 0)) : int in
 0
 
-val x86_setcc : (int, int, int, int, int, int, int, int, int) -> int effect {rreg, wreg, eamem, escape, rmem, wmv}
+val x86_setcc : (int, int, int, int, int, int, int, int, int) -> int effect {eamem, escape, rmem, rreg, wmv, wreg}
 function x86_setcc (proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode, modr_m, sib, x86) =
 let ctx = ("X86-SETCC") : string in
 let r_m = (modr_m_get_r_m(modr_m)) : int in

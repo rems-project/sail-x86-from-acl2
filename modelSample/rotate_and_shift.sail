@@ -56,7 +56,7 @@ $include "rotates_spec.sail"
  D3/5: SHR r/m16/32/64, CL<br/> 
  D3/7: SAR r/m16/32/64, CL<br/> 
  </p>*/
-val x86_sal_sar_shl_shr_rcl_rcr_rol_ror : (int, int, int, int, int, int, int, int, int) -> int effect {rreg, undef, eamem, wreg, escape, rmem, wmv}
+val x86_sal_sar_shl_shr_rcl_rcr_rol_ror : (int, int, int, int, int, int, int, int, int) -> int effect {eamem, escape, rmem, rreg, undef, wmv, wreg}
 function x86_sal_sar_shl_shr_rcl_rcr_rol_ror (proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode, modr_m, sib, x86) =
 let ctx = ("X86-SAL/SAR/SHL/SHR/RCL/RCR/ROL/ROR") : string in
 let r_m = (modr_m_get_r_m(modr_m)) : int in
@@ -146,7 +146,7 @@ else let x86 = (write_iptr(proc_mode, temp_rip, 0)) : int in
  0F AD: SHRD r/m32, r32, CL<br/> 
  0F AD: SHRD r/m64, r64, CL<br/> 
  </p>*/
-val x86_shld_shrd : (int, int, int, int, int, int, int, int, int) -> int effect {rreg, undef, eamem, wreg, escape, rmem, wmv}
+val x86_shld_shrd : (int, int, int, int, int, int, int, int, int) -> int effect {eamem, escape, rmem, rreg, undef, wmv, wreg}
 function x86_shld_shrd (proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode, modr_m, sib, x86) =
 let ctx = ("X86-SHLD/SHRD") : string in
 let r_m = (modr_m_get_r_m(modr_m)) : int in

@@ -13,7 +13,7 @@ $include <string.sail>
  
  <p><b>TO-DO:</b> If a memory address referencing the SS segment is in 
  a non-canonical form, raise the SS exception.</p>*/
-val x86_lgdt : (int, int, int, int, int, int, int, int, int) -> int effect {rreg, escape, rmem, wreg}
+val x86_lgdt : (int, int, int, int, int, int, int, int, int) -> int effect {escape, rmem, rreg, wreg}
 function x86_lgdt (proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode, modr_m, sib, x86) =
 let ctx = ("X86-LGDT") : string in
 let r_m = (modr_m_get_r_m(modr_m)) : int in
@@ -74,7 +74,7 @@ let x86 = (write_iptr(proc_mode, temp_rip, 0)) : int in
  
  <p><b>TO-DO:</b> If a memory address referencing the SS segment is in 
  a non-canonical form, raise the SS exception.</p>*/
-val x86_lidt : (int, int, int, int, int, int, int, int, int) -> int effect {rreg, escape, rmem, wreg}
+val x86_lidt : (int, int, int, int, int, int, int, int, int) -> int effect {escape, rmem, rreg, wreg}
 function x86_lidt (proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode, modr_m, sib, x86) =
 let ctx = ("X86-LIDT") : string in
 let r_m = (modr_m_get_r_m(modr_m)) : int in
@@ -137,7 +137,7 @@ let x86 = (write_iptr(proc_mode, temp_rip, 0)) : int in
  
  <p><b>TO-DO:</b> If a memory address referencing the SS segment is in 
  a non-canonical form, raise the SS exception.</p>*/
-val x86_lldt : (int, int, int, int, int, int, int, int, int) -> int effect {rreg, escape, rmem, wreg}
+val x86_lldt : (int, int, int, int, int, int, int, int, int) -> int effect {escape, rmem, rreg, wreg}
 function x86_lldt (proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode, modr_m, sib, x86) =
 let ctx = ("X86-LLDT") : string in
 let r_m = (modr_m_get_r_m(modr_m)) : int in

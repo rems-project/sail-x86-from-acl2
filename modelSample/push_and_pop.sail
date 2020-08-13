@@ -10,12 +10,12 @@ $include <string.sail>
  <p>PUSH does not have a separate instruction semantic function, unlike other 
  opcodes like ADD, SUB, etc. The decoding is coupled with the execution in 
  this case.</p>*/
-val x86_push_general_register : (int, int, int, int, int, int, int, int, int) -> int effect {rreg, escape, eamem, wreg, wmv}
+val x86_push_general_register : (int, int, int, int, int, int, int, int, int) -> int effect {eamem, escape, rreg, wmv, wreg}
 function x86_push_general_register (proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode, modr_m, sib, x86) =
 let ctx = ("X86-PUSH-GENERAL-REGISTER") : string in
 let operand_size = (select_operand_size(proc_mode, false, rex_byte, false, prefixes, true, true, false, 0)) : int in
-let rsp = (read_sptr(proc_mode, 0)) : int in
-let (flg, new_rsp) = (add_to_sptr(proc_mode, rsp, negate(operand_size), 0)) : (option(string), int) in
+let rsp_var = (read_sptr(proc_mode, 0)) : int in
+let (flg, new_rsp) = (add_to_sptr(proc_mode, rsp_var, negate(operand_size), 0)) : (option(string), int) in
 if is_some(flg)
 then throw(Emsg("A fault occurred.  Original ACL2 AST:
 ['!!FAULT-FRESH', ':SS', '0', ':PUSH', 'FLG']"))
@@ -44,7 +44,7 @@ let x86 = (write_iptr(proc_mode, temp_rip, 0)) : int in
  
  <p>This opcode belongs to Group 5, and it has an opcode 
  extension ( ModR/m.reg = 6 ) .</p>*/
-val x86_push_ev : (int, int, int, int, int, int, int, int, int) -> int effect {rreg, wreg, eamem, escape, rmem, wmv}
+val x86_push_ev : (int, int, int, int, int, int, int, int, int) -> int effect {eamem, escape, rmem, rreg, wmv, wreg}
 function x86_push_ev (proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode, modr_m, sib, x86) =
 let ctx = ("X86-PUSH-EV") : string in
 let r_m = (modr_m_get_r_m(modr_m)) : int in
@@ -53,8 +53,8 @@ let reg = (modr_m_get_reg(modr_m)) : int in
 let p2 = (prefixes_get_seg(prefixes)) : int in
 let p4? = ((103) == (prefixes_get_adr(prefixes))) : bool in
 let operand_size = (select_operand_size(proc_mode, false, rex_byte, false, prefixes, true, true, false, 0)) : int in
-let rsp = (read_sptr(proc_mode, 0)) : int in
-let (flg, new_rsp) = (add_to_sptr(proc_mode, rsp, negate(operand_size), 0)) : (option(string), int) in
+let rsp_var = (read_sptr(proc_mode, 0)) : int in
+let (flg, new_rsp) = (add_to_sptr(proc_mode, rsp_var, negate(operand_size), 0)) : (option(string), int) in
 if is_some(flg)
 then throw(Emsg("A fault occurred.  Original ACL2 AST:
 ['!!FAULT-FRESH', ':SS', '0', ':PUSH', 'FLG']"))
@@ -92,14 +92,14 @@ let x86 = (write_iptr(proc_mode, temp_rip, 0)) : int in
  <p>PUSH doesn ' t have a separate instruction semantic function, unlike other 
  opcodes like ADD, SUB, etc. The decoding is coupled the decoding with the 
  execution in this case.</p>*/
-val x86_push_i : (int, int, int, int, int, int, int, int, int) -> int effect {rreg, wreg, eamem, escape, rmem, wmv}
+val x86_push_i : (int, int, int, int, int, int, int, int, int) -> int effect {eamem, escape, rmem, rreg, wmv, wreg}
 function x86_push_i (proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode, modr_m, sib, x86) =
 let ctx = ("X86-PUSH-I") : string in
 let byte_imm? = ((opcode) == (106)) : bool in
 let imm_size = (select_operand_size(proc_mode, byte_imm?, rex_byte, true, prefixes, false, false, false, 0)) : int in
 let operand_size = (select_operand_size(proc_mode, false, rex_byte, false, prefixes, true, true, false, 0)) : int in
-let rsp = (read_sptr(proc_mode, 0)) : int in
-let (flg, new_rsp) = (add_to_sptr(proc_mode, rsp, negate(operand_size), 0)) : (option(string), int) in
+let rsp_var = (read_sptr(proc_mode, 0)) : int in
+let (flg, new_rsp) = (add_to_sptr(proc_mode, rsp_var, negate(operand_size), 0)) : (option(string), int) in
 if is_some(flg)
 then throw(Emsg("A fault occurred.  Original ACL2 AST:
 ['!!FAULT-FRESH', ':SS', '0', ':PUSH', 'FLG']"))
@@ -147,12 +147,12 @@ let x86 = (write_iptr(proc_mode, temp_rip, 0)) : int in
  <p>PUSH doesn ' t have a separate instruction semantic function, unlike other 
  opcodes like ADD, SUB, etc. The decoding is coupled with the execution in 
  this case.</p>*/
-val x86_push_segment_register : (int, int, int, int, int, int, int, int, int) -> int effect {rreg, escape, eamem, wreg, wmv}
+val x86_push_segment_register : (int, int, int, int, int, int, int, int, int) -> int effect {eamem, escape, rreg, wmv, wreg}
 function x86_push_segment_register (proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode, modr_m, sib, x86) =
 let ctx = ("X86-PUSH-SEGMENT-REGISTER") : string in
 let operand_size = (select_operand_size(proc_mode, false, rex_byte, false, prefixes, true, true, false, 0)) : int in
-let rsp = (read_sptr(proc_mode, 0)) : int in
-let (flg, new_rsp) = (add_to_sptr(proc_mode, rsp, negate(operand_size), 0)) : (option(string), int) in
+let rsp_var = (read_sptr(proc_mode, 0)) : int in
+let (flg, new_rsp) = (add_to_sptr(proc_mode, rsp_var, negate(operand_size), 0)) : (option(string), int) in
 if is_some(flg)
 then throw(Emsg("A fault occurred.  Original ACL2 AST:
 ['!!FAULT-FRESH', ':SS', '0', ':PUSH', 'FLG']"))
@@ -182,16 +182,16 @@ let x86 = (write_iptr(proc_mode, temp_rip, 0)) : int in
  <p>POP does not have a separate instruction semantic function, unlike other 
  opcodes like ADD, SUB, etc. The decoding is coupled with the execution in 
  this case.</p>*/
-val x86_pop_general_register : (int, int, int, int, int, int, int, int, int) -> int effect {rreg, escape, rmem, wreg}
+val x86_pop_general_register : (int, int, int, int, int, int, int, int, int) -> int effect {escape, rmem, rreg, wreg}
 function x86_pop_general_register (proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode, modr_m, sib, x86) =
 let ctx = ("X86-POP-GENERAL-REGISTER") : string in
 let operand_size = (select_operand_size(proc_mode, false, rex_byte, false, prefixes, true, true, false, 0)) : int in
-let rsp = (read_sptr(proc_mode, 0)) : int in
-let (flg, new_rsp) = (add_to_sptr(proc_mode, rsp, operand_size, 0)) : (option(string), int) in
+let rsp_var = (read_sptr(proc_mode, 0)) : int in
+let (flg, new_rsp) = (add_to_sptr(proc_mode, rsp_var, operand_size, 0)) : (option(string), int) in
 if is_some(flg)
 then throw(Emsg("A fault occurred.  Original ACL2 AST:
 ['!!FAULT-FRESH', ':SS', '0', ':POP', 'FLG']"))
-else let (flg0, sailval, x86) = (rme_size(proc_mode, operand_size, rsp, 2, ":R", alignment_checking_enabled_p(0), 0, struct {mem_ptr? = false})) : (option(string), int, int) in
+else let (flg0, sailval, x86) = (rme_size(proc_mode, operand_size, rsp_var, 2, ":R", alignment_checking_enabled_p(0), 0, struct {mem_ptr? = false})) : (option(string), int, int) in
 if is_some(flg0)
 then throw(Emsg("This error is generated by the translator and represents a more detailed error that occurred in `push-and-pop.lisp`"))
 else let reg = (binary_logand(opcode, 7)) : int in
@@ -216,7 +216,7 @@ let x86 = (write_iptr(proc_mode, temp_rip, 0)) : int in
  
  <p>This opcode belongs to Group 1A, and it has an opcode 
  extension ( ModR/m.reg = 0 ) .</p>*/
-val x86_pop_ev : (int, int, int, int, int, int, int, int, int) -> int effect {rreg, wreg, eamem, escape, rmem, wmv}
+val x86_pop_ev : (int, int, int, int, int, int, int, int, int) -> int effect {eamem, escape, rmem, rreg, wmv, wreg}
 function x86_pop_ev (proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode, modr_m, sib, x86) =
 let ctx = ("X86-POP-EV") : string in
 let r_m = (modr_m_get_r_m(modr_m)) : int in
@@ -225,13 +225,13 @@ let reg = (modr_m_get_reg(modr_m)) : int in
 let p2 = (prefixes_get_seg(prefixes)) : int in
 let p4? = ((103) == (prefixes_get_adr(prefixes))) : bool in
 let operand_size = (select_operand_size(proc_mode, false, rex_byte, false, prefixes, true, true, false, 0)) : int in
-let rsp = (read_sptr(proc_mode, 0)) : int in
-let (flg, new_rsp) = (add_to_sptr(proc_mode, rsp, operand_size, 0)) : (option(string), int) in
+let rsp_var = (read_sptr(proc_mode, 0)) : int in
+let (flg, new_rsp) = (add_to_sptr(proc_mode, rsp_var, operand_size, 0)) : (option(string), int) in
 if is_some(flg)
 then throw(Emsg("A fault occurred.  Original ACL2 AST:
 ['!!FAULT-FRESH', ':SS', '0', ':POP', 'FLG']"))
 else let check_alignment? = (alignment_checking_enabled_p(0)) : bool in
-let (flg0, sailval, x86) = (rme_size(proc_mode, operand_size, rsp, 2, ":R", check_alignment?, 0, struct {mem_ptr? = false})) : (option(string), int, int) in
+let (flg0, sailval, x86) = (rme_size(proc_mode, operand_size, rsp_var, 2, ":R", check_alignment?, 0, struct {mem_ptr? = false})) : (option(string), int, int) in
 if is_some(flg0)
 then throw(Emsg("This error is generated by the translator and represents a more detailed error that occurred in `push-and-pop.lisp`"))
 else let (flg1, addr, increment_rip_by, x86) = (if (mod_var) == (3)
@@ -255,12 +255,12 @@ then throw(Emsg("Model state error: :X86-OPERAND-TO-REG/MEM"))
 else let x86 = (write_iptr(proc_mode, temp_rip, 0)) : int in
 0
 
-val x86_pushf : (int, int, int, int, int, int, int, int, int) -> int effect {rreg, escape, eamem, wreg, wmv}
+val x86_pushf : (int, int, int, int, int, int, int, int, int) -> int effect {eamem, escape, rreg, wmv, wreg}
 function x86_pushf (proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode, modr_m, sib, x86) =
 let ctx = ("X86-PUSHF") : string in
 let operand_size = (select_operand_size(proc_mode, false, rex_byte, false, prefixes, true, true, false, 0)) : int in
-let rsp = (read_sptr(proc_mode, 0)) : int in
-let (flg, new_rsp) = (add_to_sptr(proc_mode, rsp, negate(operand_size), 0)) : (option(string), int) in
+let rsp_var = (read_sptr(proc_mode, 0)) : int in
+let (flg, new_rsp) = (add_to_sptr(proc_mode, rsp_var, negate(operand_size), 0)) : (option(string), int) in
 if is_some(flg)
 then throw(Emsg("A fault occurred.  Original ACL2 AST:
 ['!!FAULT-FRESH', ':SS', '0', ':PUSH', 'FLG']"))
@@ -276,16 +276,16 @@ else let x86 = (write_sptr(proc_mode, new_rsp, 0)) : int in
 let x86 = (write_iptr(proc_mode, temp_rip, 0)) : int in
 0
 
-val x86_popf : (int, int, int, int, int, int, int, int, int) -> int effect {rreg, escape, rmem, wreg}
+val x86_popf : (int, int, int, int, int, int, int, int, int) -> int effect {escape, rmem, rreg, wreg}
 function x86_popf (proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode, modr_m, sib, x86) =
 let ctx = ("X86-POPF") : string in
 let operand_size = (select_operand_size(proc_mode, false, rex_byte, false, prefixes, true, true, false, 0)) : int in
-let rsp = (read_sptr(proc_mode, 0)) : int in
-let (flg, new_rsp) = (add_to_sptr(proc_mode, rsp, operand_size, 0)) : (option(string), int) in
+let rsp_var = (read_sptr(proc_mode, 0)) : int in
+let (flg, new_rsp) = (add_to_sptr(proc_mode, rsp_var, operand_size, 0)) : (option(string), int) in
 if is_some(flg)
 then throw(Emsg("A fault occurred.  Original ACL2 AST:
 ['!!FAULT-FRESH', ':SS', '0', ':PUSH', 'FLG']"))
-else let (flg0, sailval, x86) = (rme_size(proc_mode, operand_size, rsp, 2, ":R", alignment_checking_enabled_p(0), 0, struct {mem_ptr? = false})) : (option(string), int, int) in
+else let (flg0, sailval, x86) = (rme_size(proc_mode, operand_size, rsp_var, 2, ":R", alignment_checking_enabled_p(0), 0, struct {mem_ptr? = false})) : (option(string), int, int) in
 if is_some(flg0)
 then throw(Emsg("This error is generated by the translator and represents a more detailed error that occurred in `push-and-pop.lisp`"))
 else let sailval = (binary_logior(2, binary_logand(4161495, sailval))) : int in
@@ -333,11 +333,11 @@ let x86 = (write_iptr(proc_mode, temp_rip, 0)) : int in
  We use some simple and repetitive code to write the registers into the stack. 
  It may be possible to optimize it by pushing all the registers in one shot. 
  </p>*/
-val x86_pusha : (int, int, int, int, int, int, int, int, int) -> int effect {rreg, escape, wreg, eamem, wmv}
+val x86_pusha : (int, int, int, int, int, int, int, int, int) -> int effect {eamem, escape, rreg, wmv, wreg}
 function x86_pusha (proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode, modr_m, sib, x86) =
 let ctx = ("X86-PUSHA") : string in
 let operand_size = (select_operand_size(proc_mode, false, 0, false, prefixes, false, false, false, 0)) : int in
-let rsp = (read_sptr(proc_mode, 0)) : int in
+let rsp_var = (read_sptr(proc_mode, 0)) : int in
 let eax_ax = (rgfi_size(operand_size, 0, 0, 0)) : int in
 let ecx_cx = (rgfi_size(operand_size, 1, 0, 0)) : int in
 let edx_dx = (rgfi_size(operand_size, 2, 0, 0)) : int in
@@ -347,71 +347,71 @@ let ebp_bp = (rgfi_size(operand_size, 5, 0, 0)) : int in
 let esi_si = (rgfi_size(operand_size, 6, 0, 0)) : int in
 let edi_di = (rgfi_size(operand_size, 7, 0, 0)) : int in
 let check_alignment? = (alignment_checking_enabled_p(0)) : bool in
-let (flg, rsp) = (add_to_sptr(proc_mode, rsp, negate(operand_size), 0)) : (option(string), int) in
+let (flg, rsp_var) = (add_to_sptr(proc_mode, rsp_var, negate(operand_size), 0)) : (option(string), int) in
 if is_some(flg)
 then throw(Emsg("A fault occurred.  Original ACL2 AST:
 ['!!FAULT-FRESH', ':SS', '0', ':PUSH', 'FLG']"))
-else let (flg, x86) = (wme_size(proc_mode, operand_size, rsp, 2, eax_ax, check_alignment?, 0, struct {mem_ptr? = false})) : (option(string), int) in
+else let (flg, x86) = (wme_size(proc_mode, operand_size, rsp_var, 2, eax_ax, check_alignment?, 0, struct {mem_ptr? = false})) : (option(string), int) in
 if is_some(flg)
 then throw(Emsg("This error is generated by the translator and represents a more detailed error that occurred in `push-and-pop.lisp`"))
 else let check_alignment? = (false) : bool in
-let (flg, rsp) = (add_to_sptr(proc_mode, rsp, negate(operand_size), 0)) : (option(string), int) in
+let (flg, rsp_var) = (add_to_sptr(proc_mode, rsp_var, negate(operand_size), 0)) : (option(string), int) in
 if is_some(flg)
 then throw(Emsg("A fault occurred.  Original ACL2 AST:
 ['!!FAULT-FRESH', ':SS', '0', ':PUSH', 'FLG']"))
-else let (flg, x86) = (wme_size(proc_mode, operand_size, rsp, 2, ecx_cx, check_alignment?, 0, struct {mem_ptr? = false})) : (option(string), int) in
+else let (flg, x86) = (wme_size(proc_mode, operand_size, rsp_var, 2, ecx_cx, check_alignment?, 0, struct {mem_ptr? = false})) : (option(string), int) in
 if is_some(flg)
 then throw(Emsg("A fault occurred.  Original ACL2 AST:
 ['!!FAULT-FRESH', ':SS', '0', ':PUSH', 'FLG']"))
-else let (flg, rsp) = (add_to_sptr(proc_mode, rsp, negate(operand_size), 0)) : (option(string), int) in
+else let (flg, rsp_var) = (add_to_sptr(proc_mode, rsp_var, negate(operand_size), 0)) : (option(string), int) in
 if is_some(flg)
 then throw(Emsg("A fault occurred.  Original ACL2 AST:
 ['!!FAULT-FRESH', ':SS', '0', ':PUSH', 'FLG']"))
-else let (flg, x86) = (wme_size(proc_mode, operand_size, rsp, 2, edx_dx, check_alignment?, 0, struct {mem_ptr? = false})) : (option(string), int) in
+else let (flg, x86) = (wme_size(proc_mode, operand_size, rsp_var, 2, edx_dx, check_alignment?, 0, struct {mem_ptr? = false})) : (option(string), int) in
 if is_some(flg)
 then throw(Emsg("A fault occurred.  Original ACL2 AST:
 ['!!FAULT-FRESH', ':SS', '0', ':PUSH', 'FLG']"))
-else let (flg, rsp) = (add_to_sptr(proc_mode, rsp, negate(operand_size), 0)) : (option(string), int) in
+else let (flg, rsp_var) = (add_to_sptr(proc_mode, rsp_var, negate(operand_size), 0)) : (option(string), int) in
 if is_some(flg)
 then throw(Emsg("A fault occurred.  Original ACL2 AST:
 ['!!FAULT-FRESH', ':SS', '0', ':PUSH', 'FLG']"))
-else let (flg, x86) = (wme_size(proc_mode, operand_size, rsp, 2, ebx_bx, check_alignment?, 0, struct {mem_ptr? = false})) : (option(string), int) in
+else let (flg, x86) = (wme_size(proc_mode, operand_size, rsp_var, 2, ebx_bx, check_alignment?, 0, struct {mem_ptr? = false})) : (option(string), int) in
 if is_some(flg)
 then throw(Emsg("A fault occurred.  Original ACL2 AST:
 ['!!FAULT-FRESH', ':SS', '0', ':PUSH', 'FLG']"))
-else let (flg, rsp) = (add_to_sptr(proc_mode, rsp, negate(operand_size), 0)) : (option(string), int) in
+else let (flg, rsp_var) = (add_to_sptr(proc_mode, rsp_var, negate(operand_size), 0)) : (option(string), int) in
 if is_some(flg)
 then throw(Emsg("A fault occurred.  Original ACL2 AST:
 ['!!FAULT-FRESH', ':SS', '0', ':PUSH', 'FLG']"))
-else let (flg, x86) = (wme_size(proc_mode, operand_size, rsp, 2, esp_sp, check_alignment?, 0, struct {mem_ptr? = false})) : (option(string), int) in
+else let (flg, x86) = (wme_size(proc_mode, operand_size, rsp_var, 2, esp_sp, check_alignment?, 0, struct {mem_ptr? = false})) : (option(string), int) in
 if is_some(flg)
 then throw(Emsg("A fault occurred.  Original ACL2 AST:
 ['!!FAULT-FRESH', ':SS', '0', ':PUSH', 'FLG']"))
-else let (flg, rsp) = (add_to_sptr(proc_mode, rsp, negate(operand_size), 0)) : (option(string), int) in
+else let (flg, rsp_var) = (add_to_sptr(proc_mode, rsp_var, negate(operand_size), 0)) : (option(string), int) in
 if is_some(flg)
 then throw(Emsg("A fault occurred.  Original ACL2 AST:
 ['!!FAULT-FRESH', ':SS', '0', ':PUSH', 'FLG']"))
-else let (flg, x86) = (wme_size(proc_mode, operand_size, rsp, 2, ebp_bp, check_alignment?, 0, struct {mem_ptr? = false})) : (option(string), int) in
+else let (flg, x86) = (wme_size(proc_mode, operand_size, rsp_var, 2, ebp_bp, check_alignment?, 0, struct {mem_ptr? = false})) : (option(string), int) in
 if is_some(flg)
 then throw(Emsg("A fault occurred.  Original ACL2 AST:
 ['!!FAULT-FRESH', ':SS', '0', ':PUSH', 'FLG']"))
-else let (flg, rsp) = (add_to_sptr(proc_mode, rsp, negate(operand_size), 0)) : (option(string), int) in
+else let (flg, rsp_var) = (add_to_sptr(proc_mode, rsp_var, negate(operand_size), 0)) : (option(string), int) in
 if is_some(flg)
 then throw(Emsg("A fault occurred.  Original ACL2 AST:
 ['!!FAULT-FRESH', ':SS', '0', ':PUSH', 'FLG']"))
-else let (flg, x86) = (wme_size(proc_mode, operand_size, rsp, 2, esi_si, check_alignment?, 0, struct {mem_ptr? = false})) : (option(string), int) in
+else let (flg, x86) = (wme_size(proc_mode, operand_size, rsp_var, 2, esi_si, check_alignment?, 0, struct {mem_ptr? = false})) : (option(string), int) in
 if is_some(flg)
 then throw(Emsg("A fault occurred.  Original ACL2 AST:
 ['!!FAULT-FRESH', ':SS', '0', ':PUSH', 'FLG']"))
-else let (flg, rsp) = (add_to_sptr(proc_mode, rsp, negate(operand_size), 0)) : (option(string), int) in
+else let (flg, rsp_var) = (add_to_sptr(proc_mode, rsp_var, negate(operand_size), 0)) : (option(string), int) in
 if is_some(flg)
 then throw(Emsg("A fault occurred.  Original ACL2 AST:
 ['!!FAULT-FRESH', ':SS', '0', ':PUSH', 'FLG']"))
-else let (flg, x86) = (wme_size(proc_mode, operand_size, rsp, 2, edi_di, check_alignment?, 0, struct {mem_ptr? = false})) : (option(string), int) in
+else let (flg, x86) = (wme_size(proc_mode, operand_size, rsp_var, 2, edi_di, check_alignment?, 0, struct {mem_ptr? = false})) : (option(string), int) in
 if is_some(flg)
 then throw(Emsg("A fault occurred.  Original ACL2 AST:
 ['!!FAULT-FRESH', ':SS', '0', ':PUSH', 'FLG']"))
-else let x86 = (write_sptr(proc_mode, rsp, 0)) : int in
+else let x86 = (write_sptr(proc_mode, rsp_var, 0)) : int in
 let x86 = (write_iptr(proc_mode, temp_rip, 0)) : int in
 0
 
@@ -423,69 +423,69 @@ let x86 = (write_iptr(proc_mode, temp_rip, 0)) : int in
  We use some simple and repetitive code to read the registers from the stack. 
  It may be possible to optimize it by popping all the registers in one shot. 
  </p>*/
-val x86_popa : (int, int, int, int, int, int, int, int, int) -> int effect {rreg, escape, rmem, wreg}
+val x86_popa : (int, int, int, int, int, int, int, int, int) -> int effect {escape, rmem, rreg, wreg}
 function x86_popa (proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode, modr_m, sib, x86) =
 let ctx = ("X86-POPA") : string in
 let operand_size = (select_operand_size(proc_mode, false, 0, false, prefixes, false, false, false, 0)) : int in
-let rsp = (read_sptr(proc_mode, 0)) : int in
+let rsp_var = (read_sptr(proc_mode, 0)) : int in
 let check_alignment? = (alignment_checking_enabled_p(0)) : bool in
-let (flg, edi_di, x86) = (rme_size(proc_mode, operand_size, rsp, 2, ":R", check_alignment?, 0, struct {mem_ptr? = false})) : (option(string), int, int) in
+let (flg, edi_di, x86) = (rme_size(proc_mode, operand_size, rsp_var, 2, ":R", check_alignment?, 0, struct {mem_ptr? = false})) : (option(string), int, int) in
 if is_some(flg)
 then throw(Emsg("This error is generated by the translator and represents a more detailed error that occurred in `push-and-pop.lisp`"))
-else let (flg, rsp) = (add_to_sptr(proc_mode, rsp, operand_size, 0)) : (option(string), int) in
+else let (flg, rsp_var) = (add_to_sptr(proc_mode, rsp_var, operand_size, 0)) : (option(string), int) in
 if is_some(flg)
 then throw(Emsg("A fault occurred.  Original ACL2 AST:
 ['!!FAULT-FRESH', ':SS', '0', ':POP', 'FLG']"))
 else let check_alignment? = (false) : bool in
-let (flg, esi_si, x86) = (rme_size(proc_mode, operand_size, rsp, 2, ":R", check_alignment?, 0, struct {mem_ptr? = false})) : (option(string), int, int) in
+let (flg, esi_si, x86) = (rme_size(proc_mode, operand_size, rsp_var, 2, ":R", check_alignment?, 0, struct {mem_ptr? = false})) : (option(string), int, int) in
 if is_some(flg)
 then throw(Emsg("A fault occurred.  Original ACL2 AST:
 ['!!FAULT-FRESH', ':SS', '0', ':POP', 'FLG']"))
-else let (flg, rsp) = (add_to_sptr(proc_mode, rsp, operand_size, 0)) : (option(string), int) in
+else let (flg, rsp_var) = (add_to_sptr(proc_mode, rsp_var, operand_size, 0)) : (option(string), int) in
 if is_some(flg)
 then throw(Emsg("A fault occurred.  Original ACL2 AST:
 ['!!FAULT-FRESH', ':SS', '0', ':POP', 'FLG']"))
-else let (flg, ebp_bp, x86) = (rme_size(proc_mode, operand_size, rsp, 2, ":R", check_alignment?, 0, struct {mem_ptr? = false})) : (option(string), int, int) in
+else let (flg, ebp_bp, x86) = (rme_size(proc_mode, operand_size, rsp_var, 2, ":R", check_alignment?, 0, struct {mem_ptr? = false})) : (option(string), int, int) in
 if is_some(flg)
 then throw(Emsg("A fault occurred.  Original ACL2 AST:
 ['!!FAULT-FRESH', ':SS', '0', ':POP', 'FLG']"))
-else let (flg, rsp) = (add_to_sptr(proc_mode, rsp, operand_size, 0)) : (option(string), int) in
+else let (flg, rsp_var) = (add_to_sptr(proc_mode, rsp_var, operand_size, 0)) : (option(string), int) in
 if is_some(flg)
 then throw(Emsg("A fault occurred.  Original ACL2 AST:
 ['!!FAULT-FRESH', ':SS', '0', ':POP', 'FLG']"))
-else let (flg, rsp) = (add_to_sptr(proc_mode, rsp, operand_size, 0)) : (option(string), int) in
+else let (flg, rsp_var) = (add_to_sptr(proc_mode, rsp_var, operand_size, 0)) : (option(string), int) in
 if is_some(flg)
 then throw(Emsg("A fault occurred.  Original ACL2 AST:
 ['!!FAULT-FRESH', ':SS', '0', ':POP', 'FLG']"))
-else let (flg, ebx_bx, x86) = (rme_size(proc_mode, operand_size, rsp, 2, ":R", check_alignment?, 0, struct {mem_ptr? = false})) : (option(string), int, int) in
+else let (flg, ebx_bx, x86) = (rme_size(proc_mode, operand_size, rsp_var, 2, ":R", check_alignment?, 0, struct {mem_ptr? = false})) : (option(string), int, int) in
 if is_some(flg)
 then throw(Emsg("A fault occurred.  Original ACL2 AST:
 ['!!FAULT-FRESH', ':SS', '0', ':POP', 'FLG']"))
-else let (flg, rsp) = (add_to_sptr(proc_mode, rsp, operand_size, 0)) : (option(string), int) in
+else let (flg, rsp_var) = (add_to_sptr(proc_mode, rsp_var, operand_size, 0)) : (option(string), int) in
 if is_some(flg)
 then throw(Emsg("A fault occurred.  Original ACL2 AST:
 ['!!FAULT-FRESH', ':SS', '0', ':POP', 'FLG']"))
-else let (flg, edx_dx, x86) = (rme_size(proc_mode, operand_size, rsp, 2, ":R", check_alignment?, 0, struct {mem_ptr? = false})) : (option(string), int, int) in
+else let (flg, edx_dx, x86) = (rme_size(proc_mode, operand_size, rsp_var, 2, ":R", check_alignment?, 0, struct {mem_ptr? = false})) : (option(string), int, int) in
 if is_some(flg)
 then throw(Emsg("A fault occurred.  Original ACL2 AST:
 ['!!FAULT-FRESH', ':SS', '0', ':POP', 'FLG']"))
-else let (flg, rsp) = (add_to_sptr(proc_mode, rsp, operand_size, 0)) : (option(string), int) in
+else let (flg, rsp_var) = (add_to_sptr(proc_mode, rsp_var, operand_size, 0)) : (option(string), int) in
 if is_some(flg)
 then throw(Emsg("A fault occurred.  Original ACL2 AST:
 ['!!FAULT-FRESH', ':SS', '0', ':POP', 'FLG']"))
-else let (flg, ecx_cx, x86) = (rme_size(proc_mode, operand_size, rsp, 2, ":R", check_alignment?, 0, struct {mem_ptr? = false})) : (option(string), int, int) in
+else let (flg, ecx_cx, x86) = (rme_size(proc_mode, operand_size, rsp_var, 2, ":R", check_alignment?, 0, struct {mem_ptr? = false})) : (option(string), int, int) in
 if is_some(flg)
 then throw(Emsg("A fault occurred.  Original ACL2 AST:
 ['!!FAULT-FRESH', ':SS', '0', ':POP', 'FLG']"))
-else let (flg, rsp) = (add_to_sptr(proc_mode, rsp, operand_size, 0)) : (option(string), int) in
+else let (flg, rsp_var) = (add_to_sptr(proc_mode, rsp_var, operand_size, 0)) : (option(string), int) in
 if is_some(flg)
 then throw(Emsg("A fault occurred.  Original ACL2 AST:
 ['!!FAULT-FRESH', ':SS', '0', ':POP', 'FLG']"))
-else let (flg, eax_ax, x86) = (rme_size(proc_mode, operand_size, rsp, 2, ":R", check_alignment?, 0, struct {mem_ptr? = false})) : (option(string), int, int) in
+else let (flg, eax_ax, x86) = (rme_size(proc_mode, operand_size, rsp_var, 2, ":R", check_alignment?, 0, struct {mem_ptr? = false})) : (option(string), int, int) in
 if is_some(flg)
 then throw(Emsg("A fault occurred.  Original ACL2 AST:
 ['!!FAULT-FRESH', ':SS', '0', ':POP', 'FLG']"))
-else let (flg, rsp) = (add_to_sptr(proc_mode, rsp, operand_size, 0)) : (option(string), int) in
+else let (flg, rsp_var) = (add_to_sptr(proc_mode, rsp_var, operand_size, 0)) : (option(string), int) in
 if is_some(flg)
 then throw(Emsg("A fault occurred.  Original ACL2 AST:
 ['!!FAULT-FRESH', ':SS', '0', ':POP', 'FLG']"))
@@ -496,7 +496,7 @@ let x86 = (write_rgfi_size(operand_size, 3, ebx_bx, 0, 0)) : int in
 let x86 = (write_rgfi_size(operand_size, 2, edx_dx, 0, 0)) : int in
 let x86 = (write_rgfi_size(operand_size, 1, ecx_cx, 0, 0)) : int in
 let x86 = (write_rgfi_size(operand_size, 0, eax_ax, 0, 0)) : int in
-let x86 = (write_sptr(proc_mode, rsp, 0)) : int in
+let x86 = (write_sptr(proc_mode, rsp_var, 0)) : int in
 let x86 = (write_iptr(proc_mode, temp_rip, 0)) : int in
 0
 

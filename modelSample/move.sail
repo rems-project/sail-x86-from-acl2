@@ -1,7 +1,7 @@
 $include <prelude.sail>
 $include <string.sail>
 
-val x86_mov_op_en_mr : (int, int, int, int, int, int, int, int, int) -> int effect {rreg, wreg, eamem, escape, rmem, wmv}
+val x86_mov_op_en_mr : (int, int, int, int, int, int, int, int, int) -> int effect {eamem, escape, rmem, rreg, wmv, wreg}
 function x86_mov_op_en_mr (proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode, modr_m, sib, x86) =
 let ctx = ("X86-MOV-OP/EN-MR") : string in
 let r_m = (modr_m_get_r_m(modr_m)) : int in
@@ -32,7 +32,7 @@ then throw(Emsg("Model state error: :X86-OPERAND-TO-REG/MEM"))
 else let x86 = (write_iptr(proc_mode, temp_rip, 0)) : int in
 0
 
-val x86_mov_op_en_rm : (int, int, int, int, int, int, int, int, int) -> int effect {rreg, escape, rmem, wreg}
+val x86_mov_op_en_rm : (int, int, int, int, int, int, int, int, int) -> int effect {escape, rmem, rreg, wreg}
 function x86_mov_op_en_rm (proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode, modr_m, sib, x86) =
 let ctx = ("X86-MOV-OP/EN-RM") : string in
 let r_m = (modr_m_get_r_m(modr_m)) : int in
@@ -58,7 +58,7 @@ else let x86 = (write_rgfi_size(operand_size, reg_index(reg, rex_byte, 2), reg_m
 let x86 = (write_iptr(proc_mode, temp_rip, 0)) : int in
 0
 
-val x86_mov_op_en_fd : (int, int, int, int, int, int, int, int, int) -> int effect {rreg, escape, rmem, wreg}
+val x86_mov_op_en_fd : (int, int, int, int, int, int, int, int, int) -> int effect {escape, rmem, rreg, wreg}
 function x86_mov_op_en_fd (proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode, modr_m, sib, x86) =
 let ctx = ("X86-MOV-OP/EN-FD") : string in
 let p2 = (prefixes_get_seg(prefixes)) : int in
@@ -85,7 +85,7 @@ else let x86 = (write_rgfi_size(operand_size, 0, data, rex_byte, 0)) : int in
 let x86 = (write_iptr(proc_mode, temp_rip, 0)) : int in
 0
 
-val x86_mov_op_en_td : (int, int, int, int, int, int, int, int, int) -> int effect {rreg, wreg, eamem, escape, rmem, wmv}
+val x86_mov_op_en_td : (int, int, int, int, int, int, int, int, int) -> int effect {eamem, escape, rmem, rreg, wmv, wreg}
 function x86_mov_op_en_td (proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode, modr_m, sib, x86) =
 let ctx = ("X86-MOV-OP/EN-TD") : string in
 let p2 = (prefixes_get_seg(prefixes)) : int in
@@ -112,7 +112,7 @@ then throw(Emsg("Model state error: :X86-OPERAND-TO-REG/MEM"))
 else let x86 = (write_iptr(proc_mode, temp_rip, 0)) : int in
 0
 
-val x86_mov_op_en_oi : (int, int, int, int, int, int, int, int, int) -> int effect {rreg, escape, rmem, wreg}
+val x86_mov_op_en_oi : (int, int, int, int, int, int, int, int, int) -> int effect {escape, rmem, rreg, wreg}
 function x86_mov_op_en_oi (proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode, modr_m, sib, x86) =
 let ctx = ("X86-MOV-OP/EN-OI") : string in
 let byte_operand? = (((176) <= (opcode)) & ((opcode) <= (183))) : bool in
@@ -132,7 +132,7 @@ let x86 = (write_rgfi_size(operand_size, reg_index(reg, rex_byte, 0), imm, rex_b
 let x86 = (write_iptr(proc_mode, temp_rip, 0)) : int in
 0
 
-val x86_mov_op_en_mi : (int, int, int, int, int, int, int, int, int) -> int effect {rreg, wreg, eamem, escape, rmem, wmv}
+val x86_mov_op_en_mi : (int, int, int, int, int, int, int, int, int) -> int effect {eamem, escape, rmem, rreg, wmv, wreg}
 function x86_mov_op_en_mi (proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode, modr_m, sib, x86) =
 let ctx = ("X86-MOV-OP/EN-MI") : string in
 let r_m = (modr_m_get_r_m(modr_m)) : int in
@@ -174,7 +174,7 @@ then throw(Emsg("Model state error: :X86-OPERAND-TO-REG/MEM"))
 else let x86 = (write_iptr(proc_mode, temp_rip, 0)) : int in
 0
 
-val x86_lea : (int, int, int, int, int, int, int, int, int) -> int effect {rreg, escape, rmem, wreg}
+val x86_lea : (int, int, int, int, int, int, int, int, int) -> int effect {escape, rmem, rreg, wreg}
 function x86_lea (proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode, modr_m, sib, x86) =
 let ctx = ("X86-LEA") : string in
 let r_m = (modr_m_get_r_m(modr_m)) : int in
@@ -197,7 +197,7 @@ let x86 = (write_rgfi_size(register_size, reg_index(reg, rex_byte, 2), m, rex_by
 let x86 = (write_iptr(proc_mode, temp_rip, 0)) : int in
 0
 
-val x86_movsx : (int, int, int, int, int, int, int, int, int) -> int effect {rreg, escape, rmem, wreg}
+val x86_movsx : (int, int, int, int, int, int, int, int, int) -> int effect {escape, rmem, rreg, wreg}
 function x86_movsx (proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode, modr_m, sib, x86) =
 let ctx = ("X86-MOVSX") : string in
 let r_m = (modr_m_get_r_m(modr_m)) : int in
@@ -228,7 +228,7 @@ let x86 = (write_rgfi_size(register_size, reg_index(reg, rex_byte, 2), reg_mem, 
 let x86 = (write_iptr(proc_mode, temp_rip, 0)) : int in
 0
 
-val x86_movsxd : (int, int, int, int, int, int, int, int, int) -> int effect {rreg, escape, rmem, wreg}
+val x86_movsxd : (int, int, int, int, int, int, int, int, int) -> int effect {escape, rmem, rreg, wreg}
 function x86_movsxd (proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode, modr_m, sib, x86) =
 let ctx = ("X86-MOVSXD") : string in
 let r_m = (modr_m_get_r_m(modr_m)) : int in
@@ -263,7 +263,7 @@ let x86 = (write_rgfi_size(register_size, reg_index(reg, rex_byte, 2), reg_mem, 
 let x86 = (write_iptr(proc_mode, temp_rip, 0)) : int in
 0
 
-val x86_movzx : (int, int, int, int, int, int, int, int, int) -> int effect {rreg, escape, rmem, wreg}
+val x86_movzx : (int, int, int, int, int, int, int, int, int) -> int effect {escape, rmem, rreg, wreg}
 function x86_movzx (proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode, modr_m, sib, x86) =
 let ctx = ("X86-MOVZX") : string in
 let r_m = (modr_m_get_r_m(modr_m)) : int in
@@ -291,7 +291,7 @@ let x86 = (write_rgfi_size(register_size, reg_index(reg, rex_byte, 2), reg_mem, 
 let x86 = (write_iptr(proc_mode, temp_rip, 0)) : int in
 0
 
-val x86_mov_control_regs_op_en_mr : (int, int, int, int, int, int, int, int, int) -> int effect {rreg, escape, undef, wreg}
+val x86_mov_control_regs_op_en_mr : (int, int, int, int, int, int, int, int, int) -> int effect {escape, rreg, undef, wreg}
 function x86_mov_control_regs_op_en_mr (proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode, modr_m, sib, x86) =
 let ctx = ("X86-MOV-CONTROL-REGS-OP/EN-MR") : string in
 let r_m = (modr_m_get_r_m(modr_m)) : int in

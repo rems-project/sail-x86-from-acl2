@@ -10,7 +10,7 @@ $include "divide_spec.sail"
  DIV r/m16: ( DX:AX div r/m16 ) , DX := Remainder, AX := Quotient<br/> 
  DIV r/m32: ( EDX:EAX div r/m8 ) , EDX := Remainder, EAX := Quotient<br/> 
  DIV r/m64: ( RDX:RAX div r/m8 ) , RDX := Remainder, RAX := Quotient<br/></p>*/
-val x86_div : (int, int, int, int, int, int, int, int, int) -> int effect {rreg, escape, undef, wreg, rmem}
+val x86_div : (int, int, int, int, int, int, int, int, int) -> int effect {escape, rmem, rreg, undef, wreg}
 function x86_div (proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode, modr_m, sib, x86) =
 let ctx = ("X86-DIV") : string in
 let r_m = (modr_m_get_r_m(modr_m)) : int in
@@ -35,15 +35,15 @@ else let badlength? = (check_instruction_length(start_rip, temp_rip, 0)) : optio
 if is_some(badlength?)
 then throw(Emsg("A fault occurred.  Original ACL2 AST:
 ['!!FAULT-FRESH', ':GP', '0', ':INSTRUCTION-LENGTH', 'BADLENGTH?']"))
-else let rax = (rgfi_size(if select_byte_operand
+else let rax_var = (rgfi_size(if select_byte_operand
 then 2
 else reg_mem_size, 0, rex_byte, 0)) : int in
-let rdx = (if select_byte_operand
+let rdx_var = (if select_byte_operand
 then 0
 else rgfi_size(reg_mem_size, 2, rex_byte, 0)) : int in
 let dividend = (if select_byte_operand
-then rax
-else changeBits(rax, ash(reg_mem_size, 3), ash(reg_mem_size, 4), rdx)) : int in
+then rax_var
+else changeBits(rax_var, ash(reg_mem_size, 3), ash(reg_mem_size, 4), rdx_var)) : int in
 let (overflow?, quotient, remainder) = (div_spec(reg_mem_size, dividend, reg_mem)) : (bool, int, int) in
 if overflow?
 then throw(Emsg("Model state error: :UNSIGNED-DIVIDE-ERROR-OVERFLOW"))
@@ -91,7 +91,7 @@ let x86 = (write_iptr(proc_mode, temp_rip, 0)) : int in
  IDIV r/m16: ( DX:AX div r/m16 ) , DX := Remainder, AX := Quotient <br/> 
  IDIV r/m32: ( EDX:EAX div r/m8 ) , EDX := Remainder, EAX := Quotient <br/> 
  IDIV r/m64: ( RDX:RAX div r/m8 ) , RDX := Remainder, RAX := Quotient</p>*/
-val x86_idiv : (int, int, int, int, int, int, int, int, int) -> int effect {rreg, escape, undef, wreg, rmem}
+val x86_idiv : (int, int, int, int, int, int, int, int, int) -> int effect {escape, rmem, rreg, undef, wreg}
 function x86_idiv (proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode, modr_m, sib, x86) =
 let ctx = ("X86-IDIV") : string in
 let r_m = (modr_m_get_r_m(modr_m)) : int in
@@ -116,15 +116,15 @@ else let badlength? = (check_instruction_length(start_rip, temp_rip, 0)) : optio
 if is_some(badlength?)
 then throw(Emsg("A fault occurred.  Original ACL2 AST:
 ['!!FAULT-FRESH', ':GP', '0', ':INSTRUCTION-LENGTH', 'BADLENGTH?']"))
-else let rax = (rgfi_size(if select_byte_operand
+else let rax_var = (rgfi_size(if select_byte_operand
 then 2
 else reg_mem_size, 0, rex_byte, 0)) : int in
-let rdx = (if select_byte_operand
+let rdx_var = (if select_byte_operand
 then 0
 else rgfi_size(reg_mem_size, 2, rex_byte, 0)) : int in
 let dividend = (if select_byte_operand
-then rax
-else changeBits(rax, ash(reg_mem_size, 3), ash(reg_mem_size, 4), rdx)) : int in
+then rax_var
+else changeBits(rax_var, ash(reg_mem_size, 3), ash(reg_mem_size, 4), rdx_var)) : int in
 let (overflow?, quotient, remainder) = (idiv_spec(reg_mem_size, dividend, reg_mem)) : (bool, int, int) in
 if overflow?
 then throw(Emsg("Model state error: :UNSIGNED-DIVIDE-ERROR-OVERFLOW"))

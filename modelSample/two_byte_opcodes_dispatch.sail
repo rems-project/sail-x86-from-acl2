@@ -5,7 +5,7 @@ $include "three_byte_opcodes_dispatch.sail"
 /*<p>@ ( ' two-byte-opcode-execute ' ) is the doorway to the two-byte 
  opcode map, and will lead to the three-byte opcode map if @ ( ' opcode ' ) is 
  either @ ( ' #x38 ' ) or @ ( ' #x3A ' ) .</p>*/
-val two_byte_opcode_execute : (int, int, int, int, int, int, int, int, int, int) -> int effect {rreg, undef, eamem, wreg, escape, rmem, wmv}
+val two_byte_opcode_execute : (int, int, int, int, int, int, int, int, int, int) -> int effect {eamem, escape, rmem, rreg, undef, wmv, wreg}
 function two_byte_opcode_execute (proc_mode, start_rip, temp_rip, prefixes, mandatory_prefix, rex_byte, opcode, modr_m, sib, x86) =
 (match opcode {
 0 => if ((modr_m_get_reg(modr_m)) == (0)) & (not_bool((modr_m_get_mod(modr_m)) == (3)))
@@ -2413,7 +2413,7 @@ _ => throw(Emsg("Translation error: invalid two-byte opcode"))
 
 /*Decoder and dispatch function for two-byte opcodes*/
 /*<p>Source: Intel Manual, Volume 2, Appendix A-2</p>*/
-val two_byte_opcode_decode_and_execute : (int, int, int, int, int, int, int) -> int effect {rreg, undef, eamem, wreg, escape, rmem, wmv}
+val two_byte_opcode_decode_and_execute : (int, int, int, int, int, int, int) -> int effect {eamem, escape, rmem, rreg, undef, wmv, wreg}
 function two_byte_opcode_decode_and_execute (proc_mode, start_rip, temp_rip, prefixes, rex_byte, escape_byte, x86) =
 let ctx = ("two-byte-opcode-decode-and-execute") : string in
 let (flg0, opcode, x86) = (rme08(proc_mode, temp_rip, 1, ":X", 0)) : (option(string), int, int) in

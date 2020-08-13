@@ -1,7 +1,7 @@
 $include <prelude.sail>
 $include <string.sail>
 
-val x86_bt_0f_a3 : (int, int, int, int, int, int, int, int, int) -> int effect {rreg, escape, undef, wreg, rmem}
+val x86_bt_0f_a3 : (int, int, int, int, int, int, int, int, int) -> int effect {escape, rmem, rreg, undef, wreg}
 function x86_bt_0f_a3 (proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode, modr_m, sib, x86) =
 let ctx = ("X86-BT-0F-A3") : string in
 let r_m = (modr_m_get_r_m(modr_m)) : int in
@@ -66,7 +66,7 @@ write_rflags(new_rflags, 0)) : int in
 let x86 = (write_iptr(proc_mode, temp_rip, 0)) : int in
 0
 
-val x86_bt_0f_ba : (int, int, int, int, int, int, int, int, int) -> int effect {rreg, escape, undef, wreg, rmem}
+val x86_bt_0f_ba : (int, int, int, int, int, int, int, int, int) -> int effect {escape, rmem, rreg, undef, wreg}
 function x86_bt_0f_ba (proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode, modr_m, sib, x86) =
 let ctx = ("X86-BT-0F-BA") : string in
 let r_m = (modr_m_get_r_m(modr_m)) : int in
