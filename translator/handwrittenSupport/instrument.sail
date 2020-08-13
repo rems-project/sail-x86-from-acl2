@@ -14,8 +14,16 @@ $include "instrumentFns.sail"
 
 register haltAddrReg : int
 
+// Set 64 bit mode
+val initialise_64_bit_mode : unit -> unit effect {escape, rreg, wreg}
+function initialise_64_bit_mode () = {
+	let x = write_msri(0, set_ia32_eferbits_get_lma(1,  msri(0,0)), 0) in
+	let x = write_seg_hidden_attri(1, set_code_segment_descriptor_attributesbits_get_l(1, seg_hidden_attri(1,0)), 0) in
+	()
+}
+
 // Initialise state for the add1 example
-val initialiseState : unit -> unit effect {escape, wreg}
+val initialiseState : unit -> unit effect {escape, wreg, rreg}
 function initialiseState () = {
 	// Set rip
 	x = write_rip(4195933, 0);
@@ -28,10 +36,16 @@ function initialiseState () = {
 
 	// rflags = 2
 	x = write_rflags(2, 0);
+
+	// Set 64 bit mode
+	initialise_64_bit_mode();
+
+	// Set halt address
+	haltAddrReg = 4195938
 }
 
 // Initialise state for the K-framework example
-val initialiseState2 : unit -> unit effect {escape, wreg}
+val initialiseState2 : unit -> unit effect {escape, wreg, rreg}
 function initialiseState2 () = {
 	// Set rip
 	x = write_rip(4194867, 0); // Original start to this file: 4194867; the instruction which fails in the interpreter: 4196698
@@ -44,14 +58,9 @@ function initialiseState2 () = {
 
 	// rflags = 2
 	x = write_rflags(2, 0);
-}
 
-// Set 64 bit mode
-val initialise_64_bit_mode : unit -> unit effect {escape, rreg, wreg}
-function initialise_64_bit_mode () = {
-	let x = write_msri(0, set_ia32_eferbits_get_lma(1,  msri(0,0)), 0) in
-	let x = write_seg_hidden_attri(1, set_code_segment_descriptor_attributesbits_get_l(1, seg_hidden_attri(1,0)), 0) in
-	()
+	// Set 64 bit mode
+	initialise_64_bit_mode()
 }
 
 // Using the __SetConfig method.  See aarch32 example for example.
