@@ -1,21 +1,22 @@
-val printState : unit -> unit effect {rreg}
+val printState : unit -> unit effect {rreg, escape}
 function printState () = {
-	print_bits("rax = ", gprs[0]);
-	print_bits("rbx = ", gprs[3]);
-	print_bits("rcx = ", gprs[1]);
-	print_bits("rdx = ", gprs[2]);
-	print_bits("rsi = ", gprs[6]);
-	print_bits("rdi = ", gprs[7]);
-	print_bits("rbp = ", gprs[5]);
-	print_bits("rsp = ", gprs[4]);
-	print_bits("r8 = ", gprs[8]);
-	print_bits("r9 = ", gprs[9]);
-	print_bits("r10 = ", gprs[10]);
-	print_bits("r11 = ", gprs[11]);
-	print_bits("r12 = ", gprs[12]);
-	print_bits("r13 = ", gprs[13]);
-	print_bits("r14 = ", gprs[14]);
-	print_bits("r15 = ", gprs[15]);
+    x86_dummy = 0;
+	print_bits("rax = ", get_slice_int(64, rgfi(0, x86_dummy), 0));
+	print_bits("rbx = ", get_slice_int(64, rgfi(3, x86_dummy), 0));
+	print_bits("rcx = ", get_slice_int(64, rgfi(1, x86_dummy), 0));
+	print_bits("rdx = ", get_slice_int(64, rgfi(2, x86_dummy), 0));
+	print_bits("rsi = ", get_slice_int(64, rgfi(6, x86_dummy), 0));
+	print_bits("rdi = ", get_slice_int(64, rgfi(7, x86_dummy), 0));
+	print_bits("rbp = ", get_slice_int(64, rgfi(5, x86_dummy), 0));
+	print_bits("rsp = ", get_slice_int(64, rgfi(4, x86_dummy), 0));
+	print_bits("r8 = ", get_slice_int(64, rgfi(8, x86_dummy), 0));
+	print_bits("r9 = ", get_slice_int(64, rgfi(9, x86_dummy), 0));
+	print_bits("r10 = ", get_slice_int(64, rgfi(10, x86_dummy), 0));
+	print_bits("r11 = ", get_slice_int(64, rgfi(11, x86_dummy), 0));
+	print_bits("r12 = ", get_slice_int(64, rgfi(12, x86_dummy), 0));
+	print_bits("r13 = ", get_slice_int(64, rgfi(13, x86_dummy), 0));
+	print_bits("r14 = ", get_slice_int(64, rgfi(14, x86_dummy), 0));
+	print_bits("r15 = ", get_slice_int(64, rgfi(15, x86_dummy), 0));
 
 	print_bits("rflags = ", get_slice_int(64, r_rflags(0), 0));
 

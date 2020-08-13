@@ -62,7 +62,10 @@ def sanitiseSymbol(symbol, lower=True, includeFnNames=False):
 	# Register and function names cannot be shadowed in Sail.  This part
 	# appends '_var` to such names.
 	# TODO: get these automatically
-	regNames = ['register', 'rflags', 'rip', 'gprs', 'msrs', 'seg-visibles', 'seg-hidden-attrs', 'seg-hidden-bases', 'seg-hidden-limits', 'zmms', 'ctrs']
+	regNames = ['register', 'rflags', 'rip', 'msrs',
+				'seg-visibles', 'seg-hidden-attrs', 'seg-hidden-bases', 'seg-hidden-limits', 'zmms', 'ctrs',
+				'rax', 'rbx', 'rcx', 'rdx', 'rsi', 'rdi', 'rsp', 'rbp',
+				'r8', 'r9', 'r10', 'r11', 'r12', 'r13', 'r14', 'r15']
 	functionNames = ['n64-bit-modep', 'mod']
 	if includeFnNames:
 		shadowedNames = regNames + functionNames

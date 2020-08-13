@@ -495,21 +495,86 @@ function write_rip (toSet, x86_dummy) = {
 	0
 }
 
+// In ACL2 rgfi() is often called with a `defconst` argument.  E.g.
+//      ` (rgfi *rax*) `
+// Unfortunately the translator currently translates these as number literals.
+// So (ignoring the dummy x86 variable) the above will become:
+//      ` rgfi(0)`
+// To find the number *rax* maps to, one can simply type `*rax*` into and ACL2
+// terminal with the x86 ISA project loaded.
+//
+// Each of the gprs is defined separately below, as opposed to a vector of
+// bitvectors as other registers are.  This is so they play nicely with
+// concurrency tools.  It also means rgfi() and write_rgfi() must work out
+// which reg to access themselves, instead of indexing an array.
+//
 // See here for some hints on rgfi:
 // http://www.cs.utexas.edu/users/moore/acl2/manuals/current/manual/index-seo.php/X86ISA____GPRS-READS-AND-WRITES?path=3532/29063/10660/6710/25183
 
-register gprs : vector(16, dec, bits(64)) // 16 gprs in 64 bit mode, as per table 5.1 in thesis
+register rax : bits(64)
+register rbx : bits(64)
+register rcx : bits(64)
+register rdx : bits(64)
+register rsi : bits(64)
+register rdi : bits(64)
+register rsp : bits(64)
+register rbp : bits(64)
+register r8 : bits(64)
+register r9 : bits(64)
+register r10 : bits(64)
+register r11 : bits(64)
+register r12 : bits(64)
+register r13 : bits(64)
+register r14 : bits(64)
+register r15 : bits(64)
 
 val rgfi : (int, int) -> int effect {escape, rreg}
 function rgfi (regNum, x86_dummy) = {
 	assert(0 <= regNum & regNum < 16);
-	signed(gprs[regNum])
+    match regNum {
+        0 => signed(rax),
+        1 => signed(rcx),
+        2 => signed(rdx),
+        3 => signed(rbx),
+        4 => signed(rsp),
+        5 => signed(rbp),
+        6 => signed(rsi),
+        7 => signed(rdi),
+        8 => signed(r8),
+        9 => signed(r9),
+        10 => signed(r10),
+        11 => signed(r11),
+        12 => signed(r12),
+        13 => signed(r13),
+        14 => signed(r14),
+        15 => signed(r15),
+        _ =>  throw(Emsg("Invalid regNum in rfgi"))
+    }
 }
 
 val write_rgfi : (int, int, int) -> int effect {escape, wreg}
 function write_rgfi (regNum, v, x86_dummy) = {
 	assert(0 <= regNum & regNum < 16);
-	gprs[regNum] = get_slice_int(64, v, 0);
+	val_to_write = get_slice_int(64, v, 0);
+	match regNum {
+            0 => rax = val_to_write,
+            1 => rcx = val_to_write,
+            2 => rdx = val_to_write,
+            3 => rbx = val_to_write,
+            4 => rsp = val_to_write,
+            5 => rbp = val_to_write,
+            6 => rsi = val_to_write,
+            7 => rdi = val_to_write,
+            8 => r8 = val_to_write,
+            9 => r9 = val_to_write,
+            10 => r10 = val_to_write,
+            11 => r11 = val_to_write,
+            12 => r12 = val_to_write,
+            13 => r13 = val_to_write,
+            14 => r14 = val_to_write,
+            15 => r15 = val_to_write,
+            _ =>  throw(Emsg("Invalid regNum in write_rfgi"))
+        };
 	0
 }
 
