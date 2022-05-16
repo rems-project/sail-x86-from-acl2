@@ -136,10 +136,11 @@ def translateType(env, typeSymbol, args=None):
 	typeSymbol = typeSymbol.upper()
 
 	if typeSymbol == 'unsigned-byte'.upper():
-		return Sail_t_range(0, 2 ** int(args[0]) - 1)
+		return Sail_t_bits(int(args[0])) # Sail_t_range(0, 2 ** int(args[0]) - 1)
 	elif typeSymbol == 'signed-byte'.upper():
-		halfBits = int(args[0]) - 1
-		return Sail_t_range(- 2 ** halfBits, 2 ** halfBits - 1)
+		return Sail_t_bits(int(args[0]))
+		# halfBits = int(args[0]) - 1
+		# return Sail_t_range(- 2 ** halfBits, 2 ** halfBits - 1)
 	elif typeSymbol == 'integer'.upper():
 		if args is None:
 			return Sail_t_int()
@@ -205,7 +206,7 @@ def parseGuard(guard):
 		if hiBits is None or isinstance(hiBits, float) or hiBits < 0:
 			print(f"Warning: none-integer value supplied for unsigned-byte-p argument: {guard}")
 		else:
-			dictAddOrInit(possibilities, name, Sail_t_range(0, 2 ^ hiBits - 1))
+			dictAddOrInit(possibilities, name, Sail_t_bits(hiBits)) # Sail_t_range(0, 2 ^ hiBits - 1))
 	elif switch.lower() == 'n01p':
 		# TODO: this is for the function `extract-64-bits` - would be better to use fact that we match against a numeric
 		# type to infer this type.
@@ -264,6 +265,14 @@ class SailType:
 		return id(self)
 	def containsUnknown(self):
 		return False
+	def pp(self):
+		return "unknown"
+
+def ppType(t):
+	return t.pp() if isinstance(t, SailType) else "unknown"
+
+def containsUnknownType(t):
+	return t.containsUnknown() if isinstance(t, SailType) else True
 
 class Sail_t_unit(SailType):
 	"""Represents the Sail unit type"""
@@ -326,6 +335,9 @@ class Sail_t_unknown(SailType):
 		trying to type check the output Sail.
 		"""
 		return "unknown"
+
+def isUnknownType(t):
+	return isinstance(t, Sail_t_unknown) or t == None
 
 class Sail_t_error(SailType):
 	"""
@@ -475,7 +487,7 @@ class Sail_t_fn(SailType):
 		)
 
 	def containsUnknown(self):
-		return any(t.containsUnknown() for t in self.lhs) or self.rhs.containsUnknown()
+		return any((t == None or t.containsUnknown()) for t in self.lhs) or (self.rhs == None or self.rhs.containsUnknown())
 
 	def pp(self):
 		return f"({', '.join([item.pp() for item in self.lhs])}) -> {self.rhs.pp()}"
@@ -583,6 +595,9 @@ class Sail_t_option(SailType):
 	def pp(self):
 		return f"option({self.typ.pp()})"
 
+def isStringOption(t):
+	return isinstance(t, Sail_t_option) and isinstance(t.getTyp(), Sail_t_string)
+
 class Sail_t_tuple(SailType):
 	"""
 	Represents a Sail tuple
@@ -610,6 +625,27 @@ class Sail_t_tuple(SailType):
 
 	def getSubTypes(self):
 		return self.subTypes
+
+	def generaliseSubTypes(self, others):
+		merged = self.subTypes
+		if len(merged) != len(others):
+			return None
+		for i in range(len(merged)):
+			if merged[i] == others[i]:
+				continue
+			elif isinstance(merged[i], Sail_t_unknown) or isinstance(others[i], Sail_t_unknown):
+				merged[i] = Sail_t_unknown()
+			elif isinstance(merged[i], Sail_t_tuple) and isinstance(others[i], Sail_t_tuple):
+				mergedInner = merged[i].generaliseSubTypes(others[i].getSubTypes())
+				if mergedInner == None:
+					return None
+				else:
+					merged[i] = Sail_t_tuple(mergedInner)
+			elif (isNumeric(merged[i]) and isinstance(others[i], Sail_t_bits)) or (isinstance(merged[i], Sail_t_bits) and isNumeric(others[i])):
+				merged[i] = Sail_t_unknown()
+			else:
+				return None
+		return merged
 
 	def generalise(self):
 		return Sail_t_tuple([t.generalise() for t in self.subTypes])

@@ -245,11 +245,12 @@ class SailLet(SailASTelem):
 		return self.expr
 
 	def resolveTypes(self, file, justPrint=False):
-		file.write(f"Let Resolve Types - {self.varName.pp()}\n")
-		file.write(f"Binding: {self.varName.getType().pp()}\n")
-		file.write(f"Expression: {self.expr[0].getType().pp()}\n\n")
+		return
+		#file.write(f"Let Resolve Types - {self.varName.pp()}\n")
+		#file.write(f"Binding: {self.varName.getType().pp()}\n")
+		#file.write(f"Expression: {self.expr[0].getType().pp()}\n\n")
 
-		sys.exit("Implement resolving of types of SailLet")
+		#sys.exit("Implement resolving of types of SailLet")
 
 	### Required methods ###
 	def getType(self):
@@ -284,7 +285,7 @@ class SailLet(SailASTelem):
 		# Force a type annotation of the expression to avoid type variable
 		# escape errors.
 		pp_var = self.varName.pp()
-		pp_expr = f"({self.expr[0].pp()}) : {self.expr[0].getType().generalise().pp()}"
+		pp_expr = f"({self.expr[0].pp()}) : {ppType(self.expr[0].getType())}"
 		pp_body = self.body[0].pp()
 		
 		return f"let {pp_var} = {pp_expr} in\n{pp_body}"
@@ -295,7 +296,8 @@ class SailPlaceholderNil(SailASTelem):
 	# Class variables
 	DEFAULT = 1
 	BOOL = 2
-	nilTypes = (DEFAULT, BOOL)
+	UNKNOWN = 3
+	nilTypes = (DEFAULT, BOOL, UNKNOWN)
 
 	def __init__(self, nilType=1):
 		super().__init__()
@@ -310,7 +312,8 @@ class SailPlaceholderNil(SailASTelem):
 		elif isinstance(resolvedType, Sail_t_bool):
 			self.nilType = SailPlaceholderNil.BOOL
 		else:
-			print(f"Warning: tried setting SailPlaceholderNil to invalid type - {resolvedType}, {resolvedType.pp()} - will keep as default")
+			self.nilType = SailPlaceholderNil.UNKNOWN
+			# print(f"Warning: tried setting SailPlaceholderNil to invalid type - {resolvedType}, {resolvedType.pp()} - will keep as default")
 
 	### Required methods ###
 	def getType(self):
@@ -318,6 +321,8 @@ class SailPlaceholderNil(SailASTelem):
 			return Sail_t_option(Sail_t_string())
 		elif self.nilType == SailPlaceholderNil.BOOL:
 			return Sail_t_bool()
+		elif self.nilType == SailPlaceholderNil.UNKNOWN:
+			return Sail_t_unknown()
 		else:
 			return Sail_t_PlaceholderNil()
 
@@ -331,6 +336,8 @@ class SailPlaceholderNil(SailASTelem):
 		elif self.nilType == SailPlaceholderNil.BOOL:
 			# TODO: use SailBoolLit instead of a raw string
 			return 'false'
+		elif self.nilType == SailPlaceholderNil.UNKNOWN:
+			return 'None()'
 		else:
 			sys.exit("Error: Tried to pp unresolved nil")
 
@@ -369,7 +376,8 @@ class SailBoundVar(SailASTelem):
 		if self.typ is not None:
 			return self.typ
 		else:
-			raise ValueError(f"Error: type of Sail `boundVar` is None - {self.binding}")
+			return Sail_t_unknown()
+			#raise ValueError(f"Error: type of Sail `boundVar` is None - {self.binding}")
 
 	def getEffects(self, ctx):
 		return set([])
@@ -414,7 +422,7 @@ class SailApp(SailASTelem):
 		file.write(f"Formals: {[f.pp() for f in formalTypes]}\n")
 		file.write(f"Actuals: {[at.pp() for at in actualTypes]}\n\n")
 
-		if not justPrint:
+		if isinstance(self.fn, SailFn) and not justPrint:
 			# Go through terms resolving types if necessary
 			for i in range(len(self.actuals)):
 				fType = formalTypes[i]
@@ -427,10 +435,13 @@ class SailApp(SailASTelem):
 					continue
 				# Otherwise, resolve the unknown var.  Note:
 				# - Only a SailBoundVar can have raw type of Sail_t_unknown, so we shoul be safe using its setType() method
+				#   TODO: No longer true...
 				# - self.fn must be a SailFn (not a SailHandwrittenFn) by this point.
 				unknownTerm = self.actuals[i] if isinstance(aType, Sail_t_unknown) else self.fn.getFormals()[i]
 				knownType = formalTypes[i] if isinstance(aType, Sail_t_unknown) else actualTypes[i]
-				unknownTerm.setType(knownType)
+				if isinstance(unknownTerm, SailBoundVar):
+					unknownTerm.setType(knownType)
+				# TODO: Else?
 
 	def resolve(self, resolvedType):
 		"""
@@ -635,16 +646,48 @@ class SailIf(SailASTelem):
 		if thenType != elseType:
 			if isNumeric(thenType) and isNumeric(elseType):
 				return Sail_t_int()
+			elif (isNumeric(thenType) and isinstance(elseType, Sail_t_bits)) or (isinstance(thenType, Sail_t_bits) and isNumeric(elseType)):
+				return Sail_t_unknown()
+			elif isinstance(thenType, Sail_t_bits) and isinstance(elseType, Sail_t_bits):
+				return Sail_t_unknown()
 			elif isinstance(thenType, Sail_t_tuple) and isinstance(elseType, Sail_t_tuple):
-				if thenType != elseType:
+				merged = thenType.generaliseSubTypes(elseType.getSubTypes())
+				if merged == None:
 					print("Error: then tuple not compatible with else tuple")
 					print(f"\tThen tuple/type: {self.thenTerm[0].pp()} : {thenType.pp()}")
 					print(f"\tElse tuple/type: {self.elseTerm[0].pp()} : {elseType.pp()}")
 					sys.exit()
 				else:
-					return thenType
+					return Sail_t_tuple(merged)
+				# if len(thenType.getSubTypes()) != len(elseType.getSubTypes()):
+				# 	print("Error: then tuple different length than else tuple")
+				# 	print(f"\tThen tuple/type: {self.thenTerm[0].pp()} : {thenType.pp()}")
+				# 	print(f"\tElse tuple/type: {self.elseTerm[0].pp()} : {elseType.pp()}")
+				# 	sys.exit()
+				# if thenType != elseType:
+				# 	subTypes = thenType.getSubTypes()
+				# 	for i in range(len(subTypes)):
+				# 		other = elseType.getSubTypes()[i]
+				# 		if subTypes[i] == other:
+				# 			continue
+				# 		elif isinstance(subTypes[i], Sail_t_unknown):
+				# 			subTypes[i] = other
+				# 		elif isinstance(other, Sail_t_unknown):
+				# 			continue
+				# 		elif (isNumeric(subTypes[i]) and isinstance(other, Sail_t_bits)) or (isinstance(subTypes[i], Sail_t_bits) and isNumeric(other)):
+				# 			subTypes[i] = Sail_t_unknown()
+				# 		else:
+				# 			print(f"Error: then tuple not compatible with else tuple at index {i}")
+				# 			print(f"\tThen tuple/type: {self.thenTerm[0].pp()} : {thenType.pp()}")
+				# 			print(f"\tElse tuple/type: {self.elseTerm[0].pp()} : {elseType.pp()}")
+				# 			sys.exit()
+				# 	return Sail_t_tuple(subTypes)
+				# else:
+				# 	return thenType
+			elif isUnknownType(thenType) or isUnknownType(elseType):
+				return Sail_t_unknown()
 			else:
-				print(f"Error: then type not compatible with else type.  then type: {thenType.pp()}; else type: {elseType.pp()}")
+				print(f"Error: then type not compatible with else type.  then type: {ppType(thenType)}; else type: {ppType(elseType)}")
 				print(f"if term: {self.ifTerm[0].pp()}; then term: {self.thenTerm[0].pp()}, else term: {self.elseTerm[0].pp()}")
 				sys.exit()
 		else:
@@ -806,16 +849,17 @@ class SailMatch(SailASTelem):
 		if self.forceType is None:
 			# Get the type of each expression and hope they're the same
 			typesWork, expr_t = checkTypesMatch([expr for (_, expr) in self.matches])
-			if not typesWork:
-				print(f"Error: types of expression in match statement not the same")
-				print(self.var)
-				for (p, e) in self.matches:
-					print(f"\t{p.pp()}, {e.getType().pp()}")
-				for (p, e) in self.matches:
-					print(f"\t{p.pp()}, {e.pp()}")
-				sys.exit()
+                        # TODO:
+			# if not typesWork:
+			# 	print(f"Error: types of expression in match statement not the same")
+			# 	print(self.var)
+			# 	for (p, e) in self.matches:
+			# 		print(f"\t{p.pp()}, {e.getType().pp()}")
+			# 	for (p, e) in self.matches:
+			# 		print(f"\t{p.pp()}, {e.pp()}")
+			# 	sys.exit()
 
-			return expr_t
+			return expr_t if typesWork else Sail_t_unknown()
 		else:
 			return self.forceType
 
@@ -852,7 +896,7 @@ class SailMatch(SailASTelem):
 		together = f"{headerLine}\n{matchLines}\n}}"
 
 		# Add a type annotation
-		withAnnotation = f"({together}) : {self.getType().pp()}"
+		withAnnotation = f"({together}) : {ppType(self.getType())}"
 
 		return withAnnotation
 
@@ -1193,6 +1237,9 @@ def checkTypesMatch(items):
 	Returns:
 		(bool, SailType)
 	"""
+	#if not(isinstance(items[0].getType(), SailType)):
+	#	print(f"Error: expression with invalid type: {items[0].pp()}")
+	#	sys.exit()
 	expr_t = items[0].getType().generalise()
 	for expr in items[1:]:
 		if expr.getType().generalise() != expr_t:
@@ -1304,7 +1351,7 @@ def resolveNils(exprs):
 		elif isinstance(e, SailTuple):
 			for (j, sub_e) in enumerate(e.getItems()):
 				if isinstance(sub_e, SailPlaceholderNil):
-					otherTypes = [oe.getType().generalise().getSubTypes()[j] for oe in otherExprs]
+					otherTypes = [oe.getType().generalise().getSubTypes()[j] for oe in otherExprs if isinstance(oe.getType(), Sail_t_tuple)]
 					resolveNilsInner(otherTypes, sub_e)
 
 		# Otherwise we don't know what to do so don't do anything

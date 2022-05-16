@@ -955,6 +955,10 @@ def _the_helper(theType, sailTerm):
 		retTerm = [SailApp(	fn = SailHandwrittenFn(	name = "the_range",
 													typ = Sail_t_fn([Sail_t_int(), Sail_t_int(), Sail_t_int()], Sail_t_range(low, high), {'escape'})),
 							actuals = [SailNumLit(low), SailNumLit(high), sailTerm[0]])]
+	elif isinstance(theType, Sail_t_bits):
+		retTerm = [SailApp(	fn = SailHandwrittenFn(	name = "the_bits",
+													typ = Sail_t_fn([Sail_t_int(), Sail_t_bits(theType.length)], Sail_t_bits(theType.length), {'escape'})),
+							actuals = [SailNumLit(theType.length), sailTerm[0]])]
 	else:
 		sys.exit(f"Error: unexpected type spec in `the` - {theType} in {sailTerm}")
 
@@ -1076,23 +1080,25 @@ def tr_part_select(ACL2ast, env):
 	# Create the get_slice_int function application
 	if size is not None:
 		innerRetType = Sail_t_bits(size)
-		outerRetType = Sail_t_range(0, 2^size - 1)
+		# outerRetType = Sail_t_range(0, 2^size - 1)
 	else:
-		innerRetType = Sail_t_int()
-		outerRetType = Sail_t_int()
+		innerRetType = Sail_t_bits(64) # hack...
+		# outerRetType = Sail_t_int()
+
+	targetType = innerRetType # hack...
 
 	inner = SailApp(fn = SailHandwrittenFn(
-							name = 'get_slice_int',
-							typ = Sail_t_fn([Sail_t_int(), Sail_t_int(), Sail_t_int()], innerRetType)),
-					actuals = [sizeASTsail, targetSail[0] , lowASTsail[0]])
+							name = 'slice',
+							typ = Sail_t_fn([targetType, Sail_t_int(), Sail_t_int()], innerRetType)),
+					actuals = [targetSail[0], lowASTsail[0], sizeASTsail])
 
 	# And convert the resulting bits to a range
-	outer = SailApp(fn = SailHandwrittenFn(
-							name = 'unsigned',
-							typ = Sail_t_fn([], outerRetType)),
-					actuals = [inner])
+	#outer = SailApp(fn = SailHandwrittenFn(
+	#						name = 'unsigned',
+	#						typ = Sail_t_fn([], outerRetType)),
+	#				actuals = [inner])
 
-	return [outer], env, len(ACL2ast)
+	return [inner], env, len(ACL2ast)
 
 def tr_part_install(ACL2ast, env):
 	"""
@@ -1251,7 +1257,7 @@ def _bstar_helper(bindersRemaining, results, env):
 					sys.exit(f"Unknown type of mv binder - {ident}")
 
 			# Get type information from the function call
-			bodyType = bodySail[0].getType().getSubTypes()
+			bodyType = bodySail[0].getType().getSubTypes() if isinstance(bodySail[0].getType(), Sail_t_tuple) else []
 			for (i, t) in enumerate(bodyType):
 				try:
 					boundVars[i].getType()

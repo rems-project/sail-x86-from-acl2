@@ -588,7 +588,9 @@ def transformACL2FiletoSail(file, env):
 								 (any(a.getType().containsUnknown() for a in e.getActuals()) or
 								  e.getFn().getType().containsUnknown())
 			letPred = lambda e : isinstance(e, SailLet) and\
-								 (e.getVarName().getType().containsUnknown() or
+								 (e.getVarName().getType() == None or
+								  e.getVarName().getType().containsUnknown() or
+								  e.getExpr()[0].getType() == None or
 								  e.getExpr()[0].getType().containsUnknown())
 			overallPred = lambda e : appPred(e) or letPred(e)
 

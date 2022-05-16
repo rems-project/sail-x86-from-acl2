@@ -23,14 +23,14 @@ def generate(includeHeader):
 	code_nXY = []
 	for n in numsToGenerate:
 		name = "n{:02d}".format(n)
-		val = f"val {name} : (int) -> int"
-		function = f"function {name} (x) = loghead({n}, x)"
+		val = f"val {name} : forall 'n, 'n > 0. (bits('n)) -> bits({n})"
+		function = f"function {name} (x) = sail_mask({n}, x)"
 		together = "\n".join([val, function])
 		code_nXY.append(together)
 		namesGenerated.append((	name.upper(),
 								SailASTelems.SailHandwrittenFn(
 									name,
-									Sail_t_fn([Sail_t_int()], Sail_t_int()))))
+									Sail_t_fn([Sail_t_bits(n)], Sail_t_bits(n)))))
 
 
 	'''
@@ -59,7 +59,7 @@ function {n_num}_to_{i_num} (x) = {{
 		namesGenerated.append((	f"{n_num}-to-{i_num}".upper(),
 								SailASTelems.SailHandwrittenFn(
 									f"{n_num}_to_{i_num}",
-									Sail_t_fn([Sail_t_int()], Sail_t_int(), {'escape'}))))
+									Sail_t_fn([Sail_t_bits(n)], Sail_t_bits(n), {'escape'}))))
 
 	'''
 	iXY.  Names are, for example, `i64`.  The implementation is a simple
@@ -76,7 +76,7 @@ function {i_num} x = binary_logext ({n}, x)
 		namesGenerated.append((i_num.upper(),
 							   SailASTelems.SailHandwrittenFn(
 								   i_num.upper(),
-								   Sail_t_fn([Sail_t_int()], Sail_t_int(), {'escape'}))))
+								   Sail_t_fn([Sail_t_bits(n)], Sail_t_bits(n), {'escape'}))))
 
 	'''
 	Output to file

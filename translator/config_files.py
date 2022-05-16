@@ -67,7 +67,7 @@ types they specify are proved statically by ACL2.  It does, however, require
 correct implementation of the handwritten functions - so take care if setting
 this to False.
 '''
-translate_the = False
+translate_the = True
 
 
 '''
