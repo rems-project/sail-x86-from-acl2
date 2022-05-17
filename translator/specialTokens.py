@@ -544,6 +544,12 @@ def tr_define(ACL2ast, env):
 		if kw.upper() in extendedOpts:
 			SailAST.extend([ACL2Comment(comment.getString()) for comment in extendedOpts[kw.upper()]])
 
+	guardTypes = {}
+	if ':guard'.upper() in extendedOpts:
+		for guard in extendedOpts[':guard'.upper()]:
+			newTypes = parseGuard(guard)
+			guardTypes = {**guardTypes, **newTypes}
+
 	# Split the rest into pre- and post-///
 	# We use the content before ///, but ignore the content after
 	if '///' in ACL2astRemainder:
@@ -590,6 +596,9 @@ def tr_define(ACL2ast, env):
 	# 		keyDefaults : {str : SailASTelem},
 	fnFormalsFiltered, fnFormalsTyped, keyDefaults, env = _parseFormals(fnFormals, 'normal', env)
 	numNonKeywordFormals = len(fnFormalsFiltered)
+
+	# Merge type information from guards
+	fnFormalsTyped = {**guardTypes, **fnFormalsTyped}
 
 	# Add the formal parameter bindings to the stack with their types if we have them
 	fnFormalsBVs = []
