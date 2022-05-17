@@ -644,52 +644,13 @@ class SailIf(SailASTelem):
 		thenType = self.thenTerm[0].getType()
 		elseType = self.elseTerm[0].getType()
 		if thenType != elseType:
-			if isNumeric(thenType) and isNumeric(elseType):
-				return Sail_t_int()
-			elif (isNumeric(thenType) and isinstance(elseType, Sail_t_bits)) or (isinstance(thenType, Sail_t_bits) and isNumeric(elseType)):
-				return Sail_t_unknown()
-			elif isinstance(thenType, Sail_t_bits) and isinstance(elseType, Sail_t_bits):
-				return Sail_t_unknown()
-			elif isinstance(thenType, Sail_t_tuple) and isinstance(elseType, Sail_t_tuple):
-				merged = thenType.generaliseSubTypes(elseType.getSubTypes())
-				if merged == None:
-					print("Error: then tuple not compatible with else tuple")
-					print(f"\tThen tuple/type: {self.thenTerm[0].pp()} : {thenType.pp()}")
-					print(f"\tElse tuple/type: {self.elseTerm[0].pp()} : {elseType.pp()}")
-					sys.exit()
-				else:
-					return Sail_t_tuple(merged)
-				# if len(thenType.getSubTypes()) != len(elseType.getSubTypes()):
-				# 	print("Error: then tuple different length than else tuple")
-				# 	print(f"\tThen tuple/type: {self.thenTerm[0].pp()} : {thenType.pp()}")
-				# 	print(f"\tElse tuple/type: {self.elseTerm[0].pp()} : {elseType.pp()}")
-				# 	sys.exit()
-				# if thenType != elseType:
-				# 	subTypes = thenType.getSubTypes()
-				# 	for i in range(len(subTypes)):
-				# 		other = elseType.getSubTypes()[i]
-				# 		if subTypes[i] == other:
-				# 			continue
-				# 		elif isinstance(subTypes[i], Sail_t_unknown):
-				# 			subTypes[i] = other
-				# 		elif isinstance(other, Sail_t_unknown):
-				# 			continue
-				# 		elif (isNumeric(subTypes[i]) and isinstance(other, Sail_t_bits)) or (isinstance(subTypes[i], Sail_t_bits) and isNumeric(other)):
-				# 			subTypes[i] = Sail_t_unknown()
-				# 		else:
-				# 			print(f"Error: then tuple not compatible with else tuple at index {i}")
-				# 			print(f"\tThen tuple/type: {self.thenTerm[0].pp()} : {thenType.pp()}")
-				# 			print(f"\tElse tuple/type: {self.elseTerm[0].pp()} : {elseType.pp()}")
-				# 			sys.exit()
-				# 	return Sail_t_tuple(subTypes)
-				# else:
-				# 	return thenType
-			elif isUnknownType(thenType) or isUnknownType(elseType):
-				return Sail_t_unknown()
-			else:
+			merged = mergeTypes(thenType, elseType)
+			if merged is None:
 				print(f"Error: then type not compatible with else type.  then type: {ppType(thenType)}; else type: {ppType(elseType)}")
-				print(f"if term: {self.ifTerm[0].pp()}; then term: {self.thenTerm[0].pp()}, else term: {self.elseTerm[0].pp()}")
+				print(f"then term: {self.thenTerm[0].pp()}")
+				print(f"else term: {self.elseTerm[0].pp()}")
 				sys.exit()
+			return merged
 		else:
 			if isinstance(thenType, Sail_t_error) and isinstance(elseType, Sail_t_error):
 				sys.exit("Error: Both branches have `any` type")
@@ -849,17 +810,17 @@ class SailMatch(SailASTelem):
 		if self.forceType is None:
 			# Get the type of each expression and hope they're the same
 			typesWork, expr_t = checkTypesMatch([expr for (_, expr) in self.matches])
-                        # TODO:
-			# if not typesWork:
-			# 	print(f"Error: types of expression in match statement not the same")
-			# 	print(self.var)
-			# 	for (p, e) in self.matches:
-			# 		print(f"\t{p.pp()}, {e.getType().pp()}")
-			# 	for (p, e) in self.matches:
-			# 		print(f"\t{p.pp()}, {e.pp()}")
-			# 	sys.exit()
 
-			return expr_t if typesWork else Sail_t_unknown()
+			if not typesWork:
+				print(f"Error: types of expression in match statement not the same")
+				print(self.var)
+				for (p, e) in self.matches:
+					print(f"\t{p.pp()}, {e.getType().pp()}")
+				for (p, e) in self.matches:
+					print(f"\t{p.pp()}, {e.pp()}")
+				sys.exit()
+
+			return expr_t
 		else:
 			return self.forceType
 
@@ -1237,12 +1198,10 @@ def checkTypesMatch(items):
 	Returns:
 		(bool, SailType)
 	"""
-	#if not(isinstance(items[0].getType(), SailType)):
-	#	print(f"Error: expression with invalid type: {items[0].pp()}")
-	#	sys.exit()
-	expr_t = items[0].getType().generalise()
+	expr_t = items[0].getType()
 	for expr in items[1:]:
-		if expr.getType().generalise() != expr_t:
+		expr_t = mergeTypes(expr_t, expr.getType())
+		if expr_t is None:
 			return False, None
 
 	return True, expr_t

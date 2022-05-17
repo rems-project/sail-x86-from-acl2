@@ -1244,15 +1244,18 @@ def _bstar_helper(bindersRemaining, results, env):
 			# Translate the body before pushing new bindings as the old bindings may be used in the body
 			body = binding[1]
 			(bodySail, env, _) = transform.transformACL2asttoSail(body, env)
+			bodyTypes = bodySail[0].getType().getSubTypes() if isinstance(bodySail[0].getType(), Sail_t_tuple) else []
 
 			# Perform the bindings
 			afters = [] # [(name:str, the_expr : ACL2astElem)]
 			boundVars = []
 			# Each name we bind may either be a raw symbol (easy) or a list (e.g. `the` - harder)
-			for ident in b[1:]:
+			for i in range(len(b[1:])):
+				ident = b[i + 1]
 				if type(ident) == str:
 					name = sanitiseBstarName(ident)
-					boundVars.extend(env.pushToBindings([name]))
+					typ = [bodyTypes[i]] if i < len(bodyTypes) else None
+					boundVars.extend(env.pushToBindings([name], typ))
 					boundNames.append(name)
 				elif type(ident) == list and ident[0].lower() == 'the':
 					# This is a bit of a hack as we can have more general patterns in an mv b* binder

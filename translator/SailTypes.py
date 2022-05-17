@@ -1,6 +1,6 @@
 from lex_parse import NewLine
 import utils
-
+import math
 import sys
 
 """
@@ -533,7 +533,8 @@ class Sail_t_member(SailType):
 
 		# Compare the lists
 		membersEq = True
-		for (i, item) in self.members:
+		for i in range(len(self.members)):
+			item = self.members[i]
 			if isinstance(item, int):
 				membersEq = (membersEq and item == other.members[i])
 			else: # String
@@ -554,7 +555,7 @@ class Sail_t_member(SailType):
 
 	def pp(self):
 		if self.subType == Sail_t_member.INT:
-			inner = ', '.join([item for item in self.members])
+			inner = ', '.join([str(item) for item in self.members])
 			return f"{{|{inner}|}}"
 		elif self.subType == Sail_t_member.STR:
 			# Don't think we can have member of string so just generalise to string
@@ -765,3 +766,63 @@ class Sail_t_list(SailType):
 
 	def pp(self):
 		return f"list({self.subType.pp()})"
+
+
+def getBitvectorSize(typ):
+	if isinstance(typ, Sail_t_bits):
+		return typ.length
+	elif isinstance(typ, Sail_t_range):
+		# Determine number of bits required (and make sure that it is at least 1)
+		length = max(typ.high - typ.low + 1, typ.high, abs(typ.low) + 1, 2)
+		return math.ceil(math.log2(length))
+	else:
+		return None
+
+def isBitvectorType(typ):
+	return (getBitvectorSize(typ) is not None)
+
+def isRangeType(typ):
+	return (isinstance(typ, Sail_t_range) or (isinstance(typ, Sail_t_member) and typ.subType == Sail_t_member.INT))
+
+def getRangeOfType(typ):
+	if isinstance(typ, Sail_t_range):
+		return (typ.low, typ.high)
+	elif isinstance(typ, Sail_t_member) and typ.subType == Sail_t_member.INT:
+		return (min(typ.members), max(typ.members))
+	else:
+		return None
+
+def mergeTypes(t1, t2):
+	if t1 == t2:
+		return t1
+	elif isinstance(t1, Sail_t_member) and isinstance(t2, Sail_t_member):
+		return Sail_t_member(list(set(t1.members + t2.members)))
+	elif isRangeType(t1) and isRangeType(t2):
+		(l1, h1) = getRangeOfType(t1)
+		(l2, h2) = getRangeOfType(t2)
+		return Sail_t_range(min(l1, l2), max(h1, h2))
+	elif isBitvectorType(t1) and isBitvectorType(t2):
+		length = max(getBitvectorSize(t1), getBitvectorSize(t2))
+		return Sail_t_bits(length)
+	elif (isNumeric(t1) and isNumeric(t2)) \
+	     or (isNumeric(t1) and isBitvectorType(t2)) \
+	     or (isBitvectorType(t1) and isNumeric(t2)):
+		return Sail_t_int()
+	elif isinstance(t1, Sail_t_tuple) and isinstance(t2, Sail_t_tuple):
+		ts1 = t1.getSubTypes()
+		ts2 = t2.getSubTypes()
+		if len(ts1) != len(ts2):
+			return None
+		merged = []
+		for i in range(len(ts1)):
+			t = mergeTypes(ts1[i], ts2[i])
+			if t is None:
+				return None
+			merged = merged + [t]
+		return Sail_t_tuple(merged)
+	elif isinstance(t2, Sail_t_unknown) or isinstance(t2, Sail_t_error):
+		return t1
+	elif isinstance(t1, Sail_t_unknown) or isinstance(t1, Sail_t_error):
+		return t2
+	else:
+		return None
