@@ -162,7 +162,7 @@ class SailFn(SailASTelem):
 			effectsString = ""
 
 		# Combine
-		typeSig = f"val {sanitisedName} : {self.getType().generalise().pp()}{effectsString}"
+		typeSig = f"val {sanitisedName} : {self.getType().pp()}{effectsString}"
 		header = f"function {sanitisedName} ({', '.join([utils.sanitiseSymbol(item.getName(), includeFnNames=True) for item in self.formals])}) ="
 		body = "\n".join([elem.pp() for elem in self.body])
 
@@ -200,7 +200,7 @@ class SailHandwrittenFn(SailASTelem):
 
 	### Required methods ###
 	def getType(self):
-		return self.typ.generalise()
+		return self.typ
 
 	def getEffects(self, ctx):
 		return self.typ.getEffects()
@@ -532,7 +532,7 @@ class SailNumLit(SailASTelem):
 
 	### Required methods ###
 	def getType(self):
-		return Sail_t_int()
+		return Sail_t_member([self.num])
 
 	def getEffects(self, ctx):
 		return set([])
@@ -747,8 +747,7 @@ class SailTuple(SailASTelem):
 
 	### Required methods ###
 	def getType(self):
-		# Cast items which have a numeric type to int)
-		return Sail_t_tuple([item.getType() if not isNumeric(item.getType()) else Sail_t_int() for item in self.subItems])
+		return Sail_t_tuple([item.getType() for item in self.subItems])
 
 	def getEffects(self, ctx):
 		effects = [e.getEffects(ctx) for e in self.subItems]
@@ -929,7 +928,7 @@ class SailStructLit(SailASTelem):
 		# Check the types of the expressions match the expected types
 		super().__init__()
 		for (n, e) in exprs:
-			if e.getType() != struct.getTypeOfName(n):
+			if e.getType().generalise() != struct.getTypeOfName(n).generalise():
 				print(f"Field name: {n}\nGiven expression: {e.pp()}")
 				print(f"Given expression type: {e.getType().pp()}\nExpected expression type: {struct.getTypeOfName(n).pp()}")
 				sys.exit("Error: subfield type in a struct literal does not match definition type")
@@ -1145,7 +1144,7 @@ def createStructWithDefault(name, fields):
 	# Map names to types
 	names_types = {}
 	for n in fields:
-		names_types[n] = fields[n].getType()
+		names_types[n] = fields[n].getType().generalise()
 
 	# Create the struct
 	struct = SailStruct(name, names_types, list(fields.items()))
@@ -1302,7 +1301,7 @@ def resolveNils(exprs):
 		# If the expression is a nil or a `throw`, resolve directly against the other expressions' types
 		if isinstance(e, SailPlaceholderNil) or (isinstance(e, SailApp) and e.getFn().getName().lower() == 'throw'):
 			# Get the types of the other terms and filter out nils
-			otherTypes = [oe.getType().generalise() for oe in otherExprs]
+			otherTypes = [oe.getType() for oe in otherExprs]
 			resolveNilsInner(otherTypes, e)
 
 		# If the expression is a tuple, go through it looking for nils to resolve and resolve against the types of the
@@ -1310,7 +1309,7 @@ def resolveNils(exprs):
 		elif isinstance(e, SailTuple):
 			for (j, sub_e) in enumerate(e.getItems()):
 				if isinstance(sub_e, SailPlaceholderNil):
-					otherTypes = [oe.getType().generalise().getSubTypes()[j] for oe in otherExprs if isinstance(oe.getType(), Sail_t_tuple)]
+					otherTypes = [oe.getType().getSubTypes()[j] for oe in otherExprs if isinstance(oe.getType(), Sail_t_tuple)]
 					resolveNilsInner(otherTypes, sub_e)
 
 		# Otherwise we don't know what to do so don't do anything

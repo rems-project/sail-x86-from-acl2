@@ -77,9 +77,10 @@ class eqSet():
 		Check if all items in a set are consistent with some overarching type
 		"""
 		# Check we can resolve to a single overarching type
-		genType = self.set[0].generalise()
+		genType = self.set[0]
 		for t in self.set[1:]:
-			if t.generalise() != genType:
+			genType = mergeTypes(genType, t)
+			if genType is None:
 				sys.exit(f"Error: can't generalise set - {self.set}")
 
 		# Return this type if it exists
@@ -531,6 +532,9 @@ class Sail_t_member(SailType):
 		if self.subType != other.subType:
 			return False
 
+		if len(self.members) != len(other.members):
+			return False
+
 		# Compare the lists
 		membersEq = True
 		for i in range(len(self.members)):
@@ -627,26 +631,6 @@ class Sail_t_tuple(SailType):
 	def getSubTypes(self):
 		return self.subTypes
 
-	def generaliseSubTypes(self, others):
-		merged = self.subTypes
-		if len(merged) != len(others):
-			return None
-		for i in range(len(merged)):
-			if merged[i] == others[i]:
-				continue
-			elif isinstance(merged[i], Sail_t_unknown) or isinstance(others[i], Sail_t_unknown):
-				merged[i] = Sail_t_unknown()
-			elif isinstance(merged[i], Sail_t_tuple) and isinstance(others[i], Sail_t_tuple):
-				mergedInner = merged[i].generaliseSubTypes(others[i].getSubTypes())
-				if mergedInner == None:
-					return None
-				else:
-					merged[i] = Sail_t_tuple(mergedInner)
-			elif (isNumeric(merged[i]) and isinstance(others[i], Sail_t_bits)) or (isinstance(merged[i], Sail_t_bits) and isNumeric(others[i])):
-				merged[i] = Sail_t_unknown()
-			else:
-				return None
-		return merged
 
 	def generalise(self):
 		return Sail_t_tuple([t.generalise() for t in self.subTypes])
@@ -768,19 +752,6 @@ class Sail_t_list(SailType):
 		return f"list({self.subType.pp()})"
 
 
-def getBitvectorSize(typ):
-	if isinstance(typ, Sail_t_bits):
-		return typ.length
-	elif isinstance(typ, Sail_t_range):
-		# Determine number of bits required (and make sure that it is at least 1)
-		length = max(typ.high - typ.low + 1, typ.high, abs(typ.low) + 1, 2)
-		return math.ceil(math.log2(length))
-	else:
-		return None
-
-def isBitvectorType(typ):
-	return (getBitvectorSize(typ) is not None)
-
 def isRangeType(typ):
 	return (isinstance(typ, Sail_t_range) or (isinstance(typ, Sail_t_member) and typ.subType == Sail_t_member.INT))
 
@@ -791,6 +762,20 @@ def getRangeOfType(typ):
 		return (min(typ.members), max(typ.members))
 	else:
 		return None
+
+def getBitvectorSize(typ):
+	if isinstance(typ, Sail_t_bits):
+		return typ.length
+	elif isRangeType(typ):
+		# Determine number of bits required (and make sure that it is at least 1)
+		(low, high) = getRangeOfType(typ)
+		numBits = math.ceil(math.log2(max(abs(low), abs(high) + 1, 2)))
+		return numBits if low >= 0 and high >= 0 else numBits + 1
+	else:
+		return None
+
+def isBitvectorType(typ):
+	return (getBitvectorSize(typ) is not None)
 
 def mergeTypes(t1, t2):
 	if t1 == t2:
