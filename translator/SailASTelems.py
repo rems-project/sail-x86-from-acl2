@@ -638,6 +638,8 @@ class SailIf(SailASTelem):
 
 		self.resolveNilCB = None
 
+		self.coerceBranches()
+
 	### Required methods ###
 	def getType(self):
 		# Extract types and check they're the same
@@ -652,14 +654,20 @@ class SailIf(SailASTelem):
 				sys.exit()
 			return merged
 		else:
-			if isinstance(thenType, Sail_t_error) and isinstance(elseType, Sail_t_error):
-				sys.exit("Error: Both branches have `any` type")
-			elif isinstance(thenType, Sail_t_error):
-				return elseType
-			elif isinstance(elseType, Sail_t_error):
-				return thenType
-			else:
-				return thenType
+			return thenType
+
+	def coerceBranches(self):
+		typ = self.getType()
+		thenTerm = coerceExpr(self.thenTerm[0], typ)
+		if thenTerm is None:
+			print(f"Error: cannot coerce then-term {self.thenTerm[0].pp()} to {typ.pp()} (else-term {self.elseTerm[0].pp()}")
+			sys.exit()
+		self.thenTerm[0] = thenTerm
+		elseTerm = coerceExpr(self.elseTerm[0], typ)
+		if elseTerm is None:
+			print(f"Error: cannot coerce else-term {self.elseTerm[0].pp()} to {typ.pp()} (then-term {self.thenTerm[0].pp()}")
+			sys.exit()
+		self.elseTerm[0] = elseTerm
 
 	def getEffects(self, ctx):
 		# Extract effects from each term and combine
@@ -791,6 +799,8 @@ class SailMatch(SailASTelem):
 		if isinstance(self.var.getType(), Sail_t_option):
 			self.matches = [(someHelper(p), e) if not isinstance(p, SailUnderScoreLit) else (p,e,) for (p, e) in self.matches]
 
+		self.coerceMatches()
+
 		# Resolve nils for the expressions
 		exprs = [e for (_, e) in self.matches]
 		resolveNils(exprs)
@@ -822,6 +832,16 @@ class SailMatch(SailASTelem):
 			return expr_t
 		else:
 			return self.forceType
+
+	def coerceMatches(self):
+		typ = self.getType()
+		for i in range(len(self.matches)):
+			(p, e) = self.matches[i]
+			ce = coerceExpr(e, typ)
+			if ce is None:
+				print(f"Error: cannot coerce ({e.pp()} : {e.getType().pp()}) to type {typ.pp()}")
+				sys.exit()
+			self.matches[i] = (p, ce)
 
 	def getEffects(self, ctx):
 		effects = [e.getEffects(ctx) for (_, e) in self.matches]
@@ -1168,6 +1188,10 @@ def someHelper(item):
 			typ = Sail_t_fn([item.getType()], Sail_t_option(item.getType()))),
 		actuals = [item])
 
+def isSome(item):
+	return isinstance(item, SailApp) and isinstance(item.getFn(), SailHandwrittenFn)\
+			and item.getFn().getName() == 'Some' and isinstance(item.getFn().getType().getRHS(), Sail_t_option)
+
 def noneHelper(typ):
 	"""
 	Given a Sail type, creates a None() of that type.
@@ -1181,8 +1205,12 @@ def noneHelper(typ):
 	return SailApp(
 		fn = SailHandwrittenFn(
 			name = 'None',
-			typ = Sail_t_fn([typ], Sail_t_option(typ))),
+			typ = Sail_t_fn([], Sail_t_option(typ))),
 		actuals = [])
+
+def isNone(item):
+	return isinstance(item, SailApp) and isinstance(item.getFn(), SailHandwrittenFn)\
+			and item.getFn().getName() == 'None' and isinstance(item.getFn().getType().getRHS(), Sail_t_option)
 
 
 def checkTypesMatch(items):
@@ -1199,9 +1227,16 @@ def checkTypesMatch(items):
 	"""
 	expr_t = items[0].getType()
 	for expr in items[1:]:
-		expr_t = mergeTypes(expr_t, expr.getType())
-		if expr_t is None:
-			return False, None
+		if isinstance(expr, SailPlaceholderNil) and (isinstance(expr_t, Sail_t_bool) or isinstance(expr_t, Sail_t_option)):
+			continue
+		new_expr_t = mergeTypes(expr_t, expr.getType())
+		if new_expr_t is None:
+			if coerceExpr(expr, expr_t) is None:
+				return False, None
+			else:
+				continue
+		else:
+			expr_t = new_expr_t
 
 	return True, expr_t
 
@@ -1353,3 +1388,57 @@ def saveSail(SailAST, path, name, env, includeHeaders):
 		f.write("\n")
 
 		print(f"Successfully saved file path: {path}; name: {name}")
+
+def coerceExpr(expr, typ):
+	etyp = expr.getType()
+	if etyp is None or isinstance(etyp, Sail_t_unknown):
+		return None
+	elif etyp.generalise() == typ.generalise():
+		return expr
+	elif isNumeric(etyp) and isinstance(typ, Sail_t_bits):
+		fntyp = Sail_t_fn([Sail_t_int(), Sail_t_int(), Sail_t_int()], typ)
+		args = [SailNumLit(typ.length), expr, SailNumLit(0)]
+		return SailApp(SailHandwrittenFn("get_slice_int", fntyp), args)
+	elif isinstance(etyp, Sail_t_bits) and isNumeric(typ):
+		# TODO: What about signed bitvectors?
+		return SailApp(SailHandwrittenFn("unsigned", Sail_t_fn([etyp], typ)), [expr])
+	elif isinstance(etyp, Sail_t_bits) and isinstance(typ, Sail_t_bits):
+		fntyp = Sail_t_fn([Sail_t_int(), etyp], typ)
+		args = [SailNumLit(typ.length), expr]
+		return SailApp(SailHandwrittenFn("sail_mask", fntyp), args)
+	elif isinstance(expr, SailTuple) and isinstance(typ, Sail_t_tuple):
+		elems = []
+		for i in range(len(expr.getItems())):
+			elem = coerceExpr(expr.getItems()[i], typ.getSubTypes()[i])
+			if elem is None:
+				return None
+			elems = elems + [elem]
+		return SailTuple(elems)
+	elif isinstance(etyp, Sail_t_tuple) and isinstance(typ, Sail_t_tuple):
+		elems = SailTuple([SailBoundVar("elem" + str(i), typ=etyp.getSubTypes()[i]) for i in range(len(etyp.getSubTypes()))])
+		body = coerceExpr(elems, typ)
+		return SailLet(elems, [expr], [body]) if body is not None else None
+	elif isinstance(expr, SailPlaceholderNil) and isinstance(typ, Sail_t_bool):
+		return SailBoolLit(False)
+	elif isinstance(etyp, Sail_t_option) and isinstance(typ, Sail_t_bool):
+		fntyp = Sail_t_fn([etyp], typ)
+		return SailApp(fn=SailHandwrittenFn(name='is_some', typ=fntyp), actuals=[expr])
+	elif isSome(expr) and isinstance(typ, Sail_t_option):
+		item = coerceExpr(expr.getActuals()[0], typ.getTyp())
+		return someHelper(item) if item is not None else None
+	elif isNone(expr) and isinstance(typ, Sail_t_option):
+		return noneHelper(typ.getTyp())
+	elif isinstance(expr, SailApp) and expr.getFn().getName().lower() == 'throw':
+		return expr
+	else:
+		return None
+
+def coerceExprs(exprs, typs):
+	coercedExprs = []
+	for (i, e) in enumerate(exprs):
+		new = coerceExpr(e, typs[i])
+		if new is None:
+			print(f"Error: cannot coerce ({e.pp()} : {e.getType().pp()}) to type {typs[i].pp()}")
+			sys.exit()
+		coercedExprs.append(new)
+	return coercedExprs

@@ -859,7 +859,7 @@ def tr_zp(ACL2ast, env):
 				infix = True)],
 			env, len(ACL2ast))
 
-def num_op_gen(op, resultType, numOfArgs=None, infix=True):
+def num_op_gen(op, resultType, operandType=None, numOfArgs=None, infix=True):
 	"""
 	Generates a function which conforms to the spec described at the start of
 	this file and which can be applied to an ACL2 AST to generate a simple
@@ -895,20 +895,27 @@ def num_op_gen(op, resultType, numOfArgs=None, infix=True):
 		# Check we have at least 2 elements for the num op
 		if len(argsSail) < 2: sys.exit(f"Error: not enough arguments for num op {ACL2ast}")
 
-		# Hack - if we're returning a bool but testing option types, wrap in is_some
+		nonlocal operandType
+		if operandType is None:
+			if len(argsSail) > 2:
+				operandType = resultType
+			else:
+				operandType = argsSail[0][0].getType()
+				for arg in argsSail[:-1]:
+					operandType = mergeTypes(operandType, arg[0].getType())
+					if operandType is None:
+						sys.exit(f"Error: cannot merge types in num op {ALC2ast}")
+
 		for (i, arg) in enumerate(argsSail):
-			typ = typesSail[i]
-			if isinstance(typ, Sail_t_option) and isinstance(resultType, Sail_t_bool):
-				argsSail[i] = [SailApp(
-					fn=SailHandwrittenFn(name='is_some', typ=Sail_t_fn([], Sail_t_bool())),
-					actuals=arg
-				)]
-				typesSail[i] = Sail_t_bool()
+			new = coerceExpr(arg[0], operandType)
+			if new is None:
+				sys.exit(f"Error: cannot coerce operand {arg[0].pp()} to {operandType.pp()}")
+			argsSail[i] = [new]
 
 		# Construct the base AST and remove those elements from the args/types lists
-		currentType = Sail_t_fn([typesSail[-2], typesSail[-1]], resultType)
+		fnType = Sail_t_fn([operandType, operandType], resultType)
 		currentAST = [SailApp(
-						fn = SailHandwrittenFn(op, typ = currentType),
+						fn = SailHandwrittenFn(op, typ = fnType),
 						actuals = argsSail[-2] + argsSail[-1],
 						infix = infix)]
 
@@ -917,9 +924,8 @@ def num_op_gen(op, resultType, numOfArgs=None, infix=True):
 
 		# Construct the rest of the tree
 		while len(argsSail) > 0:
-			currentType = Sail_t_fn([typesSail[-1], resultType], resultType)
 			currentAST = [SailApp(
-							fn = SailHandwrittenFn(op, typ = currentType),
+							fn = SailHandwrittenFn(op, typ = fnType),
 							actuals = argsSail[-1] + currentAST,
 							infix = infix)]
 			argsSail = argsSail[:-1]
@@ -1793,10 +1799,15 @@ def _change_helper(keywordsOrder, changeFn):
 				# None()
 				keywordActuals.append(noneHelper(Sail_t_int()))
 
+		# Coerce actuals to expected types
+		actuals = sail_change_input + keywordActuals
+		coercedActuals = coerceExprs(actuals, changeFn.getType().getLHS())
+		if coercedActuals is not None: actuals = coercedActuals
+
 		# Form the final return
 		sailAST = SailApp(
 			fn=changeFn,
-			actuals=sail_change_input + keywordActuals)
+			actuals=actuals)
 
 		# Return
 		return ([sailAST], env, len(ACL2ast))
@@ -2459,7 +2470,7 @@ def _filterActuals(ACL2ast, numOfArgs):
 
 	return ACL2actuals, ACL2keywords
 
-def apply_fn_gen(funcToApply, numOfArgs, keywordStruct=None):
+def apply_dependent_fn_gen(funcToApply_gen, numOfArgs, keywordStruct=None, coerceActuals=True):
 	"""
 	The ACL2 model defines its own functions and macros (using, for example,
 	`(define <name> <formal-args> <body>)`).  When <name> is called using
@@ -2474,7 +2485,7 @@ def apply_fn_gen(funcToApply, numOfArgs, keywordStruct=None):
 	translated Sail, the new environment and the number of tokens processed.
 
 	Args:
-		- funcToApply : SailFn | SailHandwrittenFn - the function to apply
+		- funcToApply : function - takes actual arguments and returns SailFn | SailHandwrittenFn
 		- numOfArgs : int - number of arguments `funcToApply` expects
 		- keywordStruct : SailStruct - if `funcToApply` takes keyword arguments
 	Returns:
@@ -2488,10 +2499,6 @@ def apply_fn_gen(funcToApply, numOfArgs, keywordStruct=None):
 		# Translate the non-keyword actuals.  Env should not change but don't translate for that.
 		SailActuals = []
 		for (i, a) in enumerate(ACL2actuals):
-			# Bit of a hack: if symbol is NIL and the arg is a boolean translate to False
-			if isinstance(a, str) and a.upper() == 'NIL' and isinstance(funcToApply.getType().getLHS()[i], Sail_t_bool):
-				SailActuals.append(SailBoolLit(False))
-				continue
 
 			# If not, do main translation
 			(aSail, env, _) = transform.transformACL2asttoSail(a, env)
@@ -2515,10 +2522,25 @@ def apply_fn_gen(funcToApply, numOfArgs, keywordStruct=None):
 			defaultLit = SailStructLit(keywordStruct, defaults)
 			SailActuals.append(defaultLit)
 
+		funcToApply = funcToApply_gen(SailActuals, env)
+
+		if coerceActuals:
+			# Try to coerce actuals to the expected type
+			for (i, arg) in enumerate(SailActuals):
+				try:
+					new = coerceExpr(arg, funcToApply.getType().getLHS()[i])
+					if new is not None:
+						SailActuals[i] = new
+				except:
+					continue
+
 		# Construct the Sail AST and return the number of ACL2 AST items consumed
 		return [SailApp(funcToApply, SailActuals)], env, len(ACL2ast)
 
 	return apply_fn_inner
+
+def apply_fn_gen(funcToApply, numOfArgs, keywordStruct=None):
+	return apply_dependent_fn_gen(lambda actuals, env: funcToApply, numOfArgs, keywordStruct)
 
 def apply_macro_gen(numOfArgs, useTrans1=True):
 	"""

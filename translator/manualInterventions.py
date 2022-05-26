@@ -63,7 +63,7 @@ def and_macro(ACL2ast, env):
 		# Make the return type option(int)
 		lengthBVfn = env.lookup('length')
 		(lengthBV, env, _) = lengthBVfn([], env)
-		lengthBV = lengthBV[0]
+		lengthBV = coerceExpr(lengthBV[0], Sail_t_int())
 
 		sailAST = SailIf(
 			ifTerm=[SailApp(
