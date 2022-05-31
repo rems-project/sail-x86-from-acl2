@@ -2,6 +2,7 @@ from lex_parse import NewLine
 import utils
 import math
 import sys
+import re
 
 """
 This file is split into two sections:
@@ -45,6 +46,9 @@ class eqSet():
 			for i in init:
 				self.add(i)
 
+	def items(self):
+		return self.set
+
 	def add(self, obj):
 		if obj not in self.set: # Uses __eq__ not __hash__
 			self.set.append(obj)
@@ -59,6 +63,9 @@ class eqSet():
 
 		for obj in toAdd:
 			self.add(obj)
+
+	def union(self, objs):
+		self.extend(objs)
 
 	def peek(self):
 		return self.set[0]
@@ -187,11 +194,30 @@ def parseGuard(guard):
 	# Filter newlines
 	guard = [item for item in guard if type(item) not in [NewLine]]
 
+	# Prepare a regexp for checking for number type predicates
+	n_pred = re.compile(r"n(\d{2,3})p")
+
 	# Switch on the first element of guard
 	switch = guard[0]
 	if switch.lower() == 'and':
 		for subGuard in guard[1:]:
+			# Check for a specific patterns of encoding range constraints: (natp var) (<= var bound)
+			if subGuard[0].lower() == "natp":
+				name = subGuard[1]
+				for bound in [int(g[2]) for g in guard[1:] if g[0] == "<=" and g[1] == name]:
+					if bound >= 0:
+						dictAddOrInit(possibilities, name, Sail_t_range(0, bound))
 			possibilities = utils.dictExtend(possibilities, parseGuard(subGuard))
+	elif switch.lower() == 'case':
+		for case in guard[2:]:
+			possibilities = utils.dictExtend(possibilities, parseGuard(case[1]))
+		# Try to merge types to overarching type
+		for (v, typs) in possibilities.items():
+			typ = typs.resolve()
+			if typ is None:
+				del possibilities[v]
+			else:
+				possibilities[v] = eqSet([typ])
 	elif switch.lower() == 'natp':
 		if len(guard) != 2: sys.exit(f"Error: guard for natp has unexpected number of elements: {guard}")
 		name = guard[1]
@@ -204,7 +230,7 @@ def parseGuard(guard):
 		if len(guard) != 3: sys.exit(f"Error: guard for unsigned-byte-p has unexpected number of elements: {guard}")
 		name = guard[2]
 		hiBits = utils.convertLiteral(guard[1])
-		if hiBits is None or isinstance(hiBits, float) or hiBits < 0:
+		if hiBits is None or isinstance(hiBits, float) or hiBits <= 0:
 			print(f"Warning: none-integer value supplied for unsigned-byte-p argument: {guard}")
 		else:
 			dictAddOrInit(possibilities, name, Sail_t_bits(hiBits)) # Sail_t_range(0, 2 ^ hiBits - 1))
@@ -214,6 +240,9 @@ def parseGuard(guard):
 		if len(guard) != 2: sys.exit(f"Error: guard for n01p has unexpected number of elements: {guard}")
 		name = guard[1]
 		dictAddOrInit(possibilities, name, Sail_t_range(0, 1))
+	elif n_pred.match(switch.lower()):
+		length = int(n_pred.match(switch.lower()).group(1))
+		dictAddOrInit(possibilities, guard[1], Sail_t_bits(length))
 	elif switch.lower() == 'booleanp':
 		name = guard[1]
 		dictAddOrInit(possibilities, name, Sail_t_bool())
@@ -811,3 +840,27 @@ def mergeTypes(t1, t2):
 		return t2
 	else:
 		return None
+
+def isSubType(t1, t2):
+	if t1 == t2:
+		return True
+	elif isinstance(t1, Sail_t_member) and isinstance(t2, Sail_t_member) and t1.subType == t2.subType:
+		for i in t1.members:
+			if i not in t2.members:
+				return False
+		return True
+	elif isinstance(t1, Sail_t_member) and isinstance(t2, Sail_t_range) and t1.subType == Sail_t_member.INT:
+		return t2.low <= min(t1.members) and max(t1.members) <= t2.high
+	elif isinstance(t1, Sail_t_range) and isinstance(t2, Sail_t_range):
+		return t2.low <= t1.low and t1.high <= t2.high
+	elif isRangeType(t1) and isinstance(t2, Sail_t_nat):
+		(low, high) = getRangeOfType(t1)
+		return low >= 0 and high >= 0
+	elif isNumeric(t1) and isinstance(t2, Sail_t_int):
+		return True
+	elif isinstance(t1, Sail_t_option) and isinstance(t2, Sail_t_option):
+		return isSubType(t1.getTyp(), t2.getTyp())
+	elif isinstance(t1, Sail_t_tuple) and isinstance(t2, Sail_t_tuple) and len(t1.getSubTypes()) == len(t2.getSubTypes()):
+		return all([isSubType(t1.getSubTypes()[i], t2.getSubTypes()[i]) for i in range(len(t1.getSubTypes()))])
+	else:
+		return False

@@ -548,7 +548,7 @@ def tr_define(ACL2ast, env):
 	if ':guard'.upper() in extendedOpts:
 		for guard in extendedOpts[':guard'.upper()]:
 			newTypes = parseGuard(guard)
-			guardTypes = {**guardTypes, **newTypes}
+			guardTypes = utils.dictExtend(guardTypes, newTypes)
 
 	# Split the rest into pre- and post-///
 	# We use the content before ///, but ignore the content after
@@ -598,14 +598,21 @@ def tr_define(ACL2ast, env):
 	numNonKeywordFormals = len(fnFormalsFiltered)
 
 	# Merge type information from guards
-	fnFormalsTyped = {**guardTypes, **fnFormalsTyped}
+	fnFormalsTyped = utils.dictExtend(fnFormalsTyped, guardTypes)
+	for (f, typs) in fnFormalsTyped.items():
+		if isinstance(typs, eqSet):
+			# Try to find the most specific type out of the available options
+			typ = typs.resolve()
+			for t in typs.items():
+				if isSubType(t, typ):
+					typ = t
+			fnFormalsTyped[f] = typ
 
 	# Add the formal parameter bindings to the stack with their types if we have them
 	fnFormalsBVs = []
 	for f in fnFormalsFiltered:
 		if f in fnFormalsTyped:
-			generalisedType = fnFormalsTyped[f].resolve()
-			bv = env.pushToBindings([f], [generalisedType])
+			bv = env.pushToBindings([f], [fnFormalsTyped[f]])
 		else:
 			bv = env.pushToBindings([f], [Sail_t_unknown()])
 		fnFormalsBVs.append(bv[0])
