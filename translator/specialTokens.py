@@ -973,28 +973,40 @@ def _the_helper(theType, sailTerm):
 	if type(sailTerm) not in [str, list]: sys.exit(f"Error: `the` term not a string or list - {sailTerm}")
 	if isinstance(sailTerm, list) and len(sailTerm) != 1: sys.exit(f"Error: `the` list not length - {sailTerm}")
 
+	try:
+		termType = sailTerm[0].getType()
+	except:
+		termType = Sail_t_unknown()
+
 	# Select the correct Sail `the`
 	if isinstance(theType, Sail_t_int):
-		retTerm = [SailApp(	fn = SailHandwrittenFn(	name = "the_int",
-													typ = Sail_t_fn([Sail_t_int()], Sail_t_int(), {'escape'})),
-							actuals = sailTerm)]
+		retTerm = coerceExpr(sailTerm[0], theType)
 	elif isinstance(theType, Sail_t_nat):
-		retTerm = [SailApp(	fn = SailHandwrittenFn(	name = "the_nat",
+		retTerm = SailApp(	fn = SailHandwrittenFn(	name = "the_nat",
 													typ = Sail_t_fn([Sail_t_int()], Sail_t_nat(), {'escape'})),
-							actuals = sailTerm)]
+							actuals = sailTerm)
 	elif isinstance(theType, Sail_t_range):
 		(low, high) = theType.getRange()
-		retTerm = [SailApp(	fn = SailHandwrittenFn(	name = "the_range",
-													typ = Sail_t_fn([Sail_t_int(), Sail_t_int(), Sail_t_int()], Sail_t_range(low, high), {'escape'})),
-							actuals = [SailNumLit(low), SailNumLit(high), sailTerm[0]])]
-	elif isinstance(theType, Sail_t_bits):
-		retTerm = [SailApp(	fn = SailHandwrittenFn(	name = "the_bits",
-													typ = Sail_t_fn([Sail_t_int(), Sail_t_bits(theType.length)], Sail_t_bits(theType.length), {'escape'})),
-							actuals = [SailNumLit(theType.length), sailTerm[0]])]
+		# Preserve existing constraints on the Sail term, e.g. don't
+		# cast {|1, 2, 4|} to range(1, 4), which would lose information
+		resultType = intersectTypes(termType, theType)
+		if resultType is None:
+			print(f"Warning: Failed to determine result type of `the_range({low}, {high}, {sailTerm[0].pp()})`")
+			resultType = theType
+		retTerm = SailApp(	fn = SailHandwrittenFn(	name = "the_range",
+													typ = Sail_t_fn([Sail_t_int(), Sail_t_int(), Sail_t_int()], resultType, {'escape'})),
+							actuals = [SailNumLit(low), SailNumLit(high), sailTerm[0]])
+	elif isinstance(theType, Sail_t_bits) and theType.length is not None:
+		retTerm = SailApp(	fn = SailHandwrittenFn(	name = "the_bits",
+													typ = Sail_t_fn([Sail_t_int(), termType], Sail_t_bits(theType.length), {'escape'})),
+							actuals = [SailNumLit(theType.length), sailTerm[0]])
 	else:
 		sys.exit(f"Error: unexpected type spec in `the` - {theType} in {sailTerm}")
 
-	return retTerm
+	if retTerm is None:
+		sys.exit(f"Error: failed to coerce {sailTerm[0].pp()} to {theType.pp()} in `the`")
+
+	return [retTerm]
 
 
 def tr_the(ACL2ast, env):

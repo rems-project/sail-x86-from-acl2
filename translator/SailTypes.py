@@ -864,3 +864,50 @@ def isSubType(t1, t2):
 		return all([isSubType(t1.getSubTypes()[i], t2.getSubTypes()[i]) for i in range(len(t1.getSubTypes()))])
 	else:
 		return False
+
+def intersectTypes(t1, t2):
+	if t1 == t2:
+		return t1
+	elif isinstance(t1, Sail_t_member) and isinstance(t2, Sail_t_member) and t1.subType == t2.subType:
+		members = [i for i in t1.members if i in t2.members]
+		return Sail_t_member(members) if members != [] else None
+	elif isinstance(t1, Sail_t_member) and isinstance(t2, Sail_t_range) and t1.subType == Sail_t_member.INT:
+		members = [i for i in t1.members if t2.low <= i and i <= t2.high]
+		return Sail_t_member(members) if members != [] else None
+	elif isinstance(t2, Sail_t_member) and isinstance(t1, Sail_t_range) and t2.subType == Sail_t_member.INT:
+		members = [i for i in t2.members if t1.low <= i and i <= t1.high]
+		return Sail_t_member(members) if members != [] else None
+	elif isinstance(t1, Sail_t_member) and isinstance(t2, Sail_t_nat) and t1.subType == Sail_t_member.INT:
+		members = [i for i in t1.members if i >= 0]
+		return Sail_t_member(members) if members != [] else None
+	elif isinstance(t2, Sail_t_member) and isinstance(t1, Sail_t_nat) and t2.subType == Sail_t_member.INT:
+		members = [i for i in t2.members if i >= 0]
+		return Sail_t_member(members) if members != [] else None
+	elif isinstance(t1, Sail_t_range) and isinstance(t2, Sail_t_range):
+		low = max(t1.low, t2.low)
+		high = min(t1.low, t2.low)
+		return Sail_t_range(low, high) if low <= high else None
+	elif isRangeType(t1) and isinstance(t2, Sail_t_nat):
+		(low, high) = getRangeOfType(t1)
+		return Sail_t_range(max(0, low), max(0, high)) if low >= 0 or high >= 0 else None
+	elif isRangeType(t2) and isinstance(t1, Sail_t_nat):
+		(low, high) = getRangeOfType(t2)
+		return Sail_t_range(max(0, low), max(0, high)) if low >= 0 or high >= 0 else None
+	elif isNumeric(t1) and isinstance(t2, Sail_t_int):
+		return t1
+	elif isNumeric(t2) and isinstance(t1, Sail_t_int):
+		return t2
+	elif isinstance(t1, Sail_t_option) and isinstance(t2, Sail_t_option):
+		t = intersectTypes(t1.getTyp(), t2.getTyp())
+		return Sail_t_option(t) if t is not None else None
+	elif isinstance(t1, Sail_t_tuple) and isinstance(t2, Sail_t_tuple) and len(t1.getSubTypes()) == len(t2.getSubTypes()):
+		typs = []
+		for (i, t1) in enumerate(t1.getSubTypes()):
+			t = intersectTypes(t1, t2.getSubTypes()[i])
+			if t is None:
+				return None
+			else:
+				typs.append(t)
+		return Sail_t_tuple(typs)
+	else:
+		return None
