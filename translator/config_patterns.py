@@ -259,7 +259,6 @@ only_translate = {
 	],
 
 	'utilities' : [
-		['define', 'trunc'],
 	],
 	# We call it this to avoid collision with the other segmentation file
 	'segmentationInst' : [

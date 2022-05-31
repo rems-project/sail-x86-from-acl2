@@ -48,9 +48,9 @@ logtail_fn = SailHandwrittenFn(
 				'logtail',
 				Sail_t_fn([Sail_t_int(), Sail_t_int()], Sail_t_int()))
 
-logbitp_fn = SailHandwrittenFn(
-				'logbitp',
-				Sail_t_fn([Sail_t_int(), Sail_t_int()], Sail_t_bool(), {'escape'}))
+def logbitp_fn(args, env):
+	return SailHandwrittenFn('logbitp', Sail_t_fn([Sail_t_int(), args[1].getType()], Sail_t_bool()))
+
 
 logbit_fn = SailHandwrittenFn(
 	'logbit',
@@ -82,9 +82,10 @@ binary_logext_fn = SailHandwrittenFn(
 				'binary_logext',
 				Sail_t_fn([Sail_t_int(), Sail_t_int()], Sail_t_int()))
 
-n_size_fn = SailHandwrittenFn(
-				'n_size',
-				Sail_t_fn([Sail_t_int(), Sail_t_int()], Sail_t_int()))
+def n_size_fn(args, env):
+	resultType = Sail_t_bits(args[0].getNum()) if isinstance(args[0], SailNumLit) else Sail_t_int()
+	return SailHandwrittenFn('n_size', Sail_t_fn([Sail_t_int(), resultType], resultType))
+
 
 ash_fn = SailHandwrittenFn(
 	'ash',
@@ -251,12 +252,12 @@ fault_fn = SailHandwrittenFn(
 
 memi_fn = SailHandwrittenFn(
 	'memi',
-	Sail_t_fn([Sail_t_int(), Sail_t_int()], Sail_t_int(), {'rmem', 'rreg'})
+	Sail_t_fn([Sail_t_bits(64), Sail_t_int()], Sail_t_bits(8), {'rmem', 'rreg'})
 )
 
 bang_memi_fn = SailHandwrittenFn(
 	'bang_memi',
-	Sail_t_fn([Sail_t_int(), Sail_t_int(), Sail_t_int()], Sail_t_int(), {'eamem', 'wmv', 'rreg'})
+	Sail_t_fn([Sail_t_bits(64), Sail_t_bits(8), Sail_t_int()], Sail_t_int(), {'eamem', 'wmv', 'rreg'})
 )
 
 b_xor_fn = SailHandwrittenFn(

@@ -48,18 +48,13 @@ def generate(includeHeader):
 		n_num = "n{:02d}".format(n)
 		i_num = "i{:02d}".format(n)
 		code_ntoi.append(\
-f"""val {n_num}_to_{i_num} : (int) -> (int) effect {{escape}}
-function {n_num}_to_{i_num} (x) = {{
-	assert(0 <= x & x <= {2**n - 1});
-	if x < {2**(n-1)}
-	then x
-	else x - {2**n}
-}}"""
+f"""val {n_num}_to_{i_num} : forall 'n, 'n > 0. (bits('n)) -> bits({n})
+function {n_num}_to_{i_num} (x) = sail_mask({n}, x)"""
 		)
 		namesGenerated.append((	f"{n_num}-to-{i_num}".upper(),
 								SailASTelems.SailHandwrittenFn(
 									f"{n_num}_to_{i_num}",
-									Sail_t_fn([Sail_t_bits(n)], Sail_t_bits(n), {'escape'}))))
+									Sail_t_fn([Sail_t_bits(n)], Sail_t_bits(n)))))
 
 	'''
 	iXY.  Names are, for example, `i64`.  The implementation is a simple
@@ -70,8 +65,8 @@ function {n_num}_to_{i_num} (x) = {{
 	for n in numsToGenerate:
 		i_num = "I{:02d}".format(n)
 		code_iXY.append(\
-f"""val {i_num} : int -> int effect {{escape}}
-function {i_num} x = binary_logext ({n}, x)
+f"""val {i_num} : forall 'n, 'n > 0. bits('n) -> bits({n})
+function {i_num} x = if length(x) > {n} then truncate(x, {n}) else sail_sign_extend(x, {n})
 """)
 		namesGenerated.append((i_num.upper(),
 							   SailASTelems.SailHandwrittenFn(

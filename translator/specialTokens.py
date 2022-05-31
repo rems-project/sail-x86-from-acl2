@@ -937,6 +937,16 @@ def num_op_gen(op, resultType, operandType=None, numOfArgs=None, infix=True):
 
 	return tr_num_op
 
+def bitwise_op_gen(operation):
+	def funcToApply(args, env):
+		typ0 = args[0].getType()
+		typ1 = args[1].getType()
+		retType = mergeTypes(typ0, typ1)
+		if not isinstance(retType, Sail_t_bits):
+			retType = Sail_t_int()
+		return SailHandwrittenFn(operation, typ=Sail_t_fn([retType, retType], retType))
+	return apply_dependent_fn_gen(funcToApply, 2)
+
 def _the_helper(theType, sailTerm):
 	"""
 	Helper for `tr_the`.  See documentation in `tr_the` for details on `the`.
@@ -1129,18 +1139,29 @@ def tr_part_install(ACL2ast, env):
 	widAST = _getValueOfKeyword(ACL2ast, ':width')
 
 	# Convert keywords to a size and start index
-	(sizeASTsail, _, lowASTsail, env) = _parts_helper(lowAST, hiAST, widAST, env)
+	(sizeASTsail, width, lowASTsail, env) = _parts_helper(lowAST, hiAST, widAST, env)
 
 	# Translate the target and value of the part_install
 	(val, x, _, _, _, _) = _filterExtract(ACL2ast, 7, [None] * 6, [None] * 6, "`part_install`")
 	(valSail, env, _) = transform.transformACL2asttoSail(val, env)
 	(xSail, env, _) = transform.transformACL2asttoSail(x, env)
 
+	if isinstance(xSail[0].getType(), Sail_t_bits) and width is not None:
+		cvalSail = coerceExpr(valSail[0], Sail_t_bits(width))
+		if cvalSail is None:
+			sys.exit(f"Error: failed to coerce {valSail[0].pp()} to bits({width}) in part_install expression")
+		valSail = [cvalSail]
+	else:
+		valSail = [coerceExpr(valSail[0], Sail_t_int())]
+		xSail = [coerceExpr(xSail[0], Sail_t_int())]
+		if valSail[0] is None or xSail[0] is None:
+			sys.exit(f"Error: failed to coerce operands to integer in part_install expression")
+
 	# Create the setting function application
 	inner = SailApp(
 		fn=SailHandwrittenFn(
-			name='changeBits',
-			typ=Sail_t_fn([Sail_t_int(), Sail_t_int(), Sail_t_int(), Sail_t_int()], Sail_t_int())),
+			name='changeSlice',
+			typ=Sail_t_fn([xSail[0].getType(), Sail_t_int(), Sail_t_int(), valSail[0].getType()], xSail[0].getType())),
 		actuals=[xSail[0], lowASTsail[0], sizeASTsail, valSail[0]])
 
 	return [inner], env, len(ACL2ast)
@@ -1815,23 +1836,7 @@ def _change_helper(keywordsOrder, changeFn):
 	return innerFn
 
 
-def _generateBitstructFieldAccessorAndUpdater(typeName, field, currentLow, env):
-	"""
-	Generates the accessor and updater functions for a particualr field of a
-	`defbitstruct` as described in `_parseBitstructFields()`.
-
-	Args:
-		- typeName: string - name of the bitstruct
-		- field: [ACL2astElem] - of form `(<field-name> <field-type>)`
-		- currentLow: int - how many bits have been used so far in the bitstruct
-		- env: Env
-	Returns:
-		(	Accessor function : SailFn,
-			Updater function  : SailFn,
-			New bit index     : int,
-			env				  : Env
-		)
-	"""
+def _parseBitstructFieldWidth(typeName):
 	# Constant - basically copied from basic-structs.lisp
 	# TODO: find this automatically
 	typeWidths = {
@@ -1860,13 +1865,38 @@ def _generateBitstructFieldAccessorAndUpdater(typeName, field, currentLow, env):
 	}
 
 	# Parse the field
+	if typeName.lower() not in typeWidths: sys.exit(f"Error: unrecognised type in defbitstruct - {type}")
+	return typeWidths[typeName.lower()]
+
+def _getBitstructWidth(fields):
+	def _getFieldWidth(field):
+		return _parseBitstructFieldWidth(field[1])
+	return sum(map(_getFieldWidth, fields))
+
+def _generateBitstructFieldAccessorAndUpdater(typeName, structWidth, field, currentLow, env):
+	"""
+	Generates the accessor and updater functions for a particualr field of a
+	`defbitstruct` as described in `_parseBitstructFields()`.
+
+	Args:
+		- typeName: string - name of the bitstruct
+		- structWidth: int - total width of the bitstruct
+		- field: [ACL2astElem] - of form `(<field-name> <field-type>)`
+		- currentLow: int - how many bits have been used so far in the bitstruct
+		- env: Env
+	Returns:
+		(	Accessor function : SailFn,
+			Updater function  : SailFn,
+			New bit index     : int,
+			env				  : Env
+		)
+	"""
+	# Parse the field
 	fieldName = field[0]
-	type = field[1]
-	if type.lower() not in typeWidths: sys.exit(f"Error: unrecognised type in defbitstruct - {type}")
-	width = typeWidths[type.lower()]
+	fieldWidth = _parseBitstructFieldWidth(field[1])
 
 	# Create the accessor function
-	accessorInputBitsBV = SailBoundVar(binding='inputBits', typ=Sail_t_int())
+	accessorInputBitsBV = SailBoundVar(binding='inputBits', typ=Sail_t_bits(structWidth))
 	accessorFn =\
 		SailFn(
 			name=f"{typeName.lower()}_get_{fieldName.lower()}",
@@ -1875,10 +1905,10 @@ def _generateBitstructFieldAccessorAndUpdater(typeName, field, currentLow, env):
 				SailApp(
 					fn=SailHandwrittenFn(
 						name='genericBitstructAccessor',
-						typ=Sail_t_fn([Sail_t_int(), Sail_t_int(), Sail_t_int()], Sail_t_int())
+						typ=Sail_t_fn([Sail_t_int(), Sail_t_bits(structWidth), Sail_t_int()], Sail_t_bits(fieldWidth))
 					),
 					actuals=[
-						SailNumLit(width),
+						SailNumLit(fieldWidth),
 						accessorInputBitsBV,
 						SailNumLit(currentLow)
 					]
@@ -1887,8 +1917,8 @@ def _generateBitstructFieldAccessorAndUpdater(typeName, field, currentLow, env):
 		)
 
 	# Create the updater function
-	updaterSpliceBitsBV = SailBoundVar(binding='spliceBits', typ=Sail_t_int())
-	updaterInputBitsBV = SailBoundVar(binding='inputBits', typ=Sail_t_int())
+	updaterSpliceBitsBV = SailBoundVar(binding='spliceBits', typ=Sail_t_bits(fieldWidth))
+	updaterInputBitsBV = SailBoundVar(binding='inputBits', typ=Sail_t_bits(structWidth))
 	updaterFn =\
 		SailFn(
 			name=f"set_{typeName.lower()}_get_{fieldName.lower()}",
@@ -1897,10 +1927,10 @@ def _generateBitstructFieldAccessorAndUpdater(typeName, field, currentLow, env):
 				SailApp(
 					fn=SailHandwrittenFn(
 						name='genericBitstructUpdater',
-						typ=Sail_t_fn([Sail_t_int(), Sail_t_int(), Sail_t_int(), Sail_t_int()], Sail_t_int())
+						typ=Sail_t_fn([Sail_t_int(), Sail_t_bits(fieldWidth), Sail_t_int(), Sail_t_bits(structWidth)], Sail_t_bits(structWidth))
 					),
 					actuals=[
-						SailNumLit(width),
+						SailNumLit(fieldWidth),
 						updaterSpliceBitsBV,
 						SailNumLit(currentLow),
 						updaterInputBitsBV
@@ -1916,7 +1946,7 @@ def _generateBitstructFieldAccessorAndUpdater(typeName, field, currentLow, env):
 	env.addToAuto(ACL2updater, apply_fn_gen(funcToApply=updaterFn, numOfArgs=2))
 
 	# Return the function and the new width
-	return accessorFn, updaterFn, currentLow + width, env
+	return accessorFn, updaterFn, currentLow + fieldWidth, env
 
 
 def _parseBitstructFields(typeName, fieldsList, currentLow, previousBoundVar, env):
@@ -1997,13 +2027,15 @@ def _parseBitstructFields(typeName, fieldsList, currentLow, previousBoundVar, en
 	##### Recursive case
 	# Get the accessor and updater fns for the current field
 	hd = fieldsList[0]
-	(accessorFn, updaterFn, newLow, env) = _generateBitstructFieldAccessorAndUpdater(typeName, hd, currentLow, env)
+	structWidth = _getBitstructWidth(fieldsList) + currentLow
+	(accessorFn, updaterFn, newLow, env) = _generateBitstructFieldAccessorAndUpdater(typeName, structWidth, hd, currentLow, env)
+	fieldWidth = newLow - currentLow
 
 	# Recursive call.  Get the accessor and updater fns and the let expression
 	# for the change_ function for the remainder of the fields
 	fieldName = hd[0]
-	inputBV = SailBoundVar(f"input_{fieldName}", typ=Sail_t_option(Sail_t_int()))
-	outputBV = SailBoundVar(f"output_{fieldName}", typ=Sail_t_int())
+	inputBV = SailBoundVar(f"input_{fieldName}", typ=Sail_t_option(Sail_t_bits(fieldWidth)))
+	outputBV = SailBoundVar(f"output_{fieldName}", typ=previousBoundVar.getType())
 	(accessorFns, updaterFns, changeLet, changeOrder, env) = _parseBitstructFields(typeName, fieldsList[1:], newLow, outputBV, env)
 
 	# Generate the current let expression for the change_ function
@@ -2056,7 +2088,8 @@ def tr_defbitstruct(ACL2ast, env):
 		sys.exit(f"Error: not yet implemented fixed width defbitstruct - {ACL2ast}")
 	else:
 		# List of fields
-		change_input = SailBoundVar('input_bits', typ=Sail_t_int())
+		width = _getBitstructWidth(fields_or_width)
+		change_input = SailBoundVar('input_bits', typ=Sail_t_bits(width))
 		(accessors, updaters, changeLet, changeOrder, env) = _parseBitstructFields(typeName,
 																				   fields_or_width,
 																				   0,
@@ -2323,15 +2356,18 @@ def tr_minus(ACL2ast, env):
 	"""
 	if len(ACL2ast) == 2:
 		sailArg, env, _ = transform.transformACL2asttoSail(ACL2ast[1], env)
+		sailIntArg = coerceExpr(sailArg[0], Sail_t_int())
+		if sailIntArg is None:
+			sys.exit(f"Error: Could not coerce {sailArg[0].pp()} to int in negation")
 		return [SailApp(
 			fn=SailHandwrittenFn(
 				name='negate',
 				typ=Sail_t_fn([Sail_t_int()], Sail_t_int())
 			),
-			actuals=sailArg,
+			actuals=[sailIntArg],
 		)], env, len(ACL2ast)
 	else:
-		return num_op_gen('-', Sail_t_int(), 2)(ACL2ast, env)
+		return num_op_gen('-', Sail_t_int(), operandType=Sail_t_int(), numOfArgs=2)(ACL2ast, env)
 
 
 def tr_pe(ACL2ast, env):
@@ -2438,6 +2474,41 @@ def tr_nil(ACL2ast, env):
 	else:
 		sys.exit(f"Unknown current type when translating token 'nil`: {currentType}")
 
+def tr_trunc(ACL2ast, env):
+	(nBytesSail, env, _) = transform.transformACL2asttoSail(ACL2ast[1], env)
+	nBytesSail = nBytesSail[0]
+	(operandSail, env, _) = transform.transformACL2asttoSail(ACL2ast[2], env)
+	operandSail = operandSail[0]
+
+	if isRangeType(nBytesSail.getType()):
+		(low, high) = getRangeOfType(nBytesSail.getType())
+		nBytes = high
+		isConstant = (low == high)
+	else:
+		sys.exit(f"Error: Could not determine number of bytes for `trunc` from argument {args[0].pp()}")
+	# If the result bitvector type has variable length, coerce to the maximum possible length for now
+	# TODO: Handle variable length bitvectors properly
+	resultType = Sail_t_bits(8 * nBytes)
+
+	if not isinstance(operandSail.getType(), Sail_t_bits):
+		# If the operand is an integer (or anything other than a bitvector), coerce it to a bitvector
+		coercedOperand = coerceExpr(operandSail, resultType)
+		if coercedOperand is None:
+			sys.exit(f"Error: Could not coerce operand {operandSail.pp()} for `trunc` to a bitvector")
+		operandSail = coercedOperand
+	operandType = operandSail.getType() if isinstance(operandSail.getType(), Sail_t_bits) else resultType
+
+	innerFn = SailHandwrittenFn('trunc', Sail_t_fn([nBytesSail.getType(), operandType], resultType))
+	innerSail = SailApp(innerFn, [nBytesSail, operandSail])
+
+	if isConstant:
+		outerSail = innerSail
+	else:
+		# Add the coercion from variable to constant (maximum) bitvector length
+		outerFn = SailHandwrittenFn('sail_mask', Sail_t_fn([Sail_t_int(), resultType], resultType))
+		outerSail = SailApp(outerFn, [SailNumLit(8 * nBytes), innerSail])
+
+	return [outerSail], env, len(ACL2ast)
 
 def _filterActuals(ACL2ast, numOfArgs):
 	"""

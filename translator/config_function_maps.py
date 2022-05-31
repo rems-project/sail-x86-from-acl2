@@ -50,23 +50,27 @@ def specialTokens():
 		'if': 				tr_if,
 		'encapsulate': 		tr_encapsulate,
 		'the': 				tr_the,
-		'+': 				num_op_gen('+', Sail_t_int()),
-		'binary-+': 		num_op_gen('+', Sail_t_int()),
-		'*': 				num_op_gen('*', Sail_t_int()),
+		'+': 				num_op_gen('+', Sail_t_int(), operandType=Sail_t_int()),
+		'binary-+': 		num_op_gen('+', Sail_t_int(), operandType=Sail_t_int()),
+		'*': 				num_op_gen('*', Sail_t_int(), operandType=Sail_t_int()),
 		'-': 				tr_minus,
-		'=': 				num_op_gen('==', Sail_t_bool(), 2, infix=True),
-		'equal': 			num_op_gen('==', Sail_t_bool(), 2, infix=True),
-		'eql': 				num_op_gen('==', Sail_t_bool(), 2, infix=True),
-		'int=': 			num_op_gen('==', Sail_t_bool(), 2, infix=True),
-		'eq': 				num_op_gen('==', Sail_t_bool(), 2, infix=True),
-		'/=': 				num_op_gen('!=', Sail_t_bool(), 2, infix=True),
-		'<': 				num_op_gen('<', Sail_t_bool(), 2),
-		'>': 				num_op_gen('>', Sail_t_bool(), 2),
-		'<=': 				num_op_gen('<=', Sail_t_bool(), 2),
-		'and': 				num_op_gen('&', Sail_t_bool(), None, infix=True),
-		'or': 				num_op_gen('|', Sail_t_bool(), None, infix=True),
-		'truncate': 		num_op_gen('tdiv_int', Sail_t_int(), 2, infix=False),
-		'rem': 				num_op_gen('tmod_int', Sail_t_int(), 2, infix=False),
+		'=': 				num_op_gen('==', Sail_t_bool(), numOfArgs=2, infix=True),
+		'equal': 			num_op_gen('==', Sail_t_bool(), numOfArgs=2, infix=True),
+		'eql': 				num_op_gen('==', Sail_t_bool(), numOfArgs=2, infix=True),
+		'int=': 			num_op_gen('==', Sail_t_bool(), numOfArgs=2, infix=True),
+		'eq': 				num_op_gen('==', Sail_t_bool(), numOfArgs=2, infix=True),
+		'/=': 				num_op_gen('!=', Sail_t_bool(), numOfArgs=2, infix=True),
+		'<': 				num_op_gen('<', Sail_t_bool(), operandType=Sail_t_int(), numOfArgs=2),
+		'>': 				num_op_gen('>', Sail_t_bool(), operandType=Sail_t_int(), numOfArgs=2),
+		'<=': 				num_op_gen('<=', Sail_t_bool(), operandType=Sail_t_int(), numOfArgs=2),
+		'and': 				num_op_gen('&', Sail_t_bool(), infix=True),
+		'or': 				num_op_gen('|', Sail_t_bool(), infix=True),
+		'logior':			bitwise_op_gen('logior'),
+		'logand':			bitwise_op_gen('logand'),
+		'logxor':			bitwise_op_gen('logxor'),
+		'truncate': 		num_op_gen('tdiv_int', Sail_t_int(), operandType=Sail_t_int(), numOfArgs=2, infix=False),
+		'trunc': 		tr_trunc,
+		'rem': 				num_op_gen('tmod_int', Sail_t_int(), operandType=Sail_t_int(), numOfArgs=2, infix=False),
 		'zp': 				tr_zp,
 		'part-select': 		tr_part_select,
 		'part-install': 	tr_part_install,
@@ -146,15 +150,10 @@ def handwritten():
 		'not'					: not_fn,
 		'loghead'				: loghead_fn,
 		'logtail'				: logtail_fn,
-		'logbitp'				: logbitp_fn,
 		'logbit'				: logbit_fn,
 		'lognot'				: lognot_fn,
 		'logcount'				: logcount_fn,
-		'logand'				: binary_logand_fn,
-		'logior'				: binary_logior_fn,
-		'logxor'				: binary_logxor_fn,
 		'logext'				: binary_logext_fn,
-		'n-size'				: n_size_fn,
 		'rflags'				: r_rflags_fn,
 		'!rflags'				: write_rflags_fn,
 		'rip'					: r_rip_fn,
@@ -202,6 +201,17 @@ def handwritten():
 	for (name, funcToApply) in handwrittenDefinitions.items():
 		name = name.upper()
 		name_to_fn_map[name] = apply_fn_gen(funcToApply, funcToApply.getNumFormals())
+
+	def dependent_fn(func, numOfArgs, coerceActuals=False):
+		return {'func': func, 'numOfArgs': numOfArgs, 'coerceActuals': coerceActuals}
+
+	dependentHandwrittenDefs = {
+		'n-size'	: dependent_fn(n_size_fn, 2),
+		'logbitp'	: dependent_fn(logbitp_fn, 2, coerceActuals=True),
+	}
+	for (name, fn) in dependentHandwrittenDefs.items():
+		name = name.upper()
+		name_to_fn_map[name] = apply_dependent_fn_gen(fn['func'], fn['numOfArgs'], coerceActuals=fn['coerceActuals'])
 
 	return name_to_fn_map
 
