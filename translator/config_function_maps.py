@@ -50,8 +50,8 @@ def specialTokens():
 		'if': 				tr_if,
 		'encapsulate': 		tr_encapsulate,
 		'the': 				tr_the,
-		'+': 				num_op_gen('+', Sail_t_int(), operandType=Sail_t_int()),
-		'binary-+': 		num_op_gen('+', Sail_t_int(), operandType=Sail_t_int()),
+		'+': 				tr_plus,
+		'binary-+': 		tr_plus,
 		'*': 				num_op_gen('*', Sail_t_int(), operandType=Sail_t_int()),
 		'-': 				tr_minus,
 		'=': 				num_op_gen('==', Sail_t_bool(), numOfArgs=2, infix=True),
@@ -150,7 +150,6 @@ def handwritten():
 		'not'					: not_fn,
 		'loghead'				: loghead_fn,
 		'logtail'				: logtail_fn,
-		'logbit'				: logbit_fn,
 		'lognot'				: lognot_fn,
 		'logcount'				: logcount_fn,
 		'logext'				: binary_logext_fn,
@@ -208,6 +207,7 @@ def handwritten():
 	dependentHandwrittenDefs = {
 		'n-size'	: dependent_fn(n_size_fn, 2),
 		'logbitp'	: dependent_fn(logbitp_fn, 2, coerceActuals=True),
+		'logbit'	: dependent_fn(logbit_fn, 2, coerceActuals=True),
 	}
 	for (name, fn) in dependentHandwrittenDefs.items():
 		name = name.upper()

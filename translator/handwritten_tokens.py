@@ -52,10 +52,9 @@ def logbitp_fn(args, env):
 	return SailHandwrittenFn('logbitp', Sail_t_fn([Sail_t_int(), args[1].getType()], Sail_t_bool()))
 
 
-logbit_fn = SailHandwrittenFn(
-	'logbit',
-	Sail_t_fn([Sail_t_int(), Sail_t_int()], Sail_t_int(), {'escape'})
-)
+def logbit_fn(args, env):
+	return SailHandwrittenFn('logbit', Sail_t_fn([Sail_t_int(), args[1].getType()], Sail_t_bits(1)))
+
 
 lognot_fn = SailHandwrittenFn(
 	'lognot',
@@ -277,15 +276,15 @@ rotate_right_fn = SailHandwrittenFn(
 
 merge_2_u64s_fn = SailHandwrittenFn(
 	'merge_2_u64s',
-	Sail_t_fn([Sail_t_int(), Sail_t_int()], Sail_t_int())
+	Sail_t_fn([Sail_t_bits(64), Sail_t_bits(64)], Sail_t_bits(128))
 )
 
 merge_2_u32s_fn = SailHandwrittenFn(
 	'merge_2_u32s',
-	Sail_t_fn([Sail_t_int(), Sail_t_int()], Sail_t_int())
+	Sail_t_fn([Sail_t_bits(32), Sail_t_bits(32)], Sail_t_bits(64))
 )
 
 merge_4_u32s_fn = SailHandwrittenFn(
 	'merge_4_u32s',
-	Sail_t_fn([Sail_t_int(), Sail_t_int(), Sail_t_int(), Sail_t_int()], Sail_t_int())
+	Sail_t_fn([Sail_t_bits(32), Sail_t_bits(32), Sail_t_bits(32), Sail_t_bits(32)], Sail_t_bits(128))
 )

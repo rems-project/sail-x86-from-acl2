@@ -53,6 +53,15 @@ forced_return_types = {
 }
 
 
+forced_argument_types = {
+        'wb-1': {'value': Sail_t_int()}
+}
+
+forced_variable_types = {
+        'check-alignment?': Sail_t_bool(),
+        'inst-ac?': Sail_t_bool(),
+}
+
 '''
 Exclude these files from the translation
 '''

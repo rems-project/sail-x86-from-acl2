@@ -255,11 +255,16 @@ nil)."
 
 See: http://www.cs.utexas.edu/users/moore/acl2/manuals/current/manual/?topic=ACL2____LOGBIT
 */
-val logbit : (int, int) -> int effect {escape}
-function logbit (pos, j) = {
+val logbit_int : (int, int) -> int effect {escape}
+function logbit_int (pos, j) = {
 	assert(pos >= 0);
 	unsigned(get_slice_int(1, j, pos))
 }
+
+val logbit_bits : forall 'n 'm, 0 <= 'm < 'n. (int('m), bits('n)) -> bits(1)
+function logbit_bits (pos, x) = [x[pos]]
+
+overload logbit = {logbit_bits, logbit_int}
 
 /*-----------------------------------------------------------------*/
 /*

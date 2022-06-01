@@ -583,6 +583,12 @@ def tr_define(ACL2ast, env):
 	if fnName.lower() in config_patterns.forced_return_types:
 		thisSailFn.setForceRHSType(config_patterns.forced_return_types[fnName.lower()])
 
+	# Check for forced argument types
+	if fnName.lower() in config_patterns.forced_argument_types:
+		fnFormalsForced = config_patterns.forced_argument_types[fnName.lower()]
+	else:
+		fnFormalsForced = {}
+
 	# Perform rudimentary checks
 	if not isinstance(fnName, str): sys.exit("Error: function name not a symbol")
 	if not isinstance(fnFormals, list): sys.exit("Error: function formals not a list")
@@ -611,7 +617,11 @@ def tr_define(ACL2ast, env):
 	# Add the formal parameter bindings to the stack with their types if we have them
 	fnFormalsBVs = []
 	for f in fnFormalsFiltered:
-		if f in fnFormalsTyped:
+		if f.lower() in fnFormalsForced:
+			bv = env.pushToBindings([f], [fnFormalsForced[f.lower()]])
+		elif f in fnFormalsTyped:
+			# generalisedType = fnFormalsTyped[f].resolve()
+			# bv = env.pushToBindings([f], [generalisedType])
 			bv = env.pushToBindings([f], [fnFormalsTyped[f]])
 		else:
 			bv = env.pushToBindings([f], [Sail_t_unknown()])
@@ -916,7 +926,7 @@ def num_op_gen(op, resultType, operandType=None, numOfArgs=None, infix=True):
 		for (i, arg) in enumerate(argsSail):
 			new = coerceExpr(arg[0], operandType)
 			if new is None:
-				sys.exit(f"Error: cannot coerce operand {arg[0].pp()} to {operandType.pp()}")
+				sys.exit(f"Error: cannot coerce operand ({arg[0].pp()} : {arg[0].getType().pp()}) to {operandType.pp()}")
 			argsSail[i] = [new]
 
 		# Construct the base AST and remove those elements from the args/types lists
@@ -1073,16 +1083,16 @@ def _parts_helper(lowAST, hiAST, widAST, env):
 		(lowASTsail, env, _) = transform.transformACL2asttoSail(lowAST[0], env) # lowASTsail is expected to be a list after the `if` so don't unpack yet
 		(hiASTsail, env, _) = transform.transformACL2asttoSail(hiAST[0], env)
 
-		# Create size AST
-		sizeASTsail = SailApp(fn=SailHandwrittenFn('-', typ=Sail_t_fn([Sail_t_int(), Sail_t_int()], Sail_t_int())),
-					   actuals=[hiASTsail[0], lowASTsail[0]],
-					   infix=True)
-
 		# Create size literal
 		if not isinstance(hiASTsail[0], SailNumLit) or not isinstance(lowASTsail[0], SailNumLit):
 			size = None
+
+			fnTyp = Sail_t_fn([Sail_t_int(), Sail_t_int()], Sail_t_int())
+			subASTsail = SailApp(fn=SailHandwrittenFn('-', typ=fnTyp), actuals=[hiASTsail[0], lowASTsail[0]], infix=True)
+			sizeASTsail = SailApp(fn=SailHandwrittenFn('+', typ=fnTyp), actuals=[subASTsail, SailNumLit(1)], infix=True)
 		else:
-			size = hiASTsail[0].getNum() - lowASTsail[0].getNum()
+			size = hiASTsail[0].getNum() - lowASTsail[0].getNum() + 1
+			sizeASTsail = SailNumLit(size)
 
 	elif len(lowAST) == 1 and len(widAST) == 1:
 		# Translate
@@ -1121,28 +1131,22 @@ def tr_part_select(ACL2ast, env):
 	(target, _, _, _, _) = _filterExtract(ACL2ast, 6, [None] * 5, [None] * 5, "`part_select`")
 	(targetSail, env, _) = transform.transformACL2asttoSail(target, env)
 
-	# Create the get_slice_int function application
-	if size is not None:
-		innerRetType = Sail_t_bits(size)
-		# outerRetType = Sail_t_range(0, 2^size - 1)
+	retType = Sail_t_bits(size)
+	targetType = targetSail[0].getType()
+
+	# Create the slice function application
+	if isinstance(targetType, Sail_t_bits):
+		sailTerm = SailApp(fn = SailHandwrittenFn(
+								name = 'slice',
+								typ = Sail_t_fn([targetType, Sail_t_int(), Sail_t_int()], retType)),
+						actuals = [targetSail[0], lowASTsail[0], sizeASTsail])
 	else:
-		innerRetType = Sail_t_bits(64) # hack...
-		# outerRetType = Sail_t_int()
+		sailTerm = SailApp(fn = SailHandwrittenFn(
+								name = 'get_slice_int',
+								typ = Sail_t_fn([Sail_t_int(), targetType, Sail_t_int()], retType)),
+						actuals = [sizeASTsail, targetSail[0], lowASTsail[0]])
 
-	targetType = innerRetType # hack...
-
-	inner = SailApp(fn = SailHandwrittenFn(
-							name = 'slice',
-							typ = Sail_t_fn([targetType, Sail_t_int(), Sail_t_int()], innerRetType)),
-					actuals = [targetSail[0], lowASTsail[0], sizeASTsail])
-
-	# And convert the resulting bits to a range
-	#outer = SailApp(fn = SailHandwrittenFn(
-	#						name = 'unsigned',
-	#						typ = Sail_t_fn([], outerRetType)),
-	#				actuals = [inner])
-
-	return [inner], env, len(ACL2ast)
+	return [sailTerm], env, len(ACL2ast)
 
 def tr_part_install(ACL2ast, env):
 	"""
@@ -1165,11 +1169,21 @@ def tr_part_install(ACL2ast, env):
 	(valSail, env, _) = transform.transformACL2asttoSail(val, env)
 	(xSail, env, _) = transform.transformACL2asttoSail(x, env)
 
-	if isinstance(xSail[0].getType(), Sail_t_bits) and width is not None:
+	srcType = xSail[0].getType()
+	low = lowASTsail[0].getNum() if isinstance(lowASTsail[0], SailNumLit) else None
+
+	if isinstance(srcType, Sail_t_bits) and width is not None:
 		cvalSail = coerceExpr(valSail[0], Sail_t_bits(width))
 		if cvalSail is None:
 			sys.exit(f"Error: failed to coerce {valSail[0].pp()} to bits({width}) in part_install expression")
 		valSail = [cvalSail]
+		if srcType.length is None: print("Warning: srcType.length is None!")
+		if low is None: print("Warning: low is None!")
+		if srcType.length is not None and low is not None and srcType.length < low + width:
+			cxSail = coerceExpr(xSail[0], Sail_t_bits(low + width))
+			if cxSail is None:
+				sys.exit(f"Error: failed to coerce {xSail[0].pp()} to bits({low + width}) in part_install expression")
+			xSail = [cxSail]
 	else:
 		valSail = [coerceExpr(valSail[0], Sail_t_int())]
 		xSail = [coerceExpr(xSail[0], Sail_t_int())]
@@ -1177,13 +1191,13 @@ def tr_part_install(ACL2ast, env):
 			sys.exit(f"Error: failed to coerce operands to integer in part_install expression")
 
 	# Create the setting function application
-	inner = SailApp(
+	sailTerm = SailApp(
 		fn=SailHandwrittenFn(
 			name='changeSlice',
 			typ=Sail_t_fn([xSail[0].getType(), Sail_t_int(), Sail_t_int(), valSail[0].getType()], xSail[0].getType())),
 		actuals=[xSail[0], lowASTsail[0], sizeASTsail, valSail[0]])
 
-	return [inner], env, len(ACL2ast)
+	return [sailTerm], env, len(ACL2ast)
 
 def _bstar_helper(bindersRemaining, results, env):
 	"""
@@ -1264,9 +1278,13 @@ def _bstar_helper(bindersRemaining, results, env):
 		b = sanitiseBstarName(b)
 
 		# Translate the body first, find its type, then register name with env and boundNames
+		forcedType = config_patterns.forced_variable_types.get(b.lower())
+		if isinstance(forcedType, Sail_t_bool):
+			env.setCurrentType(SailPlaceholderNil.BOOL)
 		(exprSail, env, _) = transform.transformACL2asttoSail(binding[1], env)
+		env.clearCurrentType()
 		if len(exprSail) != 1: sys.exit(f"Error: body length not 1 in `let*` in `b*` - {exprSail}")
-		exprType = exprSail[0].getType()
+		exprType = exprSail[0].getType() if forcedType is None else forcedType
 		bv = env.pushToBindings([b], [exprType])
 		boundNames.append(b)
 
@@ -1307,7 +1325,8 @@ def _bstar_helper(bindersRemaining, results, env):
 					# This is a bit of a hack as we can have more general patterns in an mv b* binder
 					name = sanitiseBstarName(ident[2])
 					ident[2] = name # tr_the needs to be able to look up the sanitised symbol
-					boundVars.extend(env.pushToBindings([name]))
+					typ = [bodyTypes[i]] if i < len(bodyTypes) else None
+					boundVars.extend(env.pushToBindings([name], typ))
 					boundNames.append(name)
 					(sailThe, env, _) = tr_the(ident, env)
 					afters.append((name, sailThe[0]))
@@ -1381,21 +1400,27 @@ def _bstar_helper(bindersRemaining, results, env):
 			(typeSpec, name) = _filterExtract(b, 3, [[list], [str]], [None, None], "`the`")
 			name = sanitiseBstarName(name)
 
-			# Translate the type		
-			theType = translateType(env, typeSpec[0], typeSpec[1:])
-
-			# Register name with env and boundNames, translate the body and encapsulate in correct `the`
-			bv = env.pushToBindings([name], [theType])
-			boundNames.append(name)
+			# Translate the body first (using the old environment, in case we are about to re-bind an existing variable)
 			body = filterAST(binding[1])
 			(bodySail, env, _) = transform.transformACL2asttoSail(body, env)
+
+			# Encapsulate in correct `the`
+			theType = translateType(env, typeSpec[0], typeSpec[1:])
 			bodySail = _the_helper(theType, bodySail)
 
-			# Recurse on the rest of the list and encapsulate in correct `the`
+			# Determine the actual type (which, in particular in
+			# the case of the_range, might be inferred to be more
+			# precise, e.g. {|1, 2, 4|} instead of range(1, 4)
+			actualType = bodySail[0].getType()
+
+			# Register name with env and boundNames,
+			bv = env.pushToBindings([name], [actualType])
+			boundNames.append(name)
+
+			# Recurse on the rest of the list
 			(recursedSail, env) = _bstar_helper(bindersRemaining[1:], results, env)
 
 			# Create Sail term
-			# E.g. `let n = foo(z) in the_range(0, 100, result)`
 			toReturn = SailLet(
 							varName = bv[0],
 							expr = bodySail,
@@ -2388,6 +2413,27 @@ def tr_minus(ACL2ast, env):
 	else:
 		return num_op_gen('-', Sail_t_int(), operandType=Sail_t_int(), numOfArgs=2)(ACL2ast, env)
 
+
+def tr_plus(ACL2ast, env):
+	if len(ACL2ast) == 3:
+		(arg1, env, _) = transform.transformACL2asttoSail(ACL2ast[1], env)
+		(arg2, env, _) = transform.transformACL2asttoSail(ACL2ast[2], env)
+		typ1 = arg1[0].getType()
+		typ2 = arg2[0].getType()
+		if isinstance(arg1[0], SailNumLit) and isinstance(typ2, Sail_t_member):
+			retTyp = Sail_t_member([arg1[0].getNum() + i for i in typ2.members])
+		elif isinstance(typ1, Sail_t_member) and isinstance(arg2[0], SailNumLit):
+			retTyp = Sail_t_member([arg2[0].getNum() + i for i in typ1.members])
+		else:
+			retTyp = None
+
+		if retTyp is None:
+			return num_op_gen('+', Sail_t_int(), operandType=Sail_t_int())(ACL2ast, env)
+		else:
+			fn = SailHandwrittenFn(name='+', typ=Sail_t_fn([typ1, typ2], retTyp))
+			return [SailApp(fn=fn, actuals=[arg1[0], arg2[0]], infix=True)], env, len(ACL2ast)
+	else:
+		return num_op_gen('+', Sail_t_int(), operandType=Sail_t_int())(ACL2ast, env)
 
 def tr_pe(ACL2ast, env):
 	"""

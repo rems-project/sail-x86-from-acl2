@@ -229,12 +229,6 @@ class SailLet(SailASTelem):
 		self.expr = expr
 		self.body = body
 
-		# Hack: force type of `check-alignment?` and `inst-ac?` to false - nil
-		# resolution.
-		if isinstance(varName, SailBoundVar) and varName.getName().lower() in ['check-alignment?', 'inst-ac?'] and isinstance(self.expr[0], SailPlaceholderNil):
-			self.varName.setType(Sail_t_bool())
-			self.expr = [SailBoolLit(False)]
-
 		self.resolveNilCB = None
 
 	### Custom Methods ###
@@ -285,7 +279,9 @@ class SailLet(SailASTelem):
 		# Force a type annotation of the expression to avoid type variable
 		# escape errors.
 		pp_var = self.varName.pp()
-		pp_expr = f"({self.expr[0].pp()}) : {ppType(self.expr[0].getType())}"
+		exprTyp = self.expr[0].getType()
+		pp_typ = f" : {ppType(exprTyp)}" if exprTyp.isPrintable() else ""
+		pp_expr = f"({self.expr[0].pp()})" + pp_typ
 		pp_body = self.body[0].pp()
 		
 		return f"let {pp_var} = {pp_expr} in\n{pp_body}"
@@ -1068,15 +1064,16 @@ class SailVectorLit(SailASTelem):
 class SailVectorProject(SailASTelem):
 	"""A Sail vector projection"""
 
-	def __init__(self, vector, index):
+	def __init__(self, vector, index, coerceIndex=True):
 		"""
 		Args:
 			vector: SailASTelem : Sail_t_vector
 			index: SailASTelem : Sail_t_int
 		"""
 		super().__init__()
+		indexType = Sail_t_range(0, vector.getType().getLength() - 1)
 		self.vector = vector
-		self.index = index
+		self.index = coerceExpr(index, indexType) if coerceIndex else index
 
 	### Required methods ###
 	def getType(self):
@@ -1097,11 +1094,7 @@ class SailVectorProject(SailASTelem):
 		return set.union(vectorSet, indexSet, selfSet)
 
 	def pp(self):
-		return\
-f"""let vectorIndex = {self.index.pp()} in {{
-	assert(0 <= vectorIndex & vectorIndex <= {self.vector.getType().getLength() - 1});
-	({self.vector.pp()})[vectorIndex]
-}}"""
+		return f"({self.vector.pp()})[{self.index.pp()}]"
 
 	### Nil resolution ###
 	def setCallBacks(self):
@@ -1393,16 +1386,27 @@ def coerceExpr(expr, typ):
 	etyp = expr.getType()
 	if etyp is None or isinstance(etyp, Sail_t_unknown):
 		return None
-	elif etyp.generalise() == typ.generalise():
+	elif isSubType(etyp, typ):
 		return expr
-	elif isNumeric(etyp) and isinstance(typ, Sail_t_bits):
+	elif isNumeric(etyp) and not isNonnegativeType(etyp) and isinstance(typ, Sail_t_nat):
+		fntyp = Sail_t_fn([Sail_t_int()], typ)
+		return SailApp(SailHandwrittenFn("the_nat", fntyp), [expr])
+	elif isNumeric(etyp) and isRangeType(typ):
+		(low, high) = getRangeOfType(typ)
+		fntyp = Sail_t_fn([Sail_t_int(), Sail_t_int(), etyp], typ)
+		args = [SailNumLit(low), SailNumLit(high), expr]
+		return SailApp(SailHandwrittenFn("the_range", fntyp), args)
+	elif isNumeric(etyp) and isinstance(typ, Sail_t_bits) and typ.length is not None:
 		fntyp = Sail_t_fn([Sail_t_int(), Sail_t_int(), Sail_t_int()], typ)
 		args = [SailNumLit(typ.length), expr, SailNumLit(0)]
 		return SailApp(SailHandwrittenFn("get_slice_int", fntyp), args)
 	elif isinstance(etyp, Sail_t_bits) and isNumeric(typ):
 		# TODO: What about signed bitvectors?
-		return SailApp(SailHandwrittenFn("unsigned", Sail_t_fn([etyp], typ)), [expr])
-	elif isinstance(etyp, Sail_t_bits) and isinstance(typ, Sail_t_bits):
+		castTyp = Sail_t_range(0, (2 ** etyp.length) - 1) if etyp.length is not None else Sail_t_nat()
+		innerTyp = typ if isSubType(castTyp, typ) else castTyp
+		innerExpr = SailApp(SailHandwrittenFn("unsigned", Sail_t_fn([etyp], innerTyp)), [expr])
+		return coerceExpr(innerExpr, typ)
+	elif isinstance(etyp, Sail_t_bits) and isinstance(typ, Sail_t_bits) and typ.length is not None:
 		fntyp = Sail_t_fn([Sail_t_int(), etyp], typ)
 		args = [SailNumLit(typ.length), expr]
 		return SailApp(SailHandwrittenFn("sail_mask", fntyp), args)

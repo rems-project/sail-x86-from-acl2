@@ -265,6 +265,11 @@ def isNumeric(st):
 	"""
 	return isinstance(st.generalise(), Sail_t_int)
 
+def isNonnegativeType(t):
+	return isinstance(t, Sail_t_nat) or \
+			(isinstance(t, Sail_t_range) and t.low >= 0 and t.high >= 0) or \
+			(isinstance(t, Sail_t_member) and t.subType == Sail_t_member.INT and all(m >= 0 for m in t.members))
+
 def isString(st):
 	"""
 	Tests if SailType `st` is a string.
@@ -297,6 +302,8 @@ class SailType:
 		return False
 	def pp(self):
 		return "unknown"
+	def isPrintable(self):
+		return True
 
 def ppType(t):
 	return t.pp() if isinstance(t, SailType) else "unknown"
@@ -366,6 +373,9 @@ class Sail_t_unknown(SailType):
 		"""
 		return "unknown"
 
+	def isPrintable(self):
+		return False
+
 def isUnknownType(t):
 	return isinstance(t, Sail_t_unknown) or t == None
 
@@ -397,6 +407,9 @@ class Sail_t_error(SailType):
 		print("WARNING: printing Sail_t_error() type")
 		return "error"
 
+	def isPrintable(self):
+		return False
+
 class Sail_t_int(SailType):
 	"""Represents an int type of unspecified size"""
 	def __init__(self):
@@ -416,7 +429,8 @@ class Sail_t_bits(SailType):
 			- length : int > 0 - I think this needs to be strictly bigger than zero
 		'''
 		super(Sail_t_bits, self).__init__()
-		if length <= 0: sys.exit(f"Error: tried to construct a bits type with size le 0.  Size was: {length}")
+		if length is not None and length <= 0:
+			raise(ValueError(f"tried to construct a bits type with size le 0.  Size was: {length}"))
 		self.length = length
 
 	def __eq__(self, other):
@@ -429,6 +443,9 @@ class Sail_t_bits(SailType):
 
 	def pp(self):
 		return f"bits({self.length})"
+
+	def isPrintable(self):
+		return self.length is not None and self.length > 0
 
 class Sail_t_nat(SailType):
 	"""Represents the nat type"""
@@ -817,10 +834,10 @@ def mergeTypes(t1, t2):
 		return Sail_t_range(min(l1, l2), max(h1, h2))
 	elif isBitvectorType(t1) and isBitvectorType(t2):
 		length = max(getBitvectorSize(t1), getBitvectorSize(t2))
-		return Sail_t_bits(length)
+		return Sail_t_bits(length) if length > 0 else None
 	elif (isNumeric(t1) and isNumeric(t2)) \
-	     or (isNumeric(t1) and isBitvectorType(t2)) \
-	     or (isBitvectorType(t1) and isNumeric(t2)):
+	     or (isNumeric(t1) and isinstance(t2, Sail_t_bits)) \
+	     or (isinstance(t1, Sail_t_bits) and isNumeric(t2)):
 		return Sail_t_int()
 	elif isinstance(t1, Sail_t_tuple) and isinstance(t2, Sail_t_tuple):
 		ts1 = t1.getSubTypes()
@@ -857,6 +874,8 @@ def isSubType(t1, t2):
 		(low, high) = getRangeOfType(t1)
 		return low >= 0 and high >= 0
 	elif isNumeric(t1) and isinstance(t2, Sail_t_int):
+		return True
+	elif isString(t1) and isString(t2):
 		return True
 	elif isinstance(t1, Sail_t_option) and isinstance(t2, Sail_t_option):
 		return isSubType(t1.getTyp(), t2.getTyp())
