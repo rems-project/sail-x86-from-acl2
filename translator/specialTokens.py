@@ -988,13 +988,14 @@ def _the_helper(theType, sailTerm):
 	except:
 		termType = Sail_t_unknown()
 
+	if termType == theType:
+		retTerm = sailTerm[0]
 	# Select the correct Sail `the`
-	if isinstance(theType, Sail_t_int):
+	elif isinstance(theType, Sail_t_int):
 		retTerm = coerceExpr(sailTerm[0], theType)
 	elif isinstance(theType, Sail_t_nat):
-		retTerm = SailApp(	fn = SailHandwrittenFn(	name = "the_nat",
-													typ = Sail_t_fn([Sail_t_int()], Sail_t_nat(), {'escape'})),
-							actuals = sailTerm)
+		fnType = Sail_t_fn([Sail_t_int()], theType, {'escape'})
+		retTerm = SailApp(fn = SailHandwrittenFn(name="the_nat", typ=fnType), actuals = sailTerm)
 	elif isinstance(theType, Sail_t_range):
 		(low, high) = theType.getRange()
 		# Preserve existing constraints on the Sail term, e.g. don't
@@ -1003,13 +1004,14 @@ def _the_helper(theType, sailTerm):
 		if resultType is None:
 			print(f"Warning: Failed to determine result type of `the_range({low}, {high}, {sailTerm[0].pp()})`")
 			resultType = theType
-		retTerm = SailApp(	fn = SailHandwrittenFn(	name = "the_range",
-													typ = Sail_t_fn([Sail_t_int(), Sail_t_int(), Sail_t_int()], resultType, {'escape'})),
-							actuals = [SailNumLit(low), SailNumLit(high), sailTerm[0]])
+		fnType = Sail_t_fn([Sail_t_int(), Sail_t_int(), Sail_t_int()], resultType, {'escape'})
+		fn = SailHandwrittenFn(name="the_range", typ=fnType)
+		retTerm = SailApp(fn=fn, actuals=[SailNumLit(low), SailNumLit(high), sailTerm[0]])
 	elif isinstance(theType, Sail_t_bits) and theType.length is not None:
-		retTerm = SailApp(	fn = SailHandwrittenFn(	name = "the_bits",
-													typ = Sail_t_fn([Sail_t_int(), termType], Sail_t_bits(theType.length), {'escape'})),
-							actuals = [SailNumLit(theType.length), sailTerm[0]])
+		fnName = "the_sbits" if theType.signed else "the_bits"
+		fnType = Sail_t_fn([Sail_t_int(), termType], theType, {'escape'})
+		fn = SailHandwrittenFn(name=fnName, typ=fnType)
+		retTerm = SailApp(fn=fn, actuals=[SailNumLit(theType.length), sailTerm[0]])
 	else:
 		sys.exit(f"Error: unexpected type spec in `the` - {theType} in {sailTerm}")
 

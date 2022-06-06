@@ -146,7 +146,7 @@ def translateType(env, typeSymbol, args=None):
 	if typeSymbol == 'unsigned-byte'.upper():
 		return Sail_t_bits(int(args[0])) # Sail_t_range(0, 2 ** int(args[0]) - 1)
 	elif typeSymbol == 'signed-byte'.upper():
-		return Sail_t_bits(int(args[0]))
+		return Sail_t_bits(int(args[0]), signed=True)
 		# halfBits = int(args[0]) - 1
 		# return Sail_t_range(- 2 ** halfBits, 2 ** halfBits - 1)
 	elif typeSymbol == 'integer'.upper():
@@ -194,8 +194,9 @@ def parseGuard(guard):
 	# Filter newlines
 	guard = [item for item in guard if type(item) not in [NewLine]]
 
-	# Prepare a regexp for checking for number type predicates
+	# Prepare regexps for checking for number type predicates
 	n_pred = re.compile(r"n(\d{2,3})p")
+	i_pred = re.compile(r"i(\d{2,3})p")
 
 	# Switch on the first element of guard
 	switch = guard[0]
@@ -226,14 +227,15 @@ def parseGuard(guard):
 		if len(guard) != 2: sys.exit(f"Error: guard for integerp has unexpected number of elements: {guard}")
 		name = guard[1]
 		dictAddOrInit(possibilities, name, Sail_t_int())
-	elif switch.lower() == 'unsigned-byte-p':
+	elif switch.lower() == 'unsigned-byte-p' or switch.lower() == 'signed-byte-p':
 		if len(guard) != 3: sys.exit(f"Error: guard for unsigned-byte-p has unexpected number of elements: {guard}")
 		name = guard[2]
 		hiBits = utils.convertLiteral(guard[1])
+		signed = (switch.lower() == 'signed-byte-p')
 		if hiBits is None or isinstance(hiBits, float) or hiBits <= 0:
 			print(f"Warning: none-integer value supplied for unsigned-byte-p argument: {guard}")
 		else:
-			dictAddOrInit(possibilities, name, Sail_t_bits(hiBits)) # Sail_t_range(0, 2 ^ hiBits - 1))
+			dictAddOrInit(possibilities, name, Sail_t_bits(hiBits, signed=signed)) # Sail_t_range(0, 2 ^ hiBits - 1))
 	elif switch.lower() == 'n01p':
 		# TODO: this is for the function `extract-64-bits` - would be better to use fact that we match against a numeric
 		# type to infer this type.
@@ -243,6 +245,9 @@ def parseGuard(guard):
 	elif n_pred.match(switch.lower()):
 		length = int(n_pred.match(switch.lower()).group(1))
 		dictAddOrInit(possibilities, guard[1], Sail_t_bits(length))
+	elif i_pred.match(switch.lower()):
+		length = int(i_pred.match(switch.lower()).group(1))
+		dictAddOrInit(possibilities, guard[1], Sail_t_bits(length, signed=True))
 	elif switch.lower() == 'booleanp':
 		name = guard[1]
 		dictAddOrInit(possibilities, name, Sail_t_bool())
@@ -268,7 +273,8 @@ def isNumeric(st):
 def isNonnegativeType(t):
 	return isinstance(t, Sail_t_nat) or \
 			(isinstance(t, Sail_t_range) and t.low >= 0 and t.high >= 0) or \
-			(isinstance(t, Sail_t_member) and t.subType == Sail_t_member.INT and all(m >= 0 for m in t.members))
+			(isinstance(t, Sail_t_member) and t.subType == Sail_t_member.INT and all(m >= 0 for m in t.members)) or \
+			(isinstance(t, Sail_t_bits) and t.signed == False)
 
 def isString(st):
 	"""
@@ -423,15 +429,17 @@ class Sail_t_int(SailType):
 
 class Sail_t_bits(SailType):
 	"""Represents the bits type"""
-	def __init__(self, length):
+	def __init__(self, length, signed=False):
 		'''
 		Args:
 			- length : int > 0 - I think this needs to be strictly bigger than zero
+			- signed : bool - whether these bits are to be interpreted as a signed number or not
 		'''
 		super(Sail_t_bits, self).__init__()
 		if length is not None and length <= 0:
 			raise(ValueError(f"tried to construct a bits type with size le 0.  Size was: {length}"))
 		self.length = length
+		self.signed = signed
 
 	def __eq__(self, other):
 		return type(self) == type(other) and self.length == other.length
@@ -439,10 +447,11 @@ class Sail_t_bits(SailType):
 		return id(self)
 
 	def generalise(self):
-		return Sail_t_bits(self.length)
+		return Sail_t_bits(self.length, signed=self.signed)
 
 	def pp(self):
-		return f"bits({self.length})"
+		constr = "sbits" if self.signed else "bits"
+		return f"{constr}({self.length})"
 
 	def isPrintable(self):
 		return self.length is not None and self.length > 0
@@ -834,7 +843,12 @@ def mergeTypes(t1, t2):
 		return Sail_t_range(min(l1, l2), max(h1, h2))
 	elif isBitvectorType(t1) and isBitvectorType(t2):
 		length = max(getBitvectorSize(t1), getBitvectorSize(t2))
-		return Sail_t_bits(length) if length > 0 else None
+		if (isNonnegativeType(t1) and not isNonnegativeType(t2)) or \
+				(isNonnegativeType(t2) and not isNonnegativeType(t1)):
+			# Allow an extra bit if we merge signed and unsigned types
+			length = length + 1
+		signed = not isNonnegativeType(t1) or not isNonnegativeType(t2)
+		return Sail_t_bits(length, signed=signed) if length > 0 else None
 	elif (isNumeric(t1) and isNumeric(t2)) \
 	     or (isNumeric(t1) and isinstance(t2, Sail_t_bits)) \
 	     or (isinstance(t1, Sail_t_bits) and isNumeric(t2)):

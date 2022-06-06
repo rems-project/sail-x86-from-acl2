@@ -16,7 +16,7 @@ output directory etc. and some general options.
 Top level file name to translate.  Likely `x86.lisp` (which is located at
 `books/projects/x86isa/machine`).
 '''
-x86_project_folder = '/Users/patrick/Desktop/x86/temp/sbcl-source/acl2-8.3/books/projects/x86isa/'
+x86_project_folder = '/local/scratch/tb592/opt/acl2/books/projects/x86isa/'
 translateFile = 'x86.lisp'
 translatePath = os.path.join(x86_project_folder, 'machine', translateFile)
 
@@ -25,14 +25,14 @@ translatePath = os.path.join(x86_project_folder, 'machine', translateFile)
 Path to the ACL2 executable, which is likely called `saved_acl2`.
 Port on localhost the ACL2 instance listens on for expansion requests.
 '''
-acl2Process = '/Users/patrick/Desktop/x86/temp/sbcl-source/acl2-8.3/saved_acl2'
+acl2Process = '/local/scratch/tb592/opt/acl2/saved_acl2'
 acl2Port = 1159
 
 
 '''
 Output folder for translated files.
 '''
-outputFolder = '/Users/Patrick/Desktop/x86_cleaned/model'
+outputFolder = '/auto/homes/tb592/REMS/sail-x86-from-acl2/model'
 
 
 '''
@@ -45,7 +45,7 @@ utilitiesFile = os.path.join(outputFolder, "utils.sail")
 '''
 Output paths for file which log data about the type resolution algorithm
 '''
-unresolvedTypesFile = '/Users/patrick/Desktop/x86_cleaned/unresolvedTypes.txt'
+unresolvedTypesFile = '/auto/homes/tb592/REMS/sail-x86-from-acl2/unresolvedTypes.txt'
 
 
 '''

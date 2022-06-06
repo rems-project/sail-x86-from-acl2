@@ -14,6 +14,11 @@ $include <string.sail>
 
 overload operator ^ = {concat_str, and_bool}
 
+// Type synonym for signed bitvectors, which are distinguished from unsigned
+// bitvectors by ACL2 (but not by Sail)
+
+type sbits ('n : Int), 'n > 0 = bits('n)
+
 /*-----------------------------------------------------------------*/
 // Misc
 /*-----------------------------------------------------------------*/
@@ -85,15 +90,11 @@ val pow2 = "pow2" : forall 'n. int('n) -> int(2 ^ 'n)
 /*
 TODO: is there a utility function for this
 TODO: make bool_to_bit and bit_to_bool a mapping?
-
-We use `int` as return type to link in with the rest of the framework
 */
-val bool_to_bit : bool -> int
+val bool_to_bit : bool -> bits(1)
 function bool_to_bit (b) = match b {
-    //true  => 0b1,
-    //false => 0b0
-    true  => 1,
-    false => 0
+    true  => 0b1,
+    false => 0b0
 }
 
 val bit_to_bool : bits(1) -> bool
@@ -131,6 +132,11 @@ val bits_of_int : forall 'n, 'n >= 0. (int('n), int) -> bits('n)
 function bits_of_int (n, x) = get_slice_int(n, x, 0)
 
 overload the_bits = {bits_of_bits, bits_of_int}
+
+val sbits_of_bits : forall 'n 'm, 'n > 0 & 'm >= 0. (int('n), bits('m)) -> bits('n)
+function sbits_of_bits (n, x) = if (n <= length(x)) then truncate(x, n) else sail_sign_extend(x, n)
+
+overload the_sbits = {sbits_of_bits, bits_of_int}
 
 val isEven : int -> bool
 function isEven x =
@@ -250,15 +256,15 @@ overload logbitp = {logbitp_bits, logbitp_int}
 
 /*
 Also `logbit` which "is just like the Common Lisp function
-`(logbitppos i)`, except that we return 1 or 0 (instead of t or
+`(logbitppos i)`, except that we return 0b1 or 0b0 (instead of t or
 nil)."
 
 See: http://www.cs.utexas.edu/users/moore/acl2/manuals/current/manual/?topic=ACL2____LOGBIT
 */
-val logbit_int : (int, int) -> int effect {escape}
+val logbit_int : (int, int) -> bits(1) effect {escape}
 function logbit_int (pos, j) = {
 	assert(pos >= 0);
-	unsigned(get_slice_int(1, j, pos))
+	get_slice_int(1, j, pos)
 }
 
 val logbit_bits : forall 'n 'm, 0 <= 'm < 'n. (int('m), bits('n)) -> bits(1)

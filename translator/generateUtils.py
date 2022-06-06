@@ -49,12 +49,12 @@ def generate(includeHeader):
 		i_num = "i{:02d}".format(n)
 		code_ntoi.append(\
 f"""val {n_num}_to_{i_num} : forall 'n, 'n > 0. (bits('n)) -> bits({n})
-function {n_num}_to_{i_num} (x) = sail_mask({n}, x)"""
+function {n_num}_to_{i_num} (x) = the_sbits({n}, x)"""
 		)
 		namesGenerated.append((	f"{n_num}-to-{i_num}".upper(),
 								SailASTelems.SailHandwrittenFn(
 									f"{n_num}_to_{i_num}",
-									Sail_t_fn([Sail_t_bits(n)], Sail_t_bits(n)))))
+									Sail_t_fn([Sail_t_bits(n)], Sail_t_bits(n, signed=True)))))
 
 	'''
 	iXY.  Names are, for example, `i64`.  The implementation is a simple
@@ -66,12 +66,12 @@ function {n_num}_to_{i_num} (x) = sail_mask({n}, x)"""
 		i_num = "I{:02d}".format(n)
 		code_iXY.append(\
 f"""val {i_num} : forall 'n, 'n > 0. bits('n) -> bits({n})
-function {i_num} x = if length(x) > {n} then truncate(x, {n}) else sail_sign_extend(x, {n})
+function {i_num} x = the_sbits({n}, x)
 """)
 		namesGenerated.append((i_num.upper(),
 							   SailASTelems.SailHandwrittenFn(
 								   i_num.upper(),
-								   Sail_t_fn([Sail_t_bits(n)], Sail_t_bits(n), {'escape'}))))
+								   Sail_t_fn([Sail_t_bits(n)], Sail_t_bits(n, signed=True), {'escape'}))))
 
 	'''
 	Output to file

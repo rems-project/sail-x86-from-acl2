@@ -1401,15 +1401,22 @@ def coerceExpr(expr, typ):
 		args = [SailNumLit(typ.length), expr, SailNumLit(0)]
 		return SailApp(SailHandwrittenFn("get_slice_int", fntyp), args)
 	elif isinstance(etyp, Sail_t_bits) and isNumeric(typ):
-		# TODO: What about signed bitvectors?
-		castTyp = Sail_t_range(0, (2 ** etyp.length) - 1) if etyp.length is not None else Sail_t_nat()
+		if etyp.length is None:
+			castTyp = Sail_t_nat()
+		else:
+			if etyp.signed:
+				castTyp = Sail_t_range(-(2 ** (etyp.length - 1)), (2 ** (etyp.length - 1)) - 1)
+			else:
+				castTyp = Sail_t_range(0, (2 ** etyp.length) - 1)
+		fn = 'signed' if etyp.signed else 'unsigned'
 		innerTyp = typ if isSubType(castTyp, typ) else castTyp
-		innerExpr = SailApp(SailHandwrittenFn("unsigned", Sail_t_fn([etyp], innerTyp)), [expr])
+		innerExpr = SailApp(SailHandwrittenFn(fn, Sail_t_fn([etyp], innerTyp)), [expr])
 		return coerceExpr(innerExpr, typ)
 	elif isinstance(etyp, Sail_t_bits) and isinstance(typ, Sail_t_bits) and typ.length is not None:
+		fn = 'the_sbits' if etyp.signed and typ.signed else 'the_bits'
 		fntyp = Sail_t_fn([Sail_t_int(), etyp], typ)
 		args = [SailNumLit(typ.length), expr]
-		return SailApp(SailHandwrittenFn("sail_mask", fntyp), args)
+		return SailApp(SailHandwrittenFn(fn, fntyp), args)
 	elif isinstance(expr, SailTuple) and isinstance(typ, Sail_t_tuple):
 		elems = []
 		for i in range(len(expr.getItems())):
