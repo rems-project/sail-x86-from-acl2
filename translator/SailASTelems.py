@@ -287,6 +287,87 @@ class SailLet(SailASTelem):
 		return f"let {pp_var} = {pp_expr} in\n{pp_body}"
 
 
+class SailBlock(SailASTelem):
+	"""Block in Sail"""
+	def __init__(self, exprs):
+		"""
+		For: `let varName = expr in body`
+		Or:  `let (x, y) = expr in body`
+
+		Args:
+			- varName : SailBoundVar | SailTuple
+			- expr : [SailAstElem]
+			- body : [SailAstElem]
+		"""
+		super().__init__()
+
+		if any(not isinstance(e.getType(), Sail_t_unit) for e in exprs):
+			sys.exit("Error: Non-unit expression in block")
+
+		self.exprs = exprs
+
+	### Custom Methods ###
+	def getExprs(self):
+		return self.exprs
+
+	### Required methods ###
+	def getType(self):
+		return Sail_t_unit()
+
+	def getEffects(self, ctx):
+		return set.union(*[e.getEffects(ctx).copy() for e in self.exprs])
+
+	def getChildrenByPred(self, p):
+		exprSet = set.union(*[e.getChildrenByPred(p) for e in self.exprs])
+		selfSet = super().getChildrenByPred(p)
+
+		return set.union(exprSet, selfSet)
+
+	def pp(self):
+		exprs_pp = [e.pp() for e in self.exprs]
+		return '{ ' + ';\n'.join(exprs_pp) + '\n}'
+
+
+class SailAssign(SailASTelem):
+	"""Assignment expression in Sail"""
+	def __init__(self, lhs, rhs):
+		"""
+		For: `let varName = expr in body`
+		Or:  `let (x, y) = expr in body`
+
+		Args:
+			- lhs : SailASTelem
+			- rhs : SailAstElem
+		"""
+		super().__init__()
+
+		self.lhs = lhs
+		self.rhs = rhs
+
+	### Required methods ###
+	def getType(self):
+		return Sail_t_unit()
+
+	def getEffects(self, ctx):
+		lhsEffects = self.lhs.getEffects(ctx).copy()
+		rhsEffects = self.rhs.getEffects(ctx).copy()
+
+		totalEffects = lhsEffects.union(rhsEffects)
+
+		return totalEffects
+
+	def getChildrenByPred(self, p):
+		lhsSet = self.lhs.getChildrenByPred(p)
+		rhsSet = self.rhs.getChildrenByPred(p)
+
+		selfSet = super().getChildrenByPred(p)
+
+		return set.union(lhsSet, rhsSet, selfSet)
+
+	def pp(self):
+		return f"{self.lhs.pp()} = {self.rhs.pp()}"
+
+
 class SailPlaceholderNil(SailASTelem):
 	"""Represents a `nil` in the ACL2 code which hasn't yet been resolved in the Sail code"""
 	# Class variables
@@ -341,7 +422,7 @@ class SailPlaceholderNil(SailASTelem):
 class SailBoundVar(SailASTelem):
 	"""Represents a bound variable (e.g. from formal parameters of a function
 	of from b*/let bindings"""
-	def __init__(self, binding, typ=None):
+	def __init__(self, binding, typ=None, sanitise=True):
 		"""
 		Args:
 			- binding : str
@@ -350,6 +431,7 @@ class SailBoundVar(SailASTelem):
 		super().__init__()
 		self.binding = binding
 		self.setType(typ)
+		self.sanitise = sanitise
 
 	def getName(self):
 		return self.binding
@@ -364,7 +446,7 @@ class SailBoundVar(SailASTelem):
 
 		if self.binding.lower() == 'x86':
 			if typ is None or isinstance(typ, Sail_t_unknown):
-				self.typ = Sail_t_int()
+				self.typ = Sail_t_unit()
 			# else the type is being set explicitly, which we allow.
 
 	### Required methods ###
@@ -382,8 +464,10 @@ class SailBoundVar(SailASTelem):
 		# TODO: remove printing the type for as many cases as possible
 		if utils.sanitiseSymbol(self.binding) in ['les_lds_distinguishing_byte', 'max_offset']:
 			return f"{utils.sanitiseSymbol(self.binding, includeFnNames=True)} : {self.getType().pp()}"
-		else:
+		elif self.sanitise:
 			return utils.sanitiseSymbol(self.binding, includeFnNames=True)
+		else:
+			return self.binding
 
 
 class SailApp(SailASTelem):
@@ -584,6 +668,22 @@ class SailStringLit(SailASTelem):
 
 	def pp(self):
 		return f'"{self.s}"'
+
+
+class SailUnitLit(SailASTelem):
+	"""Unit"""
+	def __init__(self):
+		super().__init__()
+
+	### Required methods ###
+	def getType(self):
+		return Sail_t_unit()
+
+	def getEffects(self, ctx):
+		return set([])
+
+	def pp(self):
+		return "()"
 
 
 class SailUnderScoreLit(SailASTelem):
@@ -1094,7 +1194,9 @@ class SailVectorProject(SailASTelem):
 		return set.union(vectorSet, indexSet, selfSet)
 
 	def pp(self):
-		return f"({self.vector.pp()})[{self.index.pp()}]"
+		# Add paranthesis, unless the vector is just a variable
+		vector_pp = '(' + self.vector.pp() + ')' if not isinstance(self.vector, SailBoundVar) else self.vector.pp()
+		return f"{vector_pp}[{self.index.pp()}]"
 
 	### Nil resolution ###
 	def setCallBacks(self):
@@ -1413,6 +1515,7 @@ def coerceExpr(expr, typ):
 		innerExpr = SailApp(SailHandwrittenFn(fn, Sail_t_fn([etyp], innerTyp)), [expr])
 		return coerceExpr(innerExpr, typ)
 	elif isinstance(etyp, Sail_t_bits) and isinstance(typ, Sail_t_bits) and typ.length is not None:
+		# TODO: What about coercing from signed to unsigned?
 		fn = 'the_sbits' if etyp.signed and typ.signed else 'the_bits'
 		fntyp = Sail_t_fn([Sail_t_int(), etyp], typ)
 		args = [SailNumLit(typ.length), expr]

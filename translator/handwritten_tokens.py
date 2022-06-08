@@ -11,17 +11,17 @@ TODO: this could be done automatically.
 
 feature_flag_fn = SailHandwrittenFn(
 	'feature_flag_fn',
-	Sail_t_fn([Sail_t_string(), Sail_t_int()], Sail_t_int())
+	Sail_t_fn([Sail_t_string()], Sail_t_int())
 )
 
 feature_flags_fn = SailHandwrittenFn(
 	'feature_flags_fn',
-	Sail_t_fn([Sail_t_list(Sail_t_string()), Sail_t_int()], Sail_t_int())
+	Sail_t_fn([Sail_t_list(Sail_t_string())], Sail_t_int())
 )
 
 undef_read_logic_fn = SailHandwrittenFn(
 	'undef_read_logic',
-	Sail_t_fn([Sail_t_int()], Sail_t_tuple([Sail_t_nat(), Sail_t_int()]), {'undef'})
+	Sail_t_fn([], Sail_t_nat(), {'undef'})
 )
 
 boolToBit = SailHandwrittenFn(
@@ -133,11 +133,11 @@ write_rip_fn = SailHandwrittenFn(
 
 rgfi_fn = SailHandwrittenFn(
 						'rgfi',
-						Sail_t_fn([Sail_t_int(), Sail_t_int()], Sail_t_int(), {'escape', 'rreg'}))
+						Sail_t_fn([Sail_t_int()], Sail_t_bits(64), {'escape', 'rreg'}))
 
 write_rgfi_fn = SailHandwrittenFn(
 						'write_rgfi',
-						Sail_t_fn([Sail_t_int(), Sail_t_int(), Sail_t_int()], Sail_t_int(), {'escape', 'wreg'}))
+						Sail_t_fn([Sail_t_int(), Sail_t_bits(64)], Sail_t_unit(), {'escape', 'wreg'}))
 
 msri_fn = SailHandwrittenFn(
 	'msri',
@@ -236,27 +236,27 @@ write_ssr_hidden_attri_fn = SailHandwrittenFn(
 
 app_view_fn = SailHandwrittenFn(
 	'app_view',
-	Sail_t_fn([Sail_t_unit()], Sail_t_bool())
+	Sail_t_fn([], Sail_t_bool())
 )
 
 ms_fn = SailHandwrittenFn(
 	'ms',
-	Sail_t_fn([Sail_t_int()], Sail_t_bool())
+	Sail_t_fn([], Sail_t_bool())
 )
 
 fault_fn = SailHandwrittenFn(
 	'fault',
-	Sail_t_fn([Sail_t_int()], Sail_t_bool())
+	Sail_t_fn([], Sail_t_bool())
 )
 
 memi_fn = SailHandwrittenFn(
 	'memi',
-	Sail_t_fn([Sail_t_bits(64), Sail_t_int()], Sail_t_bits(8), {'rmem', 'rreg'})
+	Sail_t_fn([Sail_t_bits(64)], Sail_t_bits(8), {'rmem', 'rreg'})
 )
 
 bang_memi_fn = SailHandwrittenFn(
 	'bang_memi',
-	Sail_t_fn([Sail_t_bits(64), Sail_t_bits(8), Sail_t_int()], Sail_t_int(), {'eamem', 'wmv', 'rreg'})
+	Sail_t_fn([Sail_t_bits(64), Sail_t_bits(8)], Sail_t_unit(), {'eamem', 'wmv', 'rreg'})
 )
 
 b_xor_fn = SailHandwrittenFn(

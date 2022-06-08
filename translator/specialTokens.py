@@ -478,6 +478,9 @@ def _parseFormals(fnFormals, mode, env):
 	if mode == 'normal':
 		name, types = _parseNormalFormal(head, env)
 		tailNames, tailTypes, tailKeyDefaults, env = _parseFormals(tail, 'normal', env)
+		if name.lower() == 'x86':
+			# Remove x86 parameters;  we use global state in Sail
+			return tailNames, tailTypes, tailKeyDefaults, env
 		if name in tailNames: sys.exit(f"Error: name '{name}' already parsed, mode='normal'")
 		if types != None:
 			tailTypes[name] = types
@@ -817,6 +820,10 @@ def tr_if(ACL2ast, env):
 		(ifTermSail, env, _) = transform.transformACL2asttoSail(ifTerm, env)
 		(thenTermSail, env, _) = transform.transformACL2asttoSail(thenTerm, env)
 		(elseTermSail, env, _) = transform.transformACL2asttoSail(elseTerm, env)
+		if isinstance(thenTermSail[0].getType(), Sail_t_unit) and not isinstance(thenTermSail[0], SailUnitLit):
+			thenTermSail = [SailBlock(thenTermSail)]
+		if isinstance(elseTermSail[0].getType(), Sail_t_unit) and not isinstance(elseTermSail[0], SailUnitLit):
+			elseTermSail = [SailBlock(elseTermSail)]
 		toReturn = [SailIf(ifTermSail, thenTermSail, elseTermSail)]
 
 	# Construct the Sail ast `if` element and return
@@ -1286,19 +1293,35 @@ def _bstar_helper(bindersRemaining, results, env):
 		(exprSail, env, _) = transform.transformACL2asttoSail(binding[1], env)
 		env.clearCurrentType()
 		if len(exprSail) != 1: sys.exit(f"Error: body length not 1 in `let*` in `b*` - {exprSail}")
-		exprType = exprSail[0].getType() if forcedType is None else forcedType
+		if forcedType is None:
+			exprType = exprSail[0].getType()
+		else:
+			exprType = forcedType
+			coercedSail = coerceExpr(exprSail[0], forcedType)
+			if coercedSail is None:
+				sys.exit(f"Error: Could not coerce {exprSail[0].pp()} to forced type {forcedType.pp()}")
+			else:
+				exprSail = [coercedSail]
 		bv = env.pushToBindings([b], [exprType])
 		boundNames.append(b)
 
 		# Recurse on rest of list
 		(recursedSail, env) = _bstar_helper(bindersRemaining[1:], results, env)
+		restType = recursedSail[0].getType() if len(recursedSail) > 0 and isinstance(recursedSail[0], SailASTelem) else Sail_t_unknown()
 
 		# Create sail term
-		toReturn = SailLet(
-						bv[0],
-						exprSail,
-						recursedSail
-					)
+		if b.lower() == 'x86' and isinstance(exprType, Sail_t_unit) and isinstance(restType, Sail_t_unit):
+			# Remove superfluous x86 bindings
+			if len(recursedSail) == 1 and isinstance(recursedSail[0], SailUnitLit):
+				# ... and superfluous unit literals
+				toReturn = exprSail[0]
+			else:
+				if isinstance(recursedSail[0], SailBlock):
+					# Merge blocks
+					recursedSail = recursedSail[0].getExprs() + recursedSail[1:]
+				toReturn = SailBlock(exprSail + recursedSail)
+		else:
+			toReturn = SailLet(bv[0], exprSail, recursedSail)
 
 	# b must be a list here.
 	elif isinstance(b, list):
@@ -1319,6 +1342,8 @@ def _bstar_helper(bindersRemaining, results, env):
 			for i in range(len(b[1:])):
 				ident = b[i + 1]
 				if type(ident) == str:
+					if ident.lower() == 'x86':
+						continue
 					name = sanitiseBstarName(ident)
 					typ = [bodyTypes[i]] if i < len(bodyTypes) else None
 					boundVars.extend(env.pushToBindings([name], typ))
@@ -1336,12 +1361,11 @@ def _bstar_helper(bindersRemaining, results, env):
 					sys.exit(f"Unknown type of mv binder - {ident}")
 
 			# Get type information from the function call
-			bodyType = bodySail[0].getType().getSubTypes() if isinstance(bodySail[0].getType(), Sail_t_tuple) else []
+			bodyType = bodySail[0].getType().getSubTypes() if isinstance(bodySail[0].getType(), Sail_t_tuple) else [bodySail[0].getType()]
 			for (i, t) in enumerate(bodyType):
-				try:
-					boundVars[i].getType()
-				except:
-					# TODO: make exception more specific
+				if i >= len(boundVars):
+					sys.exit(f"Error: Too many tuple elements in type of {bodySail[0].pp()}")
+				if isUnknownType(boundVars[i].getType()):
 					boundVars[i].setType(t)
 
 			# Sometimes there is structure within the mv (e.g. a `the`
@@ -1389,9 +1413,11 @@ def _bstar_helper(bindersRemaining, results, env):
 				# Recurse on rest of the list
 				(recursedSail, env) = _bstar_helper(bindersRemaining[1:], results, env)
 
+			sailPat = SailTuple(subItems=boundVars) if len(boundVars) > 1 else boundVars[0]
+
 			# Create Sail term
 			toReturn = SailLet(
-				varName=SailTuple(subItems=boundVars),
+				varName=sailPat,
 				expr=bodySail,
 				body=recursedSail,
 			)
@@ -1520,6 +1546,9 @@ def tr_mv(ACL2ast, env):
 	args = ACL2ast[1:]
 	sailArgs = []
 	for a in args:
+		# Hack: skip x86 tuple elements
+		if isinstance(a, str) and a.lower() == 'x86':
+			continue
 		(sa, env, _) = transform.transformACL2asttoSail(a, env)
 		if len(sa) > 1: sys.exit(f"Error: length of argument to mv not 1 - {sa}")
 		sailArgs.extend(sa)
@@ -1536,7 +1565,8 @@ def tr_mv(ACL2ast, env):
 	if isinstance(sailArgs[0], SailStringLit):
 		sailArgs = [someHelper(sailArgs[0])] + sailArgs[1:]
 
-	return [SailTuple(sailArgs)], env, len(ACL2ast)
+	retSail = [SailTuple(sailArgs)] if len(sailArgs) > 1 else sailArgs
+	return retSail, env, len(ACL2ast)
 
 def tr_case(ACL2ast, env):
 	"""
@@ -1629,6 +1659,79 @@ def tr_def_inst(ACL2ast, env):
 
 	return toReturn, env, len(ACL2ast)
 
+def get_register_info(name):
+	register_types = {
+		# Name		        (Width, number of elements)
+		'rip':		        (64, None),
+		'rflags':	        (32, None),
+		'rgfi':		        (64, 16),
+		'msr':		        (64, 7),
+		'seg-visible':	        (16, 6),
+		'seg-hidden-attr':	(16, 6),
+		'seg-hidden-base':	(64, 6),
+		'seg-hidden-limit':	(32, 6),
+		'ssr-visible':	        (16, 2),
+		'ssr-hidden-attr':	(16, 2),
+		'ssr-hidden-base':	(64, 2),
+		'ssr-hidden-limit':	(32, 2),
+		'zmm':			(512, 32),
+		'ctr':			(64, 17),
+		'str':			(80, 2),
+	}
+
+	if name[0] == '!' or name[0] == ':':
+		name = name[1:]
+
+	if name.lower() not in register_types and name.lower()[-1] == 'i':
+		# An 'i' suffix seems to be used for indexed accesses to
+		# registers with multiple elements
+		name = name[:-1]
+
+	try:
+		(width, nElems) = register_types[name.lower()]
+	except:
+		sys.exit(f"Error: Register {name} unknown")
+
+	if nElems is not None:
+		name = name + 's'
+
+	sanitisedName = utils.sanitiseSymbol(name, avoidShadowed=False)
+
+	return (sanitisedName, width, nElems)
+
+def tr_register_read(ACL2ast, env):
+	(name, width, nElems) = get_register_info(ACL2ast[0])
+	elemType = Sail_t_bits(width)
+	regType = elemType if nElems is None else Sail_t_vector(nElems, elemType)
+	regSail = SailBoundVar(name, regType, sanitise=False)
+	if nElems is None:
+		readSail = regSail
+	if nElems is not None:
+		index = ACL2ast[1]
+		(indexSail, env, _) = transform.transformACL2asttoSail(index, env)
+		readSail = SailVectorProject(regSail, indexSail[0])
+	return [readSail], env, len(ACL2ast)
+
+def tr_register_write(ACL2ast, env):
+	name = ACL2ast[0]
+	(name, width, nElems) = get_register_info(name)
+	elemType = Sail_t_bits(width)
+	regType = elemType if nElems is None else Sail_t_vector(nElems, elemType)
+	regSail = SailBoundVar(name, regType, sanitise=False)
+	if nElems is None:
+		lhsSail = regSail
+	else:
+		index = ACL2ast[1]
+		(indexSail, env, _) = transform.transformACL2asttoSail(index, env)
+		lhsSail = SailVectorProject(regSail, indexSail[0])
+	rhs = ACL2ast[1] if nElems is None else ACL2ast[2]
+	(valueSail, env, _) = transform.transformACL2asttoSail(rhs, env)
+	rhsSail = coerceExpr(valueSail[0], elemType)
+	if rhsSail is None:
+		sys.exit(f"Error: Could not coerce {valueSail[0].pp()} to {elemType.pp()} in register write")
+	writeSail = SailAssign(lhsSail, rhsSail)
+	return [writeSail], env, len(ACL2ast)
+
 def tr_xr(ACL2ast, env):
 	"""
 	XR is the register accessor function (rw is the updater).
@@ -1638,40 +1741,10 @@ def tr_xr(ACL2ast, env):
 		- we ignore the x86 object because it is represented by global state
 		  in Sail.
 
-	The lists `implementedWithoutIndex` and `implementedWithIndex` specify
-	which values of `fld` use the `index` parameter and which do not.
-
 	See: https://www.cs.utexas.edu/users/moore/acl2/manuals/current/manual/index-seo.php/X86ISA____XR
 	"""
-	fld = ACL2ast[1]
-	index = ACL2ast[2]
-	x86_dummy = SailNumLit(0)
-
-	implementedWithoutIndex = [':rip', 'rflags']
-	implementedWithIndex = [':seg-visible', ':seg-hidden-attr', ':seg-hidden-base', ':seg-hidden-limit',
-							':msr', 'ctr', 'str',
-							'ssr-hidden-base', 'ssr-hidden-limit']
-
-	if fld.lower() in implementedWithoutIndex:
-		returnAST = SailApp(
-			fn=SailHandwrittenFn(
-				name=f'{fld[1:].lower()}i',
-				typ=Sail_t_fn([Sail_t_unit(), Sail_t_int()], Sail_t_int(), {'rreg'})
-			),
-			actuals=[x86_dummy])
-	if fld.lower() in implementedWithIndex:
-		(indexSail, env, _) = transform.transformACL2asttoSail(index, env)
-		returnAST = SailApp(
-			fn=SailHandwrittenFn(
-				name=f'{fld[1:].lower()}i',
-				typ=Sail_t_fn([Sail_t_int(), Sail_t_int()], Sail_t_int(), {'escape', 'rreg'})
-			),
-			actuals=[indexSail[0], x86_dummy]
-		)
-	else:
-		sys.exit(f"Error: {fld} is not listed as implemented in `tr_xr`")
-
-	return [returnAST], env, len(ACL2ast)
+	# We just pass this on to tr_register_read (without the 'xr' token)
+	return tr_register_read(ACL2ast[1:], env)
 
 def _cond_helper(sailClauses):
 	"""

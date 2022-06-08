@@ -36,19 +36,13 @@ The current type inference algorithm occasionally fails on recursive
 functions.  Here we manually specify the return types of such functions.
 '''
 forced_return_types = {
-	'rb-1' : Sail_t_tuple([	Sail_t_option(Sail_t_string()),
-							Sail_t_int(),
-							Sail_t_int()
-							]),
+	'rb-1' : Sail_t_tuple([Sail_t_option(Sail_t_string()), Sail_t_int()]),
 
-	'wb-1' : Sail_t_tuple([	Sail_t_option(Sail_t_string()),
-							Sail_t_int()
-							]),
+	'wb-1': Sail_t_option(Sail_t_string()),
 
 	'get-prefixes' : Sail_t_tuple([	Sail_t_option(Sail_t_string()), # Error list
 									Sail_t_int(),					# Number of prefixes
-									Sail_t_int(),					# Rex byte
-									Sail_t_int()					# x86 dummy
+									Sail_t_int()					# Rex byte
 									])
 }
 
@@ -60,6 +54,7 @@ forced_argument_types = {
 forced_variable_types = {
         'check-alignment?': Sail_t_bool(),
         'inst-ac?': Sail_t_bool(),
+        'undefined-flags': Sail_t_bits(32),
 }
 
 '''

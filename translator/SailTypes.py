@@ -546,7 +546,8 @@ class Sail_t_fn(SailType):
 		return any((t == None or t.containsUnknown()) for t in self.lhs) or (self.rhs == None or self.rhs.containsUnknown())
 
 	def pp(self):
-		return f"({', '.join([item.pp() for item in self.lhs])}) -> {self.rhs.pp()}"
+		lhs = Sail_t_tuple(self.lhs) if len(self.lhs) > 0 else Sail_t_unit()
+		return f"{lhs.pp()} -> {self.rhs.pp()}"
 
 class Sail_t_member(SailType):
 	"""

@@ -33,7 +33,7 @@ Two important manual interventions are as follows:
  1. In implemented_opcode()  we can choose which opcodes to include in the
 	translation.
  2. x86_token() translates the x86 variable which is threaded through most of
- 	the model as a dummy integer as state in Sail is global.
+	the model as a dummy unit literal as state in Sail is global.
 """
 
 
@@ -41,13 +41,12 @@ def x86_token(ACL2ast, env):
 	"""
 	In ACL2 a state variable is threaded through many function calls.  It
 	follows the informal discipline of naming this variable `x86`.  In Sail
-	the state is global.  We translate `x86` simply as `0`.  Removing it
-	wholesale would be better but harder.
-
-	TODO: remove the `x86` state variable from the translation altogether.
+	the state is global.  We translate `x86` simply as `()` in the first
+	instance, which will later get simplified away in _bstar_helper in most
+	cases.
 	"""
 	if isinstance(ACL2ast, str) and ACL2ast.lower() == 'x86':
-		return True, [SailNumLit(0)], env
+		return True, [SailUnitLit()], env
 
 
 def and_macro(ACL2ast, env):
@@ -261,7 +260,7 @@ def x86_illegal_instruction(ACL2ast, env):
 
 		for _ in range(len(bottom)):
 			b = bottom.pop()
-			b.elseTerm[0].getFn().setType(Sail_t_fn([], Sail_t_int(), {'escape'}))
+			b.elseTerm[0].getFn().setType(Sail_t_fn([], Sail_t_unit(), {'escape'}))
 
 		return True, sailAST, env
 
@@ -276,8 +275,8 @@ def x86_step_unimplemented(ACL2ast, env):
 		# Translate as normal
 		sailAST, env, _ = specialTokens.tr_ms_fresh(ACL2ast, env)
 
-		# Set type to int
-		sailAST[0].getFn().setType(Sail_t_fn([], Sail_t_int(), {'escape'}))
+		# Set type to unit
+		sailAST[0].getFn().setType(Sail_t_fn([], Sail_t_unit(), {'escape'}))
 
 		return True, sailAST, env
 
@@ -306,7 +305,7 @@ def x86_hlt_return_type(ACL2ast, env):
 		sailAST, env, _ = specialTokens.tr_ms_fresh(ACL2ast, env)
 
 		# Set type
-		sailAST[0].getFn().setType(Sail_t_fn([], Sail_t_int(), {'escape'}))
+		sailAST[0].getFn().setType(Sail_t_fn([], Sail_t_unit(), {'escape'}))
 
 		return True, sailAST, env
 

@@ -130,6 +130,26 @@ def specialTokens():
 	for name in manualDefinitions:
 		name_to_fn_map[name.upper()] = manualDefinitions[name]
 
+	register_accessors = [
+		'rip',
+		'rflags',
+		'msri',
+		'seg-visiblei',
+		'seg-hidden-attri',
+		'seg-hidden-basei',
+		'seg-hidden-limiti',
+		'ssr-visiblei',
+		'ssr-hidden-attri',
+		'ssr-hidden-basei',
+		'ssr-hidden-limiti',
+		'zmmi',
+		'ctri',
+		'stri',
+	]
+	for r in register_accessors:
+		name_to_fn_map[r.upper()] = tr_register_read
+		name_to_fn_map['!' + r.upper()] = tr_register_write
+
 	return name_to_fn_map
 
 
@@ -153,31 +173,8 @@ def handwritten():
 		'lognot'				: lognot_fn,
 		'logcount'				: logcount_fn,
 		'logext'				: binary_logext_fn,
-		'rflags'				: r_rflags_fn,
-		'!rflags'				: write_rflags_fn,
-		'rip'					: r_rip_fn,
-		'!rip'					: write_rip_fn,
 		'rgfi'					: rgfi_fn,
 		'!rgfi'					: write_rgfi_fn,
-		'msri'					: msri_fn,
-		'seg-visiblei'			: seg_visiblei_fn,
-		'!seg-visiblei'			: write_seg_visible_fn,
-		'!seg-hidden-attri'		: write_seg_hidden_attri_fn,
-		'!seg-hidden-basei'		: write_seg_hidden_basei_fn,
-		'!seg-hidden-limiti'	: write_seg_hidden_limiti_fn,
-		'zmmi'					: zmmi_fn,
-		'!zmmi'					: write_zmmi_fn,
-		'ctri'					: ctri_fn,
-		'stri'					: stri_fn,
-		'!stri'					: write_stri_fn,
-		'ssr-visiblei'			: ssr_visiblei_fn,
-		'ssr-hidden-basei'		: ssr_hidden_basei_fn,
-		'ssr-hidden-limiti'		: ssr_hidden_limiti_fn,
-		'ssr-hidden-attri'		: ssr_hidden_attri_fn,
-		'!ssr-visiblei'			: write_ssr_visiblei_fn,
-		'!ssr-hidden-basei'		: write_ssr_hidden_basei_fn,
-		'!ssr-hidden-limiti'	: write_ssr_hidden_limiti_fn,
-		'!ssr-hidden-attri'		: write_ssr_hidden_attri_fn,
 		'app-view'				: app_view_fn,
 		'memi'					: memi_fn,
 		'ash'					: ash_fn,
@@ -258,8 +255,8 @@ def unimplemented():
 	"""
 	unimplementedNames = [
 		#	Name					numOfArgs	Type
-		('vex-decode-and-execute', 7, Sail_t_fn([Sail_t_int()]*7, Sail_t_int(), {'escape'})),
-		('evex-decode-and-execute', 7, Sail_t_fn([Sail_t_int()] * 7, Sail_t_int(), {'escape'})),
+		('vex-decode-and-execute', 6, Sail_t_fn([Sail_t_int()] * 6, Sail_t_unit(), {'escape'})),
+		('evex-decode-and-execute', 6, Sail_t_fn([Sail_t_int()] * 6, Sail_t_unit(), {'escape'})),
 	]
 
 	# And these have not yet been implemented

@@ -25,7 +25,7 @@ def convertLiteral(s):
 	except TypeError:
 		return None
 
-def sanitiseSymbol(symbol, lower=True, includeFnNames=False):
+def sanitiseSymbol(symbol, lower=True, includeFnNames=False, avoidShadowed=True):
 	"""
 	Lisp names are unusually permissive and can contain many characters that
 	Sail names cannot.  Similarly, Lisp names are case-insensitive.  This
@@ -71,7 +71,7 @@ def sanitiseSymbol(symbol, lower=True, includeFnNames=False):
 		shadowedNames = regNames + functionNames
 	else:
 		shadowedNames = regNames
-	if symbol.lower() in shadowedNames:
+	if symbol.lower() in shadowedNames and avoidShadowed:
 		symbol = symbol + '_var'
 
 	# General rules
