@@ -9,25 +9,25 @@ $include "application_level_memory.sail"
  cleared otherwise. This flag indicates an overflow condition for 
  unsigned-integer arithmetic. It is also used in multiple-precision 
  arithmetic.</p>*/
-val general_cf_spec_fn : (int, int) -> int effect {escape}
+val general_cf_spec_fn : (nat, nat) -> bits(1) effect {escape}
 function general_cf_spec_fn (result_nbits, raw_result) =
 bool_to_bit(not_bool(unsigned_byte_p(result_nbits, raw_result)))
 
-val cf_spec8 : (int) -> int effect {escape}
+val cf_spec8 : (bits(9)) -> bits(1) effect {escape}
 function cf_spec8 (raw_result) =
-bool_to_bit(not_bool(unsigned_byte_p(8, raw_result)))
+bool_to_bit(not_bool(unsigned_byte_p(8, unsigned(raw_result))))
 
-val cf_spec16 : (int) -> int effect {escape}
+val cf_spec16 : (bits(17)) -> bits(1) effect {escape}
 function cf_spec16 (raw_result) =
-bool_to_bit(not_bool(unsigned_byte_p(16, raw_result)))
+bool_to_bit(not_bool(unsigned_byte_p(16, unsigned(raw_result))))
 
-val cf_spec32 : (int) -> int effect {escape}
+val cf_spec32 : (bits(33)) -> bits(1) effect {escape}
 function cf_spec32 (raw_result) =
-bool_to_bit(not_bool(unsigned_byte_p(32, raw_result)))
+bool_to_bit(not_bool(unsigned_byte_p(32, unsigned(raw_result))))
 
-val cf_spec64 : (int) -> int effect {escape}
+val cf_spec64 : (bits(65)) -> bits(1) effect {escape}
 function cf_spec64 (raw_result) =
-bool_to_bit(not_bool(unsigned_byte_p(64, raw_result)))
+bool_to_bit(not_bool(unsigned_byte_p(64, unsigned(raw_result))))
 
 /*<p>General @ ( ' OF ' ) Specification ( Source: Intel Manuals, 
  Vol. 1, Section 3.4.3.1 ) :</p> 
@@ -37,83 +37,83 @@ bool_to_bit(not_bool(unsigned_byte_p(64, raw_result)))
  sign-bit ) to fit in the destination operand; cleared otherwise. This 
  flag indicates an overflow condition for signed-integer ( two s 
  complement ) arithmetic.</p>*/
-val general_of_spec_fn : (int, int) -> int effect {escape}
+val general_of_spec_fn : (nat, int) -> bits(1) effect {escape}
 function general_of_spec_fn (result_nbits, signed_raw_result) =
 bool_to_bit(not_bool(signed_byte_p(result_nbits, signed_raw_result)))
 
-val of_spec8 : (int) -> int effect {escape}
+val of_spec8 : (sbits(9)) -> bits(1) effect {escape}
 function of_spec8 (signed_raw_result) =
-bool_to_bit(not_bool(signed_byte_p(8, signed_raw_result)))
+bool_to_bit(not_bool(signed_byte_p(8, signed(signed_raw_result))))
 
-val of_spec16 : (int) -> int effect {escape}
+val of_spec16 : (sbits(17)) -> bits(1) effect {escape}
 function of_spec16 (signed_raw_result) =
-bool_to_bit(not_bool(signed_byte_p(16, signed_raw_result)))
+bool_to_bit(not_bool(signed_byte_p(16, signed(signed_raw_result))))
 
-val of_spec32 : (int) -> int effect {escape}
+val of_spec32 : (sbits(33)) -> bits(1) effect {escape}
 function of_spec32 (signed_raw_result) =
-bool_to_bit(not_bool(signed_byte_p(32, signed_raw_result)))
+bool_to_bit(not_bool(signed_byte_p(32, signed(signed_raw_result))))
 
-val of_spec64 : (int) -> int effect {escape}
+val of_spec64 : (sbits(65)) -> bits(1) effect {escape}
 function of_spec64 (signed_raw_result) =
-bool_to_bit(not_bool(signed_byte_p(64, signed_raw_result)))
+bool_to_bit(not_bool(signed_byte_p(64, signed(signed_raw_result))))
 
 /*<p>General @ ( ' ZF ' ) Specification ( Source: Intel Manuals, 
  Vol. 1, Section 3.4.3.1 ) :</p> 
  
  <p><b>Zero flag</b> Set if the result is zero; cleared 
  otherwise.</p>*/
-val zf_spec : (int) -> int
+val zf_spec : (nat) -> {|0, 1|}
 function zf_spec (result) =
-if (result) == (0)
+if (get_slice_int(8, result, 0)) == (get_slice_int(8, 0, 0))
 then 1
 else 0
 
-val bitcount8 : (int) -> int
+val bitcount8 : (bits(8)) -> int effect {escape}
 function bitcount8 (x) =
 if (x) == (0)
 then 0
-else (loghead(1, x)) + (bitcount8(logtail(1, x)))
+else (unsigned(the_bits(1, loghead(1, unsigned(x))))) + (the_range(0, 8, bitcount8(the_bits(8, logtail(1, unsigned(x))))))
 
-val pf_spec8 : (int) -> int effect {escape}
+val pf_spec8 : (bits(8)) -> bits(1) effect {escape}
 function pf_spec8 (result) =
-bool_to_bit(not_bool(logbitp(0, logcount(result))))
+bool_to_bit(not_bool(logbitp(0, logcount(unsigned(result)))))
 
-val pf_spec16 : (int) -> int effect {escape}
+val pf_spec16 : (bits(16)) -> bits(1) effect {escape}
 function pf_spec16 (result) =
-bool_to_bit(not_bool(logbitp(0, logcount(loghead(8, result)))))
+bool_to_bit(not_bool(logbitp(0, logcount(loghead(8, unsigned(result))))))
 
-val pf_spec32 : (int) -> int effect {escape}
+val pf_spec32 : (bits(32)) -> bits(1) effect {escape}
 function pf_spec32 (result) =
-bool_to_bit(not_bool(logbitp(0, logcount(loghead(8, result)))))
+bool_to_bit(not_bool(logbitp(0, logcount(loghead(8, unsigned(result))))))
 
-val pf_spec64 : (int) -> int effect {escape}
+val pf_spec64 : (bits(64)) -> bits(1) effect {escape}
 function pf_spec64 (result) =
-bool_to_bit(not_bool(logbitp(0, logcount(loghead(8, result)))))
+bool_to_bit(not_bool(logbitp(0, logcount(loghead(8, unsigned(result))))))
 
 /*<p>General @ ( ' PF ' ) Specification ( Source: Intel Manuals, 
  Vol. 1, Section 3.4.3.1 ) :</p> 
  
  <p><b>Parity flag</b> Set if the least-significant byte of the 
  result contains an even number of 1 bits; cleared otherwise.</p>*/
-val general_pf_spec_fn : (int, int) -> int effect {escape}
+val general_pf_spec_fn : ({|8, 16, 32, 64|}, nat) -> bits(1) effect {escape}
 function general_pf_spec_fn (result_nbits, result) =
 bool_to_bit(not_bool(logbitp(0, logcount(loghead(8, result)))))
 
-val sf_spec8 : (int) -> int
+val sf_spec8 : (bits(8)) -> bits(1)
 function sf_spec8 (result) =
-unsigned(get_slice_int(1, result, 7))
+slice(result, 7, 1)
 
-val sf_spec16 : (int) -> int
+val sf_spec16 : (bits(16)) -> bits(1)
 function sf_spec16 (result) =
-unsigned(get_slice_int(1, result, 15))
+slice(result, 15, 1)
 
-val sf_spec32 : (int) -> int
+val sf_spec32 : (bits(32)) -> bits(1)
 function sf_spec32 (result) =
-unsigned(get_slice_int(1, result, 31))
+slice(result, 31, 1)
 
-val sf_spec64 : (int) -> int
+val sf_spec64 : (bits(64)) -> bits(1)
 function sf_spec64 (result) =
-unsigned(get_slice_int(1, result, 63))
+slice(result, 63, 1)
 
 /*<p>General @ ( ' SF ' ) Specification ( Source: Intel Manuals, 
  Vol. 1, Section 3.4.3.1 ) :</p> 
@@ -121,135 +121,135 @@ unsigned(get_slice_int(1, result, 63))
  <p><b>Sign flag</b> Set equal to the most-significant bit of the 
  result, which is the sign bit of a signed integer. ( 0 indicates a 
  positive value and 1 indicates a negative value. ) </p>*/
-val general_sf_spec_fn : (int, int) -> int
+val general_sf_spec_fn : ({|8, 16, 32, 64|}, nat) -> bits(1)
 function general_sf_spec_fn (result_nbits, result) =
-unsigned(get_slice_int(1, result, (result_nbits) - (1)))
+get_slice_int(1, result, (result_nbits) - (1))
 
-val add_af_spec8 : (int, int) -> int
+val add_af_spec8 : (bits(8), bits(8)) -> bits(1) effect {escape}
 function add_af_spec8 (dst, src) =
-let dst_3_0 = (unsigned(get_slice_int(4, dst, 0))) : int in
-let src_3_0 = (unsigned(get_slice_int(4, src, 0))) : int in
-let add = ((dst_3_0) + (src_3_0)) : int in
-let af = (bool_to_bit((15) < (add))) : int in
+let dst_3_0 = (slice(dst, 0, 4)) : bits(4) in
+let src_3_0 = (slice(src, 0, 4)) : bits(4) in
+let add = (the_bits(5, (unsigned(dst_3_0)) + (unsigned(src_3_0)))) : bits(5) in
+let af = (bool_to_bit((15) < (unsigned(add)))) : bits(1) in
 af
 
-val add_af_spec16 : (int, int) -> int
+val add_af_spec16 : (bits(16), bits(16)) -> bits(1) effect {escape}
 function add_af_spec16 (dst, src) =
-let dst_3_0 = (unsigned(get_slice_int(4, dst, 0))) : int in
-let src_3_0 = (unsigned(get_slice_int(4, src, 0))) : int in
-let add = ((dst_3_0) + (src_3_0)) : int in
-let af = (bool_to_bit((15) < (add))) : int in
+let dst_3_0 = (slice(dst, 0, 4)) : bits(4) in
+let src_3_0 = (slice(src, 0, 4)) : bits(4) in
+let add = (the_bits(5, (unsigned(dst_3_0)) + (unsigned(src_3_0)))) : bits(5) in
+let af = (bool_to_bit((15) < (unsigned(add)))) : bits(1) in
 af
 
-val add_af_spec32 : (int, int) -> int
+val add_af_spec32 : (bits(32), bits(32)) -> bits(1) effect {escape}
 function add_af_spec32 (dst, src) =
-let dst_3_0 = (unsigned(get_slice_int(4, dst, 0))) : int in
-let src_3_0 = (unsigned(get_slice_int(4, src, 0))) : int in
-let add = ((dst_3_0) + (src_3_0)) : int in
-let af = (bool_to_bit((15) < (add))) : int in
+let dst_3_0 = (slice(dst, 0, 4)) : bits(4) in
+let src_3_0 = (slice(src, 0, 4)) : bits(4) in
+let add = (the_bits(5, (unsigned(dst_3_0)) + (unsigned(src_3_0)))) : bits(5) in
+let af = (bool_to_bit((15) < (unsigned(add)))) : bits(1) in
 af
 
-val add_af_spec64 : (int, int) -> int
+val add_af_spec64 : (bits(64), bits(64)) -> bits(1) effect {escape}
 function add_af_spec64 (dst, src) =
-let dst_3_0 = (unsigned(get_slice_int(4, dst, 0))) : int in
-let src_3_0 = (unsigned(get_slice_int(4, src, 0))) : int in
-let add = ((dst_3_0) + (src_3_0)) : int in
-let af = (bool_to_bit((15) < (add))) : int in
+let dst_3_0 = (slice(dst, 0, 4)) : bits(4) in
+let src_3_0 = (slice(src, 0, 4)) : bits(4) in
+let add = (the_bits(5, (unsigned(dst_3_0)) + (unsigned(src_3_0)))) : bits(5) in
+let af = (bool_to_bit((15) < (unsigned(add)))) : bits(1) in
 af
 
-val sub_af_spec8 : (int, int) -> int
+val sub_af_spec8 : (bits(8), bits(8)) -> bits(1) effect {escape}
 function sub_af_spec8 (dst, src) =
-let dst_3_0 = (unsigned(get_slice_int(4, dst, 0))) : int in
-let src_3_0 = (unsigned(get_slice_int(4, src, 0))) : int in
-let sub = ((dst_3_0) - (src_3_0)) : int in
-let af = (bool_to_bit((sub) < (0))) : int in
+let dst_3_0 = (slice(dst, 0, 4)) : bits(4) in
+let src_3_0 = (slice(src, 0, 4)) : bits(4) in
+let sub = (the_sbits(5, (unsigned(dst_3_0)) - (unsigned(src_3_0)))) : sbits(5) in
+let af = (bool_to_bit((signed(sub)) < (0))) : bits(1) in
 af
 
-val sub_af_spec16 : (int, int) -> int
+val sub_af_spec16 : (bits(16), bits(16)) -> bits(1) effect {escape}
 function sub_af_spec16 (dst, src) =
-let dst_3_0 = (unsigned(get_slice_int(4, dst, 0))) : int in
-let src_3_0 = (unsigned(get_slice_int(4, src, 0))) : int in
-let sub = ((dst_3_0) - (src_3_0)) : int in
-let af = (bool_to_bit((sub) < (0))) : int in
+let dst_3_0 = (slice(dst, 0, 4)) : bits(4) in
+let src_3_0 = (slice(src, 0, 4)) : bits(4) in
+let sub = (the_sbits(5, (unsigned(dst_3_0)) - (unsigned(src_3_0)))) : sbits(5) in
+let af = (bool_to_bit((signed(sub)) < (0))) : bits(1) in
 af
 
-val sub_af_spec32 : (int, int) -> int
+val sub_af_spec32 : (bits(32), bits(32)) -> bits(1) effect {escape}
 function sub_af_spec32 (dst, src) =
-let dst_3_0 = (unsigned(get_slice_int(4, dst, 0))) : int in
-let src_3_0 = (unsigned(get_slice_int(4, src, 0))) : int in
-let sub = ((dst_3_0) - (src_3_0)) : int in
-let af = (bool_to_bit((sub) < (0))) : int in
+let dst_3_0 = (slice(dst, 0, 4)) : bits(4) in
+let src_3_0 = (slice(src, 0, 4)) : bits(4) in
+let sub = (the_sbits(5, (unsigned(dst_3_0)) - (unsigned(src_3_0)))) : sbits(5) in
+let af = (bool_to_bit((signed(sub)) < (0))) : bits(1) in
 af
 
-val sub_af_spec64 : (int, int) -> int
+val sub_af_spec64 : (bits(64), bits(64)) -> bits(1) effect {escape}
 function sub_af_spec64 (dst, src) =
-let dst_3_0 = (unsigned(get_slice_int(4, dst, 0))) : int in
-let src_3_0 = (unsigned(get_slice_int(4, src, 0))) : int in
-let sub = ((dst_3_0) - (src_3_0)) : int in
-let af = (bool_to_bit((sub) < (0))) : int in
+let dst_3_0 = (slice(dst, 0, 4)) : bits(4) in
+let src_3_0 = (slice(src, 0, 4)) : bits(4) in
+let sub = (the_sbits(5, (unsigned(dst_3_0)) - (unsigned(src_3_0)))) : sbits(5) in
+let af = (bool_to_bit((signed(sub)) < (0))) : bits(1) in
 af
 
-val adc_af_spec8 : (int, int, int) -> int
+val adc_af_spec8 : (bits(8), bits(8), bits(1)) -> bits(1) effect {escape}
 function adc_af_spec8 (dst, src, cf) =
-let dst_3_0 = (unsigned(get_slice_int(4, dst, 0))) : int in
-let src_3_0 = (unsigned(get_slice_int(4, src, 0))) : int in
-let adc = ((dst_3_0) + ((src_3_0) + (cf))) : int in
-let af = (bool_to_bit((15) < (adc))) : int in
+let dst_3_0 = (slice(dst, 0, 4)) : bits(4) in
+let src_3_0 = (slice(src, 0, 4)) : bits(4) in
+let adc = (the_bits(6, (unsigned(dst_3_0)) + ((unsigned(src_3_0)) + (unsigned(cf))))) : bits(6) in
+let af = (bool_to_bit((15) < (unsigned(adc)))) : bits(1) in
 af
 
-val adc_af_spec16 : (int, int, int) -> int
+val adc_af_spec16 : (bits(16), bits(16), bits(1)) -> bits(1) effect {escape}
 function adc_af_spec16 (dst, src, cf) =
-let dst_3_0 = (unsigned(get_slice_int(4, dst, 0))) : int in
-let src_3_0 = (unsigned(get_slice_int(4, src, 0))) : int in
-let adc = ((dst_3_0) + ((src_3_0) + (cf))) : int in
-let af = (bool_to_bit((15) < (adc))) : int in
+let dst_3_0 = (slice(dst, 0, 4)) : bits(4) in
+let src_3_0 = (slice(src, 0, 4)) : bits(4) in
+let adc = (the_bits(6, (unsigned(dst_3_0)) + ((unsigned(src_3_0)) + (unsigned(cf))))) : bits(6) in
+let af = (bool_to_bit((15) < (unsigned(adc)))) : bits(1) in
 af
 
-val adc_af_spec32 : (int, int, int) -> int
+val adc_af_spec32 : (bits(32), bits(32), bits(1)) -> bits(1) effect {escape}
 function adc_af_spec32 (dst, src, cf) =
-let dst_3_0 = (unsigned(get_slice_int(4, dst, 0))) : int in
-let src_3_0 = (unsigned(get_slice_int(4, src, 0))) : int in
-let adc = ((dst_3_0) + ((src_3_0) + (cf))) : int in
-let af = (bool_to_bit((15) < (adc))) : int in
+let dst_3_0 = (slice(dst, 0, 4)) : bits(4) in
+let src_3_0 = (slice(src, 0, 4)) : bits(4) in
+let adc = (the_bits(6, (unsigned(dst_3_0)) + ((unsigned(src_3_0)) + (unsigned(cf))))) : bits(6) in
+let af = (bool_to_bit((15) < (unsigned(adc)))) : bits(1) in
 af
 
-val adc_af_spec64 : (int, int, int) -> int
+val adc_af_spec64 : (bits(64), bits(64), bits(1)) -> bits(1) effect {escape}
 function adc_af_spec64 (dst, src, cf) =
-let dst_3_0 = (unsigned(get_slice_int(4, dst, 0))) : int in
-let src_3_0 = (unsigned(get_slice_int(4, src, 0))) : int in
-let adc = ((dst_3_0) + ((src_3_0) + (cf))) : int in
-let af = (bool_to_bit((15) < (adc))) : int in
+let dst_3_0 = (slice(dst, 0, 4)) : bits(4) in
+let src_3_0 = (slice(src, 0, 4)) : bits(4) in
+let adc = (the_bits(6, (unsigned(dst_3_0)) + ((unsigned(src_3_0)) + (unsigned(cf))))) : bits(6) in
+let af = (bool_to_bit((15) < (unsigned(adc)))) : bits(1) in
 af
 
-val sbb_af_spec8 : (int, int, int) -> int
+val sbb_af_spec8 : (bits(8), bits(8), bits(1)) -> bits(1) effect {escape}
 function sbb_af_spec8 (dst, src, cf) =
-let dst_3_0 = (unsigned(get_slice_int(4, dst, 0))) : int in
-let src_3_0 = (unsigned(get_slice_int(4, src, 0))) : int in
-let sbb = ((dst_3_0) - ((src_3_0) + (cf))) : int in
-let af = (bool_to_bit((sbb) < (0))) : int in
+let dst_3_0 = (slice(dst, 0, 4)) : bits(4) in
+let src_3_0 = (slice(src, 0, 4)) : bits(4) in
+let sbb = ((unsigned(dst_3_0)) - ((unsigned(src_3_0)) + (unsigned(the_bits(4, cf))))) : int in
+let af = (bool_to_bit((sbb) < (0))) : bits(1) in
 af
 
-val sbb_af_spec16 : (int, int, int) -> int
+val sbb_af_spec16 : (bits(16), bits(16), bits(1)) -> bits(1) effect {escape}
 function sbb_af_spec16 (dst, src, cf) =
-let dst_3_0 = (unsigned(get_slice_int(4, dst, 0))) : int in
-let src_3_0 = (unsigned(get_slice_int(4, src, 0))) : int in
-let sbb = ((dst_3_0) - ((src_3_0) + (cf))) : int in
-let af = (bool_to_bit((sbb) < (0))) : int in
+let dst_3_0 = (slice(dst, 0, 4)) : bits(4) in
+let src_3_0 = (slice(src, 0, 4)) : bits(4) in
+let sbb = ((unsigned(dst_3_0)) - ((unsigned(src_3_0)) + (unsigned(the_bits(4, cf))))) : int in
+let af = (bool_to_bit((sbb) < (0))) : bits(1) in
 af
 
-val sbb_af_spec32 : (int, int, int) -> int
+val sbb_af_spec32 : (bits(32), bits(32), bits(1)) -> bits(1) effect {escape}
 function sbb_af_spec32 (dst, src, cf) =
-let dst_3_0 = (unsigned(get_slice_int(4, dst, 0))) : int in
-let src_3_0 = (unsigned(get_slice_int(4, src, 0))) : int in
-let sbb = ((dst_3_0) - ((src_3_0) + (cf))) : int in
-let af = (bool_to_bit((sbb) < (0))) : int in
+let dst_3_0 = (slice(dst, 0, 4)) : bits(4) in
+let src_3_0 = (slice(src, 0, 4)) : bits(4) in
+let sbb = ((unsigned(dst_3_0)) - ((unsigned(src_3_0)) + (unsigned(the_bits(4, cf))))) : int in
+let af = (bool_to_bit((sbb) < (0))) : bits(1) in
 af
 
-val sbb_af_spec64 : (int, int, int) -> int
+val sbb_af_spec64 : (bits(64), bits(64), bits(1)) -> bits(1) effect {escape}
 function sbb_af_spec64 (dst, src, cf) =
-let dst_3_0 = (unsigned(get_slice_int(4, dst, 0))) : int in
-let src_3_0 = (unsigned(get_slice_int(4, src, 0))) : int in
-let sbb = ((dst_3_0) - ((src_3_0) + (cf))) : int in
-let af = (bool_to_bit((sbb) < (0))) : int in
+let dst_3_0 = (slice(dst, 0, 4)) : bits(4) in
+let src_3_0 = (slice(src, 0, 4)) : bits(4) in
+let sbb = ((unsigned(dst_3_0)) - ((unsigned(src_3_0)) + (unsigned(the_bits(4, cf))))) : int in
+let af = (bool_to_bit((sbb) < (0))) : bits(1) in
 af
 

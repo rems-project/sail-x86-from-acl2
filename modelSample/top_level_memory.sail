@@ -31,17 +31,17 @@ $include "segmentation.sail"
  If the operand size is 1, 2, 8, or 16, 
  it cannot be a memory pointer of the form m16:xx. 
  </p>*/
-val address_aligned_p : (int, int, bool) -> bool
+val address_aligned_p : (sbits(48), {|1, 2, 4, 6, 8, 10, 16|}, bool) -> bool effect {escape}
 function address_aligned_p (addr, operand_size, memory_ptr?) =
-let addr = (addr) : int in
-let operand_size = (operand_size) : int in
+let addr = (addr) : sbits(48) in
+let operand_size = (the_range(0, 16, operand_size)) : {|1, 2, 4, 6, 8, 10, 16|} in
 (match operand_size {
 1 => true,
-6 => (binary_logand(addr, 3)) == (0),
-10 => (binary_logand(addr, 7)) == (0),
-_ => if (memory_ptr?) & ((operand_size) == (4))
-then (binary_logand(addr, 1)) == (0)
-else (binary_logand(addr, (operand_size) - (1))) == (0)
+6 => (the_bits(8, logand(the_sbits(49, addr), get_slice_int(49, 3, 0)))) == (get_slice_int(8, 0, 0)),
+10 => (the_bits(8, logand(the_sbits(49, addr), get_slice_int(49, 7, 0)))) == (get_slice_int(8, 0, 0)),
+_ => if (memory_ptr?) & ((get_slice_int(8, operand_size, 0)) == (get_slice_int(8, 4, 0)))
+then (the_bits(8, logand(the_sbits(49, addr), get_slice_int(49, 1, 0)))) == (get_slice_int(8, 0, 0))
+else (the_bits(8, logand(the_sbits(49, addr), get_slice_int(49, the_range(0, 15, (operand_size) - (1)), 0)))) == (get_slice_int(8, 0, 0))
 }) : bool
 
 /*Read an unsigned 8-bit value from memory via an effective address.*/
@@ -54,16 +54,16 @@ else (binary_logand(addr, (operand_size) - (1))) == (0)
  read access is attempted on an execute-only code segment, in 32-bit 
  mode. In 64-bit mode, the R bit of the code segment descriptor is 
  ignored ( see Atmel manual, Dec ' 17, Volume 2, Section 4.8.1 ) .</p>*/
-val rme08 : (int, int, int, string, int) -> (option(string), int, int) effect {escape, rmem, rreg}
-function rme08 (proc_mode, eff_addr, seg_reg, r_x, x86) =
-if ((proc_mode) != (0)) & (((seg_reg) == (1)) & (((r_x) == (":R")) & (let attr = (loghead(16, seg_hidden_attri(seg_reg, 0))) : int in
-let r = (code_segment_descriptor_attributesbits_get_r(attr)) : int in
-(r) == (0))))
-then (Some(":EXECUTE-ONLY-CODE-SEGMENT"), 0 : int, 0 : int)
-else let (flg, lin_addr) = (ea_to_la(proc_mode, eff_addr, seg_reg, 1, 0)) : (option(string), int) in
+val rme08 : (range(0, 4), sbits(64), range(0, 5), string) -> (option(string), int) effect {escape, rmem, rreg}
+function rme08 (proc_mode, eff_addr, seg_reg, r_x) =
+if ((proc_mode) != (0)) & (((seg_reg) == (1)) & (((r_x) == (":R")) & (let attr = (loghead(16, unsigned(seg_hidden_attrs[seg_reg]))) : int in
+let r = (code_segment_descriptor_attributesbits_get_r(get_slice_int(16, attr, 0))) : bits(1) in
+(unsigned(r)) == (0))))
+then (Some(":EXECUTE-ONLY-CODE-SEGMENT"), 0 : {|0|})
+else let (flg, lin_addr) = (ea_to_la(proc_mode, eff_addr, seg_reg, 1)) : (option(string), sbits(67)) in
 if is_some(flg)
-then (flg, 0 : int, 0 : int)
-else rml08(lin_addr, r_x, 0)
+then (flg, 0 : {|0|})
+else rml08(the_sbits(48, lin_addr), r_x)
 
 /*Read a signed 8-bit value from memory via an effective address.*/
 /*<p>The effective address @ ( ' eff-addr ' ) is translated to a canonical 
@@ -75,16 +75,18 @@ else rml08(lin_addr, r_x, 0)
  read access is attempted on an execute-only code segment, in 32-bit 
  mode. In 64-bit mode, the R bit of the code segment descriptor is 
  ignored ( see Atmel manual, Dec ' 17, Volume 2, Section 4.8.1 ) .</p>*/
-val rime08 : (int, int, int, string, int) -> (option(string), int, int) effect {escape, rmem, rreg}
-function rime08 (proc_mode, eff_addr, seg_reg, r_x, x86) =
-if ((proc_mode) != (0)) & (((seg_reg) == (1)) & (((r_x) == (":R")) & (let attr = (loghead(16, seg_hidden_attri(seg_reg, 0))) : int in
-let r = (code_segment_descriptor_attributesbits_get_r(attr)) : int in
-(r) == (0))))
-then (Some(":EXECUTE-ONLY-CODE-SEGMENT"), 0 : int, 0 : int)
-else let (flg, lin_addr) = (ea_to_la(proc_mode, eff_addr, seg_reg, 1, 0)) : (option(string), int) in
+val rime08 : (range(0, 4), sbits(64), range(0, 5), string) -> (option(string), sbits(10)) effect {escape, rmem, rreg}
+function rime08 (proc_mode, eff_addr, seg_reg, r_x) =
+if ((proc_mode) != (0)) & (((seg_reg) == (1)) & (((r_x) == (":R")) & (let attr = (loghead(16, unsigned(seg_hidden_attrs[seg_reg]))) : int in
+let r = (code_segment_descriptor_attributesbits_get_r(get_slice_int(16, attr, 0))) : bits(1) in
+(unsigned(r)) == (0))))
+then (Some(":EXECUTE-ONLY-CODE-SEGMENT"), get_slice_int(10, 0, 0))
+else let (elem0, elem1) = (let (flg, lin_addr) = (ea_to_la(proc_mode, eff_addr, seg_reg, 1)) : (option(string), sbits(67)) in
 if is_some(flg)
-then (flg, 0 : int, 0 : int)
-else riml08(lin_addr, r_x, 0)
+then (flg, get_slice_int(9, 0, 0))
+else let (elem0, elem1) = (riml08(the_sbits(48, lin_addr), r_x)) : (option(string), sbits(8)) in
+(elem0, the_sbits(9, elem1))) : (option(string), sbits(9)) in
+(elem0, the_sbits(10, elem1))
 
 /*Read an unsigned 16-bit value from memory via an effective address.*/
 /*<p>The effective address @ ( ' eff-addr ' ) is translated to a canonical 
@@ -96,18 +98,18 @@ else riml08(lin_addr, r_x, 0)
  read access is attempted on an execute-only code segment, in 32-bit 
  mode. In 64-bit mode, the R bit of the code segment descriptor is 
  ignored ( see Atmel manual, Dec ' 17, Volume 2, Section 4.8.1 ) .</p>*/
-val rme16 : (int, int, int, string, bool, int) -> (option(string), int, int) effect {escape, rmem, rreg}
-function rme16 (proc_mode, eff_addr, seg_reg, r_x, check_alignment?, x86) =
-if ((proc_mode) != (0)) & (((seg_reg) == (1)) & (((r_x) == (":R")) & (let attr = (loghead(16, seg_hidden_attri(seg_reg, 0))) : int in
-let r = (code_segment_descriptor_attributesbits_get_r(attr)) : int in
-(r) == (0))))
-then (Some(":EXECUTE-ONLY-CODE-SEGMENT"), 0 : int, 0 : int)
-else let (flg, lin_addr) = (ea_to_la(proc_mode, eff_addr, seg_reg, 2, 0)) : (option(string), int) in
+val rme16 : (range(0, 4), sbits(64), range(0, 5), string, bool) -> (option(string), int) effect {escape, rmem, rreg}
+function rme16 (proc_mode, eff_addr, seg_reg, r_x, check_alignment?) =
+if ((proc_mode) != (0)) & (((seg_reg) == (1)) & (((r_x) == (":R")) & (let attr = (loghead(16, unsigned(seg_hidden_attrs[seg_reg]))) : int in
+let r = (code_segment_descriptor_attributesbits_get_r(get_slice_int(16, attr, 0))) : bits(1) in
+(unsigned(r)) == (0))))
+then (Some(":EXECUTE-ONLY-CODE-SEGMENT"), 0 : {|0|})
+else let (flg, lin_addr) = (ea_to_la(proc_mode, eff_addr, seg_reg, 2)) : (option(string), sbits(67)) in
 if is_some(flg)
-then (flg, 0 : int, 0 : int)
-else if not_bool((not_bool(check_alignment?)) | (address_aligned_p(lin_addr, 2, false)))
-then (Some(":UNALIGNED-LINEAR-ADDRESS"), 0 : int, 0 : int)
-else rml16(lin_addr, r_x, 0)
+then (flg, 0 : {|0|})
+else if not_bool((not_bool(check_alignment?)) | (address_aligned_p(the_sbits(48, lin_addr), 2, false)))
+then (Some(":UNALIGNED-LINEAR-ADDRESS"), 0 : {|0|})
+else rml16(the_sbits(48, lin_addr), r_x)
 
 /*Read a signed 16-bit value from memory via an effective address.*/
 /*<p>The effective address @ ( ' eff-addr ' ) is translated to a canonical 
@@ -119,18 +121,21 @@ else rml16(lin_addr, r_x, 0)
  read access is attempted on an execute-only code segment, in 32-bit 
  mode. In 64-bit mode, the R bit of the code segment descriptor is 
  ignored ( see Atmel manual, Dec ' 17, Volume 2, Section 4.8.1 ) .</p>*/
-val rime16 : (int, int, int, string, bool, int) -> (option(string), int, int) effect {escape, rmem, rreg}
-function rime16 (proc_mode, eff_addr, seg_reg, r_x, check_alignment?, x86) =
-if ((proc_mode) != (0)) & (((seg_reg) == (1)) & (((r_x) == (":R")) & (let attr = (loghead(16, seg_hidden_attri(seg_reg, 0))) : int in
-let r = (code_segment_descriptor_attributesbits_get_r(attr)) : int in
-(r) == (0))))
-then (Some(":EXECUTE-ONLY-CODE-SEGMENT"), 0 : int, 0 : int)
-else let (flg, lin_addr) = (ea_to_la(proc_mode, eff_addr, seg_reg, 2, 0)) : (option(string), int) in
+val rime16 : (range(0, 4), sbits(64), range(0, 5), string, bool) -> (option(string), sbits(19)) effect {escape, rmem, rreg}
+function rime16 (proc_mode, eff_addr, seg_reg, r_x, check_alignment?) =
+if ((proc_mode) != (0)) & (((seg_reg) == (1)) & (((r_x) == (":R")) & (let attr = (loghead(16, unsigned(seg_hidden_attrs[seg_reg]))) : int in
+let r = (code_segment_descriptor_attributesbits_get_r(get_slice_int(16, attr, 0))) : bits(1) in
+(unsigned(r)) == (0))))
+then (Some(":EXECUTE-ONLY-CODE-SEGMENT"), get_slice_int(19, 0, 0))
+else let (elem0, elem1) = (let (flg, lin_addr) = (ea_to_la(proc_mode, eff_addr, seg_reg, 2)) : (option(string), sbits(67)) in
 if is_some(flg)
-then (flg, 0 : int, 0 : int)
-else if not_bool((not_bool(check_alignment?)) | (address_aligned_p(lin_addr, 2, false)))
-then (Some(":UNALIGNED-LINEAR-ADDRESS"), 0 : int, 0 : int)
-else riml16(lin_addr, r_x, 0)
+then (flg, get_slice_int(18, 0, 0))
+else let (elem0, elem1) = (if not_bool((not_bool(check_alignment?)) | (address_aligned_p(the_sbits(48, lin_addr), 2, false)))
+then (Some(":UNALIGNED-LINEAR-ADDRESS"), get_slice_int(17, 0, 0))
+else let (elem0, elem1) = (riml16(the_sbits(48, lin_addr), r_x)) : (option(string), sbits(16)) in
+(elem0, the_sbits(17, elem1))) : (option(string), sbits(17)) in
+(elem0, the_sbits(18, elem1))) : (option(string), sbits(18)) in
+(elem0, the_sbits(19, elem1))
 
 /*Read an unsigned 32-bit value from memory via an effective address.*/
 /*<p>The effective address @ ( ' eff-addr ' ) is translated to a canonical 
@@ -145,18 +150,18 @@ else riml16(lin_addr, r_x, 0)
 struct struct_rme32 = {
 	mem_ptr? : bool
 }
-val rme32 : (int, int, int, string, bool, int, struct_rme32) -> (option(string), int, int) effect {escape, rmem, rreg}
-function rme32 (proc_mode, eff_addr, seg_reg, r_x, check_alignment?, x86, keywords) =
-if ((proc_mode) != (0)) & (((seg_reg) == (1)) & (((r_x) == (":R")) & (let attr = (loghead(16, seg_hidden_attri(seg_reg, 0))) : int in
-let r = (code_segment_descriptor_attributesbits_get_r(attr)) : int in
-(r) == (0))))
-then (Some(":EXECUTE-ONLY-CODE-SEGMENT"), 0 : int, 0 : int)
-else let (flg, lin_addr) = (ea_to_la(proc_mode, eff_addr, seg_reg, 4, 0)) : (option(string), int) in
+val rme32 : (range(0, 4), sbits(64), range(0, 5), string, bool, struct_rme32) -> (option(string), int) effect {escape, rmem, rreg}
+function rme32 (proc_mode, eff_addr, seg_reg, r_x, check_alignment?, keywords) =
+if ((proc_mode) != (0)) & (((seg_reg) == (1)) & (((r_x) == (":R")) & (let attr = (loghead(16, unsigned(seg_hidden_attrs[seg_reg]))) : int in
+let r = (code_segment_descriptor_attributesbits_get_r(get_slice_int(16, attr, 0))) : bits(1) in
+(unsigned(r)) == (0))))
+then (Some(":EXECUTE-ONLY-CODE-SEGMENT"), 0 : {|0|})
+else let (flg, lin_addr) = (ea_to_la(proc_mode, eff_addr, seg_reg, 4)) : (option(string), sbits(67)) in
 if is_some(flg)
-then (flg, 0 : int, 0 : int)
-else if not_bool((not_bool(check_alignment?)) | (address_aligned_p(lin_addr, 4, (keywords).mem_ptr?)))
-then (Some(":UNALIGNED-LINEAR-ADDRESS"), 0 : int, 0 : int)
-else rml32(lin_addr, r_x, 0)
+then (flg, 0 : {|0|})
+else if not_bool((not_bool(check_alignment?)) | (address_aligned_p(the_sbits(48, lin_addr), 4, (keywords).mem_ptr?)))
+then (Some(":UNALIGNED-LINEAR-ADDRESS"), 0 : {|0|})
+else rml32(the_sbits(48, lin_addr), r_x)
 
 /*Read a signed 32-bit value from memory via an effective address.*/
 /*<p>The effective address @ ( ' eff-addr ' ) is translated to a canonical 
@@ -171,18 +176,21 @@ else rml32(lin_addr, r_x, 0)
 struct struct_rime32 = {
 	mem_ptr? : bool
 }
-val rime32 : (int, int, int, string, bool, int, struct_rime32) -> (option(string), int, int) effect {escape, rmem, rreg}
-function rime32 (proc_mode, eff_addr, seg_reg, r_x, check_alignment?, x86, keywords) =
-if ((proc_mode) != (0)) & (((seg_reg) == (1)) & (((r_x) == (":R")) & (let attr = (loghead(16, seg_hidden_attri(seg_reg, 0))) : int in
-let r = (code_segment_descriptor_attributesbits_get_r(attr)) : int in
-(r) == (0))))
-then (Some(":EXECUTE-ONLY-CODE-SEGMENT"), 0 : int, 0 : int)
-else let (flg, lin_addr) = (ea_to_la(proc_mode, eff_addr, seg_reg, 4, 0)) : (option(string), int) in
+val rime32 : (range(0, 4), sbits(64), range(0, 5), string, bool, struct_rime32) -> (option(string), sbits(35)) effect {escape, rmem, rreg}
+function rime32 (proc_mode, eff_addr, seg_reg, r_x, check_alignment?, keywords) =
+if ((proc_mode) != (0)) & (((seg_reg) == (1)) & (((r_x) == (":R")) & (let attr = (loghead(16, unsigned(seg_hidden_attrs[seg_reg]))) : int in
+let r = (code_segment_descriptor_attributesbits_get_r(get_slice_int(16, attr, 0))) : bits(1) in
+(unsigned(r)) == (0))))
+then (Some(":EXECUTE-ONLY-CODE-SEGMENT"), get_slice_int(35, 0, 0))
+else let (elem0, elem1) = (let (flg, lin_addr) = (ea_to_la(proc_mode, eff_addr, seg_reg, 4)) : (option(string), sbits(67)) in
 if is_some(flg)
-then (flg, 0 : int, 0 : int)
-else if not_bool((not_bool(check_alignment?)) | (address_aligned_p(lin_addr, 4, (keywords).mem_ptr?)))
-then (Some(":UNALIGNED-LINEAR-ADDRESS"), 0 : int, 0 : int)
-else riml32(lin_addr, r_x, 0)
+then (flg, get_slice_int(34, 0, 0))
+else let (elem0, elem1) = (if not_bool((not_bool(check_alignment?)) | (address_aligned_p(the_sbits(48, lin_addr), 4, (keywords).mem_ptr?)))
+then (Some(":UNALIGNED-LINEAR-ADDRESS"), get_slice_int(33, 0, 0))
+else let (elem0, elem1) = (riml32(the_sbits(48, lin_addr), r_x)) : (option(string), sbits(32)) in
+(elem0, the_sbits(33, elem1))) : (option(string), sbits(33)) in
+(elem0, the_sbits(34, elem1))) : (option(string), sbits(34)) in
+(elem0, the_sbits(35, elem1))
 
 /*Read an unsigned 48-bit value from memory via an effective address.*/
 /*<p>The effective address @ ( ' eff-addr ' ) is translated to a canonical 
@@ -194,18 +202,18 @@ else riml32(lin_addr, r_x, 0)
  read access is attempted on an execute-only code segment, in 32-bit 
  mode. In 64-bit mode, the R bit of the code segment descriptor is 
  ignored ( see Atmel manual, Dec ' 17, Volume 2, Section 4.8.1 ) .</p>*/
-val rme48 : (int, int, int, string, bool, int) -> (option(string), int, int) effect {escape, rmem, rreg}
-function rme48 (proc_mode, eff_addr, seg_reg, r_x, check_alignment?, x86) =
-if ((proc_mode) != (0)) & (((seg_reg) == (1)) & (((r_x) == (":R")) & (let attr = (loghead(16, seg_hidden_attri(seg_reg, 0))) : int in
-let r = (code_segment_descriptor_attributesbits_get_r(attr)) : int in
-(r) == (0))))
-then (Some(":EXECUTE-ONLY-CODE-SEGMENT"), 0 : int, 0 : int)
-else let (flg, lin_addr) = (ea_to_la(proc_mode, eff_addr, seg_reg, 6, 0)) : (option(string), int) in
+val rme48 : (range(0, 4), sbits(64), range(0, 5), string, bool) -> (option(string), int) effect {escape, rmem, rreg}
+function rme48 (proc_mode, eff_addr, seg_reg, r_x, check_alignment?) =
+if ((proc_mode) != (0)) & (((seg_reg) == (1)) & (((r_x) == (":R")) & (let attr = (loghead(16, unsigned(seg_hidden_attrs[seg_reg]))) : int in
+let r = (code_segment_descriptor_attributesbits_get_r(get_slice_int(16, attr, 0))) : bits(1) in
+(unsigned(r)) == (0))))
+then (Some(":EXECUTE-ONLY-CODE-SEGMENT"), 0 : {|0|})
+else let (flg, lin_addr) = (ea_to_la(proc_mode, eff_addr, seg_reg, 6)) : (option(string), sbits(67)) in
 if is_some(flg)
-then (flg, 0 : int, 0 : int)
-else if not_bool((not_bool(check_alignment?)) | (address_aligned_p(lin_addr, 6, false)))
-then (Some(":UNALIGNED-LINEAR-ADDRESS"), 0 : int, 0 : int)
-else rml48(lin_addr, r_x, 0)
+then (flg, 0 : {|0|})
+else if not_bool((not_bool(check_alignment?)) | (address_aligned_p(the_sbits(48, lin_addr), 6, false)))
+then (Some(":UNALIGNED-LINEAR-ADDRESS"), 0 : {|0|})
+else rml48(the_sbits(48, lin_addr), r_x)
 
 /*Read an unsigned 64-bit value from memory via an effective address.*/
 /*<p>The effective address @ ( ' eff-addr ' ) is translated to a canonical 
@@ -217,18 +225,18 @@ else rml48(lin_addr, r_x, 0)
  read access is attempted on an execute-only code segment, in 32-bit 
  mode. In 64-bit mode, the R bit of the code segment descriptor is 
  ignored ( see Atmel manual, Dec ' 17, Volume 2, Section 4.8.1 ) .</p>*/
-val rme64 : (int, int, int, string, bool, int) -> (option(string), int, int) effect {escape, rmem, rreg}
-function rme64 (proc_mode, eff_addr, seg_reg, r_x, check_alignment?, x86) =
-if ((proc_mode) != (0)) & (((seg_reg) == (1)) & (((r_x) == (":R")) & (let attr = (loghead(16, seg_hidden_attri(seg_reg, 0))) : int in
-let r = (code_segment_descriptor_attributesbits_get_r(attr)) : int in
-(r) == (0))))
-then (Some(":EXECUTE-ONLY-CODE-SEGMENT"), 0 : int, 0 : int)
-else let (flg, lin_addr) = (ea_to_la(proc_mode, eff_addr, seg_reg, 8, 0)) : (option(string), int) in
+val rme64 : (range(0, 4), sbits(64), range(0, 5), string, bool) -> (option(string), int) effect {escape, rmem, rreg}
+function rme64 (proc_mode, eff_addr, seg_reg, r_x, check_alignment?) =
+if ((proc_mode) != (0)) & (((seg_reg) == (1)) & (((r_x) == (":R")) & (let attr = (loghead(16, unsigned(seg_hidden_attrs[seg_reg]))) : int in
+let r = (code_segment_descriptor_attributesbits_get_r(get_slice_int(16, attr, 0))) : bits(1) in
+(unsigned(r)) == (0))))
+then (Some(":EXECUTE-ONLY-CODE-SEGMENT"), 0 : {|0|})
+else let (flg, lin_addr) = (ea_to_la(proc_mode, eff_addr, seg_reg, 8)) : (option(string), sbits(67)) in
 if is_some(flg)
-then (flg, 0 : int, 0 : int)
-else if not_bool((not_bool(check_alignment?)) | (address_aligned_p(lin_addr, 8, false)))
-then (Some(":UNALIGNED-LINEAR-ADDRESS"), 0 : int, 0 : int)
-else rml64(lin_addr, r_x, 0)
+then (flg, 0 : {|0|})
+else if not_bool((not_bool(check_alignment?)) | (address_aligned_p(the_sbits(48, lin_addr), 8, false)))
+then (Some(":UNALIGNED-LINEAR-ADDRESS"), 0 : {|0|})
+else rml64(the_sbits(48, lin_addr), r_x)
 
 /*Read a signed 64-bit value from memory via an effective address.*/
 /*<p>The effective address @ ( ' eff-addr ' ) is translated to a canonical 
@@ -240,18 +248,21 @@ else rml64(lin_addr, r_x, 0)
  read access is attempted on an execute-only code segment, in 32-bit 
  mode. In 64-bit mode, the R bit of the code segment descriptor is 
  ignored ( see Atmel manual, Dec ' 17, Volume 2, Section 4.8.1 ) .</p>*/
-val rime64 : (int, int, int, string, bool, int) -> (option(string), int, int) effect {escape, rmem, rreg}
-function rime64 (proc_mode, eff_addr, seg_reg, r_x, check_alignment?, x86) =
-if ((proc_mode) != (0)) & (((seg_reg) == (1)) & (((r_x) == (":R")) & (let attr = (loghead(16, seg_hidden_attri(seg_reg, 0))) : int in
-let r = (code_segment_descriptor_attributesbits_get_r(attr)) : int in
-(r) == (0))))
-then (Some(":EXECUTE-ONLY-CODE-SEGMENT"), 0 : int, 0 : int)
-else let (flg, lin_addr) = (ea_to_la(proc_mode, eff_addr, seg_reg, 8, 0)) : (option(string), int) in
+val rime64 : (range(0, 4), sbits(64), range(0, 5), string, bool) -> (option(string), sbits(67)) effect {escape, rmem, rreg}
+function rime64 (proc_mode, eff_addr, seg_reg, r_x, check_alignment?) =
+if ((proc_mode) != (0)) & (((seg_reg) == (1)) & (((r_x) == (":R")) & (let attr = (loghead(16, unsigned(seg_hidden_attrs[seg_reg]))) : int in
+let r = (code_segment_descriptor_attributesbits_get_r(get_slice_int(16, attr, 0))) : bits(1) in
+(unsigned(r)) == (0))))
+then (Some(":EXECUTE-ONLY-CODE-SEGMENT"), get_slice_int(67, 0, 0))
+else let (elem0, elem1) = (let (flg, lin_addr) = (ea_to_la(proc_mode, eff_addr, seg_reg, 8)) : (option(string), sbits(67)) in
 if is_some(flg)
-then (flg, 0 : int, 0 : int)
-else if not_bool((not_bool(check_alignment?)) | (address_aligned_p(lin_addr, 8, false)))
-then (Some(":UNALIGNED-LINEAR-ADDRESS"), 0 : int, 0 : int)
-else riml64(lin_addr, r_x, 0)
+then (flg, get_slice_int(66, 0, 0))
+else let (elem0, elem1) = (if not_bool((not_bool(check_alignment?)) | (address_aligned_p(the_sbits(48, lin_addr), 8, false)))
+then (Some(":UNALIGNED-LINEAR-ADDRESS"), get_slice_int(65, 0, 0))
+else let (elem0, elem1) = (riml64(the_sbits(48, lin_addr), r_x)) : (option(string), sbits(64)) in
+(elem0, the_sbits(65, elem1))) : (option(string), sbits(65)) in
+(elem0, the_sbits(66, elem1))) : (option(string), sbits(66)) in
+(elem0, the_sbits(67, elem1))
 
 /*Read an unsigned 80-bit value from memory via an effective address.*/
 /*<p>The effective address @ ( ' eff-addr ' ) is translated to a canonical 
@@ -263,18 +274,18 @@ else riml64(lin_addr, r_x, 0)
  read access is attempted on an execute-only code segment, in 32-bit 
  mode. In 64-bit mode, the R bit of the code segment descriptor is 
  ignored ( see Atmel manual, Dec ' 17, Volume 2, Section 4.8.1 ) .</p>*/
-val rme80 : (int, int, int, string, bool, int) -> (option(string), int, int) effect {escape, rmem, rreg}
-function rme80 (proc_mode, eff_addr, seg_reg, r_x, check_alignment?, x86) =
-if ((proc_mode) != (0)) & (((seg_reg) == (1)) & (((r_x) == (":R")) & (let attr = (loghead(16, seg_hidden_attri(seg_reg, 0))) : int in
-let r = (code_segment_descriptor_attributesbits_get_r(attr)) : int in
-(r) == (0))))
-then (Some(":EXECUTE-ONLY-CODE-SEGMENT"), 0 : int, 0 : int)
-else let (flg, lin_addr) = (ea_to_la(proc_mode, eff_addr, seg_reg, 10, 0)) : (option(string), int) in
+val rme80 : (range(0, 4), sbits(64), range(0, 5), string, bool) -> (option(string), int) effect {escape, rmem, rreg}
+function rme80 (proc_mode, eff_addr, seg_reg, r_x, check_alignment?) =
+if ((proc_mode) != (0)) & (((seg_reg) == (1)) & (((r_x) == (":R")) & (let attr = (loghead(16, unsigned(seg_hidden_attrs[seg_reg]))) : int in
+let r = (code_segment_descriptor_attributesbits_get_r(get_slice_int(16, attr, 0))) : bits(1) in
+(unsigned(r)) == (0))))
+then (Some(":EXECUTE-ONLY-CODE-SEGMENT"), 0 : {|0|})
+else let (flg, lin_addr) = (ea_to_la(proc_mode, eff_addr, seg_reg, 10)) : (option(string), sbits(67)) in
 if is_some(flg)
-then (flg, 0 : int, 0 : int)
-else if not_bool((not_bool(check_alignment?)) | (address_aligned_p(lin_addr, 10, false)))
-then (Some(":UNALIGNED-LINEAR-ADDRESS"), 0 : int, 0 : int)
-else rml80(lin_addr, r_x, 0)
+then (flg, 0 : {|0|})
+else if not_bool((not_bool(check_alignment?)) | (address_aligned_p(the_sbits(48, lin_addr), 10, false)))
+then (Some(":UNALIGNED-LINEAR-ADDRESS"), 0 : {|0|})
+else rml80(the_sbits(48, lin_addr), r_x)
 
 /*Read an unsigned 128-bit value from memory via an effective address.*/
 /*<p>The effective address @ ( ' eff-addr ' ) is translated to a canonical 
@@ -286,18 +297,18 @@ else rml80(lin_addr, r_x, 0)
  read access is attempted on an execute-only code segment, in 32-bit 
  mode. In 64-bit mode, the R bit of the code segment descriptor is 
  ignored ( see Atmel manual, Dec ' 17, Volume 2, Section 4.8.1 ) .</p>*/
-val rme128 : (int, int, int, string, bool, int) -> (option(string), int, int) effect {escape, rmem, rreg}
-function rme128 (proc_mode, eff_addr, seg_reg, r_x, check_alignment?, x86) =
-if ((proc_mode) != (0)) & (((seg_reg) == (1)) & (((r_x) == (":R")) & (let attr = (loghead(16, seg_hidden_attri(seg_reg, 0))) : int in
-let r = (code_segment_descriptor_attributesbits_get_r(attr)) : int in
-(r) == (0))))
-then (Some(":EXECUTE-ONLY-CODE-SEGMENT"), 0 : int, 0 : int)
-else let (flg, lin_addr) = (ea_to_la(proc_mode, eff_addr, seg_reg, 16, 0)) : (option(string), int) in
+val rme128 : (range(0, 4), sbits(64), range(0, 5), string, bool) -> (option(string), int) effect {escape, rmem, rreg}
+function rme128 (proc_mode, eff_addr, seg_reg, r_x, check_alignment?) =
+if ((proc_mode) != (0)) & (((seg_reg) == (1)) & (((r_x) == (":R")) & (let attr = (loghead(16, unsigned(seg_hidden_attrs[seg_reg]))) : int in
+let r = (code_segment_descriptor_attributesbits_get_r(get_slice_int(16, attr, 0))) : bits(1) in
+(unsigned(r)) == (0))))
+then (Some(":EXECUTE-ONLY-CODE-SEGMENT"), 0 : {|0|})
+else let (flg, lin_addr) = (ea_to_la(proc_mode, eff_addr, seg_reg, 16)) : (option(string), sbits(67)) in
 if is_some(flg)
-then (flg, 0 : int, 0 : int)
-else if not_bool((not_bool(check_alignment?)) | (address_aligned_p(lin_addr, 16, false)))
-then (Some(":UNALIGNED-LINEAR-ADDRESS"), 0 : int, 0 : int)
-else rml128(lin_addr, r_x, 0)
+then (flg, 0 : {|0|})
+else if not_bool((not_bool(check_alignment?)) | (address_aligned_p(the_sbits(48, lin_addr), 16, false)))
+then (Some(":UNALIGNED-LINEAR-ADDRESS"), 0 : {|0|})
+else rml128(the_sbits(48, lin_addr), r_x)
 
 /*Read an unsigned value with the specified number of bytes 
  from memory via an effective address.*/
@@ -312,18 +323,18 @@ else rml128(lin_addr, r_x, 0)
 struct struct_rme_size = {
 	mem_ptr? : bool
 }
-val rme_size : (int, int, int, int, string, bool, int, struct_rme_size) -> (option(string), int, int) effect {escape, rmem, rreg}
-function rme_size (proc_mode, nbytes, eff_addr, seg_reg, r_x, check_alignment?, x86, keywords) =
-if ((proc_mode) != (0)) & (((seg_reg) == (1)) & (((r_x) == (":R")) & (let attr = (loghead(16, seg_hidden_attri(seg_reg, 0))) : int in
-let r = (code_segment_descriptor_attributesbits_get_r(attr)) : int in
-(r) == (0))))
-then (Some(":EXECUTE-ONLY-CODE-SEGMENT"), 0 : int, 0 : int)
-else let (flg, lin_addr) = (ea_to_la(proc_mode, eff_addr, seg_reg, nbytes, 0)) : (option(string), int) in
+val rme_size : (range(0, 4), {|1, 2, 4, 6, 8, 10, 16|}, sbits(64), range(0, 5), string, bool, struct_rme_size) -> (option(string), int) effect {escape, rmem, rreg}
+function rme_size (proc_mode, nbytes, eff_addr, seg_reg, r_x, check_alignment?, keywords) =
+if ((proc_mode) != (0)) & (((seg_reg) == (1)) & (((r_x) == (":R")) & (let attr = (loghead(16, unsigned(seg_hidden_attrs[seg_reg]))) : int in
+let r = (code_segment_descriptor_attributesbits_get_r(get_slice_int(16, attr, 0))) : bits(1) in
+(unsigned(r)) == (0))))
+then (Some(":EXECUTE-ONLY-CODE-SEGMENT"), 0 : {|0|})
+else let (flg, lin_addr) = (ea_to_la(proc_mode, eff_addr, seg_reg, nbytes)) : (option(string), sbits(67)) in
 if is_some(flg)
-then (flg, 0 : int, 0 : int)
-else if not_bool((not_bool(check_alignment?)) | (address_aligned_p(lin_addr, nbytes, (keywords).mem_ptr?)))
-then (Some(":UNALIGNED-LINEAR-ADDRESS"), 0 : int, 0 : int)
-else rml_size(nbytes, lin_addr, r_x, 0)
+then (flg, 0 : {|0|})
+else if not_bool((not_bool(check_alignment?)) | (address_aligned_p(the_sbits(48, lin_addr), nbytes, (keywords).mem_ptr?)))
+then (Some(":UNALIGNED-LINEAR-ADDRESS"), 0 : {|0|})
+else rml_size(nbytes, the_sbits(48, lin_addr), r_x)
 
 /*Read a signed value with the specified number of bytes 
  from memory via an effective address.*/
@@ -338,18 +349,21 @@ else rml_size(nbytes, lin_addr, r_x, 0)
 struct struct_rime_size = {
 	mem_ptr? : bool
 }
-val rime_size : (int, int, int, int, string, bool, int, struct_rime_size) -> (option(string), int, int) effect {escape, rmem, rreg}
-function rime_size (proc_mode, nbytes, eff_addr, seg_reg, r_x, check_alignment?, x86, keywords) =
-if ((proc_mode) != (0)) & (((seg_reg) == (1)) & (((r_x) == (":R")) & (let attr = (loghead(16, seg_hidden_attri(seg_reg, 0))) : int in
-let r = (code_segment_descriptor_attributesbits_get_r(attr)) : int in
-(r) == (0))))
-then (Some(":EXECUTE-ONLY-CODE-SEGMENT"), 0 : int, 0 : int)
-else let (flg, lin_addr) = (ea_to_la(proc_mode, eff_addr, seg_reg, nbytes, 0)) : (option(string), int) in
+val rime_size : (range(0, 4), {|1, 2, 4, 8|}, sbits(64), range(0, 5), string, bool, struct_rime_size) -> (option(string), sbits(68)) effect {escape, rmem, rreg}
+function rime_size (proc_mode, nbytes, eff_addr, seg_reg, r_x, check_alignment?, keywords) =
+if ((proc_mode) != (0)) & (((seg_reg) == (1)) & (((r_x) == (":R")) & (let attr = (loghead(16, unsigned(seg_hidden_attrs[seg_reg]))) : int in
+let r = (code_segment_descriptor_attributesbits_get_r(get_slice_int(16, attr, 0))) : bits(1) in
+(unsigned(r)) == (0))))
+then (Some(":EXECUTE-ONLY-CODE-SEGMENT"), get_slice_int(68, 0, 0))
+else let (elem0, elem1) = (let (flg, lin_addr) = (ea_to_la(proc_mode, eff_addr, seg_reg, nbytes)) : (option(string), sbits(67)) in
 if is_some(flg)
-then (flg, 0 : int, 0 : int)
-else if not_bool((not_bool(check_alignment?)) | (address_aligned_p(lin_addr, nbytes, (keywords).mem_ptr?)))
-then (Some(":UNALIGNED-LINEAR-ADDRESS"), 0 : int, 0 : int)
-else riml_size(nbytes, lin_addr, r_x, 0)
+then (flg, get_slice_int(67, 0, 0))
+else let (elem0, elem1) = (if not_bool((not_bool(check_alignment?)) | (address_aligned_p(the_sbits(48, lin_addr), nbytes, (keywords).mem_ptr?)))
+then (Some(":UNALIGNED-LINEAR-ADDRESS"), get_slice_int(66, 0, 0))
+else let (elem0, elem1) = (riml_size(nbytes, the_sbits(48, lin_addr), r_x)) : (option(string), sbits(65)) in
+(elem0, the_sbits(66, elem1))) : (option(string), sbits(66)) in
+(elem0, the_sbits(67, elem1))) : (option(string), sbits(67)) in
+(elem0, the_sbits(68, elem1))
 
 /*Write an unsigned 8-bit value to memory via an effective address.*/
 /*<p>The effective address @ ( ' eff-addr ' ) is translated to a canonical 
@@ -366,16 +380,16 @@ else riml_size(nbytes, lin_addr, r_x, 0)
  analogy, we allow write access to the code segment as well. 
  These checks may be slightly optimized using the invariant that 
  SS.W must be 1 when SS is loaded.</p>*/
-val wme08 : (int, int, int, int, int) -> (option(string), int) effect {eamem, escape, rreg, wmv}
-function wme08 (proc_mode, eff_addr, seg_reg, sailval, x86) =
-if ((proc_mode) != (0)) & (((seg_reg) == (1)) | (let attr = (loghead(16, seg_hidden_attri(seg_reg, 0))) : int in
-let w = (data_segment_descriptor_attributesbits_get_w(attr)) : int in
-(w) == (0)))
-then (Some(":NON-WRITABLE-SEGMENT"), 0 : int)
-else let (flg, lin_addr) = (ea_to_la(proc_mode, eff_addr, seg_reg, 1, 0)) : (option(string), int) in
+val wme08 : (range(0, 4), sbits(64), range(0, 5), bits(8)) -> option(string) effect {eamem, escape, rreg, wmv}
+function wme08 (proc_mode, eff_addr, seg_reg, sailval) =
+if ((proc_mode) != (0)) & (((seg_reg) == (1)) | (let attr = (loghead(16, unsigned(seg_hidden_attrs[seg_reg]))) : int in
+let w = (data_segment_descriptor_attributesbits_get_w(get_slice_int(16, attr, 0))) : bits(1) in
+(unsigned(w)) == (0)))
+then Some(":NON-WRITABLE-SEGMENT")
+else let (flg, lin_addr) = (ea_to_la(proc_mode, eff_addr, seg_reg, 1)) : (option(string), sbits(67)) in
 if is_some(flg)
-then (flg, 0 : int)
-else wml08(lin_addr, sailval, 0)
+then flg
+else wml08(the_sbits(48, lin_addr), sailval)
 
 /*Write a signed 8-bit value to memory via an effective address.*/
 /*<p>The effective address @ ( ' eff-addr ' ) is translated to a canonical 
@@ -392,16 +406,16 @@ else wml08(lin_addr, sailval, 0)
  analogy, we allow write access to the code segment as well. 
  These checks may be slightly optimized using the invariant that 
  SS.W must be 1 when SS is loaded.</p>*/
-val wime08 : (int, int, int, int, int) -> (option(string), int) effect {eamem, escape, rreg, wmv}
-function wime08 (proc_mode, eff_addr, seg_reg, sailval, x86) =
-if ((proc_mode) != (0)) & (((seg_reg) == (1)) | (let attr = (loghead(16, seg_hidden_attri(seg_reg, 0))) : int in
-let w = (data_segment_descriptor_attributesbits_get_w(attr)) : int in
-(w) == (0)))
-then (Some(":NON-WRITABLE-SEGMENT"), 0 : int)
-else let (flg, lin_addr) = (ea_to_la(proc_mode, eff_addr, seg_reg, 1, 0)) : (option(string), int) in
+val wime08 : (range(0, 4), sbits(64), range(0, 5), sbits(8)) -> option(string) effect {eamem, escape, rreg, wmv}
+function wime08 (proc_mode, eff_addr, seg_reg, sailval) =
+if ((proc_mode) != (0)) & (((seg_reg) == (1)) | (let attr = (loghead(16, unsigned(seg_hidden_attrs[seg_reg]))) : int in
+let w = (data_segment_descriptor_attributesbits_get_w(get_slice_int(16, attr, 0))) : bits(1) in
+(unsigned(w)) == (0)))
+then Some(":NON-WRITABLE-SEGMENT")
+else let (flg, lin_addr) = (ea_to_la(proc_mode, eff_addr, seg_reg, 1)) : (option(string), sbits(67)) in
 if is_some(flg)
-then (flg, 0 : int)
-else wiml08(lin_addr, sailval, 0)
+then flg
+else wiml08(the_sbits(48, lin_addr), sailval)
 
 /*Write an unsigned 16-bit value to memory via an effective address.*/
 /*<p>The effective address @ ( ' eff-addr ' ) is translated to a canonical 
@@ -418,18 +432,18 @@ else wiml08(lin_addr, sailval, 0)
  analogy, we allow write access to the code segment as well. 
  These checks may be slightly optimized using the invariant that 
  SS.W must be 1 when SS is loaded.</p>*/
-val wme16 : (int, int, int, int, bool, int) -> (option(string), int) effect {eamem, escape, rreg, wmv}
-function wme16 (proc_mode, eff_addr, seg_reg, sailval, check_alignment?, x86) =
-if ((proc_mode) != (0)) & (((seg_reg) == (1)) | (let attr = (loghead(16, seg_hidden_attri(seg_reg, 0))) : int in
-let w = (data_segment_descriptor_attributesbits_get_w(attr)) : int in
-(w) == (0)))
-then (Some(":NON-WRITABLE-SEGMENT"), 0 : int)
-else let (flg, lin_addr) = (ea_to_la(proc_mode, eff_addr, seg_reg, 2, 0)) : (option(string), int) in
+val wme16 : (range(0, 4), sbits(64), range(0, 5), bits(16), bool) -> option(string) effect {eamem, escape, rreg, wmv}
+function wme16 (proc_mode, eff_addr, seg_reg, sailval, check_alignment?) =
+if ((proc_mode) != (0)) & (((seg_reg) == (1)) | (let attr = (loghead(16, unsigned(seg_hidden_attrs[seg_reg]))) : int in
+let w = (data_segment_descriptor_attributesbits_get_w(get_slice_int(16, attr, 0))) : bits(1) in
+(unsigned(w)) == (0)))
+then Some(":NON-WRITABLE-SEGMENT")
+else let (flg, lin_addr) = (ea_to_la(proc_mode, eff_addr, seg_reg, 2)) : (option(string), sbits(67)) in
 if is_some(flg)
-then (flg, 0 : int)
-else if not_bool((not_bool(check_alignment?)) | (address_aligned_p(lin_addr, 2, false)))
-then (Some(":UNALIGNED-LINEAR-ADDRESS"), 0 : int)
-else wml16(lin_addr, sailval, 0)
+then flg
+else if not_bool((not_bool(check_alignment?)) | (address_aligned_p(the_sbits(48, lin_addr), 2, false)))
+then Some(":UNALIGNED-LINEAR-ADDRESS")
+else wml16(the_sbits(48, lin_addr), sailval)
 
 /*Write a signed 16-bit value to memory via an effective address.*/
 /*<p>The effective address @ ( ' eff-addr ' ) is translated to a canonical 
@@ -446,18 +460,18 @@ else wml16(lin_addr, sailval, 0)
  analogy, we allow write access to the code segment as well. 
  These checks may be slightly optimized using the invariant that 
  SS.W must be 1 when SS is loaded.</p>*/
-val wime16 : (int, int, int, int, bool, int) -> (option(string), int) effect {eamem, escape, rreg, wmv}
-function wime16 (proc_mode, eff_addr, seg_reg, sailval, check_alignment?, x86) =
-if ((proc_mode) != (0)) & (((seg_reg) == (1)) | (let attr = (loghead(16, seg_hidden_attri(seg_reg, 0))) : int in
-let w = (data_segment_descriptor_attributesbits_get_w(attr)) : int in
-(w) == (0)))
-then (Some(":NON-WRITABLE-SEGMENT"), 0 : int)
-else let (flg, lin_addr) = (ea_to_la(proc_mode, eff_addr, seg_reg, 2, 0)) : (option(string), int) in
+val wime16 : (range(0, 4), sbits(64), range(0, 5), sbits(16), bool) -> option(string) effect {eamem, escape, rreg, wmv}
+function wime16 (proc_mode, eff_addr, seg_reg, sailval, check_alignment?) =
+if ((proc_mode) != (0)) & (((seg_reg) == (1)) | (let attr = (loghead(16, unsigned(seg_hidden_attrs[seg_reg]))) : int in
+let w = (data_segment_descriptor_attributesbits_get_w(get_slice_int(16, attr, 0))) : bits(1) in
+(unsigned(w)) == (0)))
+then Some(":NON-WRITABLE-SEGMENT")
+else let (flg, lin_addr) = (ea_to_la(proc_mode, eff_addr, seg_reg, 2)) : (option(string), sbits(67)) in
 if is_some(flg)
-then (flg, 0 : int)
-else if not_bool((not_bool(check_alignment?)) | (address_aligned_p(lin_addr, 2, false)))
-then (Some(":UNALIGNED-LINEAR-ADDRESS"), 0 : int)
-else wiml16(lin_addr, sailval, 0)
+then flg
+else if not_bool((not_bool(check_alignment?)) | (address_aligned_p(the_sbits(48, lin_addr), 2, false)))
+then Some(":UNALIGNED-LINEAR-ADDRESS")
+else wiml16(the_sbits(48, lin_addr), sailval)
 
 /*Write an unsigned 32-bit value to memory via an effective address.*/
 /*<p>The effective address @ ( ' eff-addr ' ) is translated to a canonical 
@@ -477,18 +491,18 @@ else wiml16(lin_addr, sailval, 0)
 struct struct_wme32 = {
 	mem_ptr? : bool
 }
-val wme32 : (int, int, int, int, bool, int, struct_wme32) -> (option(string), int) effect {eamem, escape, rreg, wmv}
-function wme32 (proc_mode, eff_addr, seg_reg, sailval, check_alignment?, x86, keywords) =
-if ((proc_mode) != (0)) & (((seg_reg) == (1)) | (let attr = (loghead(16, seg_hidden_attri(seg_reg, 0))) : int in
-let w = (data_segment_descriptor_attributesbits_get_w(attr)) : int in
-(w) == (0)))
-then (Some(":NON-WRITABLE-SEGMENT"), 0 : int)
-else let (flg, lin_addr) = (ea_to_la(proc_mode, eff_addr, seg_reg, 4, 0)) : (option(string), int) in
+val wme32 : (range(0, 4), sbits(64), range(0, 5), bits(32), bool, struct_wme32) -> option(string) effect {eamem, escape, rreg, wmv}
+function wme32 (proc_mode, eff_addr, seg_reg, sailval, check_alignment?, keywords) =
+if ((proc_mode) != (0)) & (((seg_reg) == (1)) | (let attr = (loghead(16, unsigned(seg_hidden_attrs[seg_reg]))) : int in
+let w = (data_segment_descriptor_attributesbits_get_w(get_slice_int(16, attr, 0))) : bits(1) in
+(unsigned(w)) == (0)))
+then Some(":NON-WRITABLE-SEGMENT")
+else let (flg, lin_addr) = (ea_to_la(proc_mode, eff_addr, seg_reg, 4)) : (option(string), sbits(67)) in
 if is_some(flg)
-then (flg, 0 : int)
-else if not_bool((not_bool(check_alignment?)) | (address_aligned_p(lin_addr, 4, (keywords).mem_ptr?)))
-then (Some(":UNALIGNED-LINEAR-ADDRESS"), 0 : int)
-else wml32(lin_addr, sailval, 0)
+then flg
+else if not_bool((not_bool(check_alignment?)) | (address_aligned_p(the_sbits(48, lin_addr), 4, (keywords).mem_ptr?)))
+then Some(":UNALIGNED-LINEAR-ADDRESS")
+else wml32(the_sbits(48, lin_addr), sailval)
 
 /*Write a signed 32-bit value to memory via an effective address.*/
 /*<p>The effective address @ ( ' eff-addr ' ) is translated to a canonical 
@@ -508,18 +522,18 @@ else wml32(lin_addr, sailval, 0)
 struct struct_wime32 = {
 	mem_ptr? : bool
 }
-val wime32 : (int, int, int, int, bool, int, struct_wime32) -> (option(string), int) effect {eamem, escape, rreg, wmv}
-function wime32 (proc_mode, eff_addr, seg_reg, sailval, check_alignment?, x86, keywords) =
-if ((proc_mode) != (0)) & (((seg_reg) == (1)) | (let attr = (loghead(16, seg_hidden_attri(seg_reg, 0))) : int in
-let w = (data_segment_descriptor_attributesbits_get_w(attr)) : int in
-(w) == (0)))
-then (Some(":NON-WRITABLE-SEGMENT"), 0 : int)
-else let (flg, lin_addr) = (ea_to_la(proc_mode, eff_addr, seg_reg, 4, 0)) : (option(string), int) in
+val wime32 : (range(0, 4), sbits(64), range(0, 5), sbits(32), bool, struct_wime32) -> option(string) effect {eamem, escape, rreg, wmv}
+function wime32 (proc_mode, eff_addr, seg_reg, sailval, check_alignment?, keywords) =
+if ((proc_mode) != (0)) & (((seg_reg) == (1)) | (let attr = (loghead(16, unsigned(seg_hidden_attrs[seg_reg]))) : int in
+let w = (data_segment_descriptor_attributesbits_get_w(get_slice_int(16, attr, 0))) : bits(1) in
+(unsigned(w)) == (0)))
+then Some(":NON-WRITABLE-SEGMENT")
+else let (flg, lin_addr) = (ea_to_la(proc_mode, eff_addr, seg_reg, 4)) : (option(string), sbits(67)) in
 if is_some(flg)
-then (flg, 0 : int)
-else if not_bool((not_bool(check_alignment?)) | (address_aligned_p(lin_addr, 4, (keywords).mem_ptr?)))
-then (Some(":UNALIGNED-LINEAR-ADDRESS"), 0 : int)
-else wiml32(lin_addr, sailval, 0)
+then flg
+else if not_bool((not_bool(check_alignment?)) | (address_aligned_p(the_sbits(48, lin_addr), 4, (keywords).mem_ptr?)))
+then Some(":UNALIGNED-LINEAR-ADDRESS")
+else wiml32(the_sbits(48, lin_addr), sailval)
 
 /*Write an unsigned 48-bit value to memory via an effective address.*/
 /*<p>The effective address @ ( ' eff-addr ' ) is translated to a canonical 
@@ -536,18 +550,18 @@ else wiml32(lin_addr, sailval, 0)
  analogy, we allow write access to the code segment as well. 
  These checks may be slightly optimized using the invariant that 
  SS.W must be 1 when SS is loaded.</p>*/
-val wme48 : (int, int, int, int, bool, int) -> (option(string), int) effect {eamem, escape, rreg, wmv}
-function wme48 (proc_mode, eff_addr, seg_reg, sailval, check_alignment?, x86) =
-if ((proc_mode) != (0)) & (((seg_reg) == (1)) | (let attr = (loghead(16, seg_hidden_attri(seg_reg, 0))) : int in
-let w = (data_segment_descriptor_attributesbits_get_w(attr)) : int in
-(w) == (0)))
-then (Some(":NON-WRITABLE-SEGMENT"), 0 : int)
-else let (flg, lin_addr) = (ea_to_la(proc_mode, eff_addr, seg_reg, 6, 0)) : (option(string), int) in
+val wme48 : (range(0, 4), sbits(64), range(0, 5), bits(48), bool) -> option(string) effect {eamem, escape, rreg, wmv}
+function wme48 (proc_mode, eff_addr, seg_reg, sailval, check_alignment?) =
+if ((proc_mode) != (0)) & (((seg_reg) == (1)) | (let attr = (loghead(16, unsigned(seg_hidden_attrs[seg_reg]))) : int in
+let w = (data_segment_descriptor_attributesbits_get_w(get_slice_int(16, attr, 0))) : bits(1) in
+(unsigned(w)) == (0)))
+then Some(":NON-WRITABLE-SEGMENT")
+else let (flg, lin_addr) = (ea_to_la(proc_mode, eff_addr, seg_reg, 6)) : (option(string), sbits(67)) in
 if is_some(flg)
-then (flg, 0 : int)
-else if not_bool((not_bool(check_alignment?)) | (address_aligned_p(lin_addr, 6, false)))
-then (Some(":UNALIGNED-LINEAR-ADDRESS"), 0 : int)
-else wml48(lin_addr, sailval, 0)
+then flg
+else if not_bool((not_bool(check_alignment?)) | (address_aligned_p(the_sbits(48, lin_addr), 6, false)))
+then Some(":UNALIGNED-LINEAR-ADDRESS")
+else wml48(the_sbits(48, lin_addr), sailval)
 
 /*Write an unsigned 64-bit value to memory via an effective address.*/
 /*<p>The effective address @ ( ' eff-addr ' ) is translated to a canonical 
@@ -564,18 +578,18 @@ else wml48(lin_addr, sailval, 0)
  analogy, we allow write access to the code segment as well. 
  These checks may be slightly optimized using the invariant that 
  SS.W must be 1 when SS is loaded.</p>*/
-val wme64 : (int, int, int, int, bool, int) -> (option(string), int) effect {eamem, escape, rreg, wmv}
-function wme64 (proc_mode, eff_addr, seg_reg, sailval, check_alignment?, x86) =
-if ((proc_mode) != (0)) & (((seg_reg) == (1)) | (let attr = (loghead(16, seg_hidden_attri(seg_reg, 0))) : int in
-let w = (data_segment_descriptor_attributesbits_get_w(attr)) : int in
-(w) == (0)))
-then (Some(":NON-WRITABLE-SEGMENT"), 0 : int)
-else let (flg, lin_addr) = (ea_to_la(proc_mode, eff_addr, seg_reg, 8, 0)) : (option(string), int) in
+val wme64 : (range(0, 4), sbits(64), range(0, 5), bits(64), bool) -> option(string) effect {eamem, escape, rreg, wmv}
+function wme64 (proc_mode, eff_addr, seg_reg, sailval, check_alignment?) =
+if ((proc_mode) != (0)) & (((seg_reg) == (1)) | (let attr = (loghead(16, unsigned(seg_hidden_attrs[seg_reg]))) : int in
+let w = (data_segment_descriptor_attributesbits_get_w(get_slice_int(16, attr, 0))) : bits(1) in
+(unsigned(w)) == (0)))
+then Some(":NON-WRITABLE-SEGMENT")
+else let (flg, lin_addr) = (ea_to_la(proc_mode, eff_addr, seg_reg, 8)) : (option(string), sbits(67)) in
 if is_some(flg)
-then (flg, 0 : int)
-else if not_bool((not_bool(check_alignment?)) | (address_aligned_p(lin_addr, 8, false)))
-then (Some(":UNALIGNED-LINEAR-ADDRESS"), 0 : int)
-else wml64(lin_addr, sailval, 0)
+then flg
+else if not_bool((not_bool(check_alignment?)) | (address_aligned_p(the_sbits(48, lin_addr), 8, false)))
+then Some(":UNALIGNED-LINEAR-ADDRESS")
+else wml64(the_sbits(48, lin_addr), sailval)
 
 /*Write a signed 64-bit value to memory via an effective address.*/
 /*<p>The effective address @ ( ' eff-addr ' ) is translated to a canonical 
@@ -592,18 +606,18 @@ else wml64(lin_addr, sailval, 0)
  analogy, we allow write access to the code segment as well. 
  These checks may be slightly optimized using the invariant that 
  SS.W must be 1 when SS is loaded.</p>*/
-val wime64 : (int, int, int, int, bool, int) -> (option(string), int) effect {eamem, escape, rreg, wmv}
-function wime64 (proc_mode, eff_addr, seg_reg, sailval, check_alignment?, x86) =
-if ((proc_mode) != (0)) & (((seg_reg) == (1)) | (let attr = (loghead(16, seg_hidden_attri(seg_reg, 0))) : int in
-let w = (data_segment_descriptor_attributesbits_get_w(attr)) : int in
-(w) == (0)))
-then (Some(":NON-WRITABLE-SEGMENT"), 0 : int)
-else let (flg, lin_addr) = (ea_to_la(proc_mode, eff_addr, seg_reg, 8, 0)) : (option(string), int) in
+val wime64 : (range(0, 4), sbits(64), range(0, 5), sbits(64), bool) -> option(string) effect {eamem, escape, rreg, wmv}
+function wime64 (proc_mode, eff_addr, seg_reg, sailval, check_alignment?) =
+if ((proc_mode) != (0)) & (((seg_reg) == (1)) | (let attr = (loghead(16, unsigned(seg_hidden_attrs[seg_reg]))) : int in
+let w = (data_segment_descriptor_attributesbits_get_w(get_slice_int(16, attr, 0))) : bits(1) in
+(unsigned(w)) == (0)))
+then Some(":NON-WRITABLE-SEGMENT")
+else let (flg, lin_addr) = (ea_to_la(proc_mode, eff_addr, seg_reg, 8)) : (option(string), sbits(67)) in
 if is_some(flg)
-then (flg, 0 : int)
-else if not_bool((not_bool(check_alignment?)) | (address_aligned_p(lin_addr, 8, false)))
-then (Some(":UNALIGNED-LINEAR-ADDRESS"), 0 : int)
-else wiml64(lin_addr, sailval, 0)
+then flg
+else if not_bool((not_bool(check_alignment?)) | (address_aligned_p(the_sbits(48, lin_addr), 8, false)))
+then Some(":UNALIGNED-LINEAR-ADDRESS")
+else wiml64(the_sbits(48, lin_addr), sailval)
 
 /*Write an unsigned 80-bit value to memory via an effective address.*/
 /*<p>The effective address @ ( ' eff-addr ' ) is translated to a canonical 
@@ -620,18 +634,18 @@ else wiml64(lin_addr, sailval, 0)
  analogy, we allow write access to the code segment as well. 
  These checks may be slightly optimized using the invariant that 
  SS.W must be 1 when SS is loaded.</p>*/
-val wme80 : (int, int, int, int, bool, int) -> (option(string), int) effect {eamem, escape, rreg, wmv}
-function wme80 (proc_mode, eff_addr, seg_reg, sailval, check_alignment?, x86) =
-if ((proc_mode) != (0)) & (((seg_reg) == (1)) | (let attr = (loghead(16, seg_hidden_attri(seg_reg, 0))) : int in
-let w = (data_segment_descriptor_attributesbits_get_w(attr)) : int in
-(w) == (0)))
-then (Some(":NON-WRITABLE-SEGMENT"), 0 : int)
-else let (flg, lin_addr) = (ea_to_la(proc_mode, eff_addr, seg_reg, 10, 0)) : (option(string), int) in
+val wme80 : (range(0, 4), sbits(64), range(0, 5), bits(80), bool) -> option(string) effect {eamem, escape, rreg, wmv}
+function wme80 (proc_mode, eff_addr, seg_reg, sailval, check_alignment?) =
+if ((proc_mode) != (0)) & (((seg_reg) == (1)) | (let attr = (loghead(16, unsigned(seg_hidden_attrs[seg_reg]))) : int in
+let w = (data_segment_descriptor_attributesbits_get_w(get_slice_int(16, attr, 0))) : bits(1) in
+(unsigned(w)) == (0)))
+then Some(":NON-WRITABLE-SEGMENT")
+else let (flg, lin_addr) = (ea_to_la(proc_mode, eff_addr, seg_reg, 10)) : (option(string), sbits(67)) in
 if is_some(flg)
-then (flg, 0 : int)
-else if not_bool((not_bool(check_alignment?)) | (address_aligned_p(lin_addr, 10, false)))
-then (Some(":UNALIGNED-LINEAR-ADDRESS"), 0 : int)
-else wml80(lin_addr, sailval, 0)
+then flg
+else if not_bool((not_bool(check_alignment?)) | (address_aligned_p(the_sbits(48, lin_addr), 10, false)))
+then Some(":UNALIGNED-LINEAR-ADDRESS")
+else wml80(the_sbits(48, lin_addr), sailval)
 
 /*Write an unsigned 128-bit value to memory via an effective address.*/
 /*<p>The effective address @ ( ' eff-addr ' ) is translated to a canonical 
@@ -648,18 +662,18 @@ else wml80(lin_addr, sailval, 0)
  analogy, we allow write access to the code segment as well. 
  These checks may be slightly optimized using the invariant that 
  SS.W must be 1 when SS is loaded.</p>*/
-val wme128 : (int, int, int, int, bool, int) -> (option(string), int) effect {eamem, escape, rreg, wmv}
-function wme128 (proc_mode, eff_addr, seg_reg, sailval, check_alignment?, x86) =
-if ((proc_mode) != (0)) & (((seg_reg) == (1)) | (let attr = (loghead(16, seg_hidden_attri(seg_reg, 0))) : int in
-let w = (data_segment_descriptor_attributesbits_get_w(attr)) : int in
-(w) == (0)))
-then (Some(":NON-WRITABLE-SEGMENT"), 0 : int)
-else let (flg, lin_addr) = (ea_to_la(proc_mode, eff_addr, seg_reg, 16, 0)) : (option(string), int) in
+val wme128 : (range(0, 4), sbits(64), range(0, 5), bits(128), bool) -> option(string) effect {eamem, escape, rreg, wmv}
+function wme128 (proc_mode, eff_addr, seg_reg, sailval, check_alignment?) =
+if ((proc_mode) != (0)) & (((seg_reg) == (1)) | (let attr = (loghead(16, unsigned(seg_hidden_attrs[seg_reg]))) : int in
+let w = (data_segment_descriptor_attributesbits_get_w(get_slice_int(16, attr, 0))) : bits(1) in
+(unsigned(w)) == (0)))
+then Some(":NON-WRITABLE-SEGMENT")
+else let (flg, lin_addr) = (ea_to_la(proc_mode, eff_addr, seg_reg, 16)) : (option(string), sbits(67)) in
 if is_some(flg)
-then (flg, 0 : int)
-else if not_bool((not_bool(check_alignment?)) | (address_aligned_p(lin_addr, 16, false)))
-then (Some(":UNALIGNED-LINEAR-ADDRESS"), 0 : int)
-else wml128(lin_addr, sailval, 0)
+then flg
+else if not_bool((not_bool(check_alignment?)) | (address_aligned_p(the_sbits(48, lin_addr), 16, false)))
+then Some(":UNALIGNED-LINEAR-ADDRESS")
+else wml128(the_sbits(48, lin_addr), sailval)
 
 /*Write an unsigned value with the specified number of bytes 
  to memory via an effective address.*/
@@ -679,18 +693,18 @@ else wml128(lin_addr, sailval, 0)
 struct struct_wme_size = {
 	mem_ptr? : bool
 }
-val wme_size : (int, int, int, int, int, bool, int, struct_wme_size) -> (option(string), int) effect {eamem, escape, rreg, wmv}
-function wme_size (proc_mode, nbytes, eff_addr, seg_reg, sailval, check_alignment?, x86, keywords) =
-if ((proc_mode) != (0)) & (((seg_reg) == (1)) | (let attr = (loghead(16, seg_hidden_attri(seg_reg, 0))) : int in
-let w = (data_segment_descriptor_attributesbits_get_w(attr)) : int in
-(w) == (0)))
-then (Some(":NON-WRITABLE-SEGMENT"), 0 : int)
-else let (flg, lin_addr) = (ea_to_la(proc_mode, eff_addr, seg_reg, nbytes, 0)) : (option(string), int) in
+val wme_size : (range(0, 4), {|1, 2, 4, 6, 8, 10, 16|}, sbits(64), range(0, 5), nat, bool, struct_wme_size) -> option(string) effect {eamem, escape, rreg, wmv}
+function wme_size (proc_mode, nbytes, eff_addr, seg_reg, sailval, check_alignment?, keywords) =
+if ((proc_mode) != (0)) & (((seg_reg) == (1)) | (let attr = (loghead(16, unsigned(seg_hidden_attrs[seg_reg]))) : int in
+let w = (data_segment_descriptor_attributesbits_get_w(get_slice_int(16, attr, 0))) : bits(1) in
+(unsigned(w)) == (0)))
+then Some(":NON-WRITABLE-SEGMENT")
+else let (flg, lin_addr) = (ea_to_la(proc_mode, eff_addr, seg_reg, nbytes)) : (option(string), sbits(67)) in
 if is_some(flg)
-then (flg, 0 : int)
-else if not_bool((not_bool(check_alignment?)) | (address_aligned_p(lin_addr, nbytes, (keywords).mem_ptr?)))
-then (Some(":UNALIGNED-LINEAR-ADDRESS"), 0 : int)
-else wml_size(nbytes, lin_addr, sailval, 0)
+then flg
+else if not_bool((not_bool(check_alignment?)) | (address_aligned_p(the_sbits(48, lin_addr), nbytes, (keywords).mem_ptr?)))
+then Some(":UNALIGNED-LINEAR-ADDRESS")
+else wml_size(nbytes, the_sbits(48, lin_addr), sailval)
 
 /*Write a signed value with the specified number of bytes 
  to memory via an effective address.*/
@@ -710,16 +724,16 @@ else wml_size(nbytes, lin_addr, sailval, 0)
 struct struct_wime_size = {
 	mem_ptr? : bool
 }
-val wime_size : (int, int, int, int, int, bool, int, struct_wime_size) -> (option(string), int) effect {eamem, escape, rreg, wmv}
-function wime_size (proc_mode, nbytes, eff_addr, seg_reg, sailval, check_alignment?, x86, keywords) =
-if ((proc_mode) != (0)) & (((seg_reg) == (1)) | (let attr = (loghead(16, seg_hidden_attri(seg_reg, 0))) : int in
-let w = (data_segment_descriptor_attributesbits_get_w(attr)) : int in
-(w) == (0)))
-then (Some(":NON-WRITABLE-SEGMENT"), 0 : int)
-else let (flg, lin_addr) = (ea_to_la(proc_mode, eff_addr, seg_reg, nbytes, 0)) : (option(string), int) in
+val wime_size : (range(0, 4), {|1, 2, 4, 8|}, sbits(64), range(0, 5), int, bool, struct_wime_size) -> option(string) effect {eamem, escape, rreg, wmv}
+function wime_size (proc_mode, nbytes, eff_addr, seg_reg, sailval, check_alignment?, keywords) =
+if ((proc_mode) != (0)) & (((seg_reg) == (1)) | (let attr = (loghead(16, unsigned(seg_hidden_attrs[seg_reg]))) : int in
+let w = (data_segment_descriptor_attributesbits_get_w(get_slice_int(16, attr, 0))) : bits(1) in
+(unsigned(w)) == (0)))
+then Some(":NON-WRITABLE-SEGMENT")
+else let (flg, lin_addr) = (ea_to_la(proc_mode, eff_addr, seg_reg, nbytes)) : (option(string), sbits(67)) in
 if is_some(flg)
-then (flg, 0 : int)
-else if not_bool((not_bool(check_alignment?)) | (address_aligned_p(lin_addr, nbytes, (keywords).mem_ptr?)))
-then (Some(":UNALIGNED-LINEAR-ADDRESS"), 0 : int)
-else wiml_size(nbytes, lin_addr, sailval, 0)
+then flg
+else if not_bool((not_bool(check_alignment?)) | (address_aligned_p(the_sbits(48, lin_addr), nbytes, (keywords).mem_ptr?)))
+then Some(":UNALIGNED-LINEAR-ADDRESS")
+else wiml_size(nbytes, the_sbits(48, lin_addr), sailval)
 

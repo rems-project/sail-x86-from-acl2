@@ -16,11 +16,11 @@ $include <string.sail>
  
  <p>In 32-bit mode, the REX prefix is absent. This function can be used in 
  32-bit mode, by passing 0 as REX.</p>*/
-val reg_index : (int, int, int) -> int effect {escape}
+val reg_index : (bits(3), bits(8), bits(2)) -> bits(4)
 function reg_index (reg, rex_byte, index) =
-if logbitp(index, rex_byte)
-then binary_logior(8, n03(reg))
-else n03(reg)
+if logbitp(unsigned(index), rex_byte)
+then logior(get_slice_int(4, 8, 0), the_bits(4, n03(reg)))
+else the_bits(4, n03(reg))
 
 /*Functions to read/write 8/16/32/64 bits into the registers*/
 /*<p>@ ( see rr08 ) , @ ( see rr16 ) , @ ( see rr32 ) , and @ ( see rr64 ) 
@@ -62,29 +62,29 @@ else n03(reg)
  R14L, R15L. This applies to 64-bit mode.</p> 
  
  <p>In 32-bit mode, this function is called with 0 as REX.</p>*/
-val rr08 : (int, int, int) -> int effect {escape, rreg}
-function rr08 (reg, rex, x86) =
-if (not_bool((rex) == (0))) | ((reg) < (4))
-then let qword = (rgfi(reg, 0)) : int in
-n08(qword)
-else let qword = (rgfi((reg) - (4), 0)) : int in
-unsigned(get_slice_int(8, qword, 8))
+val rr08 : (bits(4), bits(8)) -> bits(8) effect {escape, rreg}
+function rr08 (reg, rex) =
+if (not_bool((rex) == (get_slice_int(8, 0, 0)))) | ((unsigned(reg)) < (4))
+then let qword = (rgfi(unsigned(reg))) : bits(64) in
+n08(the_bits(8, qword))
+else let qword = (rgfi(unsigned(the_bits(4, (unsigned(reg)) - (4))))) : bits(64) in
+slice(qword, 8, 8)
 
 /*Read from word general-purpose registers*/
-val rr16 : (int, int) -> int effect {escape, rreg}
-function rr16 (reg, x86) =
-n16(rgfi(reg, 0))
+val rr16 : (bits(4)) -> bits(16) effect {escape, rreg}
+function rr16 (reg) =
+n16(the_bits(16, rgfi(unsigned(reg))))
 
 /*Read from doubleword general-purpose registers*/
-val rr32 : (int, int) -> int effect {escape, rreg}
-function rr32 (reg, x86) =
-n32(rgfi(reg, 0))
+val rr32 : (bits(4)) -> bits(32) effect {escape, rreg}
+function rr32 (reg) =
+n32(the_bits(32, rgfi(unsigned(reg))))
 
 /*Read from quadword general-purpose registers*/
 /*<p>This function is used only in 64-bit mode.</p>*/
-val rr64 : (int, int) -> int effect {escape, rreg}
-function rr64 (reg, x86) =
-n64(rgfi(reg, 0))
+val rr64 : (bits(4)) -> bits(64) effect {escape, rreg}
+function rr64 (reg) =
+n64(rgfi(unsigned(reg)))
 
 /*Writing to byte general-purpose registers*/
 /*<p>Note Intel Vol. 1 Sec. 3.4.1.1 
@@ -114,14 +114,14 @@ n64(rgfi(reg, 0))
  of certain instructions for certain flags. The switching from 32-bit mode 
  to 64-bit mode ( when modeled ) will set the high 32 bits of general-purpose 
  registers to undefined values.</p>*/
-val wr08 : (int, int, int, int) -> int effect {escape, rreg, wreg}
-function wr08 (reg, rex, byte, x86) =
-if (not_bool((rex) == (0))) | ((reg) < (4))
-then let qword = (rgfi(reg, 0)) : int in
-write_rgfi(reg, n64_to_i64(changeBits(unsigned(get_slice_int(64, qword, 0)), 0, 8, byte)), 0)
-else let index = ((reg) - (4)) : int in
-let qword = (rgfi(index, 0)) : int in
-write_rgfi(index, n64_to_i64(changeBits(unsigned(get_slice_int(64, qword, 0)), 8, 8, byte)), 0)
+val wr08 : (bits(4), bits(8), bits(8)) -> unit effect {escape, rreg, wreg}
+function wr08 (reg, rex, byte) =
+if (not_bool((rex) == (get_slice_int(8, 0, 0)))) | ((unsigned(reg)) < (4))
+then let qword = (rgfi(unsigned(reg))) : bits(64) in
+write_rgfi(unsigned(reg), n64_to_i64(changeSlice(slice(qword, 0, 64), 0, 8, byte)))
+else let index = (the_bits(4, (unsigned(reg)) - (4))) : bits(4) in
+let qword = (rgfi(unsigned(index))) : bits(64) in
+write_rgfi(unsigned(index), n64_to_i64(changeSlice(slice(qword, 0, 64), 8, 8, byte)))
 
 /*Write to word general-purpose registers*/
 /*<p>Note Intel Vol. 1 Sec. 3.4.1.1 
@@ -151,10 +151,10 @@ write_rgfi(index, n64_to_i64(changeBits(unsigned(get_slice_int(64, qword, 0)), 8
  semantic functions of certain instructions for certain flags. The switching 
  from 32-bit mode to 64-bit mode ( when modeled ) will set the high 32 bits of 
  general-purpose registers to undefined values.</p>*/
-val wr16 : (int, int, int) -> int effect {escape, rreg, wreg}
-function wr16 (reg, sailval, x86) =
-let qword = (rgfi(reg, 0)) : int in
-write_rgfi(reg, n64_to_i64(changeBits(unsigned(get_slice_int(64, qword, 0)), 0, 16, sailval)), 0)
+val wr16 : (bits(4), bits(16)) -> unit effect {escape, rreg, wreg}
+function wr16 (reg, sailval) =
+let qword = (rgfi(unsigned(reg))) : bits(64) in
+write_rgfi(unsigned(reg), n64_to_i64(changeSlice(slice(qword, 0, 64), 0, 16, sailval)))
 
 /*Write to doubleword general-purpose registers*/
 /*<p>Note Intel Vol. 1 Sec. 3.4.1.1 
@@ -184,39 +184,39 @@ write_rgfi(reg, n64_to_i64(changeBits(unsigned(get_slice_int(64, qword, 0)), 0, 
  functions of certain instructions for certain flags. The switching from 
  32-bit mode to 64-bit mode ( when modeled ) will set the high 32 bits of 
  general-purpose registers to undefined values.</p>*/
-val wr32 : (int, int, int) -> int effect {escape, wreg}
-function wr32 (reg, sailval, x86) =
-write_rgfi(reg, n32(sailval), 0)
+val wr32 : (bits(4), bits(32)) -> unit effect {escape, wreg}
+function wr32 (reg, sailval) =
+write_rgfi(unsigned(reg), the_bits(64, n32(sailval)))
 
 /*Write to quadword general-purpose registers*/
 /*<p>This function is used only in 64-bit mode.</p>*/
-val wr64 : (int, int, int) -> int effect {escape, wreg}
-function wr64 (reg, sailval, x86) =
-write_rgfi(reg, n64_to_i64(sailval), 0)
+val wr64 : (bits(4), bits(64)) -> unit effect {escape, wreg}
+function wr64 (reg, sailval) =
+write_rgfi(unsigned(reg), n64_to_i64(sailval))
 
 /*Read form byte, word, doubleword, or quadword 
  general-purpose register*/
-val rgfi_size : (int, int, int, int) -> int effect {escape, rreg}
-function rgfi_size (nbytes, index, rex, x86) =
+val rgfi_size : (bits(4), bits(4), bits(8)) -> bits(64) effect {escape, rreg}
+function rgfi_size (nbytes, index, rex) =
 (match nbytes {
-1 => rr08(index, rex, 0),
-2 => rr16(index, 0),
-4 => rr32(index, 0),
-8 => rr64(index, 0),
-_ => 0
-}) : int
+1 => the_bits(64, rr08(index, rex)),
+2 => the_bits(64, rr16(index)),
+4 => the_bits(64, rr32(index)),
+8 => rr64(index),
+_ => get_slice_int(64, 0, 0)
+}) : bits(64)
 
 /*Write to byte, word, doubleword, or quadword 
  general-purpose register*/
-val write_rgfi_size : (int, int, int, int, int) -> int effect {escape, rreg, wreg}
-function write_rgfi_size (nbytes, index, sailval, rex, x86) =
+val write_rgfi_size : (bits(4), bits(4), int, bits(8)) -> unit effect {escape, rreg, wreg}
+function write_rgfi_size (nbytes, index, sailval, rex) =
 (match nbytes {
-1 => wr08(index, rex, sailval, 0),
-2 => wr16(index, sailval, 0),
-4 => wr32(index, sailval, 0),
-8 => wr64(index, sailval, 0),
-_ => 0
-}) : int
+1 => wr08(index, rex, get_slice_int(8, sailval, 0)),
+2 => wr16(index, get_slice_int(16, sailval, 0)),
+4 => wr32(index, get_slice_int(32, sailval, 0)),
+8 => wr64(index, get_slice_int(64, sailval, 0)),
+_ => ()
+}) : unit
 
 /*Functions to read/write into the MMX registers*/
 /*<p>From Section 12.2, Intel Manual, Volume 3 \ ( System 
@@ -300,17 +300,17 @@ _ => 0
  <p>Similarly, @ ( see wz32 ) , @ ( see wz64 ) , @ ( see wz128 ) , @ ( see wz256 ) , 
  and @ ( see wz512 ) are used to write natural numbers into the 
  ZMMs.</p>*/
-val rz32 : (int, int) -> int effect {escape, rreg}
-function rz32 (reg, x86) =
-n32(zmmi(reg, 0))
+val rz32 : (bits(5)) -> bits(32) effect {escape}
+function rz32 (reg) =
+n32(the_bits(32, zmms[unsigned(reg)]))
 
-val rz64 : (int, int) -> int effect {escape, rreg}
-function rz64 (reg, x86) =
-n64(zmmi(reg, 0))
+val rz64 : (bits(5)) -> bits(64) effect {escape}
+function rz64 (reg) =
+n64(the_bits(64, zmms[unsigned(reg)]))
 
-val rz128 : (int, int) -> int effect {escape, rreg}
-function rz128 (reg, x86) =
-n128(zmmi(reg, 0))
+val rz128 : (bits(5)) -> bits(128) effect {escape}
+function rz128 (reg) =
+n128(the_bits(128, zmms[unsigned(reg)]))
 
 /*Write @ ( ' val ' ) to low 32 bits of a ZMM register*/
 /*<p><i>Upper bits</i>: For XMM registers, upper @ ( ` ( - 512 
@@ -321,17 +321,17 @@ n128(zmmi(reg, 0))
 struct struct_wz32 = {
 	regtype : int
 }
-val wz32 : (int, int, int, struct_wz32) -> int effect {escape, rreg, wreg}
-function wz32 (reg, sailval, x86, keywords) =
-let data = (zmmi(reg, 0)) : int in
-let regtype = ((keywords).regtype) : int in
+val wz32 : (bits(5), bits(32), struct_wz32) -> unit effect {escape}
+function wz32 (reg, sailval, keywords) =
+let data = (zmms[unsigned(reg)]) : bits(512) in
+let regtype = (the_bits(3, (keywords).regtype)) : bits(3) in
 let data = ((match regtype {
-2 => loghead(128, data),
-3 => loghead(256, data),
-_ => data
+2 => loghead(128, unsigned(data)),
+3 => loghead(256, unsigned(data)),
+_ => unsigned(data)
 }) : int) : int in
-let sailval = (n32(sailval)) : int in
-write_zmmi(reg, changeBits(data, 0, 32, sailval), 0)
+let sailval = (n32(sailval)) : bits(32) in
+zmms[unsigned(reg)] = get_slice_int(512, changeSlice(data, 0, 32, unsigned(sailval)), 0)
 
 /*Write @ ( ' val ' ) to low 64 bits of a ZMM register*/
 /*<p><i>Upper bits</i>: For XMM registers, upper @ ( ` ( - 512 
@@ -342,17 +342,17 @@ write_zmmi(reg, changeBits(data, 0, 32, sailval), 0)
 struct struct_wz64 = {
 	regtype : int
 }
-val wz64 : (int, int, int, struct_wz64) -> int effect {escape, rreg, wreg}
-function wz64 (reg, sailval, x86, keywords) =
-let data = (zmmi(reg, 0)) : int in
-let regtype = ((keywords).regtype) : int in
+val wz64 : (bits(5), bits(64), struct_wz64) -> unit effect {escape}
+function wz64 (reg, sailval, keywords) =
+let data = (zmms[unsigned(reg)]) : bits(512) in
+let regtype = (the_bits(3, (keywords).regtype)) : bits(3) in
 let data = ((match regtype {
-2 => loghead(128, data),
-3 => loghead(256, data),
-_ => data
+2 => loghead(128, unsigned(data)),
+3 => loghead(256, unsigned(data)),
+_ => unsigned(data)
 }) : int) : int in
-let sailval = (n64(sailval)) : int in
-write_zmmi(reg, changeBits(data, 0, 64, sailval), 0)
+let sailval = (n64(sailval)) : bits(64) in
+zmms[unsigned(reg)] = get_slice_int(512, changeSlice(data, 0, 64, unsigned(sailval)), 0)
 
 /*Write @ ( ' val ' ) to low 128 bits of a ZMM register*/
 /*<p><i>Upper bits</i>: For XMM registers, upper @ ( ` ( - 512 
@@ -363,17 +363,17 @@ write_zmmi(reg, changeBits(data, 0, 64, sailval), 0)
 struct struct_wz128 = {
 	regtype : int
 }
-val wz128 : (int, int, int, struct_wz128) -> int effect {escape, rreg, wreg}
-function wz128 (reg, sailval, x86, keywords) =
-let data = (zmmi(reg, 0)) : int in
-let regtype = ((keywords).regtype) : int in
+val wz128 : (bits(5), bits(128), struct_wz128) -> unit effect {escape}
+function wz128 (reg, sailval, keywords) =
+let data = (zmms[unsigned(reg)]) : bits(512) in
+let regtype = (the_bits(3, (keywords).regtype)) : bits(3) in
 let data = ((match regtype {
-2 => loghead(128, data),
-3 => loghead(256, data),
-_ => data
+2 => loghead(128, unsigned(data)),
+3 => loghead(256, unsigned(data)),
+_ => unsigned(data)
 }) : int) : int in
-let sailval = (n128(sailval)) : int in
-write_zmmi(reg, changeBits(data, 0, 128, sailval), 0)
+let sailval = (n128(sailval)) : bits(128) in
+zmms[unsigned(reg)] = get_slice_int(512, changeSlice(data, 0, 128, unsigned(sailval)), 0)
 
 /*Functions to read/write 32/64/128 bits into the XMM 
  registers ( to be used by non-VEX encoded 128-bit SIMD instructions )*/
@@ -403,55 +403,55 @@ write_zmmi(reg, changeBits(data, 0, 128, sailval), 0)
  <p>Similarly, functions @ ( see wx32 ) , @ ( see wx64 ) , and @ ( see wx128 ) 
  are used to write natural numbers into the XMMs ( and preserve the 
  upper bits of ZMMs ) .</p>*/
-val rx32 : (int, int) -> int effect {escape, rreg}
-function rx32 (reg, x86) =
-rz32(reg, 0)
+val rx32 : (bits(4)) -> bits(32) effect {escape}
+function rx32 (reg) =
+rz32(the_bits(5, reg))
 
-val rx64 : (int, int) -> int effect {escape, rreg}
-function rx64 (reg, x86) =
-rz64(reg, 0)
+val rx64 : (bits(4)) -> bits(64) effect {escape}
+function rx64 (reg) =
+rz64(the_bits(5, reg))
 
-val rx128 : (int, int) -> int effect {escape, rreg}
-function rx128 (reg, x86) =
-rz128(reg, 0)
+val rx128 : (bits(4)) -> bits(128) effect {escape}
+function rx128 (reg) =
+rz128(the_bits(5, reg))
 
 /*Write @ ( ' val ' ) to low 32 bits of a ZMM register; upper 
  bits are preserved.*/
-val wx32 : (int, int, int) -> int effect {escape, rreg, wreg}
-function wx32 (reg, sailval, x86) =
-wz32(reg, sailval, 0, struct {regtype = 1})
+val wx32 : (bits(4), bits(32)) -> unit effect {escape}
+function wx32 (reg, sailval) =
+wz32(the_bits(5, reg), sailval, struct {regtype = 1})
 
 /*Write @ ( ' val ' ) to low 64 bits of a ZMM register; upper 
  bits are preserved.*/
-val wx64 : (int, int, int) -> int effect {escape, rreg, wreg}
-function wx64 (reg, sailval, x86) =
-wz64(reg, sailval, 0, struct {regtype = 1})
+val wx64 : (bits(4), bits(64)) -> unit effect {escape}
+function wx64 (reg, sailval) =
+wz64(the_bits(5, reg), sailval, struct {regtype = 1})
 
 /*Write @ ( ' val ' ) to low 128 bits of a ZMM register; upper 
  bits are preserved.*/
-val wx128 : (int, int, int) -> int effect {escape, rreg, wreg}
-function wx128 (reg, sailval, x86) =
-wz128(reg, sailval, 0, struct {regtype = 1})
+val wx128 : (bits(4), bits(128)) -> unit effect {escape}
+function wx128 (reg, sailval) =
+wz128(the_bits(5, reg), sailval, struct {regtype = 1})
 
-val xmmi_size : (int, int, int) -> int effect {escape, rreg}
-function xmmi_size (nbytes, index, x86) =
+val xmmi_size : (bits(5), bits(4)) -> bits(128) effect {escape}
+function xmmi_size (nbytes, index) =
 (match nbytes {
-4 => rx32(index, 0),
-8 => rx64(index, 0),
-16 => rx128(index, 0),
-_ => 0
-}) : int
+4 => the_bits(128, rx32(index)),
+8 => the_bits(128, rx64(index)),
+16 => rx128(index),
+_ => get_slice_int(128, 0, 0)
+}) : bits(128)
 
 /*Write @ ( ' val ' ) to low @ ( ' nbytes ' ) of an XMM register; 
  upper bits of the ZMM register are preserved.*/
-val write_xmmi_size : (int, int, int, int) -> int effect {escape, rreg, wreg}
-function write_xmmi_size (nbytes, index, sailval, x86) =
+val write_xmmi_size : (bits(5), bits(4), int) -> unit effect {escape}
+function write_xmmi_size (nbytes, index, sailval) =
 (match nbytes {
-4 => wx32(index, sailval, 0),
-8 => wx64(index, sailval, 0),
-16 => wx128(index, sailval, 0),
-_ => 0
-}) : int
+4 => wx32(index, get_slice_int(32, sailval, 0)),
+8 => wx64(index, get_slice_int(64, sailval, 0)),
+16 => wx128(index, get_slice_int(128, sailval, 0)),
+_ => ()
+}) : unit
 
 /*Get a unique unknown to be used when reasoning about 
  undefined values in the processor*/
@@ -461,80 +461,92 @@ _ => 0
  <p>The accessor and updater functions of the @ ( ' undef ' ) field are 
  untouchable so that the only way to create a new seed for unknowns 
  is via this function.</p>*/
-val undef_read : (int) -> (int, int) effect {undef}
-function undef_read (x86) =
-undef_read_logic(0)
+val undef_read : unit -> nat effect {undef}
+function undef_read () =
+undef_read_logic()
 
 /*Reading from and writing to the @ ( ' rflags ' ) register in the @ ( ' x86 ' ) state*/
 /*<p>We define convenient macros @ ( ' flgi ' ) and @ ( ' !flgi ' ) to read a 
  flag ' s value and to write a flag ' s value into the @ ( ' rflags ' ) field in the 
  @ ( ' x86 ' ) state, respectively. Additionally, @ ( ' !flgi-undefined ' ) can be 
  used to write an undefined value into a particular flag.</p>*/
-val undef_flg_logic : (int) -> (int, int) effect {undef}
-function undef_flg_logic (x86) =
-undef_read(0)
+val undef_flg_logic : unit -> nat effect {undef}
+function undef_flg_logic () =
+undef_read()
 
-val undef_flg : (int) -> (int, int) effect {undef}
-function undef_flg (x86) =
-let (sailval, x86) = (undef_flg_logic(0)) : (int, int) in
-(n01(sailval), 0 : int)
+val undef_flg : unit -> bits(1) effect {undef}
+function undef_flg () =
+let sailval = (undef_flg_logic()) : nat in
+n01(get_slice_int(1, sailval, 0))
 
 /*Writing user rflags \ ( CF, PF, AF, ZF, SF, and OF\ ) , 
  including undefined ones, to the x86 state*/
 /*<p>We set the undefined flags, which are indicated by 
  @ ( ' mask ' ) , to the value returned by @ ( see undef-read ) .</p>*/
-val write_user_rflags : (int, int, int) -> int effect {escape, rreg, undef, wreg}
-function write_user_rflags (user_flags_vector, undefined_mask, x86) =
-let user_flags_vector = (n32(user_flags_vector)) : int in
-let undefined_mask = (n32(undefined_mask)) : int in
-let input_rflags = (n32(r_rflags(0))) : int in
-let x86 = (if (rflagsbits_get_cf(undefined_mask)) == (1)
-then let rflags_var = (r_rflags(0)) : int in
-let (sailval, x86) = (undef_flg(0)) : (int, int) in
-let new_rflags = (set_rflagsbits_get_cf(sailval, rflags_var)) : int in
-write_rflags(new_rflags, 0)
-else let rflags_var = (r_rflags(0)) : int in
-let new_rflags = (set_rflagsbits_get_cf(rflagsbits_get_cf(user_flags_vector), rflags_var)) : int in
-write_rflags(new_rflags, 0)) : int in
-let x86 = (if (rflagsbits_get_pf(undefined_mask)) == (1)
-then let rflags_var = (r_rflags(0)) : int in
-let (sailval, x86) = (undef_flg(0)) : (int, int) in
-let new_rflags = (set_rflagsbits_get_pf(sailval, rflags_var)) : int in
-write_rflags(new_rflags, 0)
-else let rflags_var = (r_rflags(0)) : int in
-let new_rflags = (set_rflagsbits_get_pf(rflagsbits_get_pf(user_flags_vector), rflags_var)) : int in
-write_rflags(new_rflags, 0)) : int in
-let x86 = (if (rflagsbits_get_af(undefined_mask)) == (1)
-then let rflags_var = (r_rflags(0)) : int in
-let (sailval, x86) = (undef_flg(0)) : (int, int) in
-let new_rflags = (set_rflagsbits_get_af(sailval, rflags_var)) : int in
-write_rflags(new_rflags, 0)
-else let rflags_var = (r_rflags(0)) : int in
-let new_rflags = (set_rflagsbits_get_af(rflagsbits_get_af(user_flags_vector), rflags_var)) : int in
-write_rflags(new_rflags, 0)) : int in
-let x86 = (if (rflagsbits_get_zf(undefined_mask)) == (1)
-then let rflags_var = (r_rflags(0)) : int in
-let (sailval, x86) = (undef_flg(0)) : (int, int) in
-let new_rflags = (set_rflagsbits_get_zf(sailval, rflags_var)) : int in
-write_rflags(new_rflags, 0)
-else let rflags_var = (r_rflags(0)) : int in
-let new_rflags = (set_rflagsbits_get_zf(rflagsbits_get_zf(user_flags_vector), rflags_var)) : int in
-write_rflags(new_rflags, 0)) : int in
-let x86 = (if (rflagsbits_get_sf(undefined_mask)) == (1)
-then let rflags_var = (r_rflags(0)) : int in
-let (sailval, x86) = (undef_flg(0)) : (int, int) in
-let new_rflags = (set_rflagsbits_get_sf(sailval, rflags_var)) : int in
-write_rflags(new_rflags, 0)
-else let rflags_var = (r_rflags(0)) : int in
-let new_rflags = (set_rflagsbits_get_sf(rflagsbits_get_sf(user_flags_vector), rflags_var)) : int in
-write_rflags(new_rflags, 0)) : int in
-let x86 = (if (rflagsbits_get_of(undefined_mask)) == (1)
-then let rflags_var = (r_rflags(0)) : int in
-let (sailval, x86) = (undef_flg(0)) : (int, int) in
-let new_rflags = (set_rflagsbits_get_of(sailval, rflags_var)) : int in
-write_rflags(new_rflags, 0)
-else let rflags_var = (r_rflags(0)) : int in
-let new_rflags = (set_rflagsbits_get_of(rflagsbits_get_of(user_flags_vector), rflags_var)) : int in
-write_rflags(new_rflags, 0)) : int in
-0
+val write_user_rflags : (bits(32), bits(32)) -> unit effect {escape, undef}
+function write_user_rflags (user_flags_vector, undefined_mask) =
+let user_flags_vector = (n32(user_flags_vector)) : bits(32) in
+let undefined_mask = (n32(undefined_mask)) : bits(32) in
+let input_rflags = (n32(rflags)) : bits(32) in
+{ if (the_bits(8, rflagsbits_get_cf(undefined_mask))) == (get_slice_int(8, 1, 0))
+then { let rflags_var = (rflags) : bits(32) in
+let sailval = (undef_flg()) : bits(1) in
+let new_rflags = (set_rflagsbits_get_cf(sailval, rflags_var)) : bits(32) in
+rflags = new_rflags
+}
+else { let rflags_var = (rflags) : bits(32) in
+let new_rflags = (set_rflagsbits_get_cf(rflagsbits_get_cf(user_flags_vector), rflags_var)) : bits(32) in
+rflags = new_rflags
+};
+if (the_bits(8, rflagsbits_get_pf(undefined_mask))) == (get_slice_int(8, 1, 0))
+then { let rflags_var = (rflags) : bits(32) in
+let sailval = (undef_flg()) : bits(1) in
+let new_rflags = (set_rflagsbits_get_pf(sailval, rflags_var)) : bits(32) in
+rflags = new_rflags
+}
+else { let rflags_var = (rflags) : bits(32) in
+let new_rflags = (set_rflagsbits_get_pf(rflagsbits_get_pf(user_flags_vector), rflags_var)) : bits(32) in
+rflags = new_rflags
+};
+if (the_bits(8, rflagsbits_get_af(undefined_mask))) == (get_slice_int(8, 1, 0))
+then { let rflags_var = (rflags) : bits(32) in
+let sailval = (undef_flg()) : bits(1) in
+let new_rflags = (set_rflagsbits_get_af(sailval, rflags_var)) : bits(32) in
+rflags = new_rflags
+}
+else { let rflags_var = (rflags) : bits(32) in
+let new_rflags = (set_rflagsbits_get_af(rflagsbits_get_af(user_flags_vector), rflags_var)) : bits(32) in
+rflags = new_rflags
+};
+if (the_bits(8, rflagsbits_get_zf(undefined_mask))) == (get_slice_int(8, 1, 0))
+then { let rflags_var = (rflags) : bits(32) in
+let sailval = (undef_flg()) : bits(1) in
+let new_rflags = (set_rflagsbits_get_zf(sailval, rflags_var)) : bits(32) in
+rflags = new_rflags
+}
+else { let rflags_var = (rflags) : bits(32) in
+let new_rflags = (set_rflagsbits_get_zf(rflagsbits_get_zf(user_flags_vector), rflags_var)) : bits(32) in
+rflags = new_rflags
+};
+if (the_bits(8, rflagsbits_get_sf(undefined_mask))) == (get_slice_int(8, 1, 0))
+then { let rflags_var = (rflags) : bits(32) in
+let sailval = (undef_flg()) : bits(1) in
+let new_rflags = (set_rflagsbits_get_sf(sailval, rflags_var)) : bits(32) in
+rflags = new_rflags
+}
+else { let rflags_var = (rflags) : bits(32) in
+let new_rflags = (set_rflagsbits_get_sf(rflagsbits_get_sf(user_flags_vector), rflags_var)) : bits(32) in
+rflags = new_rflags
+};
+if (the_bits(8, rflagsbits_get_of(undefined_mask))) == (get_slice_int(8, 1, 0))
+then { let rflags_var = (rflags) : bits(32) in
+let sailval = (undef_flg()) : bits(1) in
+let new_rflags = (set_rflagsbits_get_of(sailval, rflags_var)) : bits(32) in
+rflags = new_rflags
+}
+else { let rflags_var = (rflags) : bits(32) in
+let new_rflags = (set_rflagsbits_get_of(rflagsbits_get_of(user_flags_vector), rflags_var)) : bits(32) in
+rflags = new_rflags
+}
+}
 

@@ -29,20 +29,20 @@ $include "register_readers_and_writers.sail"
  but the IA32_EFER register consists of 12 bits. 
  So we use @ ( tsee n12 ) to make @ ( ' ia32_eferBits ' ) functions applicable. 
  </p>*/
-val n64_bit_modep : (int) -> bool effect {escape, rreg}
-function n64_bit_modep (x86) =
-let ia32_efer = (n12(msri(0, 0))) : int in
-let ia32_efer_lma = (ia32_eferbits_get_lma(ia32_efer)) : int in
-let cs_attr = (seg_hidden_attri(1, 0)) : int in
-let cs_l = (code_segment_descriptor_attributesbits_get_l(cs_attr)) : int in
-((ia32_efer_lma) == (1)) & ((cs_l) == (1))
+val n64_bit_modep : unit -> bool effect {escape}
+function n64_bit_modep () =
+let ia32_efer = (n12(the_bits(12, msrs[0]))) : bits(12) in
+let ia32_efer_lma = (ia32_eferbits_get_lma(ia32_efer)) : bits(1) in
+let cs_attr = (seg_hidden_attrs[1]) : bits(16) in
+let cs_l = (code_segment_descriptor_attributesbits_get_l(cs_attr)) : bits(1) in
+((the_bits(8, ia32_efer_lma)) == (get_slice_int(8, 1, 0))) & ((the_bits(8, cs_l)) == (get_slice_int(8, 1, 0)))
 
 /*Returns the current mode of operation of the x86 machine*/
 /*<p>We only support 64-bit, Compatibility, and 32-bit Protected Modes 
  for now.</p>*/
-val x86_operation_mode : (int) -> int effect {escape, rreg}
-function x86_operation_mode (x86) =
-if n64_bit_modep(0)
+val x86_operation_mode : unit -> {|0, 1|} effect {escape}
+function x86_operation_mode () =
+if n64_bit_modep()
 then 0
 else 1
 

@@ -5,497 +5,567 @@ $include "three_byte_opcodes_dispatch.sail"
 /*<p>@ ( ' two-byte-opcode-execute ' ) is the doorway to the two-byte 
  opcode map, and will lead to the three-byte opcode map if @ ( ' opcode ' ) is 
  either @ ( ' #x38 ' ) or @ ( ' #x3A ' ) .</p>*/
-val two_byte_opcode_execute : (int, int, int, int, int, int, int, int, int, int) -> int effect {eamem, escape, rmem, rreg, undef, wmv, wreg}
-function two_byte_opcode_execute (proc_mode, start_rip, temp_rip, prefixes, mandatory_prefix, rex_byte, opcode, modr_m, sib, x86) =
+val two_byte_opcode_execute : (range(0, 4), sbits(48), sbits(48), bits(52), bits(8), bits(8), bits(8), bits(8), bits(8)) -> unit effect {eamem, escape, rmem, rreg, undef, wmv, wreg}
+function two_byte_opcode_execute (proc_mode, start_rip, temp_rip, prefixes, mandatory_prefix, rex_byte, opcode, modr_m, sib) =
 (match opcode {
-0 => if ((modr_m_get_reg(modr_m)) == (0)) & (not_bool((modr_m_get_mod(modr_m)) == (3)))
-then let fault_var = (if (240) == (prefixes_get_lck(prefixes))
+0 => if ((the_bits(8, modr_m_get_reg(modr_m))) == (get_slice_int(8, 0, 0))) & (not_bool((the_bits(8, modr_m_get_mod(modr_m))) == (get_slice_int(8, 3, 0))))
+then let fault_var = (if (get_slice_int(8, 240, 0)) == (prefixes_get_lck(prefixes))
 then Some(":UD")
-else if (not_bool((let x86 = (0) : int in
-segment_selectorbits_get_rpl(seg_visiblei(1, 0))) == (0))) & ((cr4bits_get_umip(loghead(22, ctri(4, 0)))) == (0))
+else if (not_bool((get_slice_int(8, unsigned(let x86 = (()) : unit in
+segment_selectorbits_get_rpl(seg_visibles[1])), 0)) == (get_slice_int(8, 0, 0)))) & ((the_bits(8, cr4bits_get_umip(the_bits(22, loghead(22, unsigned(ctrs[4])))))) == (get_slice_int(8, 0, 0)))
 then Some(":GP")
 else None() : option(string)) : option(string) in
 if is_some(fault_var)
-then (match fault_var {
+then { (match fault_var {
 Some(":UD") => throw(Emsg("A fault occurred.  Original ACL2 AST:
 ['X86-ILLEGAL-INSTRUCTION', STRING: #UD Encountered!, 'START-RIP', 'TEMP-RIP', 'X86']")),
 Some(":GP") => throw(Emsg("A fault occurred.  Original ACL2 AST:
 ['X86-GENERAL-PROTECTION', STRING: #GP Encountered!, 'START-RIP', 'TEMP-RIP', 'X86']")),
 _ => throw(Emsg("Model state error: Unimplemented exception in x86isa!"))
-}) : int
-else throw(Emsg("Model state error: Opcode Unimplemented in x86isa!"))
-else if ((modr_m_get_reg(modr_m)) == (0)) & ((modr_m_get_mod(modr_m)) == (3))
-then let fault_var = (if (240) == (prefixes_get_lck(prefixes))
+}) : unit
+}
+else { throw(Emsg("Model state error: Opcode Unimplemented in x86isa!"))
+}
+else if ((the_bits(8, modr_m_get_reg(modr_m))) == (get_slice_int(8, 0, 0))) & ((the_bits(8, modr_m_get_mod(modr_m))) == (get_slice_int(8, 3, 0)))
+then let fault_var = (if (get_slice_int(8, 240, 0)) == (prefixes_get_lck(prefixes))
 then Some(":UD")
-else if (not_bool((let x86 = (0) : int in
-segment_selectorbits_get_rpl(seg_visiblei(1, 0))) == (0))) & ((cr4bits_get_umip(loghead(22, ctri(4, 0)))) == (0))
+else if (not_bool((get_slice_int(8, unsigned(let x86 = (()) : unit in
+segment_selectorbits_get_rpl(seg_visibles[1])), 0)) == (get_slice_int(8, 0, 0)))) & ((the_bits(8, cr4bits_get_umip(the_bits(22, loghead(22, unsigned(ctrs[4])))))) == (get_slice_int(8, 0, 0)))
 then Some(":GP")
 else None() : option(string)) : option(string) in
 if is_some(fault_var)
-then (match fault_var {
+then { (match fault_var {
 Some(":UD") => throw(Emsg("A fault occurred.  Original ACL2 AST:
 ['X86-ILLEGAL-INSTRUCTION', STRING: #UD Encountered!, 'START-RIP', 'TEMP-RIP', 'X86']")),
 Some(":GP") => throw(Emsg("A fault occurred.  Original ACL2 AST:
 ['X86-GENERAL-PROTECTION', STRING: #GP Encountered!, 'START-RIP', 'TEMP-RIP', 'X86']")),
 _ => throw(Emsg("Model state error: Unimplemented exception in x86isa!"))
-}) : int
-else throw(Emsg("Model state error: Opcode Unimplemented in x86isa!"))
-else if ((modr_m_get_reg(modr_m)) == (1)) & (not_bool((modr_m_get_mod(modr_m)) == (3)))
-then let fault_var = (if (240) == (prefixes_get_lck(prefixes))
+}) : unit
+}
+else { throw(Emsg("Model state error: Opcode Unimplemented in x86isa!"))
+}
+else if ((the_bits(8, modr_m_get_reg(modr_m))) == (get_slice_int(8, 1, 0))) & (not_bool((the_bits(8, modr_m_get_mod(modr_m))) == (get_slice_int(8, 3, 0))))
+then let fault_var = (if (get_slice_int(8, 240, 0)) == (prefixes_get_lck(prefixes))
 then Some(":UD")
-else if (not_bool((let x86 = (0) : int in
-segment_selectorbits_get_rpl(seg_visiblei(1, 0))) == (0))) & ((cr4bits_get_umip(loghead(22, ctri(4, 0)))) == (0))
+else if (not_bool((get_slice_int(8, unsigned(let x86 = (()) : unit in
+segment_selectorbits_get_rpl(seg_visibles[1])), 0)) == (get_slice_int(8, 0, 0)))) & ((the_bits(8, cr4bits_get_umip(the_bits(22, loghead(22, unsigned(ctrs[4])))))) == (get_slice_int(8, 0, 0)))
 then Some(":GP")
 else None() : option(string)) : option(string) in
 if is_some(fault_var)
-then (match fault_var {
+then { (match fault_var {
 Some(":UD") => throw(Emsg("A fault occurred.  Original ACL2 AST:
 ['X86-ILLEGAL-INSTRUCTION', STRING: #UD Encountered!, 'START-RIP', 'TEMP-RIP', 'X86']")),
 Some(":GP") => throw(Emsg("A fault occurred.  Original ACL2 AST:
 ['X86-GENERAL-PROTECTION', STRING: #GP Encountered!, 'START-RIP', 'TEMP-RIP', 'X86']")),
 _ => throw(Emsg("Model state error: Unimplemented exception in x86isa!"))
-}) : int
-else throw(Emsg("Model state error: Opcode Unimplemented in x86isa!"))
-else if ((modr_m_get_reg(modr_m)) == (1)) & ((modr_m_get_mod(modr_m)) == (3))
-then let fault_var = (if (240) == (prefixes_get_lck(prefixes))
+}) : unit
+}
+else { throw(Emsg("Model state error: Opcode Unimplemented in x86isa!"))
+}
+else if ((the_bits(8, modr_m_get_reg(modr_m))) == (get_slice_int(8, 1, 0))) & ((the_bits(8, modr_m_get_mod(modr_m))) == (get_slice_int(8, 3, 0)))
+then let fault_var = (if (get_slice_int(8, 240, 0)) == (prefixes_get_lck(prefixes))
 then Some(":UD")
-else if (not_bool((let x86 = (0) : int in
-segment_selectorbits_get_rpl(seg_visiblei(1, 0))) == (0))) & ((cr4bits_get_umip(loghead(22, ctri(4, 0)))) == (0))
+else if (not_bool((get_slice_int(8, unsigned(let x86 = (()) : unit in
+segment_selectorbits_get_rpl(seg_visibles[1])), 0)) == (get_slice_int(8, 0, 0)))) & ((the_bits(8, cr4bits_get_umip(the_bits(22, loghead(22, unsigned(ctrs[4])))))) == (get_slice_int(8, 0, 0)))
 then Some(":GP")
 else None() : option(string)) : option(string) in
 if is_some(fault_var)
-then (match fault_var {
+then { (match fault_var {
 Some(":UD") => throw(Emsg("A fault occurred.  Original ACL2 AST:
 ['X86-ILLEGAL-INSTRUCTION', STRING: #UD Encountered!, 'START-RIP', 'TEMP-RIP', 'X86']")),
 Some(":GP") => throw(Emsg("A fault occurred.  Original ACL2 AST:
 ['X86-GENERAL-PROTECTION', STRING: #GP Encountered!, 'START-RIP', 'TEMP-RIP', 'X86']")),
 _ => throw(Emsg("Model state error: Unimplemented exception in x86isa!"))
-}) : int
-else throw(Emsg("Model state error: Opcode Unimplemented in x86isa!"))
-else if (modr_m_get_reg(modr_m)) == (2)
-then let fault_var = (if (240) == (prefixes_get_lck(prefixes))
+}) : unit
+}
+else { throw(Emsg("Model state error: Opcode Unimplemented in x86isa!"))
+}
+else if (the_bits(8, modr_m_get_reg(modr_m))) == (get_slice_int(8, 2, 0))
+then let fault_var = (if (get_slice_int(8, 240, 0)) == (prefixes_get_lck(prefixes))
 then Some(":UD")
-else if not_bool((let x86 = (0) : int in
-segment_selectorbits_get_rpl(seg_visiblei(1, 0))) == (0))
+else if not_bool((get_slice_int(8, unsigned(let x86 = (()) : unit in
+segment_selectorbits_get_rpl(seg_visibles[1])), 0)) == (get_slice_int(8, 0, 0)))
 then Some(":GP")
 else None() : option(string)) : option(string) in
 if is_some(fault_var)
-then (match fault_var {
+then { (match fault_var {
 Some(":UD") => throw(Emsg("A fault occurred.  Original ACL2 AST:
 ['X86-ILLEGAL-INSTRUCTION', STRING: #UD Encountered!, 'START-RIP', 'TEMP-RIP', 'X86']")),
 Some(":GP") => throw(Emsg("A fault occurred.  Original ACL2 AST:
 ['X86-GENERAL-PROTECTION', STRING: #GP Encountered!, 'START-RIP', 'TEMP-RIP', 'X86']")),
 _ => throw(Emsg("Model state error: Unimplemented exception in x86isa!"))
-}) : int
-else x86_lldt(proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode, modr_m, sib, 0)
-else if (modr_m_get_reg(modr_m)) == (3)
-then let fault_var = (if (240) == (prefixes_get_lck(prefixes))
+}) : unit
+}
+else { x86_lldt(proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode, modr_m, sib)
+}
+else if (the_bits(8, modr_m_get_reg(modr_m))) == (get_slice_int(8, 3, 0))
+then let fault_var = (if (get_slice_int(8, 240, 0)) == (prefixes_get_lck(prefixes))
 then Some(":UD")
-else if not_bool((let x86 = (0) : int in
-segment_selectorbits_get_rpl(seg_visiblei(1, 0))) == (0))
+else if not_bool((get_slice_int(8, unsigned(let x86 = (()) : unit in
+segment_selectorbits_get_rpl(seg_visibles[1])), 0)) == (get_slice_int(8, 0, 0)))
 then Some(":GP")
 else None() : option(string)) : option(string) in
 if is_some(fault_var)
-then (match fault_var {
+then { (match fault_var {
 Some(":UD") => throw(Emsg("A fault occurred.  Original ACL2 AST:
 ['X86-ILLEGAL-INSTRUCTION', STRING: #UD Encountered!, 'START-RIP', 'TEMP-RIP', 'X86']")),
 Some(":GP") => throw(Emsg("A fault occurred.  Original ACL2 AST:
 ['X86-GENERAL-PROTECTION', STRING: #GP Encountered!, 'START-RIP', 'TEMP-RIP', 'X86']")),
 _ => throw(Emsg("Model state error: Unimplemented exception in x86isa!"))
-}) : int
-else throw(Emsg("Model state error: Opcode Unimplemented in x86isa!"))
-else if (modr_m_get_reg(modr_m)) == (4)
-then let fault_var = (if (240) == (prefixes_get_lck(prefixes))
+}) : unit
+}
+else { throw(Emsg("Model state error: Opcode Unimplemented in x86isa!"))
+}
+else if (the_bits(8, modr_m_get_reg(modr_m))) == (get_slice_int(8, 4, 0))
+then let fault_var = (if (get_slice_int(8, 240, 0)) == (prefixes_get_lck(prefixes))
 then Some(":UD")
 else None() : option(string)) : option(string) in
 if is_some(fault_var)
-then (match fault_var {
+then { (match fault_var {
 Some(":UD") => throw(Emsg("A fault occurred.  Original ACL2 AST:
 ['X86-ILLEGAL-INSTRUCTION', STRING: #UD Encountered!, 'START-RIP', 'TEMP-RIP', 'X86']")),
 _ => throw(Emsg("Model state error: Unimplemented exception in x86isa!"))
-}) : int
-else throw(Emsg("Model state error: Opcode Unimplemented in x86isa!"))
-else if (modr_m_get_reg(modr_m)) == (5)
-then let fault_var = (if (240) == (prefixes_get_lck(prefixes))
+}) : unit
+}
+else { throw(Emsg("Model state error: Opcode Unimplemented in x86isa!"))
+}
+else if (the_bits(8, modr_m_get_reg(modr_m))) == (get_slice_int(8, 5, 0))
+then let fault_var = (if (get_slice_int(8, 240, 0)) == (prefixes_get_lck(prefixes))
 then Some(":UD")
 else None() : option(string)) : option(string) in
 if is_some(fault_var)
-then (match fault_var {
+then { (match fault_var {
 Some(":UD") => throw(Emsg("A fault occurred.  Original ACL2 AST:
 ['X86-ILLEGAL-INSTRUCTION', STRING: #UD Encountered!, 'START-RIP', 'TEMP-RIP', 'X86']")),
 _ => throw(Emsg("Model state error: Unimplemented exception in x86isa!"))
-}) : int
-else throw(Emsg("Model state error: Opcode Unimplemented in x86isa!"))
+}) : unit
+}
+else { throw(Emsg("Model state error: Opcode Unimplemented in x86isa!"))
+}
 else throw(Emsg("A fault occurred.  Original ACL2 AST:
 ['X86-ILLEGAL-INSTRUCTION', STRING: #UD Encountered!, 'START-RIP', 'TEMP-RIP', 'X86']")),
-1 => if ((modr_m_get_reg(modr_m)) == (0)) & (not_bool((modr_m_get_mod(modr_m)) == (3)))
-then let fault_var = (if (240) == (prefixes_get_lck(prefixes))
+1 => if ((the_bits(8, modr_m_get_reg(modr_m))) == (get_slice_int(8, 0, 0))) & (not_bool((the_bits(8, modr_m_get_mod(modr_m))) == (get_slice_int(8, 3, 0))))
+then let fault_var = (if (get_slice_int(8, 240, 0)) == (prefixes_get_lck(prefixes))
 then Some(":UD")
-else if (not_bool((let x86 = (0) : int in
-segment_selectorbits_get_rpl(seg_visiblei(1, 0))) == (0))) & ((cr4bits_get_umip(loghead(22, ctri(4, 0)))) == (0))
+else if (not_bool((get_slice_int(8, unsigned(let x86 = (()) : unit in
+segment_selectorbits_get_rpl(seg_visibles[1])), 0)) == (get_slice_int(8, 0, 0)))) & ((the_bits(8, cr4bits_get_umip(the_bits(22, loghead(22, unsigned(ctrs[4])))))) == (get_slice_int(8, 0, 0)))
 then Some(":GP")
 else None() : option(string)) : option(string) in
 if is_some(fault_var)
-then (match fault_var {
+then { (match fault_var {
 Some(":UD") => throw(Emsg("A fault occurred.  Original ACL2 AST:
 ['X86-ILLEGAL-INSTRUCTION', STRING: #UD Encountered!, 'START-RIP', 'TEMP-RIP', 'X86']")),
 Some(":GP") => throw(Emsg("A fault occurred.  Original ACL2 AST:
 ['X86-GENERAL-PROTECTION', STRING: #GP Encountered!, 'START-RIP', 'TEMP-RIP', 'X86']")),
 _ => throw(Emsg("Model state error: Unimplemented exception in x86isa!"))
-}) : int
-else throw(Emsg("Model state error: Opcode Unimplemented in x86isa!"))
-else if ((modr_m_get_reg(modr_m)) == (0)) & (((modr_m_get_mod(modr_m)) == (3)) & ((modr_m_get_r_m(modr_m)) == (1)))
+}) : unit
+}
+else { throw(Emsg("Model state error: Opcode Unimplemented in x86isa!"))
+}
+else if ((the_bits(8, modr_m_get_reg(modr_m))) == (get_slice_int(8, 0, 0))) & (((the_bits(8, modr_m_get_mod(modr_m))) == (get_slice_int(8, 3, 0))) & ((the_bits(8, modr_m_get_r_m(modr_m))) == (get_slice_int(8, 1, 0))))
 then throw(Emsg("Model state error: Opcode Unimplemented in x86isa!"))
-else if ((modr_m_get_reg(modr_m)) == (0)) & (((modr_m_get_mod(modr_m)) == (3)) & ((modr_m_get_r_m(modr_m)) == (2)))
-then let fault_var = (if not_bool((let x86 = (0) : int in
-segment_selectorbits_get_rpl(seg_visiblei(1, 0))) == (0))
+else if ((the_bits(8, modr_m_get_reg(modr_m))) == (get_slice_int(8, 0, 0))) & (((the_bits(8, modr_m_get_mod(modr_m))) == (get_slice_int(8, 3, 0))) & ((the_bits(8, modr_m_get_r_m(modr_m))) == (get_slice_int(8, 2, 0))))
+then let fault_var = (if not_bool((get_slice_int(8, unsigned(let x86 = (()) : unit in
+segment_selectorbits_get_rpl(seg_visibles[1])), 0)) == (get_slice_int(8, 0, 0)))
 then Some(":GP")
 else None() : option(string)) : option(string) in
 if is_some(fault_var)
-then (match fault_var {
+then { (match fault_var {
 Some(":GP") => throw(Emsg("A fault occurred.  Original ACL2 AST:
 ['X86-GENERAL-PROTECTION', STRING: #GP Encountered!, 'START-RIP', 'TEMP-RIP', 'X86']")),
 _ => throw(Emsg("Model state error: Unimplemented exception in x86isa!"))
-}) : int
-else throw(Emsg("Model state error: Opcode Unimplemented in x86isa!"))
-else if ((modr_m_get_reg(modr_m)) == (0)) & (((modr_m_get_mod(modr_m)) == (3)) & ((modr_m_get_r_m(modr_m)) == (3)))
+}) : unit
+}
+else { throw(Emsg("Model state error: Opcode Unimplemented in x86isa!"))
+}
+else if ((the_bits(8, modr_m_get_reg(modr_m))) == (get_slice_int(8, 0, 0))) & (((the_bits(8, modr_m_get_mod(modr_m))) == (get_slice_int(8, 3, 0))) & ((the_bits(8, modr_m_get_r_m(modr_m))) == (get_slice_int(8, 3, 0))))
 then throw(Emsg("Model state error: Opcode Unimplemented in x86isa!"))
-else if ((modr_m_get_reg(modr_m)) == (0)) & (((modr_m_get_mod(modr_m)) == (3)) & ((modr_m_get_r_m(modr_m)) == (4)))
-then let fault_var = (if not_bool((let x86 = (0) : int in
-segment_selectorbits_get_rpl(seg_visiblei(1, 0))) == (0))
+else if ((the_bits(8, modr_m_get_reg(modr_m))) == (get_slice_int(8, 0, 0))) & (((the_bits(8, modr_m_get_mod(modr_m))) == (get_slice_int(8, 3, 0))) & ((the_bits(8, modr_m_get_r_m(modr_m))) == (get_slice_int(8, 4, 0))))
+then let fault_var = (if not_bool((get_slice_int(8, unsigned(let x86 = (()) : unit in
+segment_selectorbits_get_rpl(seg_visibles[1])), 0)) == (get_slice_int(8, 0, 0)))
 then Some(":GP")
 else None() : option(string)) : option(string) in
 if is_some(fault_var)
-then (match fault_var {
+then { (match fault_var {
 Some(":GP") => throw(Emsg("A fault occurred.  Original ACL2 AST:
 ['X86-GENERAL-PROTECTION', STRING: #GP Encountered!, 'START-RIP', 'TEMP-RIP', 'X86']")),
 _ => throw(Emsg("Model state error: Unimplemented exception in x86isa!"))
-}) : int
-else throw(Emsg("Model state error: Opcode Unimplemented in x86isa!"))
-else if ((modr_m_get_reg(modr_m)) == (1)) & (not_bool((modr_m_get_mod(modr_m)) == (3)))
-then let fault_var = (if (240) == (prefixes_get_lck(prefixes))
+}) : unit
+}
+else { throw(Emsg("Model state error: Opcode Unimplemented in x86isa!"))
+}
+else if ((the_bits(8, modr_m_get_reg(modr_m))) == (get_slice_int(8, 1, 0))) & (not_bool((the_bits(8, modr_m_get_mod(modr_m))) == (get_slice_int(8, 3, 0))))
+then let fault_var = (if (get_slice_int(8, 240, 0)) == (prefixes_get_lck(prefixes))
 then Some(":UD")
-else if (not_bool((let x86 = (0) : int in
-segment_selectorbits_get_rpl(seg_visiblei(1, 0))) == (0))) & ((cr4bits_get_umip(loghead(22, ctri(4, 0)))) == (0))
+else if (not_bool((get_slice_int(8, unsigned(let x86 = (()) : unit in
+segment_selectorbits_get_rpl(seg_visibles[1])), 0)) == (get_slice_int(8, 0, 0)))) & ((the_bits(8, cr4bits_get_umip(the_bits(22, loghead(22, unsigned(ctrs[4])))))) == (get_slice_int(8, 0, 0)))
 then Some(":GP")
 else None() : option(string)) : option(string) in
 if is_some(fault_var)
-then (match fault_var {
+then { (match fault_var {
 Some(":UD") => throw(Emsg("A fault occurred.  Original ACL2 AST:
 ['X86-ILLEGAL-INSTRUCTION', STRING: #UD Encountered!, 'START-RIP', 'TEMP-RIP', 'X86']")),
 Some(":GP") => throw(Emsg("A fault occurred.  Original ACL2 AST:
 ['X86-GENERAL-PROTECTION', STRING: #GP Encountered!, 'START-RIP', 'TEMP-RIP', 'X86']")),
 _ => throw(Emsg("Model state error: Unimplemented exception in x86isa!"))
-}) : int
-else throw(Emsg("Model state error: Opcode Unimplemented in x86isa!"))
-else if ((modr_m_get_reg(modr_m)) == (1)) & (((modr_m_get_mod(modr_m)) == (3)) & ((modr_m_get_r_m(modr_m)) == (0)))
-then let fault_var = (if ((feature_flags_fn([|":MONITOR"|], 0)) == (0)) | (not_bool((let x86 = (0) : int in
-segment_selectorbits_get_rpl(seg_visiblei(1, 0))) == (0)))
+}) : unit
+}
+else { throw(Emsg("Model state error: Opcode Unimplemented in x86isa!"))
+}
+else if ((the_bits(8, modr_m_get_reg(modr_m))) == (get_slice_int(8, 1, 0))) & (((the_bits(8, modr_m_get_mod(modr_m))) == (get_slice_int(8, 3, 0))) & ((the_bits(8, modr_m_get_r_m(modr_m))) == (get_slice_int(8, 0, 0))))
+then let fault_var = (if ((get_slice_int(8, feature_flags_fn([|":MONITOR"|]), 0)) == (get_slice_int(8, 0, 0))) | (not_bool((get_slice_int(8, unsigned(let x86 = (()) : unit in
+segment_selectorbits_get_rpl(seg_visibles[1])), 0)) == (get_slice_int(8, 0, 0))))
 then Some(":UD")
 else None() : option(string)) : option(string) in
 if is_some(fault_var)
-then (match fault_var {
+then { (match fault_var {
 Some(":UD") => throw(Emsg("A fault occurred.  Original ACL2 AST:
 ['X86-ILLEGAL-INSTRUCTION', STRING: #UD Encountered!, 'START-RIP', 'TEMP-RIP', 'X86']")),
 _ => throw(Emsg("Model state error: Unimplemented exception in x86isa!"))
-}) : int
-else throw(Emsg("Model state error: Opcode Unimplemented in x86isa!"))
-else if ((modr_m_get_reg(modr_m)) == (1)) & (((modr_m_get_mod(modr_m)) == (3)) & ((modr_m_get_r_m(modr_m)) == (1)))
-then let fault_var = (if ((feature_flags_fn([|":MONITOR"|], 0)) == (0)) | (not_bool((let x86 = (0) : int in
-segment_selectorbits_get_rpl(seg_visiblei(1, 0))) == (0)))
+}) : unit
+}
+else { throw(Emsg("Model state error: Opcode Unimplemented in x86isa!"))
+}
+else if ((the_bits(8, modr_m_get_reg(modr_m))) == (get_slice_int(8, 1, 0))) & (((the_bits(8, modr_m_get_mod(modr_m))) == (get_slice_int(8, 3, 0))) & ((the_bits(8, modr_m_get_r_m(modr_m))) == (get_slice_int(8, 1, 0))))
+then let fault_var = (if ((get_slice_int(8, feature_flags_fn([|":MONITOR"|]), 0)) == (get_slice_int(8, 0, 0))) | (not_bool((get_slice_int(8, unsigned(let x86 = (()) : unit in
+segment_selectorbits_get_rpl(seg_visibles[1])), 0)) == (get_slice_int(8, 0, 0))))
 then Some(":UD")
 else None() : option(string)) : option(string) in
 if is_some(fault_var)
-then (match fault_var {
+then { (match fault_var {
 Some(":UD") => throw(Emsg("A fault occurred.  Original ACL2 AST:
 ['X86-ILLEGAL-INSTRUCTION', STRING: #UD Encountered!, 'START-RIP', 'TEMP-RIP', 'X86']")),
 _ => throw(Emsg("Model state error: Unimplemented exception in x86isa!"))
-}) : int
-else throw(Emsg("Model state error: Opcode Unimplemented in x86isa!"))
-else if ((modr_m_get_reg(modr_m)) == (1)) & (((modr_m_get_mod(modr_m)) == (3)) & ((modr_m_get_r_m(modr_m)) == (2)))
-then let fault_var = (if ((feature_flags_fn([|":SMAP"|], 0)) == (0)) | (((240) == (prefixes_get_lck(prefixes))) | (not_bool((let x86 = (0) : int in
-segment_selectorbits_get_rpl(seg_visiblei(1, 0))) == (0))))
+}) : unit
+}
+else { throw(Emsg("Model state error: Opcode Unimplemented in x86isa!"))
+}
+else if ((the_bits(8, modr_m_get_reg(modr_m))) == (get_slice_int(8, 1, 0))) & (((the_bits(8, modr_m_get_mod(modr_m))) == (get_slice_int(8, 3, 0))) & ((the_bits(8, modr_m_get_r_m(modr_m))) == (get_slice_int(8, 2, 0))))
+then let fault_var = (if ((get_slice_int(8, feature_flags_fn([|":SMAP"|]), 0)) == (get_slice_int(8, 0, 0))) | (((get_slice_int(8, 240, 0)) == (prefixes_get_lck(prefixes))) | (not_bool((get_slice_int(8, unsigned(let x86 = (()) : unit in
+segment_selectorbits_get_rpl(seg_visibles[1])), 0)) == (get_slice_int(8, 0, 0)))))
 then Some(":UD")
 else None() : option(string)) : option(string) in
 if is_some(fault_var)
-then (match fault_var {
+then { (match fault_var {
 Some(":UD") => throw(Emsg("A fault occurred.  Original ACL2 AST:
 ['X86-ILLEGAL-INSTRUCTION', STRING: #UD Encountered!, 'START-RIP', 'TEMP-RIP', 'X86']")),
 _ => throw(Emsg("Model state error: Unimplemented exception in x86isa!"))
-}) : int
-else throw(Emsg("Model state error: Opcode Unimplemented in x86isa!"))
-else if ((modr_m_get_reg(modr_m)) == (1)) & (((modr_m_get_mod(modr_m)) == (3)) & ((modr_m_get_r_m(modr_m)) == (3)))
-then let fault_var = (if ((feature_flags_fn([|":SMAP"|], 0)) == (0)) | (((240) == (prefixes_get_lck(prefixes))) | (not_bool((let x86 = (0) : int in
-segment_selectorbits_get_rpl(seg_visiblei(1, 0))) == (0))))
+}) : unit
+}
+else { throw(Emsg("Model state error: Opcode Unimplemented in x86isa!"))
+}
+else if ((the_bits(8, modr_m_get_reg(modr_m))) == (get_slice_int(8, 1, 0))) & (((the_bits(8, modr_m_get_mod(modr_m))) == (get_slice_int(8, 3, 0))) & ((the_bits(8, modr_m_get_r_m(modr_m))) == (get_slice_int(8, 3, 0))))
+then let fault_var = (if ((get_slice_int(8, feature_flags_fn([|":SMAP"|]), 0)) == (get_slice_int(8, 0, 0))) | (((get_slice_int(8, 240, 0)) == (prefixes_get_lck(prefixes))) | (not_bool((get_slice_int(8, unsigned(let x86 = (()) : unit in
+segment_selectorbits_get_rpl(seg_visibles[1])), 0)) == (get_slice_int(8, 0, 0)))))
 then Some(":UD")
 else None() : option(string)) : option(string) in
 if is_some(fault_var)
-then (match fault_var {
+then { (match fault_var {
 Some(":UD") => throw(Emsg("A fault occurred.  Original ACL2 AST:
 ['X86-ILLEGAL-INSTRUCTION', STRING: #UD Encountered!, 'START-RIP', 'TEMP-RIP', 'X86']")),
 _ => throw(Emsg("Model state error: Unimplemented exception in x86isa!"))
-}) : int
-else throw(Emsg("Model state error: Opcode Unimplemented in x86isa!"))
-else if ((modr_m_get_reg(modr_m)) == (1)) & (((modr_m_get_mod(modr_m)) == (3)) & ((modr_m_get_r_m(modr_m)) == (7)))
+}) : unit
+}
+else { throw(Emsg("Model state error: Opcode Unimplemented in x86isa!"))
+}
+else if ((the_bits(8, modr_m_get_reg(modr_m))) == (get_slice_int(8, 1, 0))) & (((the_bits(8, modr_m_get_mod(modr_m))) == (get_slice_int(8, 3, 0))) & ((the_bits(8, modr_m_get_r_m(modr_m))) == (get_slice_int(8, 7, 0))))
 then throw(Emsg("Model state error: Opcode Unimplemented in x86isa!"))
-else if ((modr_m_get_reg(modr_m)) == (2)) & (not_bool((modr_m_get_mod(modr_m)) == (3)))
-then let fault_var = (if (240) == (prefixes_get_lck(prefixes))
+else if ((the_bits(8, modr_m_get_reg(modr_m))) == (get_slice_int(8, 2, 0))) & (not_bool((the_bits(8, modr_m_get_mod(modr_m))) == (get_slice_int(8, 3, 0))))
+then let fault_var = (if (get_slice_int(8, 240, 0)) == (prefixes_get_lck(prefixes))
 then Some(":UD")
-else if not_bool((let x86 = (0) : int in
-segment_selectorbits_get_rpl(seg_visiblei(1, 0))) == (0))
+else if not_bool((get_slice_int(8, unsigned(let x86 = (()) : unit in
+segment_selectorbits_get_rpl(seg_visibles[1])), 0)) == (get_slice_int(8, 0, 0)))
 then Some(":GP")
 else None() : option(string)) : option(string) in
 if is_some(fault_var)
-then (match fault_var {
+then { (match fault_var {
 Some(":UD") => throw(Emsg("A fault occurred.  Original ACL2 AST:
 ['X86-ILLEGAL-INSTRUCTION', STRING: #UD Encountered!, 'START-RIP', 'TEMP-RIP', 'X86']")),
 Some(":GP") => throw(Emsg("A fault occurred.  Original ACL2 AST:
 ['X86-GENERAL-PROTECTION', STRING: #GP Encountered!, 'START-RIP', 'TEMP-RIP', 'X86']")),
 _ => throw(Emsg("Model state error: Unimplemented exception in x86isa!"))
-}) : int
-else x86_lgdt(proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode, modr_m, sib, 0)
-else if ((modr_m_get_reg(modr_m)) == (3)) & (not_bool((modr_m_get_mod(modr_m)) == (3)))
-then let fault_var = (if (240) == (prefixes_get_lck(prefixes))
+}) : unit
+}
+else { x86_lgdt(proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode, modr_m, sib)
+}
+else if ((the_bits(8, modr_m_get_reg(modr_m))) == (get_slice_int(8, 3, 0))) & (not_bool((the_bits(8, modr_m_get_mod(modr_m))) == (get_slice_int(8, 3, 0))))
+then let fault_var = (if (get_slice_int(8, 240, 0)) == (prefixes_get_lck(prefixes))
 then Some(":UD")
-else if not_bool((let x86 = (0) : int in
-segment_selectorbits_get_rpl(seg_visiblei(1, 0))) == (0))
+else if not_bool((get_slice_int(8, unsigned(let x86 = (()) : unit in
+segment_selectorbits_get_rpl(seg_visibles[1])), 0)) == (get_slice_int(8, 0, 0)))
 then Some(":GP")
 else None() : option(string)) : option(string) in
 if is_some(fault_var)
-then (match fault_var {
+then { (match fault_var {
 Some(":UD") => throw(Emsg("A fault occurred.  Original ACL2 AST:
 ['X86-ILLEGAL-INSTRUCTION', STRING: #UD Encountered!, 'START-RIP', 'TEMP-RIP', 'X86']")),
 Some(":GP") => throw(Emsg("A fault occurred.  Original ACL2 AST:
 ['X86-GENERAL-PROTECTION', STRING: #GP Encountered!, 'START-RIP', 'TEMP-RIP', 'X86']")),
 _ => throw(Emsg("Model state error: Unimplemented exception in x86isa!"))
-}) : int
-else x86_lidt(proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode, modr_m, sib, 0)
-else if ((modr_m_get_reg(modr_m)) == (3)) & (((modr_m_get_mod(modr_m)) == (3)) & ((modr_m_get_r_m(modr_m)) == (0)))
-then let fault_var = (if ((feature_flags_fn([|":XSAVE"|], 0)) == (0)) | (((240) == (prefixes_get_lck(prefixes))) | ((cr4bits_get_osxsave(loghead(22, ctri(4, 0)))) == (0)))
+}) : unit
+}
+else { x86_lidt(proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode, modr_m, sib)
+}
+else if ((the_bits(8, modr_m_get_reg(modr_m))) == (get_slice_int(8, 3, 0))) & (((the_bits(8, modr_m_get_mod(modr_m))) == (get_slice_int(8, 3, 0))) & ((the_bits(8, modr_m_get_r_m(modr_m))) == (get_slice_int(8, 0, 0))))
+then let fault_var = (if ((get_slice_int(8, feature_flags_fn([|":XSAVE"|]), 0)) == (get_slice_int(8, 0, 0))) | (((get_slice_int(8, 240, 0)) == (prefixes_get_lck(prefixes))) | ((the_bits(8, cr4bits_get_osxsave(the_bits(22, loghead(22, unsigned(ctrs[4])))))) == (get_slice_int(8, 0, 0))))
 then Some(":UD")
 else None() : option(string)) : option(string) in
 if is_some(fault_var)
-then (match fault_var {
+then { (match fault_var {
 Some(":UD") => throw(Emsg("A fault occurred.  Original ACL2 AST:
 ['X86-ILLEGAL-INSTRUCTION', STRING: #UD Encountered!, 'START-RIP', 'TEMP-RIP', 'X86']")),
 _ => throw(Emsg("Model state error: Unimplemented exception in x86isa!"))
-}) : int
-else throw(Emsg("Model state error: Opcode Unimplemented in x86isa!"))
-else if ((modr_m_get_reg(modr_m)) == (3)) & (((modr_m_get_mod(modr_m)) == (3)) & ((modr_m_get_r_m(modr_m)) == (1)))
-then let fault_var = (if ((feature_flags_fn([|":XSAVE"|], 0)) == (0)) | (((240) == (prefixes_get_lck(prefixes))) | ((cr4bits_get_osxsave(loghead(22, ctri(4, 0)))) == (0)))
+}) : unit
+}
+else { throw(Emsg("Model state error: Opcode Unimplemented in x86isa!"))
+}
+else if ((the_bits(8, modr_m_get_reg(modr_m))) == (get_slice_int(8, 3, 0))) & (((the_bits(8, modr_m_get_mod(modr_m))) == (get_slice_int(8, 3, 0))) & ((the_bits(8, modr_m_get_r_m(modr_m))) == (get_slice_int(8, 1, 0))))
+then let fault_var = (if ((get_slice_int(8, feature_flags_fn([|":XSAVE"|]), 0)) == (get_slice_int(8, 0, 0))) | (((get_slice_int(8, 240, 0)) == (prefixes_get_lck(prefixes))) | ((the_bits(8, cr4bits_get_osxsave(the_bits(22, loghead(22, unsigned(ctrs[4])))))) == (get_slice_int(8, 0, 0))))
 then Some(":UD")
 else None() : option(string)) : option(string) in
 if is_some(fault_var)
-then (match fault_var {
+then { (match fault_var {
 Some(":UD") => throw(Emsg("A fault occurred.  Original ACL2 AST:
 ['X86-ILLEGAL-INSTRUCTION', STRING: #UD Encountered!, 'START-RIP', 'TEMP-RIP', 'X86']")),
 _ => throw(Emsg("Model state error: Unimplemented exception in x86isa!"))
-}) : int
-else throw(Emsg("Model state error: Opcode Unimplemented in x86isa!"))
-else if ((modr_m_get_reg(modr_m)) == (3)) & (((modr_m_get_mod(modr_m)) == (3)) & ((modr_m_get_r_m(modr_m)) == (4)))
+}) : unit
+}
+else { throw(Emsg("Model state error: Opcode Unimplemented in x86isa!"))
+}
+else if ((the_bits(8, modr_m_get_reg(modr_m))) == (get_slice_int(8, 3, 0))) & (((the_bits(8, modr_m_get_mod(modr_m))) == (get_slice_int(8, 3, 0))) & ((the_bits(8, modr_m_get_r_m(modr_m))) == (get_slice_int(8, 4, 0))))
 then throw(Emsg("Model state error: Opcode Unimplemented in x86isa!"))
-else if ((modr_m_get_reg(modr_m)) == (3)) & (((modr_m_get_mod(modr_m)) == (3)) & ((modr_m_get_r_m(modr_m)) == (5)))
-then let fault_var = (if ((feature_flags_fn([|":RTM"|], 0)) == (0)) | (((240) == (prefixes_get_lck(prefixes))) | (((102) == (prefixes_get_opr(prefixes))) | (((243) == (prefixes_get_rep(prefixes))) | ((242) == (prefixes_get_rep(prefixes))))))
+else if ((the_bits(8, modr_m_get_reg(modr_m))) == (get_slice_int(8, 3, 0))) & (((the_bits(8, modr_m_get_mod(modr_m))) == (get_slice_int(8, 3, 0))) & ((the_bits(8, modr_m_get_r_m(modr_m))) == (get_slice_int(8, 5, 0))))
+then let fault_var = (if ((get_slice_int(8, feature_flags_fn([|":RTM"|]), 0)) == (get_slice_int(8, 0, 0))) | (((get_slice_int(8, 240, 0)) == (prefixes_get_lck(prefixes))) | (((get_slice_int(8, 102, 0)) == (prefixes_get_opr(prefixes))) | (((get_slice_int(8, 243, 0)) == (prefixes_get_rep(prefixes))) | ((get_slice_int(8, 242, 0)) == (prefixes_get_rep(prefixes))))))
 then Some(":UD")
 else None() : option(string)) : option(string) in
 if is_some(fault_var)
-then (match fault_var {
+then { (match fault_var {
 Some(":UD") => throw(Emsg("A fault occurred.  Original ACL2 AST:
 ['X86-ILLEGAL-INSTRUCTION', STRING: #UD Encountered!, 'START-RIP', 'TEMP-RIP', 'X86']")),
 _ => throw(Emsg("Model state error: Unimplemented exception in x86isa!"))
-}) : int
-else throw(Emsg("Model state error: Opcode Unimplemented in x86isa!"))
-else if ((modr_m_get_reg(modr_m)) == (3)) & (((modr_m_get_mod(modr_m)) == (3)) & ((modr_m_get_r_m(modr_m)) == (6)))
-then let fault_var = (if ((feature_flags_fn([|":HLE", ":RTM"|], 0)) == (0)) | ((240) == (prefixes_get_lck(prefixes)))
+}) : unit
+}
+else { throw(Emsg("Model state error: Opcode Unimplemented in x86isa!"))
+}
+else if ((the_bits(8, modr_m_get_reg(modr_m))) == (get_slice_int(8, 3, 0))) & (((the_bits(8, modr_m_get_mod(modr_m))) == (get_slice_int(8, 3, 0))) & ((the_bits(8, modr_m_get_r_m(modr_m))) == (get_slice_int(8, 6, 0))))
+then let fault_var = (if ((get_slice_int(8, feature_flags_fn([|":HLE", ":RTM"|]), 0)) == (get_slice_int(8, 0, 0))) | ((get_slice_int(8, 240, 0)) == (prefixes_get_lck(prefixes)))
 then Some(":UD")
 else None() : option(string)) : option(string) in
 if is_some(fault_var)
-then (match fault_var {
+then { (match fault_var {
 Some(":UD") => throw(Emsg("A fault occurred.  Original ACL2 AST:
 ['X86-ILLEGAL-INSTRUCTION', STRING: #UD Encountered!, 'START-RIP', 'TEMP-RIP', 'X86']")),
 _ => throw(Emsg("Model state error: Unimplemented exception in x86isa!"))
-}) : int
-else throw(Emsg("Model state error: Opcode Unimplemented in x86isa!"))
-else if ((modr_m_get_reg(modr_m)) == (3)) & (((modr_m_get_mod(modr_m)) == (3)) & ((modr_m_get_r_m(modr_m)) == (7)))
-then let fault_var = (if (cr0bits_get_ts(loghead(32, ctri(0, 0)))) == (1)
+}) : unit
+}
+else { throw(Emsg("Model state error: Opcode Unimplemented in x86isa!"))
+}
+else if ((the_bits(8, modr_m_get_reg(modr_m))) == (get_slice_int(8, 3, 0))) & (((the_bits(8, modr_m_get_mod(modr_m))) == (get_slice_int(8, 3, 0))) & ((the_bits(8, modr_m_get_r_m(modr_m))) == (get_slice_int(8, 7, 0))))
+then let fault_var = (if (the_bits(8, cr0bits_get_ts(the_bits(32, loghead(32, unsigned(ctrs[0])))))) == (get_slice_int(8, 1, 0))
 then Some(":NM")
 else None() : option(string)) : option(string) in
 if is_some(fault_var)
-then (match fault_var {
+then { (match fault_var {
 Some(":NM") => throw(Emsg("A fault occurred.  Original ACL2 AST:
 ['X86-DEVICE-NOT-AVAILABLE', STRING: #NM Encountered!, 'START-RIP', 'TEMP-RIP', 'X86']")),
 _ => throw(Emsg("Model state error: Unimplemented exception in x86isa!"))
-}) : int
-else throw(Emsg("Model state error: Opcode Unimplemented in x86isa!"))
-else if ((modr_m_get_reg(modr_m)) == (4)) & (not_bool((modr_m_get_mod(modr_m)) == (3)))
-then let fault_var = (if (240) == (prefixes_get_lck(prefixes))
+}) : unit
+}
+else { throw(Emsg("Model state error: Opcode Unimplemented in x86isa!"))
+}
+else if ((the_bits(8, modr_m_get_reg(modr_m))) == (get_slice_int(8, 4, 0))) & (not_bool((the_bits(8, modr_m_get_mod(modr_m))) == (get_slice_int(8, 3, 0))))
+then let fault_var = (if (get_slice_int(8, 240, 0)) == (prefixes_get_lck(prefixes))
 then Some(":UD")
-else if (not_bool((let x86 = (0) : int in
-segment_selectorbits_get_rpl(seg_visiblei(1, 0))) == (0))) & ((cr4bits_get_umip(loghead(22, ctri(4, 0)))) == (0))
+else if (not_bool((get_slice_int(8, unsigned(let x86 = (()) : unit in
+segment_selectorbits_get_rpl(seg_visibles[1])), 0)) == (get_slice_int(8, 0, 0)))) & ((the_bits(8, cr4bits_get_umip(the_bits(22, loghead(22, unsigned(ctrs[4])))))) == (get_slice_int(8, 0, 0)))
 then Some(":GP")
 else None() : option(string)) : option(string) in
 if is_some(fault_var)
-then (match fault_var {
+then { (match fault_var {
 Some(":UD") => throw(Emsg("A fault occurred.  Original ACL2 AST:
 ['X86-ILLEGAL-INSTRUCTION', STRING: #UD Encountered!, 'START-RIP', 'TEMP-RIP', 'X86']")),
 Some(":GP") => throw(Emsg("A fault occurred.  Original ACL2 AST:
 ['X86-GENERAL-PROTECTION', STRING: #GP Encountered!, 'START-RIP', 'TEMP-RIP', 'X86']")),
 _ => throw(Emsg("Model state error: Unimplemented exception in x86isa!"))
-}) : int
-else throw(Emsg("Model state error: Opcode Unimplemented in x86isa!"))
-else if ((modr_m_get_reg(modr_m)) == (4)) & ((modr_m_get_mod(modr_m)) == (3))
-then let fault_var = (if (240) == (prefixes_get_lck(prefixes))
+}) : unit
+}
+else { throw(Emsg("Model state error: Opcode Unimplemented in x86isa!"))
+}
+else if ((the_bits(8, modr_m_get_reg(modr_m))) == (get_slice_int(8, 4, 0))) & ((the_bits(8, modr_m_get_mod(modr_m))) == (get_slice_int(8, 3, 0)))
+then let fault_var = (if (get_slice_int(8, 240, 0)) == (prefixes_get_lck(prefixes))
 then Some(":UD")
-else if (not_bool((let x86 = (0) : int in
-segment_selectorbits_get_rpl(seg_visiblei(1, 0))) == (0))) & ((cr4bits_get_umip(loghead(22, ctri(4, 0)))) == (0))
+else if (not_bool((get_slice_int(8, unsigned(let x86 = (()) : unit in
+segment_selectorbits_get_rpl(seg_visibles[1])), 0)) == (get_slice_int(8, 0, 0)))) & ((the_bits(8, cr4bits_get_umip(the_bits(22, loghead(22, unsigned(ctrs[4])))))) == (get_slice_int(8, 0, 0)))
 then Some(":GP")
 else None() : option(string)) : option(string) in
 if is_some(fault_var)
-then (match fault_var {
+then { (match fault_var {
 Some(":UD") => throw(Emsg("A fault occurred.  Original ACL2 AST:
 ['X86-ILLEGAL-INSTRUCTION', STRING: #UD Encountered!, 'START-RIP', 'TEMP-RIP', 'X86']")),
 Some(":GP") => throw(Emsg("A fault occurred.  Original ACL2 AST:
 ['X86-GENERAL-PROTECTION', STRING: #GP Encountered!, 'START-RIP', 'TEMP-RIP', 'X86']")),
 _ => throw(Emsg("Model state error: Unimplemented exception in x86isa!"))
-}) : int
-else throw(Emsg("Model state error: Opcode Unimplemented in x86isa!"))
-else if (modr_m_get_reg(modr_m)) == (6)
-then let fault_var = (if (240) == (prefixes_get_lck(prefixes))
+}) : unit
+}
+else { throw(Emsg("Model state error: Opcode Unimplemented in x86isa!"))
+}
+else if (the_bits(8, modr_m_get_reg(modr_m))) == (get_slice_int(8, 6, 0))
+then let fault_var = (if (get_slice_int(8, 240, 0)) == (prefixes_get_lck(prefixes))
 then Some(":UD")
-else if not_bool((let x86 = (0) : int in
-segment_selectorbits_get_rpl(seg_visiblei(1, 0))) == (0))
+else if not_bool((get_slice_int(8, unsigned(let x86 = (()) : unit in
+segment_selectorbits_get_rpl(seg_visibles[1])), 0)) == (get_slice_int(8, 0, 0)))
 then Some(":GP")
 else None() : option(string)) : option(string) in
 if is_some(fault_var)
-then (match fault_var {
+then { (match fault_var {
 Some(":UD") => throw(Emsg("A fault occurred.  Original ACL2 AST:
 ['X86-ILLEGAL-INSTRUCTION', STRING: #UD Encountered!, 'START-RIP', 'TEMP-RIP', 'X86']")),
 Some(":GP") => throw(Emsg("A fault occurred.  Original ACL2 AST:
 ['X86-GENERAL-PROTECTION', STRING: #GP Encountered!, 'START-RIP', 'TEMP-RIP', 'X86']")),
 _ => throw(Emsg("Model state error: Unimplemented exception in x86isa!"))
-}) : int
-else throw(Emsg("Model state error: Opcode Unimplemented in x86isa!"))
-else if ((modr_m_get_reg(modr_m)) == (7)) & (not_bool((modr_m_get_mod(modr_m)) == (3)))
-then let fault_var = (if ((240) == (prefixes_get_lck(prefixes))) | ((modr_m_get_mod(modr_m)) == (3))
+}) : unit
+}
+else { throw(Emsg("Model state error: Opcode Unimplemented in x86isa!"))
+}
+else if ((the_bits(8, modr_m_get_reg(modr_m))) == (get_slice_int(8, 7, 0))) & (not_bool((the_bits(8, modr_m_get_mod(modr_m))) == (get_slice_int(8, 3, 0))))
+then let fault_var = (if ((get_slice_int(8, 240, 0)) == (prefixes_get_lck(prefixes))) | ((the_bits(8, modr_m_get_mod(modr_m))) == (get_slice_int(8, 3, 0)))
 then Some(":UD")
-else if not_bool((let x86 = (0) : int in
-segment_selectorbits_get_rpl(seg_visiblei(1, 0))) == (0))
+else if not_bool((get_slice_int(8, unsigned(let x86 = (()) : unit in
+segment_selectorbits_get_rpl(seg_visibles[1])), 0)) == (get_slice_int(8, 0, 0)))
 then Some(":GP")
 else None() : option(string)) : option(string) in
 if is_some(fault_var)
-then (match fault_var {
+then { (match fault_var {
 Some(":UD") => throw(Emsg("A fault occurred.  Original ACL2 AST:
 ['X86-ILLEGAL-INSTRUCTION', STRING: #UD Encountered!, 'START-RIP', 'TEMP-RIP', 'X86']")),
 Some(":GP") => throw(Emsg("A fault occurred.  Original ACL2 AST:
 ['X86-GENERAL-PROTECTION', STRING: #GP Encountered!, 'START-RIP', 'TEMP-RIP', 'X86']")),
 _ => throw(Emsg("Model state error: Unimplemented exception in x86isa!"))
-}) : int
-else throw(Emsg("Model state error: Opcode Unimplemented in x86isa!"))
-else if ((proc_mode) == (0)) & (((modr_m_get_reg(modr_m)) == (7)) & (((modr_m_get_mod(modr_m)) == (3)) & ((modr_m_get_r_m(modr_m)) == (0))))
-then let fault_var = (if (240) == (prefixes_get_lck(prefixes))
+}) : unit
+}
+else { throw(Emsg("Model state error: Opcode Unimplemented in x86isa!"))
+}
+else if ((get_slice_int(8, proc_mode, 0)) == (get_slice_int(8, 0, 0))) & (((the_bits(8, modr_m_get_reg(modr_m))) == (get_slice_int(8, 7, 0))) & (((the_bits(8, modr_m_get_mod(modr_m))) == (get_slice_int(8, 3, 0))) & ((the_bits(8, modr_m_get_r_m(modr_m))) == (get_slice_int(8, 0, 0)))))
+then let fault_var = (if (get_slice_int(8, 240, 0)) == (prefixes_get_lck(prefixes))
 then Some(":UD")
-else if not_bool((let x86 = (0) : int in
-segment_selectorbits_get_rpl(seg_visiblei(1, 0))) == (0))
+else if not_bool((get_slice_int(8, unsigned(let x86 = (()) : unit in
+segment_selectorbits_get_rpl(seg_visibles[1])), 0)) == (get_slice_int(8, 0, 0)))
 then Some(":GP")
 else None() : option(string)) : option(string) in
 if is_some(fault_var)
-then (match fault_var {
+then { (match fault_var {
 Some(":UD") => throw(Emsg("A fault occurred.  Original ACL2 AST:
 ['X86-ILLEGAL-INSTRUCTION', STRING: #UD Encountered!, 'START-RIP', 'TEMP-RIP', 'X86']")),
 Some(":GP") => throw(Emsg("A fault occurred.  Original ACL2 AST:
 ['X86-GENERAL-PROTECTION', STRING: #GP Encountered!, 'START-RIP', 'TEMP-RIP', 'X86']")),
 _ => throw(Emsg("Model state error: Unimplemented exception in x86isa!"))
-}) : int
-else throw(Emsg("Model state error: Opcode Unimplemented in x86isa!"))
-else if ((modr_m_get_reg(modr_m)) == (7)) & (((modr_m_get_mod(modr_m)) == (3)) & ((modr_m_get_r_m(modr_m)) == (1)))
-then let fault_var = (if ((feature_flags_fn([|":RDTSCP"|], 0)) == (0)) | ((240) == (prefixes_get_lck(prefixes)))
+}) : unit
+}
+else { throw(Emsg("Model state error: Opcode Unimplemented in x86isa!"))
+}
+else if ((the_bits(8, modr_m_get_reg(modr_m))) == (get_slice_int(8, 7, 0))) & (((the_bits(8, modr_m_get_mod(modr_m))) == (get_slice_int(8, 3, 0))) & ((the_bits(8, modr_m_get_r_m(modr_m))) == (get_slice_int(8, 1, 0))))
+then let fault_var = (if ((get_slice_int(8, feature_flags_fn([|":RDTSCP"|]), 0)) == (get_slice_int(8, 0, 0))) | ((get_slice_int(8, 240, 0)) == (prefixes_get_lck(prefixes)))
 then Some(":UD")
 else None() : option(string)) : option(string) in
 if is_some(fault_var)
-then (match fault_var {
+then { (match fault_var {
 Some(":UD") => throw(Emsg("A fault occurred.  Original ACL2 AST:
 ['X86-ILLEGAL-INSTRUCTION', STRING: #UD Encountered!, 'START-RIP', 'TEMP-RIP', 'X86']")),
 _ => throw(Emsg("Model state error: Unimplemented exception in x86isa!"))
-}) : int
-else throw(Emsg("Model state error: Opcode Unimplemented in x86isa!"))
+}) : unit
+}
+else { throw(Emsg("Model state error: Opcode Unimplemented in x86isa!"))
+}
 else throw(Emsg("A fault occurred.  Original ACL2 AST:
 ['X86-ILLEGAL-INSTRUCTION', STRING: #UD Encountered!, 'START-RIP', 'TEMP-RIP', 'X86']")),
-2 => let fault_var = (if (240) == (prefixes_get_lck(prefixes))
+2 => let fault_var = (if (get_slice_int(8, 240, 0)) == (prefixes_get_lck(prefixes))
 then Some(":UD")
 else None() : option(string)) : option(string) in
 if is_some(fault_var)
-then (match fault_var {
+then { (match fault_var {
 Some(":UD") => throw(Emsg("A fault occurred.  Original ACL2 AST:
 ['X86-ILLEGAL-INSTRUCTION', STRING: #UD Encountered!, 'START-RIP', 'TEMP-RIP', 'X86']")),
 _ => throw(Emsg("Model state error: Unimplemented exception in x86isa!"))
-}) : int
-else throw(Emsg("Model state error: Opcode Unimplemented in x86isa!")),
-3 => let fault_var = (if (240) == (prefixes_get_lck(prefixes))
+}) : unit
+}
+else { throw(Emsg("Model state error: Opcode Unimplemented in x86isa!"))
+},
+3 => let fault_var = (if (get_slice_int(8, 240, 0)) == (prefixes_get_lck(prefixes))
 then Some(":UD")
 else None() : option(string)) : option(string) in
 if is_some(fault_var)
-then (match fault_var {
+then { (match fault_var {
 Some(":UD") => throw(Emsg("A fault occurred.  Original ACL2 AST:
 ['X86-ILLEGAL-INSTRUCTION', STRING: #UD Encountered!, 'START-RIP', 'TEMP-RIP', 'X86']")),
 _ => throw(Emsg("Model state error: Unimplemented exception in x86isa!"))
-}) : int
-else throw(Emsg("Model state error: Opcode Unimplemented in x86isa!")),
-6 => let fault_var = (if (240) == (prefixes_get_lck(prefixes))
+}) : unit
+}
+else { throw(Emsg("Model state error: Opcode Unimplemented in x86isa!"))
+},
+6 => let fault_var = (if (get_slice_int(8, 240, 0)) == (prefixes_get_lck(prefixes))
 then Some(":UD")
-else if not_bool((let x86 = (0) : int in
-segment_selectorbits_get_rpl(seg_visiblei(1, 0))) == (0))
+else if not_bool((get_slice_int(8, unsigned(let x86 = (()) : unit in
+segment_selectorbits_get_rpl(seg_visibles[1])), 0)) == (get_slice_int(8, 0, 0)))
 then Some(":GP")
 else None() : option(string)) : option(string) in
 if is_some(fault_var)
-then (match fault_var {
+then { (match fault_var {
 Some(":UD") => throw(Emsg("A fault occurred.  Original ACL2 AST:
 ['X86-ILLEGAL-INSTRUCTION', STRING: #UD Encountered!, 'START-RIP', 'TEMP-RIP', 'X86']")),
 Some(":GP") => throw(Emsg("A fault occurred.  Original ACL2 AST:
 ['X86-GENERAL-PROTECTION', STRING: #GP Encountered!, 'START-RIP', 'TEMP-RIP', 'X86']")),
 _ => throw(Emsg("Model state error: Unimplemented exception in x86isa!"))
-}) : int
-else throw(Emsg("Model state error: Opcode Unimplemented in x86isa!")),
-8 => let fault_var = (if (240) == (prefixes_get_lck(prefixes))
+}) : unit
+}
+else { throw(Emsg("Model state error: Opcode Unimplemented in x86isa!"))
+},
+8 => let fault_var = (if (get_slice_int(8, 240, 0)) == (prefixes_get_lck(prefixes))
 then Some(":UD")
 else None() : option(string)) : option(string) in
 if is_some(fault_var)
-then (match fault_var {
+then { (match fault_var {
 Some(":UD") => throw(Emsg("A fault occurred.  Original ACL2 AST:
 ['X86-ILLEGAL-INSTRUCTION', STRING: #UD Encountered!, 'START-RIP', 'TEMP-RIP', 'X86']")),
 _ => throw(Emsg("Model state error: Unimplemented exception in x86isa!"))
-}) : int
-else throw(Emsg("Model state error: Opcode Unimplemented in x86isa!")),
-9 => let fault_var = (if (240) == (prefixes_get_lck(prefixes))
+}) : unit
+}
+else { throw(Emsg("Model state error: Opcode Unimplemented in x86isa!"))
+},
+9 => let fault_var = (if (get_slice_int(8, 240, 0)) == (prefixes_get_lck(prefixes))
 then Some(":UD")
 else None() : option(string)) : option(string) in
 if is_some(fault_var)
-then (match fault_var {
+then { (match fault_var {
 Some(":UD") => throw(Emsg("A fault occurred.  Original ACL2 AST:
 ['X86-ILLEGAL-INSTRUCTION', STRING: #UD Encountered!, 'START-RIP', 'TEMP-RIP', 'X86']")),
 _ => throw(Emsg("Model state error: Unimplemented exception in x86isa!"))
-}) : int
-else throw(Emsg("Model state error: Opcode Unimplemented in x86isa!")),
+}) : unit
+}
+else { throw(Emsg("Model state error: Opcode Unimplemented in x86isa!"))
+},
 11 => throw(Emsg("A fault occurred.  Original ACL2 AST:
 ['X86-ILLEGAL-INSTRUCTION', STRING: UD2 encountered!, 'START-RIP', 'TEMP-RIP', 'X86']")),
-13 => let fault_var = (if (240) == (prefixes_get_lck(prefixes))
+13 => let fault_var = (if (get_slice_int(8, 240, 0)) == (prefixes_get_lck(prefixes))
 then Some(":UD")
 else None() : option(string)) : option(string) in
 if is_some(fault_var)
-then (match fault_var {
+then { (match fault_var {
 Some(":UD") => throw(Emsg("A fault occurred.  Original ACL2 AST:
 ['X86-ILLEGAL-INSTRUCTION', STRING: #UD Encountered!, 'START-RIP', 'TEMP-RIP', 'X86']")),
 _ => throw(Emsg("Model state error: Unimplemented exception in x86isa!"))
-}) : int
-else throw(Emsg("Model state error: Opcode Unimplemented in x86isa!")),
-16 => if (mandatory_prefix) == (0)
-then let fault_var = (let chk_ex = (chk_exc_fn(":LEGACY", ":TYPE-4", [|":SSE"|], proc_mode, prefixes, rex_byte, opcode, modr_m, sib, 0)) : option(string) in
+}) : unit
+}
+else { throw(Emsg("Model state error: Opcode Unimplemented in x86isa!"))
+},
+16 => if (mandatory_prefix) == (get_slice_int(8, 0, 0))
+then let fault_var = (let chk_ex = (chk_exc_fn(":LEGACY", ":TYPE-4", [|":SSE"|], proc_mode, prefixes, rex_byte, opcode, modr_m, sib)) : option(string) in
 if is_some(chk_ex)
 then chk_ex
-else if (feature_flags_fn([|":SSE"|], 0)) == (0)
+else if (get_slice_int(8, feature_flags_fn([|":SSE"|]), 0)) == (get_slice_int(8, 0, 0))
 then Some(":UD")
 else None() : option(string)) : option(string) in
 if is_some(fault_var)
-then (match fault_var {
+then { (match fault_var {
 Some(":UD") => throw(Emsg("A fault occurred.  Original ACL2 AST:
 ['X86-ILLEGAL-INSTRUCTION', STRING: #UD Encountered!, 'START-RIP', 'TEMP-RIP', 'X86']")),
 Some(":GP") => throw(Emsg("A fault occurred.  Original ACL2 AST:
@@ -503,17 +573,19 @@ Some(":GP") => throw(Emsg("A fault occurred.  Original ACL2 AST:
 Some(":NM") => throw(Emsg("A fault occurred.  Original ACL2 AST:
 ['X86-DEVICE-NOT-AVAILABLE', STRING: #NM Encountered!, 'START-RIP', 'TEMP-RIP', 'X86']")),
 _ => throw(Emsg("Model state error: Unimplemented exception in x86isa!"))
-}) : int
-else x86_movups_movupd_movdqu_op_en_rm(proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode, modr_m, sib, 0)
-else if (mandatory_prefix) == (102)
-then let fault_var = (let chk_ex = (chk_exc_fn(":LEGACY", ":TYPE-4", [|":SSE2"|], proc_mode, prefixes, rex_byte, opcode, modr_m, sib, 0)) : option(string) in
+}) : unit
+}
+else { x86_movups_movupd_movdqu_op_en_rm(proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode, modr_m, sib)
+}
+else if (mandatory_prefix) == (get_slice_int(8, 102, 0))
+then let fault_var = (let chk_ex = (chk_exc_fn(":LEGACY", ":TYPE-4", [|":SSE2"|], proc_mode, prefixes, rex_byte, opcode, modr_m, sib)) : option(string) in
 if is_some(chk_ex)
 then chk_ex
-else if (feature_flags_fn([|":SSE2"|], 0)) == (0)
+else if (get_slice_int(8, feature_flags_fn([|":SSE2"|]), 0)) == (get_slice_int(8, 0, 0))
 then Some(":UD")
 else None() : option(string)) : option(string) in
 if is_some(fault_var)
-then (match fault_var {
+then { (match fault_var {
 Some(":UD") => throw(Emsg("A fault occurred.  Original ACL2 AST:
 ['X86-ILLEGAL-INSTRUCTION', STRING: #UD Encountered!, 'START-RIP', 'TEMP-RIP', 'X86']")),
 Some(":GP") => throw(Emsg("A fault occurred.  Original ACL2 AST:
@@ -521,17 +593,19 @@ Some(":GP") => throw(Emsg("A fault occurred.  Original ACL2 AST:
 Some(":NM") => throw(Emsg("A fault occurred.  Original ACL2 AST:
 ['X86-DEVICE-NOT-AVAILABLE', STRING: #NM Encountered!, 'START-RIP', 'TEMP-RIP', 'X86']")),
 _ => throw(Emsg("Model state error: Unimplemented exception in x86isa!"))
-}) : int
-else x86_movups_movupd_movdqu_op_en_rm(proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode, modr_m, sib, 0)
-else if (mandatory_prefix) == (243)
-then let fault_var = (let chk_ex = (chk_exc_fn(":LEGACY", ":TYPE-5", [|":SSE"|], proc_mode, prefixes, rex_byte, opcode, modr_m, sib, 0)) : option(string) in
+}) : unit
+}
+else { x86_movups_movupd_movdqu_op_en_rm(proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode, modr_m, sib)
+}
+else if (mandatory_prefix) == (get_slice_int(8, 243, 0))
+then let fault_var = (let chk_ex = (chk_exc_fn(":LEGACY", ":TYPE-5", [|":SSE"|], proc_mode, prefixes, rex_byte, opcode, modr_m, sib)) : option(string) in
 if is_some(chk_ex)
 then chk_ex
-else if (feature_flags_fn([|":SSE"|], 0)) == (0)
+else if (get_slice_int(8, feature_flags_fn([|":SSE"|]), 0)) == (get_slice_int(8, 0, 0))
 then Some(":UD")
 else None() : option(string)) : option(string) in
 if is_some(fault_var)
-then (match fault_var {
+then { (match fault_var {
 Some(":UD") => throw(Emsg("A fault occurred.  Original ACL2 AST:
 ['X86-ILLEGAL-INSTRUCTION', STRING: #UD Encountered!, 'START-RIP', 'TEMP-RIP', 'X86']")),
 Some(":GP") => throw(Emsg("A fault occurred.  Original ACL2 AST:
@@ -539,17 +613,19 @@ Some(":GP") => throw(Emsg("A fault occurred.  Original ACL2 AST:
 Some(":NM") => throw(Emsg("A fault occurred.  Original ACL2 AST:
 ['X86-DEVICE-NOT-AVAILABLE', STRING: #NM Encountered!, 'START-RIP', 'TEMP-RIP', 'X86']")),
 _ => throw(Emsg("Model state error: Unimplemented exception in x86isa!"))
-}) : int
-else x86_movss_movsd_op_en_rm(0, proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode, modr_m, sib, 0)
-else if (mandatory_prefix) == (242)
-then let fault_var = (let chk_ex = (chk_exc_fn(":LEGACY", ":TYPE-5", [|":SSE2"|], proc_mode, prefixes, rex_byte, opcode, modr_m, sib, 0)) : option(string) in
+}) : unit
+}
+else { x86_movss_movsd_op_en_rm(0, proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode, modr_m, sib)
+}
+else if (mandatory_prefix) == (get_slice_int(8, 242, 0))
+then let fault_var = (let chk_ex = (chk_exc_fn(":LEGACY", ":TYPE-5", [|":SSE2"|], proc_mode, prefixes, rex_byte, opcode, modr_m, sib)) : option(string) in
 if is_some(chk_ex)
 then chk_ex
-else if (feature_flags_fn([|":SSE2"|], 0)) == (0)
+else if (get_slice_int(8, feature_flags_fn([|":SSE2"|]), 0)) == (get_slice_int(8, 0, 0))
 then Some(":UD")
 else None() : option(string)) : option(string) in
 if is_some(fault_var)
-then (match fault_var {
+then { (match fault_var {
 Some(":UD") => throw(Emsg("A fault occurred.  Original ACL2 AST:
 ['X86-ILLEGAL-INSTRUCTION', STRING: #UD Encountered!, 'START-RIP', 'TEMP-RIP', 'X86']")),
 Some(":GP") => throw(Emsg("A fault occurred.  Original ACL2 AST:
@@ -557,19 +633,21 @@ Some(":GP") => throw(Emsg("A fault occurred.  Original ACL2 AST:
 Some(":NM") => throw(Emsg("A fault occurred.  Original ACL2 AST:
 ['X86-DEVICE-NOT-AVAILABLE', STRING: #NM Encountered!, 'START-RIP', 'TEMP-RIP', 'X86']")),
 _ => throw(Emsg("Model state error: Unimplemented exception in x86isa!"))
-}) : int
-else x86_movss_movsd_op_en_rm(1, proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode, modr_m, sib, 0)
+}) : unit
+}
+else { x86_movss_movsd_op_en_rm(1, proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode, modr_m, sib)
+}
 else throw(Emsg("A fault occurred.  Original ACL2 AST:
 ['X86-ILLEGAL-INSTRUCTION', STRING: #UD Encountered!, 'START-RIP', 'TEMP-RIP', 'X86']")),
-17 => if (mandatory_prefix) == (0)
-then let fault_var = (let chk_ex = (chk_exc_fn(":LEGACY", ":TYPE-4", [|":SSE"|], proc_mode, prefixes, rex_byte, opcode, modr_m, sib, 0)) : option(string) in
+17 => if (mandatory_prefix) == (get_slice_int(8, 0, 0))
+then let fault_var = (let chk_ex = (chk_exc_fn(":LEGACY", ":TYPE-4", [|":SSE"|], proc_mode, prefixes, rex_byte, opcode, modr_m, sib)) : option(string) in
 if is_some(chk_ex)
 then chk_ex
-else if (feature_flags_fn([|":SSE"|], 0)) == (0)
+else if (get_slice_int(8, feature_flags_fn([|":SSE"|]), 0)) == (get_slice_int(8, 0, 0))
 then Some(":UD")
 else None() : option(string)) : option(string) in
 if is_some(fault_var)
-then (match fault_var {
+then { (match fault_var {
 Some(":UD") => throw(Emsg("A fault occurred.  Original ACL2 AST:
 ['X86-ILLEGAL-INSTRUCTION', STRING: #UD Encountered!, 'START-RIP', 'TEMP-RIP', 'X86']")),
 Some(":GP") => throw(Emsg("A fault occurred.  Original ACL2 AST:
@@ -577,17 +655,19 @@ Some(":GP") => throw(Emsg("A fault occurred.  Original ACL2 AST:
 Some(":NM") => throw(Emsg("A fault occurred.  Original ACL2 AST:
 ['X86-DEVICE-NOT-AVAILABLE', STRING: #NM Encountered!, 'START-RIP', 'TEMP-RIP', 'X86']")),
 _ => throw(Emsg("Model state error: Unimplemented exception in x86isa!"))
-}) : int
-else x86_movups_movupd_movdqu_op_en_mr(proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode, modr_m, sib, 0)
-else if (mandatory_prefix) == (102)
-then let fault_var = (let chk_ex = (chk_exc_fn(":LEGACY", ":TYPE-4", [|":SSE2"|], proc_mode, prefixes, rex_byte, opcode, modr_m, sib, 0)) : option(string) in
+}) : unit
+}
+else { x86_movups_movupd_movdqu_op_en_mr(proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode, modr_m, sib)
+}
+else if (mandatory_prefix) == (get_slice_int(8, 102, 0))
+then let fault_var = (let chk_ex = (chk_exc_fn(":LEGACY", ":TYPE-4", [|":SSE2"|], proc_mode, prefixes, rex_byte, opcode, modr_m, sib)) : option(string) in
 if is_some(chk_ex)
 then chk_ex
-else if (feature_flags_fn([|":SSE2"|], 0)) == (0)
+else if (get_slice_int(8, feature_flags_fn([|":SSE2"|]), 0)) == (get_slice_int(8, 0, 0))
 then Some(":UD")
 else None() : option(string)) : option(string) in
 if is_some(fault_var)
-then (match fault_var {
+then { (match fault_var {
 Some(":UD") => throw(Emsg("A fault occurred.  Original ACL2 AST:
 ['X86-ILLEGAL-INSTRUCTION', STRING: #UD Encountered!, 'START-RIP', 'TEMP-RIP', 'X86']")),
 Some(":GP") => throw(Emsg("A fault occurred.  Original ACL2 AST:
@@ -595,17 +675,19 @@ Some(":GP") => throw(Emsg("A fault occurred.  Original ACL2 AST:
 Some(":NM") => throw(Emsg("A fault occurred.  Original ACL2 AST:
 ['X86-DEVICE-NOT-AVAILABLE', STRING: #NM Encountered!, 'START-RIP', 'TEMP-RIP', 'X86']")),
 _ => throw(Emsg("Model state error: Unimplemented exception in x86isa!"))
-}) : int
-else x86_movups_movupd_movdqu_op_en_mr(proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode, modr_m, sib, 0)
-else if (mandatory_prefix) == (243)
-then let fault_var = (let chk_ex = (chk_exc_fn(":LEGACY", ":TYPE-5", [|":SSE"|], proc_mode, prefixes, rex_byte, opcode, modr_m, sib, 0)) : option(string) in
+}) : unit
+}
+else { x86_movups_movupd_movdqu_op_en_mr(proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode, modr_m, sib)
+}
+else if (mandatory_prefix) == (get_slice_int(8, 243, 0))
+then let fault_var = (let chk_ex = (chk_exc_fn(":LEGACY", ":TYPE-5", [|":SSE"|], proc_mode, prefixes, rex_byte, opcode, modr_m, sib)) : option(string) in
 if is_some(chk_ex)
 then chk_ex
-else if (feature_flags_fn([|":SSE"|], 0)) == (0)
+else if (get_slice_int(8, feature_flags_fn([|":SSE"|]), 0)) == (get_slice_int(8, 0, 0))
 then Some(":UD")
 else None() : option(string)) : option(string) in
 if is_some(fault_var)
-then (match fault_var {
+then { (match fault_var {
 Some(":UD") => throw(Emsg("A fault occurred.  Original ACL2 AST:
 ['X86-ILLEGAL-INSTRUCTION', STRING: #UD Encountered!, 'START-RIP', 'TEMP-RIP', 'X86']")),
 Some(":GP") => throw(Emsg("A fault occurred.  Original ACL2 AST:
@@ -613,17 +695,19 @@ Some(":GP") => throw(Emsg("A fault occurred.  Original ACL2 AST:
 Some(":NM") => throw(Emsg("A fault occurred.  Original ACL2 AST:
 ['X86-DEVICE-NOT-AVAILABLE', STRING: #NM Encountered!, 'START-RIP', 'TEMP-RIP', 'X86']")),
 _ => throw(Emsg("Model state error: Unimplemented exception in x86isa!"))
-}) : int
-else x86_movss_movsd_op_en_mr(0, proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode, modr_m, sib, 0)
-else if (mandatory_prefix) == (242)
-then let fault_var = (let chk_ex = (chk_exc_fn(":LEGACY", ":TYPE-5", [|":SSE2"|], proc_mode, prefixes, rex_byte, opcode, modr_m, sib, 0)) : option(string) in
+}) : unit
+}
+else { x86_movss_movsd_op_en_mr(0, proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode, modr_m, sib)
+}
+else if (mandatory_prefix) == (get_slice_int(8, 242, 0))
+then let fault_var = (let chk_ex = (chk_exc_fn(":LEGACY", ":TYPE-5", [|":SSE2"|], proc_mode, prefixes, rex_byte, opcode, modr_m, sib)) : option(string) in
 if is_some(chk_ex)
 then chk_ex
-else if (feature_flags_fn([|":SSE2"|], 0)) == (0)
+else if (get_slice_int(8, feature_flags_fn([|":SSE2"|]), 0)) == (get_slice_int(8, 0, 0))
 then Some(":UD")
 else None() : option(string)) : option(string) in
 if is_some(fault_var)
-then (match fault_var {
+then { (match fault_var {
 Some(":UD") => throw(Emsg("A fault occurred.  Original ACL2 AST:
 ['X86-ILLEGAL-INSTRUCTION', STRING: #UD Encountered!, 'START-RIP', 'TEMP-RIP', 'X86']")),
 Some(":GP") => throw(Emsg("A fault occurred.  Original ACL2 AST:
@@ -631,17 +715,19 @@ Some(":GP") => throw(Emsg("A fault occurred.  Original ACL2 AST:
 Some(":NM") => throw(Emsg("A fault occurred.  Original ACL2 AST:
 ['X86-DEVICE-NOT-AVAILABLE', STRING: #NM Encountered!, 'START-RIP', 'TEMP-RIP', 'X86']")),
 _ => throw(Emsg("Model state error: Unimplemented exception in x86isa!"))
-}) : int
-else x86_movss_movsd_op_en_mr(1, proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode, modr_m, sib, 0)
+}) : unit
+}
+else { x86_movss_movsd_op_en_mr(1, proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode, modr_m, sib)
+}
 else throw(Emsg("A fault occurred.  Original ACL2 AST:
 ['X86-ILLEGAL-INSTRUCTION', STRING: #UD Encountered!, 'START-RIP', 'TEMP-RIP', 'X86']")),
-18 => if (not_bool((modr_m_get_mod(modr_m)) == (3))) & ((mandatory_prefix) == (0))
-then let fault_var = (let chk_ex = (chk_exc_fn(":LEGACY", ":TYPE-5", [|":SSE"|], proc_mode, prefixes, rex_byte, opcode, modr_m, sib, 0)) : option(string) in
+18 => if (not_bool((the_bits(8, modr_m_get_mod(modr_m))) == (get_slice_int(8, 3, 0)))) & ((mandatory_prefix) == (get_slice_int(8, 0, 0)))
+then let fault_var = (let chk_ex = (chk_exc_fn(":LEGACY", ":TYPE-5", [|":SSE"|], proc_mode, prefixes, rex_byte, opcode, modr_m, sib)) : option(string) in
 if is_some(chk_ex)
 then chk_ex
 else None() : option(string)) : option(string) in
 if is_some(fault_var)
-then (match fault_var {
+then { (match fault_var {
 Some(":UD") => throw(Emsg("A fault occurred.  Original ACL2 AST:
 ['X86-ILLEGAL-INSTRUCTION', STRING: #UD Encountered!, 'START-RIP', 'TEMP-RIP', 'X86']")),
 Some(":GP") => throw(Emsg("A fault occurred.  Original ACL2 AST:
@@ -649,15 +735,17 @@ Some(":GP") => throw(Emsg("A fault occurred.  Original ACL2 AST:
 Some(":NM") => throw(Emsg("A fault occurred.  Original ACL2 AST:
 ['X86-DEVICE-NOT-AVAILABLE', STRING: #NM Encountered!, 'START-RIP', 'TEMP-RIP', 'X86']")),
 _ => throw(Emsg("Model state error: Unimplemented exception in x86isa!"))
-}) : int
-else x86_movlps_movlpd_op_en_rm(proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode, modr_m, sib, 0)
-else if ((modr_m_get_mod(modr_m)) == (3)) & ((mandatory_prefix) == (0))
-then let fault_var = (let chk_ex = (chk_exc_fn(":LEGACY", ":TYPE-7", [|":SSE"|], proc_mode, prefixes, rex_byte, opcode, modr_m, sib, 0)) : option(string) in
+}) : unit
+}
+else { x86_movlps_movlpd_op_en_rm(proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode, modr_m, sib)
+}
+else if ((the_bits(8, modr_m_get_mod(modr_m))) == (get_slice_int(8, 3, 0))) & ((mandatory_prefix) == (get_slice_int(8, 0, 0)))
+then let fault_var = (let chk_ex = (chk_exc_fn(":LEGACY", ":TYPE-7", [|":SSE"|], proc_mode, prefixes, rex_byte, opcode, modr_m, sib)) : option(string) in
 if is_some(chk_ex)
 then chk_ex
 else None() : option(string)) : option(string) in
 if is_some(fault_var)
-then (match fault_var {
+then { (match fault_var {
 Some(":UD") => throw(Emsg("A fault occurred.  Original ACL2 AST:
 ['X86-ILLEGAL-INSTRUCTION', STRING: #UD Encountered!, 'START-RIP', 'TEMP-RIP', 'X86']")),
 Some(":GP") => throw(Emsg("A fault occurred.  Original ACL2 AST:
@@ -665,17 +753,19 @@ Some(":GP") => throw(Emsg("A fault occurred.  Original ACL2 AST:
 Some(":NM") => throw(Emsg("A fault occurred.  Original ACL2 AST:
 ['X86-DEVICE-NOT-AVAILABLE', STRING: #NM Encountered!, 'START-RIP', 'TEMP-RIP', 'X86']")),
 _ => throw(Emsg("Model state error: Unimplemented exception in x86isa!"))
-}) : int
-else throw(Emsg("Model state error: Opcode Unimplemented in x86isa!"))
-else if (mandatory_prefix) == (102)
-then let fault_var = (let chk_ex = (chk_exc_fn(":LEGACY", ":TYPE-5", [|":SSE2"|], proc_mode, prefixes, rex_byte, opcode, modr_m, sib, 0)) : option(string) in
+}) : unit
+}
+else { throw(Emsg("Model state error: Opcode Unimplemented in x86isa!"))
+}
+else if (mandatory_prefix) == (get_slice_int(8, 102, 0))
+then let fault_var = (let chk_ex = (chk_exc_fn(":LEGACY", ":TYPE-5", [|":SSE2"|], proc_mode, prefixes, rex_byte, opcode, modr_m, sib)) : option(string) in
 if is_some(chk_ex)
 then chk_ex
-else if ((feature_flags_fn([|":SSE2"|], 0)) == (0)) | ((modr_m_get_mod(modr_m)) == (3))
+else if ((get_slice_int(8, feature_flags_fn([|":SSE2"|]), 0)) == (get_slice_int(8, 0, 0))) | ((the_bits(8, modr_m_get_mod(modr_m))) == (get_slice_int(8, 3, 0)))
 then Some(":UD")
 else None() : option(string)) : option(string) in
 if is_some(fault_var)
-then (match fault_var {
+then { (match fault_var {
 Some(":UD") => throw(Emsg("A fault occurred.  Original ACL2 AST:
 ['X86-ILLEGAL-INSTRUCTION', STRING: #UD Encountered!, 'START-RIP', 'TEMP-RIP', 'X86']")),
 Some(":GP") => throw(Emsg("A fault occurred.  Original ACL2 AST:
@@ -683,17 +773,19 @@ Some(":GP") => throw(Emsg("A fault occurred.  Original ACL2 AST:
 Some(":NM") => throw(Emsg("A fault occurred.  Original ACL2 AST:
 ['X86-DEVICE-NOT-AVAILABLE', STRING: #NM Encountered!, 'START-RIP', 'TEMP-RIP', 'X86']")),
 _ => throw(Emsg("Model state error: Unimplemented exception in x86isa!"))
-}) : int
-else x86_movlps_movlpd_op_en_rm(proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode, modr_m, sib, 0)
-else if (mandatory_prefix) == (243)
-then let fault_var = (let chk_ex = (chk_exc_fn(":LEGACY", ":TYPE-4", [|":SSE3"|], proc_mode, prefixes, rex_byte, opcode, modr_m, sib, 0)) : option(string) in
+}) : unit
+}
+else { x86_movlps_movlpd_op_en_rm(proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode, modr_m, sib)
+}
+else if (mandatory_prefix) == (get_slice_int(8, 243, 0))
+then let fault_var = (let chk_ex = (chk_exc_fn(":LEGACY", ":TYPE-4", [|":SSE3"|], proc_mode, prefixes, rex_byte, opcode, modr_m, sib)) : option(string) in
 if is_some(chk_ex)
 then chk_ex
-else if (feature_flags_fn([|":SSE3"|], 0)) == (0)
+else if (get_slice_int(8, feature_flags_fn([|":SSE3"|]), 0)) == (get_slice_int(8, 0, 0))
 then Some(":UD")
 else None() : option(string)) : option(string) in
 if is_some(fault_var)
-then (match fault_var {
+then { (match fault_var {
 Some(":UD") => throw(Emsg("A fault occurred.  Original ACL2 AST:
 ['X86-ILLEGAL-INSTRUCTION', STRING: #UD Encountered!, 'START-RIP', 'TEMP-RIP', 'X86']")),
 Some(":GP") => throw(Emsg("A fault occurred.  Original ACL2 AST:
@@ -701,17 +793,19 @@ Some(":GP") => throw(Emsg("A fault occurred.  Original ACL2 AST:
 Some(":NM") => throw(Emsg("A fault occurred.  Original ACL2 AST:
 ['X86-DEVICE-NOT-AVAILABLE', STRING: #NM Encountered!, 'START-RIP', 'TEMP-RIP', 'X86']")),
 _ => throw(Emsg("Model state error: Unimplemented exception in x86isa!"))
-}) : int
-else x86_movlps_movlpd_op_en_rm(proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode, modr_m, sib, 0)
-else if (mandatory_prefix) == (242)
-then let fault_var = (let chk_ex = (chk_exc_fn(":LEGACY", ":TYPE-5", [|":SSE3"|], proc_mode, prefixes, rex_byte, opcode, modr_m, sib, 0)) : option(string) in
+}) : unit
+}
+else { x86_movlps_movlpd_op_en_rm(proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode, modr_m, sib)
+}
+else if (mandatory_prefix) == (get_slice_int(8, 242, 0))
+then let fault_var = (let chk_ex = (chk_exc_fn(":LEGACY", ":TYPE-5", [|":SSE3"|], proc_mode, prefixes, rex_byte, opcode, modr_m, sib)) : option(string) in
 if is_some(chk_ex)
 then chk_ex
-else if (feature_flags_fn([|":SSE3"|], 0)) == (0)
+else if (get_slice_int(8, feature_flags_fn([|":SSE3"|]), 0)) == (get_slice_int(8, 0, 0))
 then Some(":UD")
 else None() : option(string)) : option(string) in
 if is_some(fault_var)
-then (match fault_var {
+then { (match fault_var {
 Some(":UD") => throw(Emsg("A fault occurred.  Original ACL2 AST:
 ['X86-ILLEGAL-INSTRUCTION', STRING: #UD Encountered!, 'START-RIP', 'TEMP-RIP', 'X86']")),
 Some(":GP") => throw(Emsg("A fault occurred.  Original ACL2 AST:
@@ -719,19 +813,21 @@ Some(":GP") => throw(Emsg("A fault occurred.  Original ACL2 AST:
 Some(":NM") => throw(Emsg("A fault occurred.  Original ACL2 AST:
 ['X86-DEVICE-NOT-AVAILABLE', STRING: #NM Encountered!, 'START-RIP', 'TEMP-RIP', 'X86']")),
 _ => throw(Emsg("Model state error: Unimplemented exception in x86isa!"))
-}) : int
-else x86_movlps_movlpd_op_en_rm(proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode, modr_m, sib, 0)
+}) : unit
+}
+else { x86_movlps_movlpd_op_en_rm(proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode, modr_m, sib)
+}
 else throw(Emsg("A fault occurred.  Original ACL2 AST:
 ['X86-ILLEGAL-INSTRUCTION', STRING: #UD Encountered!, 'START-RIP', 'TEMP-RIP', 'X86']")),
-19 => if (mandatory_prefix) == (0)
-then let fault_var = (let chk_ex = (chk_exc_fn(":LEGACY", ":TYPE-5", [|":SSE"|], proc_mode, prefixes, rex_byte, opcode, modr_m, sib, 0)) : option(string) in
+19 => if (mandatory_prefix) == (get_slice_int(8, 0, 0))
+then let fault_var = (let chk_ex = (chk_exc_fn(":LEGACY", ":TYPE-5", [|":SSE"|], proc_mode, prefixes, rex_byte, opcode, modr_m, sib)) : option(string) in
 if is_some(chk_ex)
 then chk_ex
-else if ((feature_flags_fn([|":SSE"|], 0)) == (0)) | ((modr_m_get_mod(modr_m)) == (3))
+else if ((get_slice_int(8, feature_flags_fn([|":SSE"|]), 0)) == (get_slice_int(8, 0, 0))) | ((the_bits(8, modr_m_get_mod(modr_m))) == (get_slice_int(8, 3, 0)))
 then Some(":UD")
 else None() : option(string)) : option(string) in
 if is_some(fault_var)
-then (match fault_var {
+then { (match fault_var {
 Some(":UD") => throw(Emsg("A fault occurred.  Original ACL2 AST:
 ['X86-ILLEGAL-INSTRUCTION', STRING: #UD Encountered!, 'START-RIP', 'TEMP-RIP', 'X86']")),
 Some(":GP") => throw(Emsg("A fault occurred.  Original ACL2 AST:
@@ -739,17 +835,19 @@ Some(":GP") => throw(Emsg("A fault occurred.  Original ACL2 AST:
 Some(":NM") => throw(Emsg("A fault occurred.  Original ACL2 AST:
 ['X86-DEVICE-NOT-AVAILABLE', STRING: #NM Encountered!, 'START-RIP', 'TEMP-RIP', 'X86']")),
 _ => throw(Emsg("Model state error: Unimplemented exception in x86isa!"))
-}) : int
-else x86_movlps_movlpd_op_en_mr(proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode, modr_m, sib, 0)
-else if (mandatory_prefix) == (102)
-then let fault_var = (let chk_ex = (chk_exc_fn(":LEGACY", ":TYPE-5", [|":SSE2"|], proc_mode, prefixes, rex_byte, opcode, modr_m, sib, 0)) : option(string) in
+}) : unit
+}
+else { x86_movlps_movlpd_op_en_mr(proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode, modr_m, sib)
+}
+else if (mandatory_prefix) == (get_slice_int(8, 102, 0))
+then let fault_var = (let chk_ex = (chk_exc_fn(":LEGACY", ":TYPE-5", [|":SSE2"|], proc_mode, prefixes, rex_byte, opcode, modr_m, sib)) : option(string) in
 if is_some(chk_ex)
 then chk_ex
-else if ((feature_flags_fn([|":SSE2"|], 0)) == (0)) | ((modr_m_get_mod(modr_m)) == (3))
+else if ((get_slice_int(8, feature_flags_fn([|":SSE2"|]), 0)) == (get_slice_int(8, 0, 0))) | ((the_bits(8, modr_m_get_mod(modr_m))) == (get_slice_int(8, 3, 0)))
 then Some(":UD")
 else None() : option(string)) : option(string) in
 if is_some(fault_var)
-then (match fault_var {
+then { (match fault_var {
 Some(":UD") => throw(Emsg("A fault occurred.  Original ACL2 AST:
 ['X86-ILLEGAL-INSTRUCTION', STRING: #UD Encountered!, 'START-RIP', 'TEMP-RIP', 'X86']")),
 Some(":GP") => throw(Emsg("A fault occurred.  Original ACL2 AST:
@@ -757,19 +855,21 @@ Some(":GP") => throw(Emsg("A fault occurred.  Original ACL2 AST:
 Some(":NM") => throw(Emsg("A fault occurred.  Original ACL2 AST:
 ['X86-DEVICE-NOT-AVAILABLE', STRING: #NM Encountered!, 'START-RIP', 'TEMP-RIP', 'X86']")),
 _ => throw(Emsg("Model state error: Unimplemented exception in x86isa!"))
-}) : int
-else x86_movlps_movlpd_op_en_mr(proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode, modr_m, sib, 0)
+}) : unit
+}
+else { x86_movlps_movlpd_op_en_mr(proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode, modr_m, sib)
+}
 else throw(Emsg("A fault occurred.  Original ACL2 AST:
 ['X86-ILLEGAL-INSTRUCTION', STRING: #UD Encountered!, 'START-RIP', 'TEMP-RIP', 'X86']")),
-20 => if (mandatory_prefix) == (0)
-then let fault_var = (let chk_ex = (chk_exc_fn(":LEGACY", ":TYPE-4", [|":SSE"|], proc_mode, prefixes, rex_byte, opcode, modr_m, sib, 0)) : option(string) in
+20 => if (mandatory_prefix) == (get_slice_int(8, 0, 0))
+then let fault_var = (let chk_ex = (chk_exc_fn(":LEGACY", ":TYPE-4", [|":SSE"|], proc_mode, prefixes, rex_byte, opcode, modr_m, sib)) : option(string) in
 if is_some(chk_ex)
 then chk_ex
-else if (feature_flags_fn([|":SSE"|], 0)) == (0)
+else if (get_slice_int(8, feature_flags_fn([|":SSE"|]), 0)) == (get_slice_int(8, 0, 0))
 then Some(":UD")
 else None() : option(string)) : option(string) in
 if is_some(fault_var)
-then (match fault_var {
+then { (match fault_var {
 Some(":UD") => throw(Emsg("A fault occurred.  Original ACL2 AST:
 ['X86-ILLEGAL-INSTRUCTION', STRING: #UD Encountered!, 'START-RIP', 'TEMP-RIP', 'X86']")),
 Some(":GP") => throw(Emsg("A fault occurred.  Original ACL2 AST:
@@ -777,17 +877,19 @@ Some(":GP") => throw(Emsg("A fault occurred.  Original ACL2 AST:
 Some(":NM") => throw(Emsg("A fault occurred.  Original ACL2 AST:
 ['X86-DEVICE-NOT-AVAILABLE', STRING: #NM Encountered!, 'START-RIP', 'TEMP-RIP', 'X86']")),
 _ => throw(Emsg("Model state error: Unimplemented exception in x86isa!"))
-}) : int
-else x86_unpck?ps_op_en_rm(0, proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode, modr_m, sib, 0)
-else if (mandatory_prefix) == (102)
-then let fault_var = (let chk_ex = (chk_exc_fn(":LEGACY", ":TYPE-4", [|":SSE2"|], proc_mode, prefixes, rex_byte, opcode, modr_m, sib, 0)) : option(string) in
+}) : unit
+}
+else { x86_unpck?ps_op_en_rm(0, proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode, modr_m, sib)
+}
+else if (mandatory_prefix) == (get_slice_int(8, 102, 0))
+then let fault_var = (let chk_ex = (chk_exc_fn(":LEGACY", ":TYPE-4", [|":SSE2"|], proc_mode, prefixes, rex_byte, opcode, modr_m, sib)) : option(string) in
 if is_some(chk_ex)
 then chk_ex
-else if (feature_flags_fn([|":SSE2"|], 0)) == (0)
+else if (get_slice_int(8, feature_flags_fn([|":SSE2"|]), 0)) == (get_slice_int(8, 0, 0))
 then Some(":UD")
 else None() : option(string)) : option(string) in
 if is_some(fault_var)
-then (match fault_var {
+then { (match fault_var {
 Some(":UD") => throw(Emsg("A fault occurred.  Original ACL2 AST:
 ['X86-ILLEGAL-INSTRUCTION', STRING: #UD Encountered!, 'START-RIP', 'TEMP-RIP', 'X86']")),
 Some(":GP") => throw(Emsg("A fault occurred.  Original ACL2 AST:
@@ -795,19 +897,21 @@ Some(":GP") => throw(Emsg("A fault occurred.  Original ACL2 AST:
 Some(":NM") => throw(Emsg("A fault occurred.  Original ACL2 AST:
 ['X86-DEVICE-NOT-AVAILABLE', STRING: #NM Encountered!, 'START-RIP', 'TEMP-RIP', 'X86']")),
 _ => throw(Emsg("Model state error: Unimplemented exception in x86isa!"))
-}) : int
-else x86_unpck?pd_op_en_rm(0, proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode, modr_m, sib, 0)
+}) : unit
+}
+else { x86_unpck?pd_op_en_rm(0, proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode, modr_m, sib)
+}
 else throw(Emsg("A fault occurred.  Original ACL2 AST:
 ['X86-ILLEGAL-INSTRUCTION', STRING: #UD Encountered!, 'START-RIP', 'TEMP-RIP', 'X86']")),
-21 => if (mandatory_prefix) == (0)
-then let fault_var = (let chk_ex = (chk_exc_fn(":LEGACY", ":TYPE-4", [|":SSE"|], proc_mode, prefixes, rex_byte, opcode, modr_m, sib, 0)) : option(string) in
+21 => if (mandatory_prefix) == (get_slice_int(8, 0, 0))
+then let fault_var = (let chk_ex = (chk_exc_fn(":LEGACY", ":TYPE-4", [|":SSE"|], proc_mode, prefixes, rex_byte, opcode, modr_m, sib)) : option(string) in
 if is_some(chk_ex)
 then chk_ex
-else if (feature_flags_fn([|":SSE"|], 0)) == (0)
+else if (get_slice_int(8, feature_flags_fn([|":SSE"|]), 0)) == (get_slice_int(8, 0, 0))
 then Some(":UD")
 else None() : option(string)) : option(string) in
 if is_some(fault_var)
-then (match fault_var {
+then { (match fault_var {
 Some(":UD") => throw(Emsg("A fault occurred.  Original ACL2 AST:
 ['X86-ILLEGAL-INSTRUCTION', STRING: #UD Encountered!, 'START-RIP', 'TEMP-RIP', 'X86']")),
 Some(":GP") => throw(Emsg("A fault occurred.  Original ACL2 AST:
@@ -815,17 +919,19 @@ Some(":GP") => throw(Emsg("A fault occurred.  Original ACL2 AST:
 Some(":NM") => throw(Emsg("A fault occurred.  Original ACL2 AST:
 ['X86-DEVICE-NOT-AVAILABLE', STRING: #NM Encountered!, 'START-RIP', 'TEMP-RIP', 'X86']")),
 _ => throw(Emsg("Model state error: Unimplemented exception in x86isa!"))
-}) : int
-else x86_unpck?ps_op_en_rm(1, proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode, modr_m, sib, 0)
-else if (mandatory_prefix) == (102)
-then let fault_var = (let chk_ex = (chk_exc_fn(":LEGACY", ":TYPE-4", [|":SSE2"|], proc_mode, prefixes, rex_byte, opcode, modr_m, sib, 0)) : option(string) in
+}) : unit
+}
+else { x86_unpck?ps_op_en_rm(1, proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode, modr_m, sib)
+}
+else if (mandatory_prefix) == (get_slice_int(8, 102, 0))
+then let fault_var = (let chk_ex = (chk_exc_fn(":LEGACY", ":TYPE-4", [|":SSE2"|], proc_mode, prefixes, rex_byte, opcode, modr_m, sib)) : option(string) in
 if is_some(chk_ex)
 then chk_ex
-else if (feature_flags_fn([|":SSE2"|], 0)) == (0)
+else if (get_slice_int(8, feature_flags_fn([|":SSE2"|]), 0)) == (get_slice_int(8, 0, 0))
 then Some(":UD")
 else None() : option(string)) : option(string) in
 if is_some(fault_var)
-then (match fault_var {
+then { (match fault_var {
 Some(":UD") => throw(Emsg("A fault occurred.  Original ACL2 AST:
 ['X86-ILLEGAL-INSTRUCTION', STRING: #UD Encountered!, 'START-RIP', 'TEMP-RIP', 'X86']")),
 Some(":GP") => throw(Emsg("A fault occurred.  Original ACL2 AST:
@@ -833,17 +939,19 @@ Some(":GP") => throw(Emsg("A fault occurred.  Original ACL2 AST:
 Some(":NM") => throw(Emsg("A fault occurred.  Original ACL2 AST:
 ['X86-DEVICE-NOT-AVAILABLE', STRING: #NM Encountered!, 'START-RIP', 'TEMP-RIP', 'X86']")),
 _ => throw(Emsg("Model state error: Unimplemented exception in x86isa!"))
-}) : int
-else x86_unpck?pd_op_en_rm(1, proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode, modr_m, sib, 0)
+}) : unit
+}
+else { x86_unpck?pd_op_en_rm(1, proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode, modr_m, sib)
+}
 else throw(Emsg("A fault occurred.  Original ACL2 AST:
 ['X86-ILLEGAL-INSTRUCTION', STRING: #UD Encountered!, 'START-RIP', 'TEMP-RIP', 'X86']")),
-22 => if (not_bool((modr_m_get_mod(modr_m)) == (3))) & ((mandatory_prefix) == (0))
-then let fault_var = (let chk_ex = (chk_exc_fn(":LEGACY", ":TYPE-5", [|":SSE"|], proc_mode, prefixes, rex_byte, opcode, modr_m, sib, 0)) : option(string) in
+22 => if (not_bool((the_bits(8, modr_m_get_mod(modr_m))) == (get_slice_int(8, 3, 0)))) & ((mandatory_prefix) == (get_slice_int(8, 0, 0)))
+then let fault_var = (let chk_ex = (chk_exc_fn(":LEGACY", ":TYPE-5", [|":SSE"|], proc_mode, prefixes, rex_byte, opcode, modr_m, sib)) : option(string) in
 if is_some(chk_ex)
 then chk_ex
 else None() : option(string)) : option(string) in
 if is_some(fault_var)
-then (match fault_var {
+then { (match fault_var {
 Some(":UD") => throw(Emsg("A fault occurred.  Original ACL2 AST:
 ['X86-ILLEGAL-INSTRUCTION', STRING: #UD Encountered!, 'START-RIP', 'TEMP-RIP', 'X86']")),
 Some(":GP") => throw(Emsg("A fault occurred.  Original ACL2 AST:
@@ -851,15 +959,17 @@ Some(":GP") => throw(Emsg("A fault occurred.  Original ACL2 AST:
 Some(":NM") => throw(Emsg("A fault occurred.  Original ACL2 AST:
 ['X86-DEVICE-NOT-AVAILABLE', STRING: #NM Encountered!, 'START-RIP', 'TEMP-RIP', 'X86']")),
 _ => throw(Emsg("Model state error: Unimplemented exception in x86isa!"))
-}) : int
-else x86_movhps_movhpd_op_en_rm(proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode, modr_m, sib, 0)
-else if ((modr_m_get_mod(modr_m)) == (3)) & ((mandatory_prefix) == (0))
-then let fault_var = (let chk_ex = (chk_exc_fn(":LEGACY", ":TYPE-7", [|":SSE"|], proc_mode, prefixes, rex_byte, opcode, modr_m, sib, 0)) : option(string) in
+}) : unit
+}
+else { x86_movhps_movhpd_op_en_rm(proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode, modr_m, sib)
+}
+else if ((the_bits(8, modr_m_get_mod(modr_m))) == (get_slice_int(8, 3, 0))) & ((mandatory_prefix) == (get_slice_int(8, 0, 0)))
+then let fault_var = (let chk_ex = (chk_exc_fn(":LEGACY", ":TYPE-7", [|":SSE"|], proc_mode, prefixes, rex_byte, opcode, modr_m, sib)) : option(string) in
 if is_some(chk_ex)
 then chk_ex
 else None() : option(string)) : option(string) in
 if is_some(fault_var)
-then (match fault_var {
+then { (match fault_var {
 Some(":UD") => throw(Emsg("A fault occurred.  Original ACL2 AST:
 ['X86-ILLEGAL-INSTRUCTION', STRING: #UD Encountered!, 'START-RIP', 'TEMP-RIP', 'X86']")),
 Some(":GP") => throw(Emsg("A fault occurred.  Original ACL2 AST:
@@ -867,17 +977,19 @@ Some(":GP") => throw(Emsg("A fault occurred.  Original ACL2 AST:
 Some(":NM") => throw(Emsg("A fault occurred.  Original ACL2 AST:
 ['X86-DEVICE-NOT-AVAILABLE', STRING: #NM Encountered!, 'START-RIP', 'TEMP-RIP', 'X86']")),
 _ => throw(Emsg("Model state error: Unimplemented exception in x86isa!"))
-}) : int
-else throw(Emsg("Model state error: Opcode Unimplemented in x86isa!"))
-else if (mandatory_prefix) == (102)
-then let fault_var = (let chk_ex = (chk_exc_fn(":LEGACY", ":TYPE-5", [|":SSE2"|], proc_mode, prefixes, rex_byte, opcode, modr_m, sib, 0)) : option(string) in
+}) : unit
+}
+else { throw(Emsg("Model state error: Opcode Unimplemented in x86isa!"))
+}
+else if (mandatory_prefix) == (get_slice_int(8, 102, 0))
+then let fault_var = (let chk_ex = (chk_exc_fn(":LEGACY", ":TYPE-5", [|":SSE2"|], proc_mode, prefixes, rex_byte, opcode, modr_m, sib)) : option(string) in
 if is_some(chk_ex)
 then chk_ex
-else if ((feature_flags_fn([|":SSE2"|], 0)) == (0)) | ((modr_m_get_mod(modr_m)) == (3))
+else if ((get_slice_int(8, feature_flags_fn([|":SSE2"|]), 0)) == (get_slice_int(8, 0, 0))) | ((the_bits(8, modr_m_get_mod(modr_m))) == (get_slice_int(8, 3, 0)))
 then Some(":UD")
 else None() : option(string)) : option(string) in
 if is_some(fault_var)
-then (match fault_var {
+then { (match fault_var {
 Some(":UD") => throw(Emsg("A fault occurred.  Original ACL2 AST:
 ['X86-ILLEGAL-INSTRUCTION', STRING: #UD Encountered!, 'START-RIP', 'TEMP-RIP', 'X86']")),
 Some(":GP") => throw(Emsg("A fault occurred.  Original ACL2 AST:
@@ -885,17 +997,19 @@ Some(":GP") => throw(Emsg("A fault occurred.  Original ACL2 AST:
 Some(":NM") => throw(Emsg("A fault occurred.  Original ACL2 AST:
 ['X86-DEVICE-NOT-AVAILABLE', STRING: #NM Encountered!, 'START-RIP', 'TEMP-RIP', 'X86']")),
 _ => throw(Emsg("Model state error: Unimplemented exception in x86isa!"))
-}) : int
-else x86_movhps_movhpd_op_en_rm(proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode, modr_m, sib, 0)
-else if (mandatory_prefix) == (243)
-then let fault_var = (let chk_ex = (chk_exc_fn(":LEGACY", ":TYPE-4", [|":SSE3"|], proc_mode, prefixes, rex_byte, opcode, modr_m, sib, 0)) : option(string) in
+}) : unit
+}
+else { x86_movhps_movhpd_op_en_rm(proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode, modr_m, sib)
+}
+else if (mandatory_prefix) == (get_slice_int(8, 243, 0))
+then let fault_var = (let chk_ex = (chk_exc_fn(":LEGACY", ":TYPE-4", [|":SSE3"|], proc_mode, prefixes, rex_byte, opcode, modr_m, sib)) : option(string) in
 if is_some(chk_ex)
 then chk_ex
-else if (feature_flags_fn([|":SSE3"|], 0)) == (0)
+else if (get_slice_int(8, feature_flags_fn([|":SSE3"|]), 0)) == (get_slice_int(8, 0, 0))
 then Some(":UD")
 else None() : option(string)) : option(string) in
 if is_some(fault_var)
-then (match fault_var {
+then { (match fault_var {
 Some(":UD") => throw(Emsg("A fault occurred.  Original ACL2 AST:
 ['X86-ILLEGAL-INSTRUCTION', STRING: #UD Encountered!, 'START-RIP', 'TEMP-RIP', 'X86']")),
 Some(":GP") => throw(Emsg("A fault occurred.  Original ACL2 AST:
@@ -903,19 +1017,21 @@ Some(":GP") => throw(Emsg("A fault occurred.  Original ACL2 AST:
 Some(":NM") => throw(Emsg("A fault occurred.  Original ACL2 AST:
 ['X86-DEVICE-NOT-AVAILABLE', STRING: #NM Encountered!, 'START-RIP', 'TEMP-RIP', 'X86']")),
 _ => throw(Emsg("Model state error: Unimplemented exception in x86isa!"))
-}) : int
-else throw(Emsg("Model state error: Opcode Unimplemented in x86isa!"))
+}) : unit
+}
+else { throw(Emsg("Model state error: Opcode Unimplemented in x86isa!"))
+}
 else throw(Emsg("A fault occurred.  Original ACL2 AST:
 ['X86-ILLEGAL-INSTRUCTION', STRING: #UD Encountered!, 'START-RIP', 'TEMP-RIP', 'X86']")),
-23 => if (mandatory_prefix) == (0)
-then let fault_var = (let chk_ex = (chk_exc_fn(":LEGACY", ":TYPE-5", [|":SSE"|], proc_mode, prefixes, rex_byte, opcode, modr_m, sib, 0)) : option(string) in
+23 => if (mandatory_prefix) == (get_slice_int(8, 0, 0))
+then let fault_var = (let chk_ex = (chk_exc_fn(":LEGACY", ":TYPE-5", [|":SSE"|], proc_mode, prefixes, rex_byte, opcode, modr_m, sib)) : option(string) in
 if is_some(chk_ex)
 then chk_ex
-else if ((feature_flags_fn([|":SSE"|], 0)) == (0)) | ((modr_m_get_mod(modr_m)) == (3))
+else if ((get_slice_int(8, feature_flags_fn([|":SSE"|]), 0)) == (get_slice_int(8, 0, 0))) | ((the_bits(8, modr_m_get_mod(modr_m))) == (get_slice_int(8, 3, 0)))
 then Some(":UD")
 else None() : option(string)) : option(string) in
 if is_some(fault_var)
-then (match fault_var {
+then { (match fault_var {
 Some(":UD") => throw(Emsg("A fault occurred.  Original ACL2 AST:
 ['X86-ILLEGAL-INSTRUCTION', STRING: #UD Encountered!, 'START-RIP', 'TEMP-RIP', 'X86']")),
 Some(":GP") => throw(Emsg("A fault occurred.  Original ACL2 AST:
@@ -923,17 +1039,19 @@ Some(":GP") => throw(Emsg("A fault occurred.  Original ACL2 AST:
 Some(":NM") => throw(Emsg("A fault occurred.  Original ACL2 AST:
 ['X86-DEVICE-NOT-AVAILABLE', STRING: #NM Encountered!, 'START-RIP', 'TEMP-RIP', 'X86']")),
 _ => throw(Emsg("Model state error: Unimplemented exception in x86isa!"))
-}) : int
-else x86_movhps_movhpd_op_en_mr(proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode, modr_m, sib, 0)
-else if (mandatory_prefix) == (102)
-then let fault_var = (let chk_ex = (chk_exc_fn(":LEGACY", ":TYPE-5", [|":SSE2"|], proc_mode, prefixes, rex_byte, opcode, modr_m, sib, 0)) : option(string) in
+}) : unit
+}
+else { x86_movhps_movhpd_op_en_mr(proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode, modr_m, sib)
+}
+else if (mandatory_prefix) == (get_slice_int(8, 102, 0))
+then let fault_var = (let chk_ex = (chk_exc_fn(":LEGACY", ":TYPE-5", [|":SSE2"|], proc_mode, prefixes, rex_byte, opcode, modr_m, sib)) : option(string) in
 if is_some(chk_ex)
 then chk_ex
-else if ((feature_flags_fn([|":SSE2"|], 0)) == (0)) | ((modr_m_get_mod(modr_m)) == (3))
+else if ((get_slice_int(8, feature_flags_fn([|":SSE2"|]), 0)) == (get_slice_int(8, 0, 0))) | ((the_bits(8, modr_m_get_mod(modr_m))) == (get_slice_int(8, 3, 0)))
 then Some(":UD")
 else None() : option(string)) : option(string) in
 if is_some(fault_var)
-then (match fault_var {
+then { (match fault_var {
 Some(":UD") => throw(Emsg("A fault occurred.  Original ACL2 AST:
 ['X86-ILLEGAL-INSTRUCTION', STRING: #UD Encountered!, 'START-RIP', 'TEMP-RIP', 'X86']")),
 Some(":GP") => throw(Emsg("A fault occurred.  Original ACL2 AST:
@@ -941,347 +1059,393 @@ Some(":GP") => throw(Emsg("A fault occurred.  Original ACL2 AST:
 Some(":NM") => throw(Emsg("A fault occurred.  Original ACL2 AST:
 ['X86-DEVICE-NOT-AVAILABLE', STRING: #NM Encountered!, 'START-RIP', 'TEMP-RIP', 'X86']")),
 _ => throw(Emsg("Model state error: Unimplemented exception in x86isa!"))
-}) : int
-else x86_movhps_movhpd_op_en_mr(proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode, modr_m, sib, 0)
+}) : unit
+}
+else { x86_movhps_movhpd_op_en_mr(proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode, modr_m, sib)
+}
 else throw(Emsg("A fault occurred.  Original ACL2 AST:
 ['X86-ILLEGAL-INSTRUCTION', STRING: #UD Encountered!, 'START-RIP', 'TEMP-RIP', 'X86']")),
-24 => if ((modr_m_get_reg(modr_m)) == (0)) & (not_bool((modr_m_get_mod(modr_m)) == (3)))
-then let fault_var = (if (240) == (prefixes_get_lck(prefixes))
+24 => if ((the_bits(8, modr_m_get_reg(modr_m))) == (get_slice_int(8, 0, 0))) & (not_bool((the_bits(8, modr_m_get_mod(modr_m))) == (get_slice_int(8, 3, 0))))
+then let fault_var = (if (get_slice_int(8, 240, 0)) == (prefixes_get_lck(prefixes))
 then Some(":UD")
 else None() : option(string)) : option(string) in
 if is_some(fault_var)
-then (match fault_var {
+then { (match fault_var {
 Some(":UD") => throw(Emsg("A fault occurred.  Original ACL2 AST:
 ['X86-ILLEGAL-INSTRUCTION', STRING: #UD Encountered!, 'START-RIP', 'TEMP-RIP', 'X86']")),
 _ => throw(Emsg("Model state error: Unimplemented exception in x86isa!"))
-}) : int
-else throw(Emsg("Model state error: Opcode Unimplemented in x86isa!"))
-else if ((modr_m_get_reg(modr_m)) == (1)) & (not_bool((modr_m_get_mod(modr_m)) == (3)))
-then let fault_var = (if (240) == (prefixes_get_lck(prefixes))
+}) : unit
+}
+else { throw(Emsg("Model state error: Opcode Unimplemented in x86isa!"))
+}
+else if ((the_bits(8, modr_m_get_reg(modr_m))) == (get_slice_int(8, 1, 0))) & (not_bool((the_bits(8, modr_m_get_mod(modr_m))) == (get_slice_int(8, 3, 0))))
+then let fault_var = (if (get_slice_int(8, 240, 0)) == (prefixes_get_lck(prefixes))
 then Some(":UD")
 else None() : option(string)) : option(string) in
 if is_some(fault_var)
-then (match fault_var {
+then { (match fault_var {
 Some(":UD") => throw(Emsg("A fault occurred.  Original ACL2 AST:
 ['X86-ILLEGAL-INSTRUCTION', STRING: #UD Encountered!, 'START-RIP', 'TEMP-RIP', 'X86']")),
 _ => throw(Emsg("Model state error: Unimplemented exception in x86isa!"))
-}) : int
-else throw(Emsg("Model state error: Opcode Unimplemented in x86isa!"))
-else if ((modr_m_get_reg(modr_m)) == (2)) & (not_bool((modr_m_get_mod(modr_m)) == (3)))
-then let fault_var = (if (240) == (prefixes_get_lck(prefixes))
+}) : unit
+}
+else { throw(Emsg("Model state error: Opcode Unimplemented in x86isa!"))
+}
+else if ((the_bits(8, modr_m_get_reg(modr_m))) == (get_slice_int(8, 2, 0))) & (not_bool((the_bits(8, modr_m_get_mod(modr_m))) == (get_slice_int(8, 3, 0))))
+then let fault_var = (if (get_slice_int(8, 240, 0)) == (prefixes_get_lck(prefixes))
 then Some(":UD")
 else None() : option(string)) : option(string) in
 if is_some(fault_var)
-then (match fault_var {
+then { (match fault_var {
 Some(":UD") => throw(Emsg("A fault occurred.  Original ACL2 AST:
 ['X86-ILLEGAL-INSTRUCTION', STRING: #UD Encountered!, 'START-RIP', 'TEMP-RIP', 'X86']")),
 _ => throw(Emsg("Model state error: Unimplemented exception in x86isa!"))
-}) : int
-else throw(Emsg("Model state error: Opcode Unimplemented in x86isa!"))
-else if ((modr_m_get_reg(modr_m)) == (3)) & (not_bool((modr_m_get_mod(modr_m)) == (3)))
-then let fault_var = (if (240) == (prefixes_get_lck(prefixes))
+}) : unit
+}
+else { throw(Emsg("Model state error: Opcode Unimplemented in x86isa!"))
+}
+else if ((the_bits(8, modr_m_get_reg(modr_m))) == (get_slice_int(8, 3, 0))) & (not_bool((the_bits(8, modr_m_get_mod(modr_m))) == (get_slice_int(8, 3, 0))))
+then let fault_var = (if (get_slice_int(8, 240, 0)) == (prefixes_get_lck(prefixes))
 then Some(":UD")
 else None() : option(string)) : option(string) in
 if is_some(fault_var)
-then (match fault_var {
+then { (match fault_var {
 Some(":UD") => throw(Emsg("A fault occurred.  Original ACL2 AST:
 ['X86-ILLEGAL-INSTRUCTION', STRING: #UD Encountered!, 'START-RIP', 'TEMP-RIP', 'X86']")),
 _ => throw(Emsg("Model state error: Unimplemented exception in x86isa!"))
-}) : int
-else throw(Emsg("Model state error: Opcode Unimplemented in x86isa!"))
-else if (modr_m_get_reg(modr_m)) == (4)
+}) : unit
+}
+else { throw(Emsg("Model state error: Opcode Unimplemented in x86isa!"))
+}
+else if (the_bits(8, modr_m_get_reg(modr_m))) == (get_slice_int(8, 4, 0))
 then throw(Emsg("Model state error: Opcode Unimplemented in x86isa!"))
-else if (modr_m_get_reg(modr_m)) == (5)
+else if (the_bits(8, modr_m_get_reg(modr_m))) == (get_slice_int(8, 5, 0))
 then throw(Emsg("Model state error: Opcode Unimplemented in x86isa!"))
-else if (modr_m_get_reg(modr_m)) == (6)
+else if (the_bits(8, modr_m_get_reg(modr_m))) == (get_slice_int(8, 6, 0))
 then throw(Emsg("Model state error: Opcode Unimplemented in x86isa!"))
-else if (modr_m_get_reg(modr_m)) == (7)
+else if (the_bits(8, modr_m_get_reg(modr_m))) == (get_slice_int(8, 7, 0))
 then throw(Emsg("Model state error: Opcode Unimplemented in x86isa!"))
-else if (modr_m_get_mod(modr_m)) == (3)
+else if (the_bits(8, modr_m_get_mod(modr_m))) == (get_slice_int(8, 3, 0))
 then throw(Emsg("Model state error: Opcode Unimplemented in x86isa!"))
 else throw(Emsg("A fault occurred.  Original ACL2 AST:
 ['X86-ILLEGAL-INSTRUCTION', STRING: #UD Encountered!, 'START-RIP', 'TEMP-RIP', 'X86']")),
-26 => if (not_bool((modr_m_get_mod(modr_m)) == (3))) & ((mandatory_prefix) == (0))
-then let fault_var = (if ((feature_flags_fn([|":MPX"|], 0)) == (0)) | (((240) == (prefixes_get_lck(prefixes))) | (((4) <= (reg_index(modr_m_get_reg(modr_m), rex_byte, 2))) | (if (proc_mode) == (0)
-then ((modr_m_get_mod(modr_m)) == (0)) & (((modr_m_get_r_m(modr_m)) == (5)) | (((modr_m_get_r_m(modr_m)) == (4)) & (((sib_get_base(sib)) == (5)) & ((sib_get_index(sib)) == (4)))))
-else if (prefixes_get_adr(prefixes)) == (103)
-then (let cs_attr = (seg_hidden_attri(1, 0)) : int in
-code_segment_descriptor_attributesbits_get_d(cs_attr)) == (1)
-else (let cs_attr = (seg_hidden_attri(1, 0)) : int in
-code_segment_descriptor_attributesbits_get_d(cs_attr)) == (0))))
+26 => if (not_bool((the_bits(8, modr_m_get_mod(modr_m))) == (get_slice_int(8, 3, 0)))) & ((mandatory_prefix) == (get_slice_int(8, 0, 0)))
+then let fault_var = (if ((get_slice_int(8, feature_flags_fn([|":MPX"|]), 0)) == (get_slice_int(8, 0, 0))) | (((get_slice_int(8, 240, 0)) == (prefixes_get_lck(prefixes))) | (((4) <= (unsigned(reg_index(modr_m_get_reg(modr_m), rex_byte, get_slice_int(2, 2, 0))))) | (if (get_slice_int(8, proc_mode, 0)) == (get_slice_int(8, 0, 0))
+then ((the_bits(8, modr_m_get_mod(modr_m))) == (get_slice_int(8, 0, 0))) & (((the_bits(8, modr_m_get_r_m(modr_m))) == (get_slice_int(8, 5, 0))) | (((the_bits(8, modr_m_get_r_m(modr_m))) == (get_slice_int(8, 4, 0))) & (((the_bits(8, sib_get_base(sib))) == (get_slice_int(8, 5, 0))) & ((the_bits(8, sib_get_index(sib))) == (get_slice_int(8, 4, 0))))))
+else if (prefixes_get_adr(prefixes)) == (get_slice_int(8, 103, 0))
+then (the_bits(8, let cs_attr = (seg_hidden_attrs[1]) : bits(16) in
+code_segment_descriptor_attributesbits_get_d(cs_attr))) == (get_slice_int(8, 1, 0))
+else (the_bits(8, let cs_attr = (seg_hidden_attrs[1]) : bits(16) in
+code_segment_descriptor_attributesbits_get_d(cs_attr))) == (get_slice_int(8, 0, 0)))))
 then Some(":UD")
 else None() : option(string)) : option(string) in
 if is_some(fault_var)
-then (match fault_var {
+then { (match fault_var {
 Some(":UD") => throw(Emsg("A fault occurred.  Original ACL2 AST:
 ['X86-ILLEGAL-INSTRUCTION', STRING: #UD Encountered!, 'START-RIP', 'TEMP-RIP', 'X86']")),
 _ => throw(Emsg("Model state error: Unimplemented exception in x86isa!"))
-}) : int
-else throw(Emsg("Model state error: Opcode Unimplemented in x86isa!"))
-else if ((modr_m_get_mod(modr_m)) == (3)) & ((mandatory_prefix) == (0))
-then let fault_var = (if (feature_flags_fn([|":MPX"|], 0)) == (0)
+}) : unit
+}
+else { throw(Emsg("Model state error: Opcode Unimplemented in x86isa!"))
+}
+else if ((the_bits(8, modr_m_get_mod(modr_m))) == (get_slice_int(8, 3, 0))) & ((mandatory_prefix) == (get_slice_int(8, 0, 0)))
+then let fault_var = (if (get_slice_int(8, feature_flags_fn([|":MPX"|]), 0)) == (get_slice_int(8, 0, 0))
 then Some(":UD")
 else None() : option(string)) : option(string) in
 if is_some(fault_var)
-then (match fault_var {
+then { (match fault_var {
 Some(":UD") => throw(Emsg("A fault occurred.  Original ACL2 AST:
 ['X86-ILLEGAL-INSTRUCTION', STRING: #UD Encountered!, 'START-RIP', 'TEMP-RIP', 'X86']")),
 _ => throw(Emsg("Model state error: Unimplemented exception in x86isa!"))
-}) : int
-else throw(Emsg("Model state error: Opcode Unimplemented in x86isa!"))
-else if (not_bool((modr_m_get_mod(modr_m)) == (3))) & ((mandatory_prefix) == (102))
-then let fault_var = (if ((feature_flags_fn([|":MPX"|], 0)) == (0)) | ((((modr_m_get_mod(modr_m)) == (3)) & ((240) == (prefixes_get_lck(prefixes)))) | (((4) <= (reg_index(modr_m_get_r_m(modr_m), rex_byte, 0))) | (if (not_bool((proc_mode) == (0))) & ((prefixes_get_adr(prefixes)) == (103))
-then (let cs_attr = (seg_hidden_attri(1, 0)) : int in
-code_segment_descriptor_attributesbits_get_d(cs_attr)) == (1)
-else (let cs_attr = (seg_hidden_attri(1, 0)) : int in
-code_segment_descriptor_attributesbits_get_d(cs_attr)) == (0))))
+}) : unit
+}
+else { throw(Emsg("Model state error: Opcode Unimplemented in x86isa!"))
+}
+else if (not_bool((the_bits(8, modr_m_get_mod(modr_m))) == (get_slice_int(8, 3, 0)))) & ((mandatory_prefix) == (get_slice_int(8, 102, 0)))
+then let fault_var = (if ((get_slice_int(8, feature_flags_fn([|":MPX"|]), 0)) == (get_slice_int(8, 0, 0))) | ((((the_bits(8, modr_m_get_mod(modr_m))) == (get_slice_int(8, 3, 0))) & ((get_slice_int(8, 240, 0)) == (prefixes_get_lck(prefixes)))) | (((4) <= (unsigned(reg_index(modr_m_get_r_m(modr_m), rex_byte, get_slice_int(2, 0, 0))))) | (if (not_bool((get_slice_int(8, proc_mode, 0)) == (get_slice_int(8, 0, 0)))) & ((prefixes_get_adr(prefixes)) == (get_slice_int(8, 103, 0)))
+then (the_bits(8, let cs_attr = (seg_hidden_attrs[1]) : bits(16) in
+code_segment_descriptor_attributesbits_get_d(cs_attr))) == (get_slice_int(8, 1, 0))
+else (the_bits(8, let cs_attr = (seg_hidden_attrs[1]) : bits(16) in
+code_segment_descriptor_attributesbits_get_d(cs_attr))) == (get_slice_int(8, 0, 0)))))
 then Some(":UD")
 else None() : option(string)) : option(string) in
 if is_some(fault_var)
-then (match fault_var {
+then { (match fault_var {
 Some(":UD") => throw(Emsg("A fault occurred.  Original ACL2 AST:
 ['X86-ILLEGAL-INSTRUCTION', STRING: #UD Encountered!, 'START-RIP', 'TEMP-RIP', 'X86']")),
 _ => throw(Emsg("Model state error: Unimplemented exception in x86isa!"))
-}) : int
-else throw(Emsg("Model state error: Opcode Unimplemented in x86isa!"))
-else if ((modr_m_get_mod(modr_m)) == (3)) & ((mandatory_prefix) == (102))
-then let fault_var = (if ((feature_flags_fn([|":MPX"|], 0)) == (0)) | ((((modr_m_get_mod(modr_m)) == (3)) & ((240) == (prefixes_get_lck(prefixes)))) | (((4) <= (reg_index(modr_m_get_r_m(modr_m), rex_byte, 0))) | (if (not_bool((proc_mode) == (0))) & ((prefixes_get_adr(prefixes)) == (103))
-then (let cs_attr = (seg_hidden_attri(1, 0)) : int in
-code_segment_descriptor_attributesbits_get_d(cs_attr)) == (1)
-else (let cs_attr = (seg_hidden_attri(1, 0)) : int in
-code_segment_descriptor_attributesbits_get_d(cs_attr)) == (0))))
+}) : unit
+}
+else { throw(Emsg("Model state error: Opcode Unimplemented in x86isa!"))
+}
+else if ((the_bits(8, modr_m_get_mod(modr_m))) == (get_slice_int(8, 3, 0))) & ((mandatory_prefix) == (get_slice_int(8, 102, 0)))
+then let fault_var = (if ((get_slice_int(8, feature_flags_fn([|":MPX"|]), 0)) == (get_slice_int(8, 0, 0))) | ((((the_bits(8, modr_m_get_mod(modr_m))) == (get_slice_int(8, 3, 0))) & ((get_slice_int(8, 240, 0)) == (prefixes_get_lck(prefixes)))) | (((4) <= (unsigned(reg_index(modr_m_get_r_m(modr_m), rex_byte, get_slice_int(2, 0, 0))))) | (if (not_bool((get_slice_int(8, proc_mode, 0)) == (get_slice_int(8, 0, 0)))) & ((prefixes_get_adr(prefixes)) == (get_slice_int(8, 103, 0)))
+then (the_bits(8, let cs_attr = (seg_hidden_attrs[1]) : bits(16) in
+code_segment_descriptor_attributesbits_get_d(cs_attr))) == (get_slice_int(8, 1, 0))
+else (the_bits(8, let cs_attr = (seg_hidden_attrs[1]) : bits(16) in
+code_segment_descriptor_attributesbits_get_d(cs_attr))) == (get_slice_int(8, 0, 0)))))
 then Some(":UD")
 else None() : option(string)) : option(string) in
 if is_some(fault_var)
-then (match fault_var {
+then { (match fault_var {
 Some(":UD") => throw(Emsg("A fault occurred.  Original ACL2 AST:
 ['X86-ILLEGAL-INSTRUCTION', STRING: #UD Encountered!, 'START-RIP', 'TEMP-RIP', 'X86']")),
 _ => throw(Emsg("Model state error: Unimplemented exception in x86isa!"))
-}) : int
-else throw(Emsg("Model state error: Opcode Unimplemented in x86isa!"))
-else if (mandatory_prefix) == (243)
-then let fault_var = (if ((feature_flags_fn([|":MPX"|], 0)) == (0)) | (((240) == (prefixes_get_lck(prefixes))) | (((4) <= (reg_index(modr_m_get_reg(modr_m), rex_byte, 2))) | ((not_bool((proc_mode) == (0))) & (if (prefixes_get_adr(prefixes)) == (103)
-then (let cs_attr = (seg_hidden_attri(1, 0)) : int in
-code_segment_descriptor_attributesbits_get_d(cs_attr)) == (1)
-else (let cs_attr = (seg_hidden_attri(1, 0)) : int in
-code_segment_descriptor_attributesbits_get_d(cs_attr)) == (0)))))
+}) : unit
+}
+else { throw(Emsg("Model state error: Opcode Unimplemented in x86isa!"))
+}
+else if (mandatory_prefix) == (get_slice_int(8, 243, 0))
+then let fault_var = (if ((get_slice_int(8, feature_flags_fn([|":MPX"|]), 0)) == (get_slice_int(8, 0, 0))) | (((get_slice_int(8, 240, 0)) == (prefixes_get_lck(prefixes))) | (((4) <= (unsigned(reg_index(modr_m_get_reg(modr_m), rex_byte, get_slice_int(2, 2, 0))))) | ((not_bool((get_slice_int(8, proc_mode, 0)) == (get_slice_int(8, 0, 0)))) & (if (prefixes_get_adr(prefixes)) == (get_slice_int(8, 103, 0))
+then (the_bits(8, let cs_attr = (seg_hidden_attrs[1]) : bits(16) in
+code_segment_descriptor_attributesbits_get_d(cs_attr))) == (get_slice_int(8, 1, 0))
+else (the_bits(8, let cs_attr = (seg_hidden_attrs[1]) : bits(16) in
+code_segment_descriptor_attributesbits_get_d(cs_attr))) == (get_slice_int(8, 0, 0))))))
 then Some(":UD")
 else None() : option(string)) : option(string) in
 if is_some(fault_var)
-then (match fault_var {
+then { (match fault_var {
 Some(":UD") => throw(Emsg("A fault occurred.  Original ACL2 AST:
 ['X86-ILLEGAL-INSTRUCTION', STRING: #UD Encountered!, 'START-RIP', 'TEMP-RIP', 'X86']")),
 _ => throw(Emsg("Model state error: Unimplemented exception in x86isa!"))
-}) : int
-else throw(Emsg("Model state error: Opcode Unimplemented in x86isa!"))
-else if (mandatory_prefix) == (242)
-then let fault_var = (if ((feature_flags_fn([|":MPX"|], 0)) == (0)) | (((240) == (prefixes_get_lck(prefixes))) | (((4) <= (reg_index(modr_m_get_reg(modr_m), rex_byte, 2))) | ((not_bool((proc_mode) == (0))) & (if (prefixes_get_adr(prefixes)) == (103)
-then (let cs_attr = (seg_hidden_attri(1, 0)) : int in
-code_segment_descriptor_attributesbits_get_d(cs_attr)) == (1)
-else (let cs_attr = (seg_hidden_attri(1, 0)) : int in
-code_segment_descriptor_attributesbits_get_d(cs_attr)) == (0)))))
+}) : unit
+}
+else { throw(Emsg("Model state error: Opcode Unimplemented in x86isa!"))
+}
+else if (mandatory_prefix) == (get_slice_int(8, 242, 0))
+then let fault_var = (if ((get_slice_int(8, feature_flags_fn([|":MPX"|]), 0)) == (get_slice_int(8, 0, 0))) | (((get_slice_int(8, 240, 0)) == (prefixes_get_lck(prefixes))) | (((4) <= (unsigned(reg_index(modr_m_get_reg(modr_m), rex_byte, get_slice_int(2, 2, 0))))) | ((not_bool((get_slice_int(8, proc_mode, 0)) == (get_slice_int(8, 0, 0)))) & (if (prefixes_get_adr(prefixes)) == (get_slice_int(8, 103, 0))
+then (the_bits(8, let cs_attr = (seg_hidden_attrs[1]) : bits(16) in
+code_segment_descriptor_attributesbits_get_d(cs_attr))) == (get_slice_int(8, 1, 0))
+else (the_bits(8, let cs_attr = (seg_hidden_attrs[1]) : bits(16) in
+code_segment_descriptor_attributesbits_get_d(cs_attr))) == (get_slice_int(8, 0, 0))))))
 then Some(":UD")
 else None() : option(string)) : option(string) in
 if is_some(fault_var)
-then (match fault_var {
+then { (match fault_var {
 Some(":UD") => throw(Emsg("A fault occurred.  Original ACL2 AST:
 ['X86-ILLEGAL-INSTRUCTION', STRING: #UD Encountered!, 'START-RIP', 'TEMP-RIP', 'X86']")),
 _ => throw(Emsg("Model state error: Unimplemented exception in x86isa!"))
-}) : int
-else throw(Emsg("Model state error: Opcode Unimplemented in x86isa!"))
+}) : unit
+}
+else { throw(Emsg("Model state error: Opcode Unimplemented in x86isa!"))
+}
 else throw(Emsg("A fault occurred.  Original ACL2 AST:
 ['X86-ILLEGAL-INSTRUCTION', STRING: #UD Encountered!, 'START-RIP', 'TEMP-RIP', 'X86']")),
-27 => if (not_bool((modr_m_get_mod(modr_m)) == (3))) & ((mandatory_prefix) == (0))
-then let fault_var = (if ((feature_flags_fn([|":MPX"|], 0)) == (0)) | (((240) == (prefixes_get_lck(prefixes))) | (((4) <= (reg_index(modr_m_get_reg(modr_m), rex_byte, 2))) | (if (proc_mode) == (0)
-then ((modr_m_get_mod(modr_m)) == (0)) & (((modr_m_get_r_m(modr_m)) == (5)) | (((modr_m_get_r_m(modr_m)) == (4)) & (((sib_get_base(sib)) == (5)) & ((sib_get_index(sib)) == (4)))))
-else if (prefixes_get_adr(prefixes)) == (103)
-then (let cs_attr = (seg_hidden_attri(1, 0)) : int in
-code_segment_descriptor_attributesbits_get_d(cs_attr)) == (1)
-else (let cs_attr = (seg_hidden_attri(1, 0)) : int in
-code_segment_descriptor_attributesbits_get_d(cs_attr)) == (0))))
+27 => if (not_bool((the_bits(8, modr_m_get_mod(modr_m))) == (get_slice_int(8, 3, 0)))) & ((mandatory_prefix) == (get_slice_int(8, 0, 0)))
+then let fault_var = (if ((get_slice_int(8, feature_flags_fn([|":MPX"|]), 0)) == (get_slice_int(8, 0, 0))) | (((get_slice_int(8, 240, 0)) == (prefixes_get_lck(prefixes))) | (((4) <= (unsigned(reg_index(modr_m_get_reg(modr_m), rex_byte, get_slice_int(2, 2, 0))))) | (if (get_slice_int(8, proc_mode, 0)) == (get_slice_int(8, 0, 0))
+then ((the_bits(8, modr_m_get_mod(modr_m))) == (get_slice_int(8, 0, 0))) & (((the_bits(8, modr_m_get_r_m(modr_m))) == (get_slice_int(8, 5, 0))) | (((the_bits(8, modr_m_get_r_m(modr_m))) == (get_slice_int(8, 4, 0))) & (((the_bits(8, sib_get_base(sib))) == (get_slice_int(8, 5, 0))) & ((the_bits(8, sib_get_index(sib))) == (get_slice_int(8, 4, 0))))))
+else if (prefixes_get_adr(prefixes)) == (get_slice_int(8, 103, 0))
+then (the_bits(8, let cs_attr = (seg_hidden_attrs[1]) : bits(16) in
+code_segment_descriptor_attributesbits_get_d(cs_attr))) == (get_slice_int(8, 1, 0))
+else (the_bits(8, let cs_attr = (seg_hidden_attrs[1]) : bits(16) in
+code_segment_descriptor_attributesbits_get_d(cs_attr))) == (get_slice_int(8, 0, 0)))))
 then Some(":UD")
 else None() : option(string)) : option(string) in
 if is_some(fault_var)
-then (match fault_var {
+then { (match fault_var {
 Some(":UD") => throw(Emsg("A fault occurred.  Original ACL2 AST:
 ['X86-ILLEGAL-INSTRUCTION', STRING: #UD Encountered!, 'START-RIP', 'TEMP-RIP', 'X86']")),
 _ => throw(Emsg("Model state error: Unimplemented exception in x86isa!"))
-}) : int
-else throw(Emsg("Model state error: Opcode Unimplemented in x86isa!"))
-else if ((modr_m_get_mod(modr_m)) == (3)) & ((mandatory_prefix) == (0))
-then let fault_var = (if (feature_flags_fn([|":MPX"|], 0)) == (0)
+}) : unit
+}
+else { throw(Emsg("Model state error: Opcode Unimplemented in x86isa!"))
+}
+else if ((the_bits(8, modr_m_get_mod(modr_m))) == (get_slice_int(8, 3, 0))) & ((mandatory_prefix) == (get_slice_int(8, 0, 0)))
+then let fault_var = (if (get_slice_int(8, feature_flags_fn([|":MPX"|]), 0)) == (get_slice_int(8, 0, 0))
 then Some(":UD")
 else None() : option(string)) : option(string) in
 if is_some(fault_var)
-then (match fault_var {
+then { (match fault_var {
 Some(":UD") => throw(Emsg("A fault occurred.  Original ACL2 AST:
 ['X86-ILLEGAL-INSTRUCTION', STRING: #UD Encountered!, 'START-RIP', 'TEMP-RIP', 'X86']")),
 _ => throw(Emsg("Model state error: Unimplemented exception in x86isa!"))
-}) : int
-else throw(Emsg("Model state error: Opcode Unimplemented in x86isa!"))
-else if (not_bool((modr_m_get_mod(modr_m)) == (3))) & ((mandatory_prefix) == (102))
-then let fault_var = (if ((feature_flags_fn([|":MPX"|], 0)) == (0)) | ((((modr_m_get_mod(modr_m)) == (3)) & ((240) == (prefixes_get_lck(prefixes)))) | (((4) <= (reg_index(modr_m_get_r_m(modr_m), rex_byte, 0))) | (if (not_bool((proc_mode) == (0))) & ((prefixes_get_adr(prefixes)) == (103))
-then (let cs_attr = (seg_hidden_attri(1, 0)) : int in
-code_segment_descriptor_attributesbits_get_d(cs_attr)) == (1)
-else (let cs_attr = (seg_hidden_attri(1, 0)) : int in
-code_segment_descriptor_attributesbits_get_d(cs_attr)) == (0))))
+}) : unit
+}
+else { throw(Emsg("Model state error: Opcode Unimplemented in x86isa!"))
+}
+else if (not_bool((the_bits(8, modr_m_get_mod(modr_m))) == (get_slice_int(8, 3, 0)))) & ((mandatory_prefix) == (get_slice_int(8, 102, 0)))
+then let fault_var = (if ((get_slice_int(8, feature_flags_fn([|":MPX"|]), 0)) == (get_slice_int(8, 0, 0))) | ((((the_bits(8, modr_m_get_mod(modr_m))) == (get_slice_int(8, 3, 0))) & ((get_slice_int(8, 240, 0)) == (prefixes_get_lck(prefixes)))) | (((4) <= (unsigned(reg_index(modr_m_get_r_m(modr_m), rex_byte, get_slice_int(2, 0, 0))))) | (if (not_bool((get_slice_int(8, proc_mode, 0)) == (get_slice_int(8, 0, 0)))) & ((prefixes_get_adr(prefixes)) == (get_slice_int(8, 103, 0)))
+then (the_bits(8, let cs_attr = (seg_hidden_attrs[1]) : bits(16) in
+code_segment_descriptor_attributesbits_get_d(cs_attr))) == (get_slice_int(8, 1, 0))
+else (the_bits(8, let cs_attr = (seg_hidden_attrs[1]) : bits(16) in
+code_segment_descriptor_attributesbits_get_d(cs_attr))) == (get_slice_int(8, 0, 0)))))
 then Some(":UD")
 else None() : option(string)) : option(string) in
 if is_some(fault_var)
-then (match fault_var {
+then { (match fault_var {
 Some(":UD") => throw(Emsg("A fault occurred.  Original ACL2 AST:
 ['X86-ILLEGAL-INSTRUCTION', STRING: #UD Encountered!, 'START-RIP', 'TEMP-RIP', 'X86']")),
 _ => throw(Emsg("Model state error: Unimplemented exception in x86isa!"))
-}) : int
-else throw(Emsg("Model state error: Opcode Unimplemented in x86isa!"))
-else if ((modr_m_get_mod(modr_m)) == (3)) & ((mandatory_prefix) == (102))
-then let fault_var = (if ((feature_flags_fn([|":MPX"|], 0)) == (0)) | ((((modr_m_get_mod(modr_m)) == (3)) & ((240) == (prefixes_get_lck(prefixes)))) | (((4) <= (reg_index(modr_m_get_r_m(modr_m), rex_byte, 0))) | (if (not_bool((proc_mode) == (0))) & ((prefixes_get_adr(prefixes)) == (103))
-then (let cs_attr = (seg_hidden_attri(1, 0)) : int in
-code_segment_descriptor_attributesbits_get_d(cs_attr)) == (1)
-else (let cs_attr = (seg_hidden_attri(1, 0)) : int in
-code_segment_descriptor_attributesbits_get_d(cs_attr)) == (0))))
+}) : unit
+}
+else { throw(Emsg("Model state error: Opcode Unimplemented in x86isa!"))
+}
+else if ((the_bits(8, modr_m_get_mod(modr_m))) == (get_slice_int(8, 3, 0))) & ((mandatory_prefix) == (get_slice_int(8, 102, 0)))
+then let fault_var = (if ((get_slice_int(8, feature_flags_fn([|":MPX"|]), 0)) == (get_slice_int(8, 0, 0))) | ((((the_bits(8, modr_m_get_mod(modr_m))) == (get_slice_int(8, 3, 0))) & ((get_slice_int(8, 240, 0)) == (prefixes_get_lck(prefixes)))) | (((4) <= (unsigned(reg_index(modr_m_get_r_m(modr_m), rex_byte, get_slice_int(2, 0, 0))))) | (if (not_bool((get_slice_int(8, proc_mode, 0)) == (get_slice_int(8, 0, 0)))) & ((prefixes_get_adr(prefixes)) == (get_slice_int(8, 103, 0)))
+then (the_bits(8, let cs_attr = (seg_hidden_attrs[1]) : bits(16) in
+code_segment_descriptor_attributesbits_get_d(cs_attr))) == (get_slice_int(8, 1, 0))
+else (the_bits(8, let cs_attr = (seg_hidden_attrs[1]) : bits(16) in
+code_segment_descriptor_attributesbits_get_d(cs_attr))) == (get_slice_int(8, 0, 0)))))
 then Some(":UD")
 else None() : option(string)) : option(string) in
 if is_some(fault_var)
-then (match fault_var {
+then { (match fault_var {
 Some(":UD") => throw(Emsg("A fault occurred.  Original ACL2 AST:
 ['X86-ILLEGAL-INSTRUCTION', STRING: #UD Encountered!, 'START-RIP', 'TEMP-RIP', 'X86']")),
 _ => throw(Emsg("Model state error: Unimplemented exception in x86isa!"))
-}) : int
-else throw(Emsg("Model state error: Opcode Unimplemented in x86isa!"))
-else if (not_bool((modr_m_get_mod(modr_m)) == (3))) & ((mandatory_prefix) == (243))
-then let fault_var = (if ((feature_flags_fn([|":MPX"|], 0)) == (0)) | (((240) == (prefixes_get_lck(prefixes))) | (((4) <= (reg_index(modr_m_get_reg(modr_m), rex_byte, 2))) | (if (proc_mode) == (0)
-then ((modr_m_get_mod(modr_m)) == (0)) & (((modr_m_get_r_m(modr_m)) == (5)) | (((modr_m_get_r_m(modr_m)) == (4)) & (((sib_get_base(sib)) == (5)) & ((sib_get_index(sib)) == (4)))))
-else if (prefixes_get_adr(prefixes)) == (103)
-then (let cs_attr = (seg_hidden_attri(1, 0)) : int in
-code_segment_descriptor_attributesbits_get_d(cs_attr)) == (1)
-else (let cs_attr = (seg_hidden_attri(1, 0)) : int in
-code_segment_descriptor_attributesbits_get_d(cs_attr)) == (0))))
+}) : unit
+}
+else { throw(Emsg("Model state error: Opcode Unimplemented in x86isa!"))
+}
+else if (not_bool((the_bits(8, modr_m_get_mod(modr_m))) == (get_slice_int(8, 3, 0)))) & ((mandatory_prefix) == (get_slice_int(8, 243, 0)))
+then let fault_var = (if ((get_slice_int(8, feature_flags_fn([|":MPX"|]), 0)) == (get_slice_int(8, 0, 0))) | (((get_slice_int(8, 240, 0)) == (prefixes_get_lck(prefixes))) | (((4) <= (unsigned(reg_index(modr_m_get_reg(modr_m), rex_byte, get_slice_int(2, 2, 0))))) | (if (get_slice_int(8, proc_mode, 0)) == (get_slice_int(8, 0, 0))
+then ((the_bits(8, modr_m_get_mod(modr_m))) == (get_slice_int(8, 0, 0))) & (((the_bits(8, modr_m_get_r_m(modr_m))) == (get_slice_int(8, 5, 0))) | (((the_bits(8, modr_m_get_r_m(modr_m))) == (get_slice_int(8, 4, 0))) & (((the_bits(8, sib_get_base(sib))) == (get_slice_int(8, 5, 0))) & ((the_bits(8, sib_get_index(sib))) == (get_slice_int(8, 4, 0))))))
+else if (prefixes_get_adr(prefixes)) == (get_slice_int(8, 103, 0))
+then (the_bits(8, let cs_attr = (seg_hidden_attrs[1]) : bits(16) in
+code_segment_descriptor_attributesbits_get_d(cs_attr))) == (get_slice_int(8, 1, 0))
+else (the_bits(8, let cs_attr = (seg_hidden_attrs[1]) : bits(16) in
+code_segment_descriptor_attributesbits_get_d(cs_attr))) == (get_slice_int(8, 0, 0)))))
 then Some(":UD")
 else None() : option(string)) : option(string) in
 if is_some(fault_var)
-then (match fault_var {
+then { (match fault_var {
 Some(":UD") => throw(Emsg("A fault occurred.  Original ACL2 AST:
 ['X86-ILLEGAL-INSTRUCTION', STRING: #UD Encountered!, 'START-RIP', 'TEMP-RIP', 'X86']")),
 _ => throw(Emsg("Model state error: Unimplemented exception in x86isa!"))
-}) : int
-else throw(Emsg("Model state error: Opcode Unimplemented in x86isa!"))
-else if ((modr_m_get_mod(modr_m)) == (3)) & ((mandatory_prefix) == (243))
-then let fault_var = (if (feature_flags_fn([|":MPX"|], 0)) == (0)
+}) : unit
+}
+else { throw(Emsg("Model state error: Opcode Unimplemented in x86isa!"))
+}
+else if ((the_bits(8, modr_m_get_mod(modr_m))) == (get_slice_int(8, 3, 0))) & ((mandatory_prefix) == (get_slice_int(8, 243, 0)))
+then let fault_var = (if (get_slice_int(8, feature_flags_fn([|":MPX"|]), 0)) == (get_slice_int(8, 0, 0))
 then Some(":UD")
 else None() : option(string)) : option(string) in
 if is_some(fault_var)
-then (match fault_var {
+then { (match fault_var {
 Some(":UD") => throw(Emsg("A fault occurred.  Original ACL2 AST:
 ['X86-ILLEGAL-INSTRUCTION', STRING: #UD Encountered!, 'START-RIP', 'TEMP-RIP', 'X86']")),
 _ => throw(Emsg("Model state error: Unimplemented exception in x86isa!"))
-}) : int
-else throw(Emsg("Model state error: Opcode Unimplemented in x86isa!"))
-else if (mandatory_prefix) == (242)
-then let fault_var = (if ((feature_flags_fn([|":MPX"|], 0)) == (0)) | (((240) == (prefixes_get_lck(prefixes))) | (((4) <= (reg_index(modr_m_get_reg(modr_m), rex_byte, 2))) | ((not_bool((proc_mode) == (0))) & (if (prefixes_get_adr(prefixes)) == (103)
-then (let cs_attr = (seg_hidden_attri(1, 0)) : int in
-code_segment_descriptor_attributesbits_get_d(cs_attr)) == (1)
-else (let cs_attr = (seg_hidden_attri(1, 0)) : int in
-code_segment_descriptor_attributesbits_get_d(cs_attr)) == (0)))))
+}) : unit
+}
+else { throw(Emsg("Model state error: Opcode Unimplemented in x86isa!"))
+}
+else if (mandatory_prefix) == (get_slice_int(8, 242, 0))
+then let fault_var = (if ((get_slice_int(8, feature_flags_fn([|":MPX"|]), 0)) == (get_slice_int(8, 0, 0))) | (((get_slice_int(8, 240, 0)) == (prefixes_get_lck(prefixes))) | (((4) <= (unsigned(reg_index(modr_m_get_reg(modr_m), rex_byte, get_slice_int(2, 2, 0))))) | ((not_bool((get_slice_int(8, proc_mode, 0)) == (get_slice_int(8, 0, 0)))) & (if (prefixes_get_adr(prefixes)) == (get_slice_int(8, 103, 0))
+then (the_bits(8, let cs_attr = (seg_hidden_attrs[1]) : bits(16) in
+code_segment_descriptor_attributesbits_get_d(cs_attr))) == (get_slice_int(8, 1, 0))
+else (the_bits(8, let cs_attr = (seg_hidden_attrs[1]) : bits(16) in
+code_segment_descriptor_attributesbits_get_d(cs_attr))) == (get_slice_int(8, 0, 0))))))
 then Some(":UD")
 else None() : option(string)) : option(string) in
 if is_some(fault_var)
-then (match fault_var {
+then { (match fault_var {
 Some(":UD") => throw(Emsg("A fault occurred.  Original ACL2 AST:
 ['X86-ILLEGAL-INSTRUCTION', STRING: #UD Encountered!, 'START-RIP', 'TEMP-RIP', 'X86']")),
 _ => throw(Emsg("Model state error: Unimplemented exception in x86isa!"))
-}) : int
-else throw(Emsg("Model state error: Opcode Unimplemented in x86isa!"))
+}) : unit
+}
+else { throw(Emsg("Model state error: Opcode Unimplemented in x86isa!"))
+}
 else throw(Emsg("A fault occurred.  Original ACL2 AST:
 ['X86-ILLEGAL-INSTRUCTION', STRING: #UD Encountered!, 'START-RIP', 'TEMP-RIP', 'X86']")),
 28 => throw(Emsg("Model state error: Opcode Unimplemented in x86isa!")),
 29 => throw(Emsg("Model state error: Opcode Unimplemented in x86isa!")),
 30 => throw(Emsg("Model state error: Opcode Unimplemented in x86isa!")),
-31 => let fault_var = (if (240) == (prefixes_get_lck(prefixes))
+31 => let fault_var = (if (get_slice_int(8, 240, 0)) == (prefixes_get_lck(prefixes))
 then Some(":UD")
 else None() : option(string)) : option(string) in
 if is_some(fault_var)
-then (match fault_var {
+then { (match fault_var {
 Some(":UD") => throw(Emsg("A fault occurred.  Original ACL2 AST:
 ['X86-ILLEGAL-INSTRUCTION', STRING: #UD Encountered!, 'START-RIP', 'TEMP-RIP', 'X86']")),
 _ => throw(Emsg("Model state error: Unimplemented exception in x86isa!"))
-}) : int
-else x86_two_byte_nop(proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode, modr_m, sib, 0),
-32 => let fault_var = (if ((240) == (prefixes_get_lck(prefixes))) | (let reg = (modr_m_get_reg(modr_m)) : int in
-if ((proc_mode) == (0)) & (logbitp(2, rex_byte))
-then not_bool((reg) == (0))
-else ((reg) == (1)) | (((reg) == (5)) | (((reg) == (6)) | ((reg) == (7)))))
+}) : unit
+}
+else { x86_two_byte_nop(proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode, modr_m, sib)
+},
+32 => let fault_var = (if ((get_slice_int(8, 240, 0)) == (prefixes_get_lck(prefixes))) | (let reg = (modr_m_get_reg(modr_m)) : bits(3) in
+if ((get_slice_int(8, proc_mode, 0)) == (get_slice_int(8, 0, 0))) & (logbitp(2, rex_byte))
+then not_bool((the_bits(8, reg)) == (get_slice_int(8, 0, 0)))
+else ((the_bits(8, reg)) == (get_slice_int(8, 1, 0))) | (((the_bits(8, reg)) == (get_slice_int(8, 5, 0))) | (((the_bits(8, reg)) == (get_slice_int(8, 6, 0))) | ((the_bits(8, reg)) == (get_slice_int(8, 7, 0))))))
 then Some(":UD")
-else if not_bool((let x86 = (0) : int in
-segment_selectorbits_get_rpl(seg_visiblei(1, 0))) == (0))
+else if not_bool((get_slice_int(8, unsigned(let x86 = (()) : unit in
+segment_selectorbits_get_rpl(seg_visibles[1])), 0)) == (get_slice_int(8, 0, 0)))
 then Some(":GP")
 else None() : option(string)) : option(string) in
 if is_some(fault_var)
-then (match fault_var {
+then { (match fault_var {
 Some(":UD") => throw(Emsg("A fault occurred.  Original ACL2 AST:
 ['X86-ILLEGAL-INSTRUCTION', STRING: #UD Encountered!, 'START-RIP', 'TEMP-RIP', 'X86']")),
 Some(":GP") => throw(Emsg("A fault occurred.  Original ACL2 AST:
 ['X86-GENERAL-PROTECTION', STRING: #GP Encountered!, 'START-RIP', 'TEMP-RIP', 'X86']")),
 _ => throw(Emsg("Model state error: Unimplemented exception in x86isa!"))
-}) : int
-else x86_mov_control_regs_op_en_mr(proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode, modr_m, sib, 0),
-33 => let fault_var = (if ((240) == (prefixes_get_lck(prefixes))) | (((cr4bits_get_de(loghead(22, ctri(4, 0)))) == (1)) & (((modr_m_get_reg(modr_m)) == (4)) | ((modr_m_get_reg(modr_m)) == (5))))
+}) : unit
+}
+else { x86_mov_control_regs_op_en_mr(proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode, modr_m, sib)
+},
+33 => let fault_var = (if ((get_slice_int(8, 240, 0)) == (prefixes_get_lck(prefixes))) | (((the_bits(8, cr4bits_get_de(the_bits(22, loghead(22, unsigned(ctrs[4])))))) == (get_slice_int(8, 1, 0))) & (((the_bits(8, modr_m_get_reg(modr_m))) == (get_slice_int(8, 4, 0))) | ((the_bits(8, modr_m_get_reg(modr_m))) == (get_slice_int(8, 5, 0)))))
 then Some(":UD")
-else if not_bool((let x86 = (0) : int in
-segment_selectorbits_get_rpl(seg_visiblei(1, 0))) == (0))
+else if not_bool((get_slice_int(8, unsigned(let x86 = (()) : unit in
+segment_selectorbits_get_rpl(seg_visibles[1])), 0)) == (get_slice_int(8, 0, 0)))
 then Some(":GP")
 else None() : option(string)) : option(string) in
 if is_some(fault_var)
-then (match fault_var {
+then { (match fault_var {
 Some(":UD") => throw(Emsg("A fault occurred.  Original ACL2 AST:
 ['X86-ILLEGAL-INSTRUCTION', STRING: #UD Encountered!, 'START-RIP', 'TEMP-RIP', 'X86']")),
 Some(":GP") => throw(Emsg("A fault occurred.  Original ACL2 AST:
 ['X86-GENERAL-PROTECTION', STRING: #GP Encountered!, 'START-RIP', 'TEMP-RIP', 'X86']")),
 _ => throw(Emsg("Model state error: Unimplemented exception in x86isa!"))
-}) : int
-else throw(Emsg("Model state error: Opcode Unimplemented in x86isa!")),
-34 => let fault_var = (if ((240) == (prefixes_get_lck(prefixes))) | (let reg = (modr_m_get_reg(modr_m)) : int in
-if ((proc_mode) == (0)) & (logbitp(2, rex_byte))
-then not_bool((reg) == (0))
-else ((reg) == (1)) | (((reg) == (5)) | (((reg) == (6)) | ((reg) == (7)))))
+}) : unit
+}
+else { throw(Emsg("Model state error: Opcode Unimplemented in x86isa!"))
+},
+34 => let fault_var = (if ((get_slice_int(8, 240, 0)) == (prefixes_get_lck(prefixes))) | (let reg = (modr_m_get_reg(modr_m)) : bits(3) in
+if ((get_slice_int(8, proc_mode, 0)) == (get_slice_int(8, 0, 0))) & (logbitp(2, rex_byte))
+then not_bool((the_bits(8, reg)) == (get_slice_int(8, 0, 0)))
+else ((the_bits(8, reg)) == (get_slice_int(8, 1, 0))) | (((the_bits(8, reg)) == (get_slice_int(8, 5, 0))) | (((the_bits(8, reg)) == (get_slice_int(8, 6, 0))) | ((the_bits(8, reg)) == (get_slice_int(8, 7, 0))))))
 then Some(":UD")
-else if not_bool((let x86 = (0) : int in
-segment_selectorbits_get_rpl(seg_visiblei(1, 0))) == (0))
+else if not_bool((get_slice_int(8, unsigned(let x86 = (()) : unit in
+segment_selectorbits_get_rpl(seg_visibles[1])), 0)) == (get_slice_int(8, 0, 0)))
 then Some(":GP")
 else None() : option(string)) : option(string) in
 if is_some(fault_var)
-then (match fault_var {
+then { (match fault_var {
 Some(":UD") => throw(Emsg("A fault occurred.  Original ACL2 AST:
 ['X86-ILLEGAL-INSTRUCTION', STRING: #UD Encountered!, 'START-RIP', 'TEMP-RIP', 'X86']")),
 Some(":GP") => throw(Emsg("A fault occurred.  Original ACL2 AST:
 ['X86-GENERAL-PROTECTION', STRING: #GP Encountered!, 'START-RIP', 'TEMP-RIP', 'X86']")),
 _ => throw(Emsg("Model state error: Unimplemented exception in x86isa!"))
-}) : int
-else throw(Emsg("Model state error: Opcode Unimplemented in x86isa!")),
-35 => let fault_var = (if ((240) == (prefixes_get_lck(prefixes))) | (((cr4bits_get_de(loghead(22, ctri(4, 0)))) == (1)) & (((modr_m_get_reg(modr_m)) == (4)) | ((modr_m_get_reg(modr_m)) == (5))))
+}) : unit
+}
+else { throw(Emsg("Model state error: Opcode Unimplemented in x86isa!"))
+},
+35 => let fault_var = (if ((get_slice_int(8, 240, 0)) == (prefixes_get_lck(prefixes))) | (((the_bits(8, cr4bits_get_de(the_bits(22, loghead(22, unsigned(ctrs[4])))))) == (get_slice_int(8, 1, 0))) & (((the_bits(8, modr_m_get_reg(modr_m))) == (get_slice_int(8, 4, 0))) | ((the_bits(8, modr_m_get_reg(modr_m))) == (get_slice_int(8, 5, 0)))))
 then Some(":UD")
-else if not_bool((let x86 = (0) : int in
-segment_selectorbits_get_rpl(seg_visiblei(1, 0))) == (0))
+else if not_bool((get_slice_int(8, unsigned(let x86 = (()) : unit in
+segment_selectorbits_get_rpl(seg_visibles[1])), 0)) == (get_slice_int(8, 0, 0)))
 then Some(":GP")
 else None() : option(string)) : option(string) in
 if is_some(fault_var)
-then (match fault_var {
+then { (match fault_var {
 Some(":UD") => throw(Emsg("A fault occurred.  Original ACL2 AST:
 ['X86-ILLEGAL-INSTRUCTION', STRING: #UD Encountered!, 'START-RIP', 'TEMP-RIP', 'X86']")),
 Some(":GP") => throw(Emsg("A fault occurred.  Original ACL2 AST:
 ['X86-GENERAL-PROTECTION', STRING: #GP Encountered!, 'START-RIP', 'TEMP-RIP', 'X86']")),
 _ => throw(Emsg("Model state error: Unimplemented exception in x86isa!"))
-}) : int
-else throw(Emsg("Model state error: Opcode Unimplemented in x86isa!")),
-40 => if (mandatory_prefix) == (0)
-then let fault_var = (let chk_ex = (chk_exc_fn(":LEGACY", ":TYPE-1", [|":SSE"|], proc_mode, prefixes, rex_byte, opcode, modr_m, sib, 0)) : option(string) in
+}) : unit
+}
+else { throw(Emsg("Model state error: Opcode Unimplemented in x86isa!"))
+},
+40 => if (mandatory_prefix) == (get_slice_int(8, 0, 0))
+then let fault_var = (let chk_ex = (chk_exc_fn(":LEGACY", ":TYPE-1", [|":SSE"|], proc_mode, prefixes, rex_byte, opcode, modr_m, sib)) : option(string) in
 if is_some(chk_ex)
 then chk_ex
-else if (feature_flags_fn([|":SSE"|], 0)) == (0)
+else if (get_slice_int(8, feature_flags_fn([|":SSE"|]), 0)) == (get_slice_int(8, 0, 0))
 then Some(":UD")
 else None() : option(string)) : option(string) in
 if is_some(fault_var)
-then (match fault_var {
+then { (match fault_var {
 Some(":UD") => throw(Emsg("A fault occurred.  Original ACL2 AST:
 ['X86-ILLEGAL-INSTRUCTION', STRING: #UD Encountered!, 'START-RIP', 'TEMP-RIP', 'X86']")),
 Some(":GP") => throw(Emsg("A fault occurred.  Original ACL2 AST:
@@ -1289,17 +1453,19 @@ Some(":GP") => throw(Emsg("A fault occurred.  Original ACL2 AST:
 Some(":NM") => throw(Emsg("A fault occurred.  Original ACL2 AST:
 ['X86-DEVICE-NOT-AVAILABLE', STRING: #NM Encountered!, 'START-RIP', 'TEMP-RIP', 'X86']")),
 _ => throw(Emsg("Model state error: Unimplemented exception in x86isa!"))
-}) : int
-else x86_movaps_movapd_op_en_rm(proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode, modr_m, sib, 0)
-else if (mandatory_prefix) == (102)
-then let fault_var = (let chk_ex = (chk_exc_fn(":LEGACY", ":TYPE-1", [|":SSE2"|], proc_mode, prefixes, rex_byte, opcode, modr_m, sib, 0)) : option(string) in
+}) : unit
+}
+else { x86_movaps_movapd_op_en_rm(proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode, modr_m, sib)
+}
+else if (mandatory_prefix) == (get_slice_int(8, 102, 0))
+then let fault_var = (let chk_ex = (chk_exc_fn(":LEGACY", ":TYPE-1", [|":SSE2"|], proc_mode, prefixes, rex_byte, opcode, modr_m, sib)) : option(string) in
 if is_some(chk_ex)
 then chk_ex
-else if (feature_flags_fn([|":SSE2"|], 0)) == (0)
+else if (get_slice_int(8, feature_flags_fn([|":SSE2"|]), 0)) == (get_slice_int(8, 0, 0))
 then Some(":UD")
 else None() : option(string)) : option(string) in
 if is_some(fault_var)
-then (match fault_var {
+then { (match fault_var {
 Some(":UD") => throw(Emsg("A fault occurred.  Original ACL2 AST:
 ['X86-ILLEGAL-INSTRUCTION', STRING: #UD Encountered!, 'START-RIP', 'TEMP-RIP', 'X86']")),
 Some(":GP") => throw(Emsg("A fault occurred.  Original ACL2 AST:
@@ -1307,19 +1473,21 @@ Some(":GP") => throw(Emsg("A fault occurred.  Original ACL2 AST:
 Some(":NM") => throw(Emsg("A fault occurred.  Original ACL2 AST:
 ['X86-DEVICE-NOT-AVAILABLE', STRING: #NM Encountered!, 'START-RIP', 'TEMP-RIP', 'X86']")),
 _ => throw(Emsg("Model state error: Unimplemented exception in x86isa!"))
-}) : int
-else x86_movaps_movapd_op_en_rm(proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode, modr_m, sib, 0)
+}) : unit
+}
+else { x86_movaps_movapd_op_en_rm(proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode, modr_m, sib)
+}
 else throw(Emsg("A fault occurred.  Original ACL2 AST:
 ['X86-ILLEGAL-INSTRUCTION', STRING: #UD Encountered!, 'START-RIP', 'TEMP-RIP', 'X86']")),
-41 => if (mandatory_prefix) == (0)
-then let fault_var = (let chk_ex = (chk_exc_fn(":LEGACY", ":TYPE-1", [|":SSE"|], proc_mode, prefixes, rex_byte, opcode, modr_m, sib, 0)) : option(string) in
+41 => if (mandatory_prefix) == (get_slice_int(8, 0, 0))
+then let fault_var = (let chk_ex = (chk_exc_fn(":LEGACY", ":TYPE-1", [|":SSE"|], proc_mode, prefixes, rex_byte, opcode, modr_m, sib)) : option(string) in
 if is_some(chk_ex)
 then chk_ex
-else if (feature_flags_fn([|":SSE"|], 0)) == (0)
+else if (get_slice_int(8, feature_flags_fn([|":SSE"|]), 0)) == (get_slice_int(8, 0, 0))
 then Some(":UD")
 else None() : option(string)) : option(string) in
 if is_some(fault_var)
-then (match fault_var {
+then { (match fault_var {
 Some(":UD") => throw(Emsg("A fault occurred.  Original ACL2 AST:
 ['X86-ILLEGAL-INSTRUCTION', STRING: #UD Encountered!, 'START-RIP', 'TEMP-RIP', 'X86']")),
 Some(":GP") => throw(Emsg("A fault occurred.  Original ACL2 AST:
@@ -1327,17 +1495,19 @@ Some(":GP") => throw(Emsg("A fault occurred.  Original ACL2 AST:
 Some(":NM") => throw(Emsg("A fault occurred.  Original ACL2 AST:
 ['X86-DEVICE-NOT-AVAILABLE', STRING: #NM Encountered!, 'START-RIP', 'TEMP-RIP', 'X86']")),
 _ => throw(Emsg("Model state error: Unimplemented exception in x86isa!"))
-}) : int
-else x86_movaps_movapd_op_en_mr(proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode, modr_m, sib, 0)
-else if (mandatory_prefix) == (102)
-then let fault_var = (let chk_ex = (chk_exc_fn(":LEGACY", ":TYPE-1", [|":SSE2"|], proc_mode, prefixes, rex_byte, opcode, modr_m, sib, 0)) : option(string) in
+}) : unit
+}
+else { x86_movaps_movapd_op_en_mr(proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode, modr_m, sib)
+}
+else if (mandatory_prefix) == (get_slice_int(8, 102, 0))
+then let fault_var = (let chk_ex = (chk_exc_fn(":LEGACY", ":TYPE-1", [|":SSE2"|], proc_mode, prefixes, rex_byte, opcode, modr_m, sib)) : option(string) in
 if is_some(chk_ex)
 then chk_ex
-else if (feature_flags_fn([|":SSE2"|], 0)) == (0)
+else if (get_slice_int(8, feature_flags_fn([|":SSE2"|]), 0)) == (get_slice_int(8, 0, 0))
 then Some(":UD")
 else None() : option(string)) : option(string) in
 if is_some(fault_var)
-then (match fault_var {
+then { (match fault_var {
 Some(":UD") => throw(Emsg("A fault occurred.  Original ACL2 AST:
 ['X86-ILLEGAL-INSTRUCTION', STRING: #UD Encountered!, 'START-RIP', 'TEMP-RIP', 'X86']")),
 Some(":GP") => throw(Emsg("A fault occurred.  Original ACL2 AST:
@@ -1345,179 +1515,213 @@ Some(":GP") => throw(Emsg("A fault occurred.  Original ACL2 AST:
 Some(":NM") => throw(Emsg("A fault occurred.  Original ACL2 AST:
 ['X86-DEVICE-NOT-AVAILABLE', STRING: #NM Encountered!, 'START-RIP', 'TEMP-RIP', 'X86']")),
 _ => throw(Emsg("Model state error: Unimplemented exception in x86isa!"))
-}) : int
-else x86_movaps_movapd_op_en_mr(proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode, modr_m, sib, 0)
+}) : unit
+}
+else { x86_movaps_movapd_op_en_mr(proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode, modr_m, sib)
+}
 else throw(Emsg("A fault occurred.  Original ACL2 AST:
 ['X86-ILLEGAL-INSTRUCTION', STRING: #UD Encountered!, 'START-RIP', 'TEMP-RIP', 'X86']")),
-64 => let fault_var = (if (240) == (prefixes_get_lck(prefixes))
+64 => let fault_var = (if (get_slice_int(8, 240, 0)) == (prefixes_get_lck(prefixes))
 then Some(":UD")
 else None() : option(string)) : option(string) in
 if is_some(fault_var)
-then (match fault_var {
+then { (match fault_var {
 Some(":UD") => throw(Emsg("A fault occurred.  Original ACL2 AST:
 ['X86-ILLEGAL-INSTRUCTION', STRING: #UD Encountered!, 'START-RIP', 'TEMP-RIP', 'X86']")),
 _ => throw(Emsg("Model state error: Unimplemented exception in x86isa!"))
-}) : int
-else x86_cmovcc(proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode, modr_m, sib, 0),
-65 => let fault_var = (if (240) == (prefixes_get_lck(prefixes))
+}) : unit
+}
+else { x86_cmovcc(proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode, modr_m, sib)
+},
+65 => let fault_var = (if (get_slice_int(8, 240, 0)) == (prefixes_get_lck(prefixes))
 then Some(":UD")
 else None() : option(string)) : option(string) in
 if is_some(fault_var)
-then (match fault_var {
+then { (match fault_var {
 Some(":UD") => throw(Emsg("A fault occurred.  Original ACL2 AST:
 ['X86-ILLEGAL-INSTRUCTION', STRING: #UD Encountered!, 'START-RIP', 'TEMP-RIP', 'X86']")),
 _ => throw(Emsg("Model state error: Unimplemented exception in x86isa!"))
-}) : int
-else x86_cmovcc(proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode, modr_m, sib, 0),
-66 => let fault_var = (if (240) == (prefixes_get_lck(prefixes))
+}) : unit
+}
+else { x86_cmovcc(proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode, modr_m, sib)
+},
+66 => let fault_var = (if (get_slice_int(8, 240, 0)) == (prefixes_get_lck(prefixes))
 then Some(":UD")
 else None() : option(string)) : option(string) in
 if is_some(fault_var)
-then (match fault_var {
+then { (match fault_var {
 Some(":UD") => throw(Emsg("A fault occurred.  Original ACL2 AST:
 ['X86-ILLEGAL-INSTRUCTION', STRING: #UD Encountered!, 'START-RIP', 'TEMP-RIP', 'X86']")),
 _ => throw(Emsg("Model state error: Unimplemented exception in x86isa!"))
-}) : int
-else x86_cmovcc(proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode, modr_m, sib, 0),
-67 => let fault_var = (if (240) == (prefixes_get_lck(prefixes))
+}) : unit
+}
+else { x86_cmovcc(proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode, modr_m, sib)
+},
+67 => let fault_var = (if (get_slice_int(8, 240, 0)) == (prefixes_get_lck(prefixes))
 then Some(":UD")
 else None() : option(string)) : option(string) in
 if is_some(fault_var)
-then (match fault_var {
+then { (match fault_var {
 Some(":UD") => throw(Emsg("A fault occurred.  Original ACL2 AST:
 ['X86-ILLEGAL-INSTRUCTION', STRING: #UD Encountered!, 'START-RIP', 'TEMP-RIP', 'X86']")),
 _ => throw(Emsg("Model state error: Unimplemented exception in x86isa!"))
-}) : int
-else x86_cmovcc(proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode, modr_m, sib, 0),
-68 => let fault_var = (if (240) == (prefixes_get_lck(prefixes))
+}) : unit
+}
+else { x86_cmovcc(proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode, modr_m, sib)
+},
+68 => let fault_var = (if (get_slice_int(8, 240, 0)) == (prefixes_get_lck(prefixes))
 then Some(":UD")
 else None() : option(string)) : option(string) in
 if is_some(fault_var)
-then (match fault_var {
+then { (match fault_var {
 Some(":UD") => throw(Emsg("A fault occurred.  Original ACL2 AST:
 ['X86-ILLEGAL-INSTRUCTION', STRING: #UD Encountered!, 'START-RIP', 'TEMP-RIP', 'X86']")),
 _ => throw(Emsg("Model state error: Unimplemented exception in x86isa!"))
-}) : int
-else x86_cmovcc(proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode, modr_m, sib, 0),
-69 => let fault_var = (if (240) == (prefixes_get_lck(prefixes))
+}) : unit
+}
+else { x86_cmovcc(proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode, modr_m, sib)
+},
+69 => let fault_var = (if (get_slice_int(8, 240, 0)) == (prefixes_get_lck(prefixes))
 then Some(":UD")
 else None() : option(string)) : option(string) in
 if is_some(fault_var)
-then (match fault_var {
+then { (match fault_var {
 Some(":UD") => throw(Emsg("A fault occurred.  Original ACL2 AST:
 ['X86-ILLEGAL-INSTRUCTION', STRING: #UD Encountered!, 'START-RIP', 'TEMP-RIP', 'X86']")),
 _ => throw(Emsg("Model state error: Unimplemented exception in x86isa!"))
-}) : int
-else x86_cmovcc(proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode, modr_m, sib, 0),
-70 => let fault_var = (if (240) == (prefixes_get_lck(prefixes))
+}) : unit
+}
+else { x86_cmovcc(proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode, modr_m, sib)
+},
+70 => let fault_var = (if (get_slice_int(8, 240, 0)) == (prefixes_get_lck(prefixes))
 then Some(":UD")
 else None() : option(string)) : option(string) in
 if is_some(fault_var)
-then (match fault_var {
+then { (match fault_var {
 Some(":UD") => throw(Emsg("A fault occurred.  Original ACL2 AST:
 ['X86-ILLEGAL-INSTRUCTION', STRING: #UD Encountered!, 'START-RIP', 'TEMP-RIP', 'X86']")),
 _ => throw(Emsg("Model state error: Unimplemented exception in x86isa!"))
-}) : int
-else x86_cmovcc(proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode, modr_m, sib, 0),
-71 => let fault_var = (if (240) == (prefixes_get_lck(prefixes))
+}) : unit
+}
+else { x86_cmovcc(proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode, modr_m, sib)
+},
+71 => let fault_var = (if (get_slice_int(8, 240, 0)) == (prefixes_get_lck(prefixes))
 then Some(":UD")
 else None() : option(string)) : option(string) in
 if is_some(fault_var)
-then (match fault_var {
+then { (match fault_var {
 Some(":UD") => throw(Emsg("A fault occurred.  Original ACL2 AST:
 ['X86-ILLEGAL-INSTRUCTION', STRING: #UD Encountered!, 'START-RIP', 'TEMP-RIP', 'X86']")),
 _ => throw(Emsg("Model state error: Unimplemented exception in x86isa!"))
-}) : int
-else x86_cmovcc(proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode, modr_m, sib, 0),
-72 => let fault_var = (if (240) == (prefixes_get_lck(prefixes))
+}) : unit
+}
+else { x86_cmovcc(proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode, modr_m, sib)
+},
+72 => let fault_var = (if (get_slice_int(8, 240, 0)) == (prefixes_get_lck(prefixes))
 then Some(":UD")
 else None() : option(string)) : option(string) in
 if is_some(fault_var)
-then (match fault_var {
+then { (match fault_var {
 Some(":UD") => throw(Emsg("A fault occurred.  Original ACL2 AST:
 ['X86-ILLEGAL-INSTRUCTION', STRING: #UD Encountered!, 'START-RIP', 'TEMP-RIP', 'X86']")),
 _ => throw(Emsg("Model state error: Unimplemented exception in x86isa!"))
-}) : int
-else x86_cmovcc(proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode, modr_m, sib, 0),
-73 => let fault_var = (if (240) == (prefixes_get_lck(prefixes))
+}) : unit
+}
+else { x86_cmovcc(proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode, modr_m, sib)
+},
+73 => let fault_var = (if (get_slice_int(8, 240, 0)) == (prefixes_get_lck(prefixes))
 then Some(":UD")
 else None() : option(string)) : option(string) in
 if is_some(fault_var)
-then (match fault_var {
+then { (match fault_var {
 Some(":UD") => throw(Emsg("A fault occurred.  Original ACL2 AST:
 ['X86-ILLEGAL-INSTRUCTION', STRING: #UD Encountered!, 'START-RIP', 'TEMP-RIP', 'X86']")),
 _ => throw(Emsg("Model state error: Unimplemented exception in x86isa!"))
-}) : int
-else x86_cmovcc(proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode, modr_m, sib, 0),
-74 => let fault_var = (if (240) == (prefixes_get_lck(prefixes))
+}) : unit
+}
+else { x86_cmovcc(proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode, modr_m, sib)
+},
+74 => let fault_var = (if (get_slice_int(8, 240, 0)) == (prefixes_get_lck(prefixes))
 then Some(":UD")
 else None() : option(string)) : option(string) in
 if is_some(fault_var)
-then (match fault_var {
+then { (match fault_var {
 Some(":UD") => throw(Emsg("A fault occurred.  Original ACL2 AST:
 ['X86-ILLEGAL-INSTRUCTION', STRING: #UD Encountered!, 'START-RIP', 'TEMP-RIP', 'X86']")),
 _ => throw(Emsg("Model state error: Unimplemented exception in x86isa!"))
-}) : int
-else x86_cmovcc(proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode, modr_m, sib, 0),
-75 => let fault_var = (if (240) == (prefixes_get_lck(prefixes))
+}) : unit
+}
+else { x86_cmovcc(proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode, modr_m, sib)
+},
+75 => let fault_var = (if (get_slice_int(8, 240, 0)) == (prefixes_get_lck(prefixes))
 then Some(":UD")
 else None() : option(string)) : option(string) in
 if is_some(fault_var)
-then (match fault_var {
+then { (match fault_var {
 Some(":UD") => throw(Emsg("A fault occurred.  Original ACL2 AST:
 ['X86-ILLEGAL-INSTRUCTION', STRING: #UD Encountered!, 'START-RIP', 'TEMP-RIP', 'X86']")),
 _ => throw(Emsg("Model state error: Unimplemented exception in x86isa!"))
-}) : int
-else x86_cmovcc(proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode, modr_m, sib, 0),
-76 => let fault_var = (if (240) == (prefixes_get_lck(prefixes))
+}) : unit
+}
+else { x86_cmovcc(proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode, modr_m, sib)
+},
+76 => let fault_var = (if (get_slice_int(8, 240, 0)) == (prefixes_get_lck(prefixes))
 then Some(":UD")
 else None() : option(string)) : option(string) in
 if is_some(fault_var)
-then (match fault_var {
+then { (match fault_var {
 Some(":UD") => throw(Emsg("A fault occurred.  Original ACL2 AST:
 ['X86-ILLEGAL-INSTRUCTION', STRING: #UD Encountered!, 'START-RIP', 'TEMP-RIP', 'X86']")),
 _ => throw(Emsg("Model state error: Unimplemented exception in x86isa!"))
-}) : int
-else x86_cmovcc(proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode, modr_m, sib, 0),
-77 => let fault_var = (if (240) == (prefixes_get_lck(prefixes))
+}) : unit
+}
+else { x86_cmovcc(proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode, modr_m, sib)
+},
+77 => let fault_var = (if (get_slice_int(8, 240, 0)) == (prefixes_get_lck(prefixes))
 then Some(":UD")
 else None() : option(string)) : option(string) in
 if is_some(fault_var)
-then (match fault_var {
+then { (match fault_var {
 Some(":UD") => throw(Emsg("A fault occurred.  Original ACL2 AST:
 ['X86-ILLEGAL-INSTRUCTION', STRING: #UD Encountered!, 'START-RIP', 'TEMP-RIP', 'X86']")),
 _ => throw(Emsg("Model state error: Unimplemented exception in x86isa!"))
-}) : int
-else x86_cmovcc(proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode, modr_m, sib, 0),
-78 => let fault_var = (if (240) == (prefixes_get_lck(prefixes))
+}) : unit
+}
+else { x86_cmovcc(proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode, modr_m, sib)
+},
+78 => let fault_var = (if (get_slice_int(8, 240, 0)) == (prefixes_get_lck(prefixes))
 then Some(":UD")
 else None() : option(string)) : option(string) in
 if is_some(fault_var)
-then (match fault_var {
+then { (match fault_var {
 Some(":UD") => throw(Emsg("A fault occurred.  Original ACL2 AST:
 ['X86-ILLEGAL-INSTRUCTION', STRING: #UD Encountered!, 'START-RIP', 'TEMP-RIP', 'X86']")),
 _ => throw(Emsg("Model state error: Unimplemented exception in x86isa!"))
-}) : int
-else x86_cmovcc(proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode, modr_m, sib, 0),
-79 => let fault_var = (if (240) == (prefixes_get_lck(prefixes))
+}) : unit
+}
+else { x86_cmovcc(proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode, modr_m, sib)
+},
+79 => let fault_var = (if (get_slice_int(8, 240, 0)) == (prefixes_get_lck(prefixes))
 then Some(":UD")
 else None() : option(string)) : option(string) in
 if is_some(fault_var)
-then (match fault_var {
+then { (match fault_var {
 Some(":UD") => throw(Emsg("A fault occurred.  Original ACL2 AST:
 ['X86-ILLEGAL-INSTRUCTION', STRING: #UD Encountered!, 'START-RIP', 'TEMP-RIP', 'X86']")),
 _ => throw(Emsg("Model state error: Unimplemented exception in x86isa!"))
-}) : int
-else x86_cmovcc(proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode, modr_m, sib, 0),
-110 => if (mandatory_prefix) == (0)
-then let fault_var = (let chk_ex = (chk_exc_fn(":LEGACY", ":TYPE-22-8", [|":MMX"|], proc_mode, prefixes, rex_byte, opcode, modr_m, sib, 0)) : option(string) in
+}) : unit
+}
+else { x86_cmovcc(proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode, modr_m, sib)
+},
+110 => if (mandatory_prefix) == (get_slice_int(8, 0, 0))
+then let fault_var = (let chk_ex = (chk_exc_fn(":LEGACY", ":TYPE-22-8", [|":MMX"|], proc_mode, prefixes, rex_byte, opcode, modr_m, sib)) : option(string) in
 if is_some(chk_ex)
 then chk_ex
-else if (feature_flags_fn([|":MMX"|], 0)) == (0)
+else if (get_slice_int(8, feature_flags_fn([|":MMX"|]), 0)) == (get_slice_int(8, 0, 0))
 then Some(":UD")
 else None() : option(string)) : option(string) in
 if is_some(fault_var)
-then (match fault_var {
+then { (match fault_var {
 Some(":UD") => throw(Emsg("A fault occurred.  Original ACL2 AST:
 ['X86-ILLEGAL-INSTRUCTION', STRING: #UD Encountered!, 'START-RIP', 'TEMP-RIP', 'X86']")),
 Some(":GP") => throw(Emsg("A fault occurred.  Original ACL2 AST:
@@ -1525,17 +1729,19 @@ Some(":GP") => throw(Emsg("A fault occurred.  Original ACL2 AST:
 Some(":NM") => throw(Emsg("A fault occurred.  Original ACL2 AST:
 ['X86-DEVICE-NOT-AVAILABLE', STRING: #NM Encountered!, 'START-RIP', 'TEMP-RIP', 'X86']")),
 _ => throw(Emsg("Model state error: Unimplemented exception in x86isa!"))
-}) : int
-else throw(Emsg("Model state error: Opcode Unimplemented in x86isa!"))
-else if (mandatory_prefix) == (102)
-then let fault_var = (let chk_ex = (chk_exc_fn(":LEGACY", ":TYPE-5", [|":SSE2"|], proc_mode, prefixes, rex_byte, opcode, modr_m, sib, 0)) : option(string) in
+}) : unit
+}
+else { throw(Emsg("Model state error: Opcode Unimplemented in x86isa!"))
+}
+else if (mandatory_prefix) == (get_slice_int(8, 102, 0))
+then let fault_var = (let chk_ex = (chk_exc_fn(":LEGACY", ":TYPE-5", [|":SSE2"|], proc_mode, prefixes, rex_byte, opcode, modr_m, sib)) : option(string) in
 if is_some(chk_ex)
 then chk_ex
-else if (feature_flags_fn([|":SSE2"|], 0)) == (0)
+else if (get_slice_int(8, feature_flags_fn([|":SSE2"|]), 0)) == (get_slice_int(8, 0, 0))
 then Some(":UD")
 else None() : option(string)) : option(string) in
 if is_some(fault_var)
-then (match fault_var {
+then { (match fault_var {
 Some(":UD") => throw(Emsg("A fault occurred.  Original ACL2 AST:
 ['X86-ILLEGAL-INSTRUCTION', STRING: #UD Encountered!, 'START-RIP', 'TEMP-RIP', 'X86']")),
 Some(":GP") => throw(Emsg("A fault occurred.  Original ACL2 AST:
@@ -1543,19 +1749,21 @@ Some(":GP") => throw(Emsg("A fault occurred.  Original ACL2 AST:
 Some(":NM") => throw(Emsg("A fault occurred.  Original ACL2 AST:
 ['X86-DEVICE-NOT-AVAILABLE', STRING: #NM Encountered!, 'START-RIP', 'TEMP-RIP', 'X86']")),
 _ => throw(Emsg("Model state error: Unimplemented exception in x86isa!"))
-}) : int
-else throw(Emsg("Model state error: Opcode Unimplemented in x86isa!"))
+}) : unit
+}
+else { throw(Emsg("Model state error: Opcode Unimplemented in x86isa!"))
+}
 else throw(Emsg("A fault occurred.  Original ACL2 AST:
 ['X86-ILLEGAL-INSTRUCTION', STRING: #UD Encountered!, 'START-RIP', 'TEMP-RIP', 'X86']")),
-111 => if (mandatory_prefix) == (0)
-then let fault_var = (let chk_ex = (chk_exc_fn(":LEGACY", ":TYPE-22-8", [|":MMX"|], proc_mode, prefixes, rex_byte, opcode, modr_m, sib, 0)) : option(string) in
+111 => if (mandatory_prefix) == (get_slice_int(8, 0, 0))
+then let fault_var = (let chk_ex = (chk_exc_fn(":LEGACY", ":TYPE-22-8", [|":MMX"|], proc_mode, prefixes, rex_byte, opcode, modr_m, sib)) : option(string) in
 if is_some(chk_ex)
 then chk_ex
-else if (feature_flags_fn([|":MMX"|], 0)) == (0)
+else if (get_slice_int(8, feature_flags_fn([|":MMX"|]), 0)) == (get_slice_int(8, 0, 0))
 then Some(":UD")
 else None() : option(string)) : option(string) in
 if is_some(fault_var)
-then (match fault_var {
+then { (match fault_var {
 Some(":UD") => throw(Emsg("A fault occurred.  Original ACL2 AST:
 ['X86-ILLEGAL-INSTRUCTION', STRING: #UD Encountered!, 'START-RIP', 'TEMP-RIP', 'X86']")),
 Some(":GP") => throw(Emsg("A fault occurred.  Original ACL2 AST:
@@ -1563,17 +1771,19 @@ Some(":GP") => throw(Emsg("A fault occurred.  Original ACL2 AST:
 Some(":NM") => throw(Emsg("A fault occurred.  Original ACL2 AST:
 ['X86-DEVICE-NOT-AVAILABLE', STRING: #NM Encountered!, 'START-RIP', 'TEMP-RIP', 'X86']")),
 _ => throw(Emsg("Model state error: Unimplemented exception in x86isa!"))
-}) : int
-else throw(Emsg("Model state error: Opcode Unimplemented in x86isa!"))
-else if (mandatory_prefix) == (102)
-then let fault_var = (let chk_ex = (chk_exc_fn(":LEGACY", ":TYPE-1", [|":SSE2"|], proc_mode, prefixes, rex_byte, opcode, modr_m, sib, 0)) : option(string) in
+}) : unit
+}
+else { throw(Emsg("Model state error: Opcode Unimplemented in x86isa!"))
+}
+else if (mandatory_prefix) == (get_slice_int(8, 102, 0))
+then let fault_var = (let chk_ex = (chk_exc_fn(":LEGACY", ":TYPE-1", [|":SSE2"|], proc_mode, prefixes, rex_byte, opcode, modr_m, sib)) : option(string) in
 if is_some(chk_ex)
 then chk_ex
-else if (feature_flags_fn([|":SSE2"|], 0)) == (0)
+else if (get_slice_int(8, feature_flags_fn([|":SSE2"|]), 0)) == (get_slice_int(8, 0, 0))
 then Some(":UD")
 else None() : option(string)) : option(string) in
 if is_some(fault_var)
-then (match fault_var {
+then { (match fault_var {
 Some(":UD") => throw(Emsg("A fault occurred.  Original ACL2 AST:
 ['X86-ILLEGAL-INSTRUCTION', STRING: #UD Encountered!, 'START-RIP', 'TEMP-RIP', 'X86']")),
 Some(":GP") => throw(Emsg("A fault occurred.  Original ACL2 AST:
@@ -1581,17 +1791,19 @@ Some(":GP") => throw(Emsg("A fault occurred.  Original ACL2 AST:
 Some(":NM") => throw(Emsg("A fault occurred.  Original ACL2 AST:
 ['X86-DEVICE-NOT-AVAILABLE', STRING: #NM Encountered!, 'START-RIP', 'TEMP-RIP', 'X86']")),
 _ => throw(Emsg("Model state error: Unimplemented exception in x86isa!"))
-}) : int
-else throw(Emsg("Model state error: Opcode Unimplemented in x86isa!"))
-else if (mandatory_prefix) == (243)
-then let fault_var = (let chk_ex = (chk_exc_fn(":LEGACY", ":TYPE-4", [|":SSE2"|], proc_mode, prefixes, rex_byte, opcode, modr_m, sib, 0)) : option(string) in
+}) : unit
+}
+else { throw(Emsg("Model state error: Opcode Unimplemented in x86isa!"))
+}
+else if (mandatory_prefix) == (get_slice_int(8, 243, 0))
+then let fault_var = (let chk_ex = (chk_exc_fn(":LEGACY", ":TYPE-4", [|":SSE2"|], proc_mode, prefixes, rex_byte, opcode, modr_m, sib)) : option(string) in
 if is_some(chk_ex)
 then chk_ex
-else if (feature_flags_fn([|":SSE2"|], 0)) == (0)
+else if (get_slice_int(8, feature_flags_fn([|":SSE2"|]), 0)) == (get_slice_int(8, 0, 0))
 then Some(":UD")
 else None() : option(string)) : option(string) in
 if is_some(fault_var)
-then (match fault_var {
+then { (match fault_var {
 Some(":UD") => throw(Emsg("A fault occurred.  Original ACL2 AST:
 ['X86-ILLEGAL-INSTRUCTION', STRING: #UD Encountered!, 'START-RIP', 'TEMP-RIP', 'X86']")),
 Some(":GP") => throw(Emsg("A fault occurred.  Original ACL2 AST:
@@ -1599,19 +1811,21 @@ Some(":GP") => throw(Emsg("A fault occurred.  Original ACL2 AST:
 Some(":NM") => throw(Emsg("A fault occurred.  Original ACL2 AST:
 ['X86-DEVICE-NOT-AVAILABLE', STRING: #NM Encountered!, 'START-RIP', 'TEMP-RIP', 'X86']")),
 _ => throw(Emsg("Model state error: Unimplemented exception in x86isa!"))
-}) : int
-else x86_movups_movupd_movdqu_op_en_rm(proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode, modr_m, sib, 0)
+}) : unit
+}
+else { x86_movups_movupd_movdqu_op_en_rm(proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode, modr_m, sib)
+}
 else throw(Emsg("A fault occurred.  Original ACL2 AST:
 ['X86-ILLEGAL-INSTRUCTION', STRING: #UD Encountered!, 'START-RIP', 'TEMP-RIP', 'X86']")),
-127 => if (mandatory_prefix) == (0)
-then let fault_var = (let chk_ex = (chk_exc_fn(":LEGACY", ":TYPE-22-8", [|":MMX"|], proc_mode, prefixes, rex_byte, opcode, modr_m, sib, 0)) : option(string) in
+127 => if (mandatory_prefix) == (get_slice_int(8, 0, 0))
+then let fault_var = (let chk_ex = (chk_exc_fn(":LEGACY", ":TYPE-22-8", [|":MMX"|], proc_mode, prefixes, rex_byte, opcode, modr_m, sib)) : option(string) in
 if is_some(chk_ex)
 then chk_ex
-else if (feature_flags_fn([|":MMX"|], 0)) == (0)
+else if (get_slice_int(8, feature_flags_fn([|":MMX"|]), 0)) == (get_slice_int(8, 0, 0))
 then Some(":UD")
 else None() : option(string)) : option(string) in
 if is_some(fault_var)
-then (match fault_var {
+then { (match fault_var {
 Some(":UD") => throw(Emsg("A fault occurred.  Original ACL2 AST:
 ['X86-ILLEGAL-INSTRUCTION', STRING: #UD Encountered!, 'START-RIP', 'TEMP-RIP', 'X86']")),
 Some(":GP") => throw(Emsg("A fault occurred.  Original ACL2 AST:
@@ -1619,17 +1833,19 @@ Some(":GP") => throw(Emsg("A fault occurred.  Original ACL2 AST:
 Some(":NM") => throw(Emsg("A fault occurred.  Original ACL2 AST:
 ['X86-DEVICE-NOT-AVAILABLE', STRING: #NM Encountered!, 'START-RIP', 'TEMP-RIP', 'X86']")),
 _ => throw(Emsg("Model state error: Unimplemented exception in x86isa!"))
-}) : int
-else throw(Emsg("Model state error: Opcode Unimplemented in x86isa!"))
-else if (mandatory_prefix) == (102)
-then let fault_var = (let chk_ex = (chk_exc_fn(":LEGACY", ":TYPE-1", [|":SSE2"|], proc_mode, prefixes, rex_byte, opcode, modr_m, sib, 0)) : option(string) in
+}) : unit
+}
+else { throw(Emsg("Model state error: Opcode Unimplemented in x86isa!"))
+}
+else if (mandatory_prefix) == (get_slice_int(8, 102, 0))
+then let fault_var = (let chk_ex = (chk_exc_fn(":LEGACY", ":TYPE-1", [|":SSE2"|], proc_mode, prefixes, rex_byte, opcode, modr_m, sib)) : option(string) in
 if is_some(chk_ex)
 then chk_ex
-else if (feature_flags_fn([|":SSE2"|], 0)) == (0)
+else if (get_slice_int(8, feature_flags_fn([|":SSE2"|]), 0)) == (get_slice_int(8, 0, 0))
 then Some(":UD")
 else None() : option(string)) : option(string) in
 if is_some(fault_var)
-then (match fault_var {
+then { (match fault_var {
 Some(":UD") => throw(Emsg("A fault occurred.  Original ACL2 AST:
 ['X86-ILLEGAL-INSTRUCTION', STRING: #UD Encountered!, 'START-RIP', 'TEMP-RIP', 'X86']")),
 Some(":GP") => throw(Emsg("A fault occurred.  Original ACL2 AST:
@@ -1637,17 +1853,19 @@ Some(":GP") => throw(Emsg("A fault occurred.  Original ACL2 AST:
 Some(":NM") => throw(Emsg("A fault occurred.  Original ACL2 AST:
 ['X86-DEVICE-NOT-AVAILABLE', STRING: #NM Encountered!, 'START-RIP', 'TEMP-RIP', 'X86']")),
 _ => throw(Emsg("Model state error: Unimplemented exception in x86isa!"))
-}) : int
-else throw(Emsg("Model state error: Opcode Unimplemented in x86isa!"))
-else if (mandatory_prefix) == (243)
-then let fault_var = (let chk_ex = (chk_exc_fn(":LEGACY", ":TYPE-4", [|":SSE2"|], proc_mode, prefixes, rex_byte, opcode, modr_m, sib, 0)) : option(string) in
+}) : unit
+}
+else { throw(Emsg("Model state error: Opcode Unimplemented in x86isa!"))
+}
+else if (mandatory_prefix) == (get_slice_int(8, 243, 0))
+then let fault_var = (let chk_ex = (chk_exc_fn(":LEGACY", ":TYPE-4", [|":SSE2"|], proc_mode, prefixes, rex_byte, opcode, modr_m, sib)) : option(string) in
 if is_some(chk_ex)
 then chk_ex
-else if (feature_flags_fn([|":SSE2"|], 0)) == (0)
+else if (get_slice_int(8, feature_flags_fn([|":SSE2"|]), 0)) == (get_slice_int(8, 0, 0))
 then Some(":UD")
 else None() : option(string)) : option(string) in
 if is_some(fault_var)
-then (match fault_var {
+then { (match fault_var {
 Some(":UD") => throw(Emsg("A fault occurred.  Original ACL2 AST:
 ['X86-ILLEGAL-INSTRUCTION', STRING: #UD Encountered!, 'START-RIP', 'TEMP-RIP', 'X86']")),
 Some(":GP") => throw(Emsg("A fault occurred.  Original ACL2 AST:
@@ -1655,574 +1873,684 @@ Some(":GP") => throw(Emsg("A fault occurred.  Original ACL2 AST:
 Some(":NM") => throw(Emsg("A fault occurred.  Original ACL2 AST:
 ['X86-DEVICE-NOT-AVAILABLE', STRING: #NM Encountered!, 'START-RIP', 'TEMP-RIP', 'X86']")),
 _ => throw(Emsg("Model state error: Unimplemented exception in x86isa!"))
-}) : int
-else x86_movups_movupd_movdqu_op_en_mr(proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode, modr_m, sib, 0)
+}) : unit
+}
+else { x86_movups_movupd_movdqu_op_en_mr(proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode, modr_m, sib)
+}
 else throw(Emsg("A fault occurred.  Original ACL2 AST:
 ['X86-ILLEGAL-INSTRUCTION', STRING: #UD Encountered!, 'START-RIP', 'TEMP-RIP', 'X86']")),
-128 => let fault_var = (if (240) == (prefixes_get_lck(prefixes))
+128 => let fault_var = (if (get_slice_int(8, 240, 0)) == (prefixes_get_lck(prefixes))
 then Some(":UD")
 else None() : option(string)) : option(string) in
 if is_some(fault_var)
-then (match fault_var {
+then { (match fault_var {
 Some(":UD") => throw(Emsg("A fault occurred.  Original ACL2 AST:
 ['X86-ILLEGAL-INSTRUCTION', STRING: #UD Encountered!, 'START-RIP', 'TEMP-RIP', 'X86']")),
 _ => throw(Emsg("Model state error: Unimplemented exception in x86isa!"))
-}) : int
-else x86_two_byte_jcc(proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode, modr_m, sib, 0),
-129 => let fault_var = (if (240) == (prefixes_get_lck(prefixes))
+}) : unit
+}
+else { x86_two_byte_jcc(proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode, modr_m, sib)
+},
+129 => let fault_var = (if (get_slice_int(8, 240, 0)) == (prefixes_get_lck(prefixes))
 then Some(":UD")
 else None() : option(string)) : option(string) in
 if is_some(fault_var)
-then (match fault_var {
+then { (match fault_var {
 Some(":UD") => throw(Emsg("A fault occurred.  Original ACL2 AST:
 ['X86-ILLEGAL-INSTRUCTION', STRING: #UD Encountered!, 'START-RIP', 'TEMP-RIP', 'X86']")),
 _ => throw(Emsg("Model state error: Unimplemented exception in x86isa!"))
-}) : int
-else x86_two_byte_jcc(proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode, modr_m, sib, 0),
-130 => let fault_var = (if (240) == (prefixes_get_lck(prefixes))
+}) : unit
+}
+else { x86_two_byte_jcc(proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode, modr_m, sib)
+},
+130 => let fault_var = (if (get_slice_int(8, 240, 0)) == (prefixes_get_lck(prefixes))
 then Some(":UD")
 else None() : option(string)) : option(string) in
 if is_some(fault_var)
-then (match fault_var {
+then { (match fault_var {
 Some(":UD") => throw(Emsg("A fault occurred.  Original ACL2 AST:
 ['X86-ILLEGAL-INSTRUCTION', STRING: #UD Encountered!, 'START-RIP', 'TEMP-RIP', 'X86']")),
 _ => throw(Emsg("Model state error: Unimplemented exception in x86isa!"))
-}) : int
-else x86_two_byte_jcc(proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode, modr_m, sib, 0),
-131 => let fault_var = (if (240) == (prefixes_get_lck(prefixes))
+}) : unit
+}
+else { x86_two_byte_jcc(proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode, modr_m, sib)
+},
+131 => let fault_var = (if (get_slice_int(8, 240, 0)) == (prefixes_get_lck(prefixes))
 then Some(":UD")
 else None() : option(string)) : option(string) in
 if is_some(fault_var)
-then (match fault_var {
+then { (match fault_var {
 Some(":UD") => throw(Emsg("A fault occurred.  Original ACL2 AST:
 ['X86-ILLEGAL-INSTRUCTION', STRING: #UD Encountered!, 'START-RIP', 'TEMP-RIP', 'X86']")),
 _ => throw(Emsg("Model state error: Unimplemented exception in x86isa!"))
-}) : int
-else x86_two_byte_jcc(proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode, modr_m, sib, 0),
-132 => let fault_var = (if (240) == (prefixes_get_lck(prefixes))
+}) : unit
+}
+else { x86_two_byte_jcc(proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode, modr_m, sib)
+},
+132 => let fault_var = (if (get_slice_int(8, 240, 0)) == (prefixes_get_lck(prefixes))
 then Some(":UD")
 else None() : option(string)) : option(string) in
 if is_some(fault_var)
-then (match fault_var {
+then { (match fault_var {
 Some(":UD") => throw(Emsg("A fault occurred.  Original ACL2 AST:
 ['X86-ILLEGAL-INSTRUCTION', STRING: #UD Encountered!, 'START-RIP', 'TEMP-RIP', 'X86']")),
 _ => throw(Emsg("Model state error: Unimplemented exception in x86isa!"))
-}) : int
-else x86_two_byte_jcc(proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode, modr_m, sib, 0),
-133 => let fault_var = (if (240) == (prefixes_get_lck(prefixes))
+}) : unit
+}
+else { x86_two_byte_jcc(proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode, modr_m, sib)
+},
+133 => let fault_var = (if (get_slice_int(8, 240, 0)) == (prefixes_get_lck(prefixes))
 then Some(":UD")
 else None() : option(string)) : option(string) in
 if is_some(fault_var)
-then (match fault_var {
+then { (match fault_var {
 Some(":UD") => throw(Emsg("A fault occurred.  Original ACL2 AST:
 ['X86-ILLEGAL-INSTRUCTION', STRING: #UD Encountered!, 'START-RIP', 'TEMP-RIP', 'X86']")),
 _ => throw(Emsg("Model state error: Unimplemented exception in x86isa!"))
-}) : int
-else x86_two_byte_jcc(proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode, modr_m, sib, 0),
-134 => let fault_var = (if (240) == (prefixes_get_lck(prefixes))
+}) : unit
+}
+else { x86_two_byte_jcc(proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode, modr_m, sib)
+},
+134 => let fault_var = (if (get_slice_int(8, 240, 0)) == (prefixes_get_lck(prefixes))
 then Some(":UD")
 else None() : option(string)) : option(string) in
 if is_some(fault_var)
-then (match fault_var {
+then { (match fault_var {
 Some(":UD") => throw(Emsg("A fault occurred.  Original ACL2 AST:
 ['X86-ILLEGAL-INSTRUCTION', STRING: #UD Encountered!, 'START-RIP', 'TEMP-RIP', 'X86']")),
 _ => throw(Emsg("Model state error: Unimplemented exception in x86isa!"))
-}) : int
-else x86_two_byte_jcc(proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode, modr_m, sib, 0),
-135 => let fault_var = (if (240) == (prefixes_get_lck(prefixes))
+}) : unit
+}
+else { x86_two_byte_jcc(proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode, modr_m, sib)
+},
+135 => let fault_var = (if (get_slice_int(8, 240, 0)) == (prefixes_get_lck(prefixes))
 then Some(":UD")
 else None() : option(string)) : option(string) in
 if is_some(fault_var)
-then (match fault_var {
+then { (match fault_var {
 Some(":UD") => throw(Emsg("A fault occurred.  Original ACL2 AST:
 ['X86-ILLEGAL-INSTRUCTION', STRING: #UD Encountered!, 'START-RIP', 'TEMP-RIP', 'X86']")),
 _ => throw(Emsg("Model state error: Unimplemented exception in x86isa!"))
-}) : int
-else x86_two_byte_jcc(proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode, modr_m, sib, 0),
-136 => let fault_var = (if (240) == (prefixes_get_lck(prefixes))
+}) : unit
+}
+else { x86_two_byte_jcc(proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode, modr_m, sib)
+},
+136 => let fault_var = (if (get_slice_int(8, 240, 0)) == (prefixes_get_lck(prefixes))
 then Some(":UD")
 else None() : option(string)) : option(string) in
 if is_some(fault_var)
-then (match fault_var {
+then { (match fault_var {
 Some(":UD") => throw(Emsg("A fault occurred.  Original ACL2 AST:
 ['X86-ILLEGAL-INSTRUCTION', STRING: #UD Encountered!, 'START-RIP', 'TEMP-RIP', 'X86']")),
 _ => throw(Emsg("Model state error: Unimplemented exception in x86isa!"))
-}) : int
-else x86_two_byte_jcc(proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode, modr_m, sib, 0),
-137 => let fault_var = (if (240) == (prefixes_get_lck(prefixes))
+}) : unit
+}
+else { x86_two_byte_jcc(proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode, modr_m, sib)
+},
+137 => let fault_var = (if (get_slice_int(8, 240, 0)) == (prefixes_get_lck(prefixes))
 then Some(":UD")
 else None() : option(string)) : option(string) in
 if is_some(fault_var)
-then (match fault_var {
+then { (match fault_var {
 Some(":UD") => throw(Emsg("A fault occurred.  Original ACL2 AST:
 ['X86-ILLEGAL-INSTRUCTION', STRING: #UD Encountered!, 'START-RIP', 'TEMP-RIP', 'X86']")),
 _ => throw(Emsg("Model state error: Unimplemented exception in x86isa!"))
-}) : int
-else x86_two_byte_jcc(proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode, modr_m, sib, 0),
-138 => let fault_var = (if (240) == (prefixes_get_lck(prefixes))
+}) : unit
+}
+else { x86_two_byte_jcc(proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode, modr_m, sib)
+},
+138 => let fault_var = (if (get_slice_int(8, 240, 0)) == (prefixes_get_lck(prefixes))
 then Some(":UD")
 else None() : option(string)) : option(string) in
 if is_some(fault_var)
-then (match fault_var {
+then { (match fault_var {
 Some(":UD") => throw(Emsg("A fault occurred.  Original ACL2 AST:
 ['X86-ILLEGAL-INSTRUCTION', STRING: #UD Encountered!, 'START-RIP', 'TEMP-RIP', 'X86']")),
 _ => throw(Emsg("Model state error: Unimplemented exception in x86isa!"))
-}) : int
-else x86_two_byte_jcc(proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode, modr_m, sib, 0),
-139 => let fault_var = (if (240) == (prefixes_get_lck(prefixes))
+}) : unit
+}
+else { x86_two_byte_jcc(proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode, modr_m, sib)
+},
+139 => let fault_var = (if (get_slice_int(8, 240, 0)) == (prefixes_get_lck(prefixes))
 then Some(":UD")
 else None() : option(string)) : option(string) in
 if is_some(fault_var)
-then (match fault_var {
+then { (match fault_var {
 Some(":UD") => throw(Emsg("A fault occurred.  Original ACL2 AST:
 ['X86-ILLEGAL-INSTRUCTION', STRING: #UD Encountered!, 'START-RIP', 'TEMP-RIP', 'X86']")),
 _ => throw(Emsg("Model state error: Unimplemented exception in x86isa!"))
-}) : int
-else x86_two_byte_jcc(proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode, modr_m, sib, 0),
-140 => let fault_var = (if (240) == (prefixes_get_lck(prefixes))
+}) : unit
+}
+else { x86_two_byte_jcc(proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode, modr_m, sib)
+},
+140 => let fault_var = (if (get_slice_int(8, 240, 0)) == (prefixes_get_lck(prefixes))
 then Some(":UD")
 else None() : option(string)) : option(string) in
 if is_some(fault_var)
-then (match fault_var {
+then { (match fault_var {
 Some(":UD") => throw(Emsg("A fault occurred.  Original ACL2 AST:
 ['X86-ILLEGAL-INSTRUCTION', STRING: #UD Encountered!, 'START-RIP', 'TEMP-RIP', 'X86']")),
 _ => throw(Emsg("Model state error: Unimplemented exception in x86isa!"))
-}) : int
-else x86_two_byte_jcc(proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode, modr_m, sib, 0),
-141 => let fault_var = (if (240) == (prefixes_get_lck(prefixes))
+}) : unit
+}
+else { x86_two_byte_jcc(proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode, modr_m, sib)
+},
+141 => let fault_var = (if (get_slice_int(8, 240, 0)) == (prefixes_get_lck(prefixes))
 then Some(":UD")
 else None() : option(string)) : option(string) in
 if is_some(fault_var)
-then (match fault_var {
+then { (match fault_var {
 Some(":UD") => throw(Emsg("A fault occurred.  Original ACL2 AST:
 ['X86-ILLEGAL-INSTRUCTION', STRING: #UD Encountered!, 'START-RIP', 'TEMP-RIP', 'X86']")),
 _ => throw(Emsg("Model state error: Unimplemented exception in x86isa!"))
-}) : int
-else x86_two_byte_jcc(proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode, modr_m, sib, 0),
-142 => let fault_var = (if (240) == (prefixes_get_lck(prefixes))
+}) : unit
+}
+else { x86_two_byte_jcc(proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode, modr_m, sib)
+},
+142 => let fault_var = (if (get_slice_int(8, 240, 0)) == (prefixes_get_lck(prefixes))
 then Some(":UD")
 else None() : option(string)) : option(string) in
 if is_some(fault_var)
-then (match fault_var {
+then { (match fault_var {
 Some(":UD") => throw(Emsg("A fault occurred.  Original ACL2 AST:
 ['X86-ILLEGAL-INSTRUCTION', STRING: #UD Encountered!, 'START-RIP', 'TEMP-RIP', 'X86']")),
 _ => throw(Emsg("Model state error: Unimplemented exception in x86isa!"))
-}) : int
-else x86_two_byte_jcc(proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode, modr_m, sib, 0),
-143 => let fault_var = (if (240) == (prefixes_get_lck(prefixes))
+}) : unit
+}
+else { x86_two_byte_jcc(proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode, modr_m, sib)
+},
+143 => let fault_var = (if (get_slice_int(8, 240, 0)) == (prefixes_get_lck(prefixes))
 then Some(":UD")
 else None() : option(string)) : option(string) in
 if is_some(fault_var)
-then (match fault_var {
+then { (match fault_var {
 Some(":UD") => throw(Emsg("A fault occurred.  Original ACL2 AST:
 ['X86-ILLEGAL-INSTRUCTION', STRING: #UD Encountered!, 'START-RIP', 'TEMP-RIP', 'X86']")),
 _ => throw(Emsg("Model state error: Unimplemented exception in x86isa!"))
-}) : int
-else x86_two_byte_jcc(proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode, modr_m, sib, 0),
-144 => let fault_var = (if (240) == (prefixes_get_lck(prefixes))
+}) : unit
+}
+else { x86_two_byte_jcc(proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode, modr_m, sib)
+},
+144 => let fault_var = (if (get_slice_int(8, 240, 0)) == (prefixes_get_lck(prefixes))
 then Some(":UD")
 else None() : option(string)) : option(string) in
 if is_some(fault_var)
-then (match fault_var {
+then { (match fault_var {
 Some(":UD") => throw(Emsg("A fault occurred.  Original ACL2 AST:
 ['X86-ILLEGAL-INSTRUCTION', STRING: #UD Encountered!, 'START-RIP', 'TEMP-RIP', 'X86']")),
 _ => throw(Emsg("Model state error: Unimplemented exception in x86isa!"))
-}) : int
-else x86_setcc(proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode, modr_m, sib, 0),
-145 => let fault_var = (if (240) == (prefixes_get_lck(prefixes))
+}) : unit
+}
+else { x86_setcc(proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode, modr_m, sib)
+},
+145 => let fault_var = (if (get_slice_int(8, 240, 0)) == (prefixes_get_lck(prefixes))
 then Some(":UD")
 else None() : option(string)) : option(string) in
 if is_some(fault_var)
-then (match fault_var {
+then { (match fault_var {
 Some(":UD") => throw(Emsg("A fault occurred.  Original ACL2 AST:
 ['X86-ILLEGAL-INSTRUCTION', STRING: #UD Encountered!, 'START-RIP', 'TEMP-RIP', 'X86']")),
 _ => throw(Emsg("Model state error: Unimplemented exception in x86isa!"))
-}) : int
-else x86_setcc(proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode, modr_m, sib, 0),
-146 => let fault_var = (if (240) == (prefixes_get_lck(prefixes))
+}) : unit
+}
+else { x86_setcc(proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode, modr_m, sib)
+},
+146 => let fault_var = (if (get_slice_int(8, 240, 0)) == (prefixes_get_lck(prefixes))
 then Some(":UD")
 else None() : option(string)) : option(string) in
 if is_some(fault_var)
-then (match fault_var {
+then { (match fault_var {
 Some(":UD") => throw(Emsg("A fault occurred.  Original ACL2 AST:
 ['X86-ILLEGAL-INSTRUCTION', STRING: #UD Encountered!, 'START-RIP', 'TEMP-RIP', 'X86']")),
 _ => throw(Emsg("Model state error: Unimplemented exception in x86isa!"))
-}) : int
-else x86_setcc(proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode, modr_m, sib, 0),
-147 => let fault_var = (if (240) == (prefixes_get_lck(prefixes))
+}) : unit
+}
+else { x86_setcc(proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode, modr_m, sib)
+},
+147 => let fault_var = (if (get_slice_int(8, 240, 0)) == (prefixes_get_lck(prefixes))
 then Some(":UD")
 else None() : option(string)) : option(string) in
 if is_some(fault_var)
-then (match fault_var {
+then { (match fault_var {
 Some(":UD") => throw(Emsg("A fault occurred.  Original ACL2 AST:
 ['X86-ILLEGAL-INSTRUCTION', STRING: #UD Encountered!, 'START-RIP', 'TEMP-RIP', 'X86']")),
 _ => throw(Emsg("Model state error: Unimplemented exception in x86isa!"))
-}) : int
-else x86_setcc(proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode, modr_m, sib, 0),
-148 => let fault_var = (if (240) == (prefixes_get_lck(prefixes))
+}) : unit
+}
+else { x86_setcc(proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode, modr_m, sib)
+},
+148 => let fault_var = (if (get_slice_int(8, 240, 0)) == (prefixes_get_lck(prefixes))
 then Some(":UD")
 else None() : option(string)) : option(string) in
 if is_some(fault_var)
-then (match fault_var {
+then { (match fault_var {
 Some(":UD") => throw(Emsg("A fault occurred.  Original ACL2 AST:
 ['X86-ILLEGAL-INSTRUCTION', STRING: #UD Encountered!, 'START-RIP', 'TEMP-RIP', 'X86']")),
 _ => throw(Emsg("Model state error: Unimplemented exception in x86isa!"))
-}) : int
-else x86_setcc(proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode, modr_m, sib, 0),
-149 => let fault_var = (if (240) == (prefixes_get_lck(prefixes))
+}) : unit
+}
+else { x86_setcc(proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode, modr_m, sib)
+},
+149 => let fault_var = (if (get_slice_int(8, 240, 0)) == (prefixes_get_lck(prefixes))
 then Some(":UD")
 else None() : option(string)) : option(string) in
 if is_some(fault_var)
-then (match fault_var {
+then { (match fault_var {
 Some(":UD") => throw(Emsg("A fault occurred.  Original ACL2 AST:
 ['X86-ILLEGAL-INSTRUCTION', STRING: #UD Encountered!, 'START-RIP', 'TEMP-RIP', 'X86']")),
 _ => throw(Emsg("Model state error: Unimplemented exception in x86isa!"))
-}) : int
-else x86_setcc(proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode, modr_m, sib, 0),
-150 => let fault_var = (if (240) == (prefixes_get_lck(prefixes))
+}) : unit
+}
+else { x86_setcc(proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode, modr_m, sib)
+},
+150 => let fault_var = (if (get_slice_int(8, 240, 0)) == (prefixes_get_lck(prefixes))
 then Some(":UD")
 else None() : option(string)) : option(string) in
 if is_some(fault_var)
-then (match fault_var {
+then { (match fault_var {
 Some(":UD") => throw(Emsg("A fault occurred.  Original ACL2 AST:
 ['X86-ILLEGAL-INSTRUCTION', STRING: #UD Encountered!, 'START-RIP', 'TEMP-RIP', 'X86']")),
 _ => throw(Emsg("Model state error: Unimplemented exception in x86isa!"))
-}) : int
-else x86_setcc(proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode, modr_m, sib, 0),
-151 => let fault_var = (if (240) == (prefixes_get_lck(prefixes))
+}) : unit
+}
+else { x86_setcc(proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode, modr_m, sib)
+},
+151 => let fault_var = (if (get_slice_int(8, 240, 0)) == (prefixes_get_lck(prefixes))
 then Some(":UD")
 else None() : option(string)) : option(string) in
 if is_some(fault_var)
-then (match fault_var {
+then { (match fault_var {
 Some(":UD") => throw(Emsg("A fault occurred.  Original ACL2 AST:
 ['X86-ILLEGAL-INSTRUCTION', STRING: #UD Encountered!, 'START-RIP', 'TEMP-RIP', 'X86']")),
 _ => throw(Emsg("Model state error: Unimplemented exception in x86isa!"))
-}) : int
-else x86_setcc(proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode, modr_m, sib, 0),
-152 => let fault_var = (if (240) == (prefixes_get_lck(prefixes))
+}) : unit
+}
+else { x86_setcc(proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode, modr_m, sib)
+},
+152 => let fault_var = (if (get_slice_int(8, 240, 0)) == (prefixes_get_lck(prefixes))
 then Some(":UD")
 else None() : option(string)) : option(string) in
 if is_some(fault_var)
-then (match fault_var {
+then { (match fault_var {
 Some(":UD") => throw(Emsg("A fault occurred.  Original ACL2 AST:
 ['X86-ILLEGAL-INSTRUCTION', STRING: #UD Encountered!, 'START-RIP', 'TEMP-RIP', 'X86']")),
 _ => throw(Emsg("Model state error: Unimplemented exception in x86isa!"))
-}) : int
-else x86_setcc(proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode, modr_m, sib, 0),
-153 => let fault_var = (if (240) == (prefixes_get_lck(prefixes))
+}) : unit
+}
+else { x86_setcc(proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode, modr_m, sib)
+},
+153 => let fault_var = (if (get_slice_int(8, 240, 0)) == (prefixes_get_lck(prefixes))
 then Some(":UD")
 else None() : option(string)) : option(string) in
 if is_some(fault_var)
-then (match fault_var {
+then { (match fault_var {
 Some(":UD") => throw(Emsg("A fault occurred.  Original ACL2 AST:
 ['X86-ILLEGAL-INSTRUCTION', STRING: #UD Encountered!, 'START-RIP', 'TEMP-RIP', 'X86']")),
 _ => throw(Emsg("Model state error: Unimplemented exception in x86isa!"))
-}) : int
-else x86_setcc(proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode, modr_m, sib, 0),
-154 => let fault_var = (if (240) == (prefixes_get_lck(prefixes))
+}) : unit
+}
+else { x86_setcc(proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode, modr_m, sib)
+},
+154 => let fault_var = (if (get_slice_int(8, 240, 0)) == (prefixes_get_lck(prefixes))
 then Some(":UD")
 else None() : option(string)) : option(string) in
 if is_some(fault_var)
-then (match fault_var {
+then { (match fault_var {
 Some(":UD") => throw(Emsg("A fault occurred.  Original ACL2 AST:
 ['X86-ILLEGAL-INSTRUCTION', STRING: #UD Encountered!, 'START-RIP', 'TEMP-RIP', 'X86']")),
 _ => throw(Emsg("Model state error: Unimplemented exception in x86isa!"))
-}) : int
-else x86_setcc(proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode, modr_m, sib, 0),
-155 => let fault_var = (if (240) == (prefixes_get_lck(prefixes))
+}) : unit
+}
+else { x86_setcc(proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode, modr_m, sib)
+},
+155 => let fault_var = (if (get_slice_int(8, 240, 0)) == (prefixes_get_lck(prefixes))
 then Some(":UD")
 else None() : option(string)) : option(string) in
 if is_some(fault_var)
-then (match fault_var {
+then { (match fault_var {
 Some(":UD") => throw(Emsg("A fault occurred.  Original ACL2 AST:
 ['X86-ILLEGAL-INSTRUCTION', STRING: #UD Encountered!, 'START-RIP', 'TEMP-RIP', 'X86']")),
 _ => throw(Emsg("Model state error: Unimplemented exception in x86isa!"))
-}) : int
-else x86_setcc(proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode, modr_m, sib, 0),
-156 => let fault_var = (if (240) == (prefixes_get_lck(prefixes))
+}) : unit
+}
+else { x86_setcc(proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode, modr_m, sib)
+},
+156 => let fault_var = (if (get_slice_int(8, 240, 0)) == (prefixes_get_lck(prefixes))
 then Some(":UD")
 else None() : option(string)) : option(string) in
 if is_some(fault_var)
-then (match fault_var {
+then { (match fault_var {
 Some(":UD") => throw(Emsg("A fault occurred.  Original ACL2 AST:
 ['X86-ILLEGAL-INSTRUCTION', STRING: #UD Encountered!, 'START-RIP', 'TEMP-RIP', 'X86']")),
 _ => throw(Emsg("Model state error: Unimplemented exception in x86isa!"))
-}) : int
-else x86_setcc(proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode, modr_m, sib, 0),
-157 => let fault_var = (if (240) == (prefixes_get_lck(prefixes))
+}) : unit
+}
+else { x86_setcc(proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode, modr_m, sib)
+},
+157 => let fault_var = (if (get_slice_int(8, 240, 0)) == (prefixes_get_lck(prefixes))
 then Some(":UD")
 else None() : option(string)) : option(string) in
 if is_some(fault_var)
-then (match fault_var {
+then { (match fault_var {
 Some(":UD") => throw(Emsg("A fault occurred.  Original ACL2 AST:
 ['X86-ILLEGAL-INSTRUCTION', STRING: #UD Encountered!, 'START-RIP', 'TEMP-RIP', 'X86']")),
 _ => throw(Emsg("Model state error: Unimplemented exception in x86isa!"))
-}) : int
-else x86_setcc(proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode, modr_m, sib, 0),
-158 => let fault_var = (if (240) == (prefixes_get_lck(prefixes))
+}) : unit
+}
+else { x86_setcc(proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode, modr_m, sib)
+},
+158 => let fault_var = (if (get_slice_int(8, 240, 0)) == (prefixes_get_lck(prefixes))
 then Some(":UD")
 else None() : option(string)) : option(string) in
 if is_some(fault_var)
-then (match fault_var {
+then { (match fault_var {
 Some(":UD") => throw(Emsg("A fault occurred.  Original ACL2 AST:
 ['X86-ILLEGAL-INSTRUCTION', STRING: #UD Encountered!, 'START-RIP', 'TEMP-RIP', 'X86']")),
 _ => throw(Emsg("Model state error: Unimplemented exception in x86isa!"))
-}) : int
-else x86_setcc(proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode, modr_m, sib, 0),
-159 => let fault_var = (if (240) == (prefixes_get_lck(prefixes))
+}) : unit
+}
+else { x86_setcc(proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode, modr_m, sib)
+},
+159 => let fault_var = (if (get_slice_int(8, 240, 0)) == (prefixes_get_lck(prefixes))
 then Some(":UD")
 else None() : option(string)) : option(string) in
 if is_some(fault_var)
-then (match fault_var {
+then { (match fault_var {
 Some(":UD") => throw(Emsg("A fault occurred.  Original ACL2 AST:
 ['X86-ILLEGAL-INSTRUCTION', STRING: #UD Encountered!, 'START-RIP', 'TEMP-RIP', 'X86']")),
 _ => throw(Emsg("Model state error: Unimplemented exception in x86isa!"))
-}) : int
-else x86_setcc(proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode, modr_m, sib, 0),
-160 => let fault_var = (if (240) == (prefixes_get_lck(prefixes))
+}) : unit
+}
+else { x86_setcc(proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode, modr_m, sib)
+},
+160 => let fault_var = (if (get_slice_int(8, 240, 0)) == (prefixes_get_lck(prefixes))
 then Some(":UD")
 else None() : option(string)) : option(string) in
 if is_some(fault_var)
-then (match fault_var {
+then { (match fault_var {
 Some(":UD") => throw(Emsg("A fault occurred.  Original ACL2 AST:
 ['X86-ILLEGAL-INSTRUCTION', STRING: #UD Encountered!, 'START-RIP', 'TEMP-RIP', 'X86']")),
 _ => throw(Emsg("Model state error: Unimplemented exception in x86isa!"))
-}) : int
-else x86_push_segment_register(proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode, modr_m, sib, 0),
-163 => let fault_var = (if (240) == (prefixes_get_lck(prefixes))
+}) : unit
+}
+else { x86_push_segment_register(proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode, modr_m, sib)
+},
+163 => let fault_var = (if (get_slice_int(8, 240, 0)) == (prefixes_get_lck(prefixes))
 then Some(":UD")
 else None() : option(string)) : option(string) in
 if is_some(fault_var)
-then (match fault_var {
+then { (match fault_var {
 Some(":UD") => throw(Emsg("A fault occurred.  Original ACL2 AST:
 ['X86-ILLEGAL-INSTRUCTION', STRING: #UD Encountered!, 'START-RIP', 'TEMP-RIP', 'X86']")),
 _ => throw(Emsg("Model state error: Unimplemented exception in x86isa!"))
-}) : int
-else x86_bt_0f_a3(proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode, modr_m, sib, 0),
-164 => let fault_var = (if (240) == (prefixes_get_lck(prefixes))
+}) : unit
+}
+else { x86_bt_0f_a3(proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode, modr_m, sib)
+},
+164 => let fault_var = (if (get_slice_int(8, 240, 0)) == (prefixes_get_lck(prefixes))
 then Some(":UD")
 else None() : option(string)) : option(string) in
 if is_some(fault_var)
-then (match fault_var {
+then { (match fault_var {
 Some(":UD") => throw(Emsg("A fault occurred.  Original ACL2 AST:
 ['X86-ILLEGAL-INSTRUCTION', STRING: #UD Encountered!, 'START-RIP', 'TEMP-RIP', 'X86']")),
 _ => throw(Emsg("Model state error: Unimplemented exception in x86isa!"))
-}) : int
-else x86_shld_shrd(proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode, modr_m, sib, 0),
-165 => let fault_var = (if (240) == (prefixes_get_lck(prefixes))
+}) : unit
+}
+else { x86_shld_shrd(proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode, modr_m, sib)
+},
+165 => let fault_var = (if (get_slice_int(8, 240, 0)) == (prefixes_get_lck(prefixes))
 then Some(":UD")
 else None() : option(string)) : option(string) in
 if is_some(fault_var)
-then (match fault_var {
+then { (match fault_var {
 Some(":UD") => throw(Emsg("A fault occurred.  Original ACL2 AST:
 ['X86-ILLEGAL-INSTRUCTION', STRING: #UD Encountered!, 'START-RIP', 'TEMP-RIP', 'X86']")),
 _ => throw(Emsg("Model state error: Unimplemented exception in x86isa!"))
-}) : int
-else x86_shld_shrd(proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode, modr_m, sib, 0),
-168 => let fault_var = (if (240) == (prefixes_get_lck(prefixes))
+}) : unit
+}
+else { x86_shld_shrd(proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode, modr_m, sib)
+},
+168 => let fault_var = (if (get_slice_int(8, 240, 0)) == (prefixes_get_lck(prefixes))
 then Some(":UD")
 else None() : option(string)) : option(string) in
 if is_some(fault_var)
-then (match fault_var {
+then { (match fault_var {
 Some(":UD") => throw(Emsg("A fault occurred.  Original ACL2 AST:
 ['X86-ILLEGAL-INSTRUCTION', STRING: #UD Encountered!, 'START-RIP', 'TEMP-RIP', 'X86']")),
 _ => throw(Emsg("Model state error: Unimplemented exception in x86isa!"))
-}) : int
-else x86_push_segment_register(proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode, modr_m, sib, 0),
-172 => let fault_var = (if (240) == (prefixes_get_lck(prefixes))
+}) : unit
+}
+else { x86_push_segment_register(proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode, modr_m, sib)
+},
+172 => let fault_var = (if (get_slice_int(8, 240, 0)) == (prefixes_get_lck(prefixes))
 then Some(":UD")
 else None() : option(string)) : option(string) in
 if is_some(fault_var)
-then (match fault_var {
+then { (match fault_var {
 Some(":UD") => throw(Emsg("A fault occurred.  Original ACL2 AST:
 ['X86-ILLEGAL-INSTRUCTION', STRING: #UD Encountered!, 'START-RIP', 'TEMP-RIP', 'X86']")),
 _ => throw(Emsg("Model state error: Unimplemented exception in x86isa!"))
-}) : int
-else x86_shld_shrd(proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode, modr_m, sib, 0),
-173 => let fault_var = (if (240) == (prefixes_get_lck(prefixes))
+}) : unit
+}
+else { x86_shld_shrd(proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode, modr_m, sib)
+},
+173 => let fault_var = (if (get_slice_int(8, 240, 0)) == (prefixes_get_lck(prefixes))
 then Some(":UD")
 else None() : option(string)) : option(string) in
 if is_some(fault_var)
-then (match fault_var {
+then { (match fault_var {
 Some(":UD") => throw(Emsg("A fault occurred.  Original ACL2 AST:
 ['X86-ILLEGAL-INSTRUCTION', STRING: #UD Encountered!, 'START-RIP', 'TEMP-RIP', 'X86']")),
 _ => throw(Emsg("Model state error: Unimplemented exception in x86isa!"))
-}) : int
-else x86_shld_shrd(proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode, modr_m, sib, 0),
-175 => let fault_var = (if (240) == (prefixes_get_lck(prefixes))
+}) : unit
+}
+else { x86_shld_shrd(proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode, modr_m, sib)
+},
+175 => let fault_var = (if (get_slice_int(8, 240, 0)) == (prefixes_get_lck(prefixes))
 then Some(":UD")
 else None() : option(string)) : option(string) in
 if is_some(fault_var)
-then (match fault_var {
+then { (match fault_var {
 Some(":UD") => throw(Emsg("A fault occurred.  Original ACL2 AST:
 ['X86-ILLEGAL-INSTRUCTION', STRING: #UD Encountered!, 'START-RIP', 'TEMP-RIP', 'X86']")),
 _ => throw(Emsg("Model state error: Unimplemented exception in x86isa!"))
-}) : int
-else x86_imul_op_en_rm(proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode, modr_m, sib, 0),
-176 => let fault_var = (if ((modr_m_get_mod(modr_m)) == (3)) & ((240) == (prefixes_get_lck(prefixes)))
+}) : unit
+}
+else { x86_imul_op_en_rm(proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode, modr_m, sib)
+},
+176 => let fault_var = (if ((the_bits(8, modr_m_get_mod(modr_m))) == (get_slice_int(8, 3, 0))) & ((get_slice_int(8, 240, 0)) == (prefixes_get_lck(prefixes)))
 then Some(":UD")
 else None() : option(string)) : option(string) in
 if is_some(fault_var)
-then (match fault_var {
+then { (match fault_var {
 Some(":UD") => throw(Emsg("A fault occurred.  Original ACL2 AST:
 ['X86-ILLEGAL-INSTRUCTION', STRING: #UD Encountered!, 'START-RIP', 'TEMP-RIP', 'X86']")),
 _ => throw(Emsg("Model state error: Unimplemented exception in x86isa!"))
-}) : int
-else x86_cmpxchg(proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode, modr_m, sib, 0),
-177 => let fault_var = (if ((modr_m_get_mod(modr_m)) == (3)) & ((240) == (prefixes_get_lck(prefixes)))
+}) : unit
+}
+else { x86_cmpxchg(proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode, modr_m, sib)
+},
+177 => let fault_var = (if ((the_bits(8, modr_m_get_mod(modr_m))) == (get_slice_int(8, 3, 0))) & ((get_slice_int(8, 240, 0)) == (prefixes_get_lck(prefixes)))
 then Some(":UD")
 else None() : option(string)) : option(string) in
 if is_some(fault_var)
-then (match fault_var {
+then { (match fault_var {
 Some(":UD") => throw(Emsg("A fault occurred.  Original ACL2 AST:
 ['X86-ILLEGAL-INSTRUCTION', STRING: #UD Encountered!, 'START-RIP', 'TEMP-RIP', 'X86']")),
 _ => throw(Emsg("Model state error: Unimplemented exception in x86isa!"))
-}) : int
-else x86_cmpxchg(proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode, modr_m, sib, 0),
-182 => let fault_var = (if (240) == (prefixes_get_lck(prefixes))
+}) : unit
+}
+else { x86_cmpxchg(proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode, modr_m, sib)
+},
+182 => let fault_var = (if (get_slice_int(8, 240, 0)) == (prefixes_get_lck(prefixes))
 then Some(":UD")
 else None() : option(string)) : option(string) in
 if is_some(fault_var)
-then (match fault_var {
+then { (match fault_var {
 Some(":UD") => throw(Emsg("A fault occurred.  Original ACL2 AST:
 ['X86-ILLEGAL-INSTRUCTION', STRING: #UD Encountered!, 'START-RIP', 'TEMP-RIP', 'X86']")),
 _ => throw(Emsg("Model state error: Unimplemented exception in x86isa!"))
-}) : int
-else x86_movzx(proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode, modr_m, sib, 0),
-183 => let fault_var = (if (240) == (prefixes_get_lck(prefixes))
+}) : unit
+}
+else { x86_movzx(proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode, modr_m, sib)
+},
+183 => let fault_var = (if (get_slice_int(8, 240, 0)) == (prefixes_get_lck(prefixes))
 then Some(":UD")
 else None() : option(string)) : option(string) in
 if is_some(fault_var)
-then (match fault_var {
+then { (match fault_var {
 Some(":UD") => throw(Emsg("A fault occurred.  Original ACL2 AST:
 ['X86-ILLEGAL-INSTRUCTION', STRING: #UD Encountered!, 'START-RIP', 'TEMP-RIP', 'X86']")),
 _ => throw(Emsg("Model state error: Unimplemented exception in x86isa!"))
-}) : int
-else x86_movzx(proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode, modr_m, sib, 0),
-184 => if (mandatory_prefix) == (0)
+}) : unit
+}
+else { x86_movzx(proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode, modr_m, sib)
+},
+184 => if (mandatory_prefix) == (get_slice_int(8, 0, 0))
 then throw(Emsg("Model state error: Opcode Unimplemented in x86isa!"))
-else if (mandatory_prefix) == (243)
-then let fault_var = (if ((feature_flags_fn([|":POPCNT"|], 0)) == (0)) | ((240) == (prefixes_get_lck(prefixes)))
+else if (mandatory_prefix) == (get_slice_int(8, 243, 0))
+then let fault_var = (if ((get_slice_int(8, feature_flags_fn([|":POPCNT"|]), 0)) == (get_slice_int(8, 0, 0))) | ((get_slice_int(8, 240, 0)) == (prefixes_get_lck(prefixes)))
 then Some(":UD")
 else None() : option(string)) : option(string) in
 if is_some(fault_var)
-then (match fault_var {
+then { (match fault_var {
 Some(":UD") => throw(Emsg("A fault occurred.  Original ACL2 AST:
 ['X86-ILLEGAL-INSTRUCTION', STRING: #UD Encountered!, 'START-RIP', 'TEMP-RIP', 'X86']")),
 _ => throw(Emsg("Model state error: Unimplemented exception in x86isa!"))
-}) : int
-else throw(Emsg("Model state error: Opcode Unimplemented in x86isa!"))
+}) : unit
+}
+else { throw(Emsg("Model state error: Opcode Unimplemented in x86isa!"))
+}
 else throw(Emsg("A fault occurred.  Original ACL2 AST:
 ['X86-ILLEGAL-INSTRUCTION', STRING: #UD Encountered!, 'START-RIP', 'TEMP-RIP', 'X86']")),
-186 => if (modr_m_get_reg(modr_m)) == (4)
-then let fault_var = (if (240) == (prefixes_get_lck(prefixes))
+186 => if (the_bits(8, modr_m_get_reg(modr_m))) == (get_slice_int(8, 4, 0))
+then let fault_var = (if (get_slice_int(8, 240, 0)) == (prefixes_get_lck(prefixes))
 then Some(":UD")
 else None() : option(string)) : option(string) in
 if is_some(fault_var)
-then (match fault_var {
+then { (match fault_var {
 Some(":UD") => throw(Emsg("A fault occurred.  Original ACL2 AST:
 ['X86-ILLEGAL-INSTRUCTION', STRING: #UD Encountered!, 'START-RIP', 'TEMP-RIP', 'X86']")),
 _ => throw(Emsg("Model state error: Unimplemented exception in x86isa!"))
-}) : int
-else x86_bt_0f_ba(proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode, modr_m, sib, 0)
-else if (modr_m_get_reg(modr_m)) == (5)
-then let fault_var = (if ((modr_m_get_mod(modr_m)) == (3)) & ((240) == (prefixes_get_lck(prefixes)))
+}) : unit
+}
+else { x86_bt_0f_ba(proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode, modr_m, sib)
+}
+else if (the_bits(8, modr_m_get_reg(modr_m))) == (get_slice_int(8, 5, 0))
+then let fault_var = (if ((the_bits(8, modr_m_get_mod(modr_m))) == (get_slice_int(8, 3, 0))) & ((get_slice_int(8, 240, 0)) == (prefixes_get_lck(prefixes)))
 then Some(":UD")
 else None() : option(string)) : option(string) in
 if is_some(fault_var)
-then (match fault_var {
+then { (match fault_var {
 Some(":UD") => throw(Emsg("A fault occurred.  Original ACL2 AST:
 ['X86-ILLEGAL-INSTRUCTION', STRING: #UD Encountered!, 'START-RIP', 'TEMP-RIP', 'X86']")),
 _ => throw(Emsg("Model state error: Unimplemented exception in x86isa!"))
-}) : int
-else throw(Emsg("Model state error: Opcode Unimplemented in x86isa!"))
-else if (modr_m_get_reg(modr_m)) == (6)
-then let fault_var = (if ((modr_m_get_mod(modr_m)) == (3)) & ((240) == (prefixes_get_lck(prefixes)))
+}) : unit
+}
+else { throw(Emsg("Model state error: Opcode Unimplemented in x86isa!"))
+}
+else if (the_bits(8, modr_m_get_reg(modr_m))) == (get_slice_int(8, 6, 0))
+then let fault_var = (if ((the_bits(8, modr_m_get_mod(modr_m))) == (get_slice_int(8, 3, 0))) & ((get_slice_int(8, 240, 0)) == (prefixes_get_lck(prefixes)))
 then Some(":UD")
 else None() : option(string)) : option(string) in
 if is_some(fault_var)
-then (match fault_var {
+then { (match fault_var {
 Some(":UD") => throw(Emsg("A fault occurred.  Original ACL2 AST:
 ['X86-ILLEGAL-INSTRUCTION', STRING: #UD Encountered!, 'START-RIP', 'TEMP-RIP', 'X86']")),
 _ => throw(Emsg("Model state error: Unimplemented exception in x86isa!"))
-}) : int
-else throw(Emsg("Model state error: Opcode Unimplemented in x86isa!"))
-else if (modr_m_get_reg(modr_m)) == (7)
-then let fault_var = (if ((modr_m_get_mod(modr_m)) == (3)) & ((240) == (prefixes_get_lck(prefixes)))
+}) : unit
+}
+else { throw(Emsg("Model state error: Opcode Unimplemented in x86isa!"))
+}
+else if (the_bits(8, modr_m_get_reg(modr_m))) == (get_slice_int(8, 7, 0))
+then let fault_var = (if ((the_bits(8, modr_m_get_mod(modr_m))) == (get_slice_int(8, 3, 0))) & ((get_slice_int(8, 240, 0)) == (prefixes_get_lck(prefixes)))
 then Some(":UD")
 else None() : option(string)) : option(string) in
 if is_some(fault_var)
-then (match fault_var {
+then { (match fault_var {
 Some(":UD") => throw(Emsg("A fault occurred.  Original ACL2 AST:
 ['X86-ILLEGAL-INSTRUCTION', STRING: #UD Encountered!, 'START-RIP', 'TEMP-RIP', 'X86']")),
 _ => throw(Emsg("Model state error: Unimplemented exception in x86isa!"))
-}) : int
-else throw(Emsg("Model state error: Opcode Unimplemented in x86isa!"))
+}) : unit
+}
+else { throw(Emsg("Model state error: Opcode Unimplemented in x86isa!"))
+}
 else throw(Emsg("A fault occurred.  Original ACL2 AST:
 ['X86-ILLEGAL-INSTRUCTION', STRING: #UD Encountered!, 'START-RIP', 'TEMP-RIP', 'X86']")),
-189 => if (mandatory_prefix) == (0)
-then let fault_var = (if (240) == (prefixes_get_lck(prefixes))
+189 => if (mandatory_prefix) == (get_slice_int(8, 0, 0))
+then let fault_var = (if (get_slice_int(8, 240, 0)) == (prefixes_get_lck(prefixes))
 then Some(":UD")
 else None() : option(string)) : option(string) in
 if is_some(fault_var)
-then (match fault_var {
+then { (match fault_var {
 Some(":UD") => throw(Emsg("A fault occurred.  Original ACL2 AST:
 ['X86-ILLEGAL-INSTRUCTION', STRING: #UD Encountered!, 'START-RIP', 'TEMP-RIP', 'X86']")),
 _ => throw(Emsg("Model state error: Unimplemented exception in x86isa!"))
-}) : int
-else throw(Emsg("Model state error: Opcode Unimplemented in x86isa!"))
-else if (mandatory_prefix) == (243)
-then let fault_var = (if (240) == (prefixes_get_lck(prefixes))
+}) : unit
+}
+else { throw(Emsg("Model state error: Opcode Unimplemented in x86isa!"))
+}
+else if (mandatory_prefix) == (get_slice_int(8, 243, 0))
+then let fault_var = (if (get_slice_int(8, 240, 0)) == (prefixes_get_lck(prefixes))
 then Some(":UD")
 else None() : option(string)) : option(string) in
 if is_some(fault_var)
-then (match fault_var {
+then { (match fault_var {
 Some(":UD") => throw(Emsg("A fault occurred.  Original ACL2 AST:
 ['X86-ILLEGAL-INSTRUCTION', STRING: #UD Encountered!, 'START-RIP', 'TEMP-RIP', 'X86']")),
 _ => throw(Emsg("Model state error: Unimplemented exception in x86isa!"))
-}) : int
-else throw(Emsg("Model state error: Opcode Unimplemented in x86isa!"))
+}) : unit
+}
+else { throw(Emsg("Model state error: Opcode Unimplemented in x86isa!"))
+}
 else throw(Emsg("A fault occurred.  Original ACL2 AST:
 ['X86-ILLEGAL-INSTRUCTION', STRING: #UD Encountered!, 'START-RIP', 'TEMP-RIP', 'X86']")),
-190 => let fault_var = (if (240) == (prefixes_get_lck(prefixes))
+190 => let fault_var = (if (get_slice_int(8, 240, 0)) == (prefixes_get_lck(prefixes))
 then Some(":UD")
 else None() : option(string)) : option(string) in
 if is_some(fault_var)
-then (match fault_var {
+then { (match fault_var {
 Some(":UD") => throw(Emsg("A fault occurred.  Original ACL2 AST:
 ['X86-ILLEGAL-INSTRUCTION', STRING: #UD Encountered!, 'START-RIP', 'TEMP-RIP', 'X86']")),
 _ => throw(Emsg("Model state error: Unimplemented exception in x86isa!"))
-}) : int
-else x86_movsxd(proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode, modr_m, sib, 0),
-191 => let fault_var = (if (240) == (prefixes_get_lck(prefixes))
+}) : unit
+}
+else { x86_movsxd(proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode, modr_m, sib)
+},
+191 => let fault_var = (if (get_slice_int(8, 240, 0)) == (prefixes_get_lck(prefixes))
 then Some(":UD")
 else None() : option(string)) : option(string) in
 if is_some(fault_var)
-then (match fault_var {
+then { (match fault_var {
 Some(":UD") => throw(Emsg("A fault occurred.  Original ACL2 AST:
 ['X86-ILLEGAL-INSTRUCTION', STRING: #UD Encountered!, 'START-RIP', 'TEMP-RIP', 'X86']")),
 _ => throw(Emsg("Model state error: Unimplemented exception in x86isa!"))
-}) : int
-else x86_movsxd(proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode, modr_m, sib, 0),
-192 => let fault_var = (if ((modr_m_get_mod(modr_m)) == (3)) & ((240) == (prefixes_get_lck(prefixes)))
+}) : unit
+}
+else { x86_movsxd(proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode, modr_m, sib)
+},
+192 => let fault_var = (if ((the_bits(8, modr_m_get_mod(modr_m))) == (get_slice_int(8, 3, 0))) & ((get_slice_int(8, 240, 0)) == (prefixes_get_lck(prefixes)))
 then Some(":UD")
 else None() : option(string)) : option(string) in
 if is_some(fault_var)
-then (match fault_var {
+then { (match fault_var {
 Some(":UD") => throw(Emsg("A fault occurred.  Original ACL2 AST:
 ['X86-ILLEGAL-INSTRUCTION', STRING: #UD Encountered!, 'START-RIP', 'TEMP-RIP', 'X86']")),
 _ => throw(Emsg("Model state error: Unimplemented exception in x86isa!"))
-}) : int
-else throw(Emsg("Model state error: Opcode Unimplemented in x86isa!")),
-198 => if (mandatory_prefix) == (0)
-then let fault_var = (let chk_ex = (chk_exc_fn(":LEGACY", ":TYPE-4", [|":SSE"|], proc_mode, prefixes, rex_byte, opcode, modr_m, sib, 0)) : option(string) in
+}) : unit
+}
+else { throw(Emsg("Model state error: Opcode Unimplemented in x86isa!"))
+},
+198 => if (mandatory_prefix) == (get_slice_int(8, 0, 0))
+then let fault_var = (let chk_ex = (chk_exc_fn(":LEGACY", ":TYPE-4", [|":SSE"|], proc_mode, prefixes, rex_byte, opcode, modr_m, sib)) : option(string) in
 if is_some(chk_ex)
 then chk_ex
-else if (feature_flags_fn([|":SSE"|], 0)) == (0)
+else if (get_slice_int(8, feature_flags_fn([|":SSE"|]), 0)) == (get_slice_int(8, 0, 0))
 then Some(":UD")
 else None() : option(string)) : option(string) in
 if is_some(fault_var)
-then (match fault_var {
+then { (match fault_var {
 Some(":UD") => throw(Emsg("A fault occurred.  Original ACL2 AST:
 ['X86-ILLEGAL-INSTRUCTION', STRING: #UD Encountered!, 'START-RIP', 'TEMP-RIP', 'X86']")),
 Some(":GP") => throw(Emsg("A fault occurred.  Original ACL2 AST:
@@ -2230,17 +2558,19 @@ Some(":GP") => throw(Emsg("A fault occurred.  Original ACL2 AST:
 Some(":NM") => throw(Emsg("A fault occurred.  Original ACL2 AST:
 ['X86-DEVICE-NOT-AVAILABLE', STRING: #NM Encountered!, 'START-RIP', 'TEMP-RIP', 'X86']")),
 _ => throw(Emsg("Model state error: Unimplemented exception in x86isa!"))
-}) : int
-else x86_shufps_op_en_rmi(proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode, modr_m, sib, 0)
-else if (mandatory_prefix) == (102)
-then let fault_var = (let chk_ex = (chk_exc_fn(":LEGACY", ":TYPE-4", [|":SSE2"|], proc_mode, prefixes, rex_byte, opcode, modr_m, sib, 0)) : option(string) in
+}) : unit
+}
+else { x86_shufps_op_en_rmi(proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode, modr_m, sib)
+}
+else if (mandatory_prefix) == (get_slice_int(8, 102, 0))
+then let fault_var = (let chk_ex = (chk_exc_fn(":LEGACY", ":TYPE-4", [|":SSE2"|], proc_mode, prefixes, rex_byte, opcode, modr_m, sib)) : option(string) in
 if is_some(chk_ex)
 then chk_ex
-else if (feature_flags_fn([|":SSE2"|], 0)) == (0)
+else if (get_slice_int(8, feature_flags_fn([|":SSE2"|]), 0)) == (get_slice_int(8, 0, 0))
 then Some(":UD")
 else None() : option(string)) : option(string) in
 if is_some(fault_var)
-then (match fault_var {
+then { (match fault_var {
 Some(":UD") => throw(Emsg("A fault occurred.  Original ACL2 AST:
 ['X86-ILLEGAL-INSTRUCTION', STRING: #UD Encountered!, 'START-RIP', 'TEMP-RIP', 'X86']")),
 Some(":GP") => throw(Emsg("A fault occurred.  Original ACL2 AST:
@@ -2248,8 +2578,10 @@ Some(":GP") => throw(Emsg("A fault occurred.  Original ACL2 AST:
 Some(":NM") => throw(Emsg("A fault occurred.  Original ACL2 AST:
 ['X86-DEVICE-NOT-AVAILABLE', STRING: #NM Encountered!, 'START-RIP', 'TEMP-RIP', 'X86']")),
 _ => throw(Emsg("Model state error: Unimplemented exception in x86isa!"))
-}) : int
-else x86_shufpd_op_en_rmi(proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode, modr_m, sib, 0)
+}) : unit
+}
+else { x86_shufpd_op_en_rmi(proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode, modr_m, sib)
+}
 else throw(Emsg("A fault occurred.  Original ACL2 AST:
 ['X86-ILLEGAL-INSTRUCTION', STRING: #UD Encountered!, 'START-RIP', 'TEMP-RIP', 'X86']")),
 4 => throw(Emsg("Translation error: two-byte opcode 4 not translated")),
@@ -2409,43 +2741,46 @@ else throw(Emsg("A fault occurred.  Original ACL2 AST:
 254 => throw(Emsg("Translation error: two-byte opcode 254 not translated")),
 255 => throw(Emsg("Translation error: two-byte opcode 255 not translated")),
 _ => throw(Emsg("Translation error: invalid two-byte opcode"))
-}) : int
+}) : unit
 
 /*Decoder and dispatch function for two-byte opcodes*/
 /*<p>Source: Intel Manual, Volume 2, Appendix A-2</p>*/
-val two_byte_opcode_decode_and_execute : (int, int, int, int, int, int, int) -> int effect {eamem, escape, rmem, rreg, undef, wmv, wreg}
-function two_byte_opcode_decode_and_execute (proc_mode, start_rip, temp_rip, prefixes, rex_byte, escape_byte, x86) =
+val two_byte_opcode_decode_and_execute : (range(0, 4), sbits(48), sbits(48), bits(52), bits(8), bits(8)) -> unit effect {eamem, escape, rmem, rreg, undef, wmv, wreg}
+function two_byte_opcode_decode_and_execute (proc_mode, start_rip, temp_rip, prefixes, rex_byte, escape_byte) =
 let ctx = ("two-byte-opcode-decode-and-execute") : string in
-let (flg0, opcode, x86) = (rme08(proc_mode, temp_rip, 1, ":X", 0)) : (option(string), int, int) in
+let (flg0, opcode) = (rme08(proc_mode, the_sbits(64, temp_rip), 1, ":X")) : (option(string), int) in
+let opcode = (the_bits(8, opcode)) : bits(8) in
 if is_some(flg0)
 then throw(Emsg("Model state error: :OPCODE-BYTE-ACCESS-ERROR"))
-else let (flg, temp_rip) = (add_to_iptr(proc_mode, temp_rip, 1, 0)) : (option(string), int) in
+else let (flg, temp_rip) = (add_to_iptr(proc_mode, temp_rip, get_slice_int(48, 1, 0))) : (option(string), sbits(52)) in
 if is_some(flg)
 then throw(Emsg("Model state error: :INCREMENT-ERROR"))
-else let mandatory_prefix = (compute_mandatory_prefix_for_two_byte_opcode(proc_mode, opcode, prefixes)) : int in
+else let mandatory_prefix = (compute_mandatory_prefix_for_two_byte_opcode(proc_mode, opcode, prefixes)) : bits(8) in
 let modr_m? = (two_byte_opcode_modr_m_p(proc_mode, mandatory_prefix, opcode)) : bool in
-let (flg1, modr_m, x86) = (if modr_m?
-then rme08(proc_mode, temp_rip, 1, ":X", 0)
-else (None() : option(string), 0 : int, 0 : int)) : (option(string), int, int) in
+let (flg1, modr_m) = (if modr_m?
+then rme08(proc_mode, the_sbits(64, temp_rip), 1, ":X")
+else (None() : option(string), 0 : {|0|})) : (option(string), int) in
+let modr_m = (the_bits(8, modr_m)) : bits(8) in
 if is_some(flg1)
 then throw(Emsg("Model state error: :MODR/M-BYTE-READ-ERROR"))
 else let (flg, temp_rip) = (if modr_m?
-then add_to_iptr(proc_mode, temp_rip, 1, 0)
-else (None() : option(string), temp_rip)) : (option(string), int) in
+then add_to_iptr(proc_mode, the_sbits(48, temp_rip), get_slice_int(48, 1, 0))
+else (None() : option(string), temp_rip)) : (option(string), sbits(52)) in
 if is_some(flg)
 then throw(Emsg("Model state error: :INCREMENT-ERROR"))
-else let sib? = ((modr_m?) & (let p4? = ((103) == (prefixes_get_adr(prefixes))) : bool in
-let n16_bit_addressp = ((2) == (select_address_size(proc_mode, p4?, 0))) : bool in
+else let sib? = ((modr_m?) & (let p4? = ((get_slice_int(8, 103, 0)) == (prefixes_get_adr(prefixes))) : bool in
+let n16_bit_addressp = ((get_slice_int(8, 2, 0)) == (get_slice_int(8, select_address_size(proc_mode, p4?), 0))) : bool in
 x86_decode_sib_p(modr_m, n16_bit_addressp))) : bool in
-let (flg2, sib, x86) = (if sib?
-then rme08(proc_mode, temp_rip, 1, ":X", 0)
-else (None() : option(string), 0 : int, 0 : int)) : (option(string), int, int) in
+let (flg2, sib) = (if sib?
+then rme08(proc_mode, the_sbits(64, temp_rip), 1, ":X")
+else (None() : option(string), 0 : {|0|})) : (option(string), int) in
+let sib = (the_bits(8, sib)) : bits(8) in
 if is_some(flg2)
 then throw(Emsg("Model state error: :SIB-BYTE-READ-ERROR"))
 else let (flg, temp_rip) = (if sib?
-then add_to_iptr(proc_mode, temp_rip, 1, 0)
-else (None() : option(string), temp_rip)) : (option(string), int) in
+then add_to_iptr(proc_mode, the_sbits(48, temp_rip), get_slice_int(48, 1, 0))
+else (None() : option(string), temp_rip)) : (option(string), sbits(52)) in
 if is_some(flg)
 then throw(Emsg("Model state error: :INCREMENT-ERROR"))
-else two_byte_opcode_execute(proc_mode, start_rip, temp_rip, prefixes, mandatory_prefix, rex_byte, opcode, modr_m, sib, 0)
+else two_byte_opcode_execute(proc_mode, start_rip, the_sbits(48, temp_rip), prefixes, mandatory_prefix, rex_byte, opcode, modr_m, sib)
 

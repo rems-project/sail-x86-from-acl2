@@ -1,494 +1,539 @@
 $include "./segmentation.sail"
 
-val address_aligned_p : (int, int, bool) -> bool
+val address_aligned_p : (sbits(48), {|1, 2, 4, 6, 8, 10, 16|}, bool) -> bool
 
 function address_aligned_p (addr, operand_size, memory_ptr?) = {
-    let addr = addr : int;
-    let operand_size = operand_size : int;
+    let addr = addr : sbits(48);
+    let operand_size = the_range(0, 16, operand_size) : {|1, 2, 4, 6, 8, 10, 16|};
     (match operand_size {
       1 => true,
-      6 => binary_logand(addr, 3) == 0,
-      10 => binary_logand(addr, 7) == 0,
-      _ => if memory_ptr? & operand_size == 4 then {
-          binary_logand(addr, 1) == 0
+      6 => the_bits(8, logand(the_sbits(49, addr), get_slice_int(49, 3, 0))) == get_slice_int(8, 0, 0),
+      10 => the_bits(8, logand(the_sbits(49, addr), get_slice_int(49, 7, 0))) == get_slice_int(8, 0, 0),
+      _ => if memory_ptr? & get_slice_int(8, operand_size, 0) == get_slice_int(8, 4, 0) then {
+          the_bits(8, logand(the_sbits(49, addr), get_slice_int(49, 1, 0))) == get_slice_int(8, 0, 0)
       } else {
-          binary_logand(addr, operand_size - 1) == 0
+          the_bits(8, logand(the_sbits(49, addr), get_slice_int(49, the_range(0, 15, operand_size - 1), 0))) == get_slice_int(8, 0, 0)
       }
     }) : bool
 }
 
-val rme08 : (int, int, int, string, int) -> (option(string), int, int) effect {escape, rmem, rreg}
+val rme08 : (range(0, 4), sbits(64), range(0, 5), string) -> (option(string), int)
 
-function rme08 (proc_mode, eff_addr, seg_reg, r_x, x86) = {
-    if proc_mode != 0 & seg_reg == 1 & r_x == ":R" & (let attr = loghead(16, seg_hidden_attri(seg_reg, 0)) : int in
-      let r = code_segment_descriptor_attributesbits_get_r(attr) : int in r == 0) then {
-        (Some(":EXECUTE-ONLY-CODE-SEGMENT"), 0 : int, 0 : int)
+function rme08 (proc_mode, eff_addr, seg_reg, r_x) = {
+    if proc_mode != 0 & seg_reg == 1 & r_x == ":R" & (let attr = loghead(16, unsigned(seg_hidden_attrs[seg_reg])) : int
+    in
+    let r = code_segment_descriptor_attributesbits_get_r(get_slice_int(16, attr, 0)) : bits(1) in unsigned(r) == 0) then {
+        (Some(":EXECUTE-ONLY-CODE-SEGMENT"), 0 : {|0|})
     } else {
-        let (flg, lin_addr) = ea_to_la(proc_mode, eff_addr, seg_reg, 1, 0) : (option(string), int);
+        let (flg, lin_addr) = ea_to_la(proc_mode, eff_addr, seg_reg, 1) : (option(string), sbits(67));
         if is_some(flg) then {
-            (flg, 0 : int, 0 : int)
+            (flg, 0 : {|0|})
         } else {
-            rml08(lin_addr, r_x, 0)
+            rml08(the_sbits(48, lin_addr), r_x)
         }
     }
 }
 
-val rime08 : (int, int, int, string, int) -> (option(string), int, int) effect {escape, rmem, rreg}
+val rime08 : (range(0, 4), sbits(64), range(0, 5), string) -> (option(string), sbits(10))
 
-function rime08 (proc_mode, eff_addr, seg_reg, r_x, x86) = {
-    if proc_mode != 0 & seg_reg == 1 & r_x == ":R" & (let attr = loghead(16, seg_hidden_attri(seg_reg, 0)) : int in
-      let r = code_segment_descriptor_attributesbits_get_r(attr) : int in r == 0) then {
-        (Some(":EXECUTE-ONLY-CODE-SEGMENT"), 0 : int, 0 : int)
+function rime08 (proc_mode, eff_addr, seg_reg, r_x) = {
+    if proc_mode != 0 & seg_reg == 1 & r_x == ":R" & (let attr = loghead(16, unsigned(seg_hidden_attrs[seg_reg])) : int
+    in
+    let r = code_segment_descriptor_attributesbits_get_r(get_slice_int(16, attr, 0)) : bits(1) in unsigned(r) == 0) then {
+        (Some(":EXECUTE-ONLY-CODE-SEGMENT"), get_slice_int(10, 0, 0))
     } else {
-        let (flg, lin_addr) = ea_to_la(proc_mode, eff_addr, seg_reg, 1, 0) : (option(string), int);
+        let (elem0, elem1) = (let (flg, lin_addr) =
+          ea_to_la(proc_mode, eff_addr, seg_reg, 1) : (option(string), sbits(67))
+        in
+          if is_some(flg) then {
+              (flg, get_slice_int(9, 0, 0))
+          } else {
+              let (elem0, elem1) = riml08(the_sbits(48, lin_addr), r_x) : (option(string), sbits(8));
+              (elem0, the_sbits(9, elem1))
+          }) : (option(string), sbits(9));
+        (elem0, the_sbits(10, elem1))
+    }
+}
+
+val rme16 : (range(0, 4), sbits(64), range(0, 5), string, bool) -> (option(string), int)
+
+function rme16 (proc_mode, eff_addr, seg_reg, r_x, check_alignment?) = {
+    if proc_mode != 0 & seg_reg == 1 & r_x == ":R" & (let attr = loghead(16, unsigned(seg_hidden_attrs[seg_reg])) : int
+    in
+    let r = code_segment_descriptor_attributesbits_get_r(get_slice_int(16, attr, 0)) : bits(1) in unsigned(r) == 0) then {
+        (Some(":EXECUTE-ONLY-CODE-SEGMENT"), 0 : {|0|})
+    } else {
+        let (flg, lin_addr) = ea_to_la(proc_mode, eff_addr, seg_reg, 2) : (option(string), sbits(67));
         if is_some(flg) then {
-            (flg, 0 : int, 0 : int)
+            (flg, 0 : {|0|})
+        } else if not_bool(not_bool(check_alignment?) | address_aligned_p(the_sbits(48, lin_addr), 2, false)) then {
+            (Some(":UNALIGNED-LINEAR-ADDRESS"), 0 : {|0|})
         } else {
-            riml08(lin_addr, r_x, 0)
+            rml16(the_sbits(48, lin_addr), r_x)
         }
     }
 }
 
-val rme16 : (int, int, int, string, bool, int) -> (option(string), int, int) effect {escape, rmem, rreg}
+val rime16 : (range(0, 4), sbits(64), range(0, 5), string, bool) -> (option(string), sbits(19))
 
-function rme16 (proc_mode, eff_addr, seg_reg, r_x, check_alignment?, x86) = {
-    if proc_mode != 0 & seg_reg == 1 & r_x == ":R" & (let attr = loghead(16, seg_hidden_attri(seg_reg, 0)) : int in
-      let r = code_segment_descriptor_attributesbits_get_r(attr) : int in r == 0) then {
-        (Some(":EXECUTE-ONLY-CODE-SEGMENT"), 0 : int, 0 : int)
+function rime16 (proc_mode, eff_addr, seg_reg, r_x, check_alignment?) = {
+    if proc_mode != 0 & seg_reg == 1 & r_x == ":R" & (let attr = loghead(16, unsigned(seg_hidden_attrs[seg_reg])) : int
+    in
+    let r = code_segment_descriptor_attributesbits_get_r(get_slice_int(16, attr, 0)) : bits(1) in unsigned(r) == 0) then {
+        (Some(":EXECUTE-ONLY-CODE-SEGMENT"), get_slice_int(19, 0, 0))
     } else {
-        let (flg, lin_addr) = ea_to_la(proc_mode, eff_addr, seg_reg, 2, 0) : (option(string), int);
-        if is_some(flg) then {
-            (flg, 0 : int, 0 : int)
-        } else if not_bool(not_bool(check_alignment?) | address_aligned_p(lin_addr, 2, false)) then {
-            (Some(":UNALIGNED-LINEAR-ADDRESS"), 0 : int, 0 : int)
-        } else {
-            rml16(lin_addr, r_x, 0)
-        }
-    }
-}
-
-val rime16 : (int, int, int, string, bool, int) -> (option(string), int, int) effect {escape, rmem, rreg}
-
-function rime16 (proc_mode, eff_addr, seg_reg, r_x, check_alignment?, x86) = {
-    if proc_mode != 0 & seg_reg == 1 & r_x == ":R" & (let attr = loghead(16, seg_hidden_attri(seg_reg, 0)) : int in
-      let r = code_segment_descriptor_attributesbits_get_r(attr) : int in r == 0) then {
-        (Some(":EXECUTE-ONLY-CODE-SEGMENT"), 0 : int, 0 : int)
-    } else {
-        let (flg, lin_addr) = ea_to_la(proc_mode, eff_addr, seg_reg, 2, 0) : (option(string), int);
-        if is_some(flg) then {
-            (flg, 0 : int, 0 : int)
-        } else if not_bool(not_bool(check_alignment?) | address_aligned_p(lin_addr, 2, false)) then {
-            (Some(":UNALIGNED-LINEAR-ADDRESS"), 0 : int, 0 : int)
-        } else {
-            riml16(lin_addr, r_x, 0)
-        }
+        let (elem0, elem1) = (let (flg, lin_addr) =
+          ea_to_la(proc_mode, eff_addr, seg_reg, 2) : (option(string), sbits(67))
+        in
+          if is_some(flg) then {
+              (flg, get_slice_int(18, 0, 0))
+          } else {
+              let (elem0, elem1) = (if not_bool(not_bool(check_alignment?) | address_aligned_p(the_sbits(48, lin_addr), 2, false)) then {
+                  (Some(":UNALIGNED-LINEAR-ADDRESS"), get_slice_int(17, 0, 0))
+              } else {
+                  let (elem0, elem1) = riml16(the_sbits(48, lin_addr), r_x) : (option(string), sbits(16));
+                  (elem0, the_sbits(17, elem1))
+              }) : (option(string), sbits(17));
+              (elem0, the_sbits(18, elem1))
+          }) : (option(string), sbits(18));
+        (elem0, the_sbits(19, elem1))
     }
 }
 
 struct struct_rme32 = {mem_ptr? : bool}
 
-val rme32 : (int, int, int, string, bool, int, struct_rme32) -> (option(string), int, int) effect {escape, rmem, rreg}
+val rme32 : (range(0, 4), sbits(64), range(0, 5), string, bool, struct_rme32) -> (option(string), int)
 
-function rme32 (proc_mode, eff_addr, seg_reg, r_x, check_alignment?, x86, keywords) = {
-    if proc_mode != 0 & seg_reg == 1 & r_x == ":R" & (let attr = loghead(16, seg_hidden_attri(seg_reg, 0)) : int in
-      let r = code_segment_descriptor_attributesbits_get_r(attr) : int in r == 0) then {
-        (Some(":EXECUTE-ONLY-CODE-SEGMENT"), 0 : int, 0 : int)
+function rme32 (proc_mode, eff_addr, seg_reg, r_x, check_alignment?, keywords) = {
+    if proc_mode != 0 & seg_reg == 1 & r_x == ":R" & (let attr = loghead(16, unsigned(seg_hidden_attrs[seg_reg])) : int
+    in
+    let r = code_segment_descriptor_attributesbits_get_r(get_slice_int(16, attr, 0)) : bits(1) in unsigned(r) == 0) then {
+        (Some(":EXECUTE-ONLY-CODE-SEGMENT"), 0 : {|0|})
     } else {
-        let (flg, lin_addr) = ea_to_la(proc_mode, eff_addr, seg_reg, 4, 0) : (option(string), int);
+        let (flg, lin_addr) = ea_to_la(proc_mode, eff_addr, seg_reg, 4) : (option(string), sbits(67));
         if is_some(flg) then {
-            (flg, 0 : int, 0 : int)
-        } else if not_bool(not_bool(check_alignment?) | address_aligned_p(lin_addr, 4, keywords.mem_ptr?)) then {
-            (Some(":UNALIGNED-LINEAR-ADDRESS"), 0 : int, 0 : int)
+            (flg, 0 : {|0|})
+        } else if not_bool(not_bool(check_alignment?) | address_aligned_p(the_sbits(48, lin_addr), 4, keywords.mem_ptr?)) then {
+            (Some(":UNALIGNED-LINEAR-ADDRESS"), 0 : {|0|})
         } else {
-            rml32(lin_addr, r_x, 0)
+            rml32(the_sbits(48, lin_addr), r_x)
         }
     }
 }
 
 struct struct_rime32 = {mem_ptr? : bool}
 
-val rime32 : (int, int, int, string, bool, int, struct_rime32) -> (option(string), int, int) effect {escape, rmem, rreg}
+val rime32 : (range(0, 4), sbits(64), range(0, 5), string, bool, struct_rime32) -> (option(string), sbits(35))
 
-function rime32 (proc_mode, eff_addr, seg_reg, r_x, check_alignment?, x86, keywords) = {
-    if proc_mode != 0 & seg_reg == 1 & r_x == ":R" & (let attr = loghead(16, seg_hidden_attri(seg_reg, 0)) : int in
-      let r = code_segment_descriptor_attributesbits_get_r(attr) : int in r == 0) then {
-        (Some(":EXECUTE-ONLY-CODE-SEGMENT"), 0 : int, 0 : int)
+function rime32 (proc_mode, eff_addr, seg_reg, r_x, check_alignment?, keywords) = {
+    if proc_mode != 0 & seg_reg == 1 & r_x == ":R" & (let attr = loghead(16, unsigned(seg_hidden_attrs[seg_reg])) : int
+    in
+    let r = code_segment_descriptor_attributesbits_get_r(get_slice_int(16, attr, 0)) : bits(1) in unsigned(r) == 0) then {
+        (Some(":EXECUTE-ONLY-CODE-SEGMENT"), get_slice_int(35, 0, 0))
     } else {
-        let (flg, lin_addr) = ea_to_la(proc_mode, eff_addr, seg_reg, 4, 0) : (option(string), int);
+        let (elem0, elem1) = (let (flg, lin_addr) =
+          ea_to_la(proc_mode, eff_addr, seg_reg, 4) : (option(string), sbits(67))
+        in
+          if is_some(flg) then {
+              (flg, get_slice_int(34, 0, 0))
+          } else {
+              let (elem0, elem1) = (if not_bool(not_bool(check_alignment?) | address_aligned_p(the_sbits(48, lin_addr), 4, keywords.mem_ptr?)) then {
+                  (Some(":UNALIGNED-LINEAR-ADDRESS"), get_slice_int(33, 0, 0))
+              } else {
+                  let (elem0, elem1) = riml32(the_sbits(48, lin_addr), r_x) : (option(string), sbits(32));
+                  (elem0, the_sbits(33, elem1))
+              }) : (option(string), sbits(33));
+              (elem0, the_sbits(34, elem1))
+          }) : (option(string), sbits(34));
+        (elem0, the_sbits(35, elem1))
+    }
+}
+
+val rme48 : (range(0, 4), sbits(64), range(0, 5), string, bool) -> (option(string), int)
+
+function rme48 (proc_mode, eff_addr, seg_reg, r_x, check_alignment?) = {
+    if proc_mode != 0 & seg_reg == 1 & r_x == ":R" & (let attr = loghead(16, unsigned(seg_hidden_attrs[seg_reg])) : int
+    in
+    let r = code_segment_descriptor_attributesbits_get_r(get_slice_int(16, attr, 0)) : bits(1) in unsigned(r) == 0) then {
+        (Some(":EXECUTE-ONLY-CODE-SEGMENT"), 0 : {|0|})
+    } else {
+        let (flg, lin_addr) = ea_to_la(proc_mode, eff_addr, seg_reg, 6) : (option(string), sbits(67));
         if is_some(flg) then {
-            (flg, 0 : int, 0 : int)
-        } else if not_bool(not_bool(check_alignment?) | address_aligned_p(lin_addr, 4, keywords.mem_ptr?)) then {
-            (Some(":UNALIGNED-LINEAR-ADDRESS"), 0 : int, 0 : int)
+            (flg, 0 : {|0|})
+        } else if not_bool(not_bool(check_alignment?) | address_aligned_p(the_sbits(48, lin_addr), 6, false)) then {
+            (Some(":UNALIGNED-LINEAR-ADDRESS"), 0 : {|0|})
         } else {
-            riml32(lin_addr, r_x, 0)
+            rml48(the_sbits(48, lin_addr), r_x)
         }
     }
 }
 
-val rme48 : (int, int, int, string, bool, int) -> (option(string), int, int) effect {escape, rmem, rreg}
+val rme64 : (range(0, 4), sbits(64), range(0, 5), string, bool) -> (option(string), int)
 
-function rme48 (proc_mode, eff_addr, seg_reg, r_x, check_alignment?, x86) = {
-    if proc_mode != 0 & seg_reg == 1 & r_x == ":R" & (let attr = loghead(16, seg_hidden_attri(seg_reg, 0)) : int in
-      let r = code_segment_descriptor_attributesbits_get_r(attr) : int in r == 0) then {
-        (Some(":EXECUTE-ONLY-CODE-SEGMENT"), 0 : int, 0 : int)
+function rme64 (proc_mode, eff_addr, seg_reg, r_x, check_alignment?) = {
+    if proc_mode != 0 & seg_reg == 1 & r_x == ":R" & (let attr = loghead(16, unsigned(seg_hidden_attrs[seg_reg])) : int
+    in
+    let r = code_segment_descriptor_attributesbits_get_r(get_slice_int(16, attr, 0)) : bits(1) in unsigned(r) == 0) then {
+        (Some(":EXECUTE-ONLY-CODE-SEGMENT"), 0 : {|0|})
     } else {
-        let (flg, lin_addr) = ea_to_la(proc_mode, eff_addr, seg_reg, 6, 0) : (option(string), int);
+        let (flg, lin_addr) = ea_to_la(proc_mode, eff_addr, seg_reg, 8) : (option(string), sbits(67));
         if is_some(flg) then {
-            (flg, 0 : int, 0 : int)
-        } else if not_bool(not_bool(check_alignment?) | address_aligned_p(lin_addr, 6, false)) then {
-            (Some(":UNALIGNED-LINEAR-ADDRESS"), 0 : int, 0 : int)
+            (flg, 0 : {|0|})
+        } else if not_bool(not_bool(check_alignment?) | address_aligned_p(the_sbits(48, lin_addr), 8, false)) then {
+            (Some(":UNALIGNED-LINEAR-ADDRESS"), 0 : {|0|})
         } else {
-            rml48(lin_addr, r_x, 0)
+            rml64(the_sbits(48, lin_addr), r_x)
         }
     }
 }
 
-val rme64 : (int, int, int, string, bool, int) -> (option(string), int, int) effect {escape, rmem, rreg}
+val rime64 : (range(0, 4), sbits(64), range(0, 5), string, bool) -> (option(string), sbits(67))
 
-function rme64 (proc_mode, eff_addr, seg_reg, r_x, check_alignment?, x86) = {
-    if proc_mode != 0 & seg_reg == 1 & r_x == ":R" & (let attr = loghead(16, seg_hidden_attri(seg_reg, 0)) : int in
-      let r = code_segment_descriptor_attributesbits_get_r(attr) : int in r == 0) then {
-        (Some(":EXECUTE-ONLY-CODE-SEGMENT"), 0 : int, 0 : int)
+function rime64 (proc_mode, eff_addr, seg_reg, r_x, check_alignment?) = {
+    if proc_mode != 0 & seg_reg == 1 & r_x == ":R" & (let attr = loghead(16, unsigned(seg_hidden_attrs[seg_reg])) : int
+    in
+    let r = code_segment_descriptor_attributesbits_get_r(get_slice_int(16, attr, 0)) : bits(1) in unsigned(r) == 0) then {
+        (Some(":EXECUTE-ONLY-CODE-SEGMENT"), get_slice_int(67, 0, 0))
     } else {
-        let (flg, lin_addr) = ea_to_la(proc_mode, eff_addr, seg_reg, 8, 0) : (option(string), int);
+        let (elem0, elem1) = (let (flg, lin_addr) =
+          ea_to_la(proc_mode, eff_addr, seg_reg, 8) : (option(string), sbits(67))
+        in
+          if is_some(flg) then {
+              (flg, get_slice_int(66, 0, 0))
+          } else {
+              let (elem0, elem1) = (if not_bool(not_bool(check_alignment?) | address_aligned_p(the_sbits(48, lin_addr), 8, false)) then {
+                  (Some(":UNALIGNED-LINEAR-ADDRESS"), get_slice_int(65, 0, 0))
+              } else {
+                  let (elem0, elem1) = riml64(the_sbits(48, lin_addr), r_x) : (option(string), sbits(64));
+                  (elem0, the_sbits(65, elem1))
+              }) : (option(string), sbits(65));
+              (elem0, the_sbits(66, elem1))
+          }) : (option(string), sbits(66));
+        (elem0, the_sbits(67, elem1))
+    }
+}
+
+val rme80 : (range(0, 4), sbits(64), range(0, 5), string, bool) -> (option(string), int)
+
+function rme80 (proc_mode, eff_addr, seg_reg, r_x, check_alignment?) = {
+    if proc_mode != 0 & seg_reg == 1 & r_x == ":R" & (let attr = loghead(16, unsigned(seg_hidden_attrs[seg_reg])) : int
+    in
+    let r = code_segment_descriptor_attributesbits_get_r(get_slice_int(16, attr, 0)) : bits(1) in unsigned(r) == 0) then {
+        (Some(":EXECUTE-ONLY-CODE-SEGMENT"), 0 : {|0|})
+    } else {
+        let (flg, lin_addr) = ea_to_la(proc_mode, eff_addr, seg_reg, 10) : (option(string), sbits(67));
         if is_some(flg) then {
-            (flg, 0 : int, 0 : int)
-        } else if not_bool(not_bool(check_alignment?) | address_aligned_p(lin_addr, 8, false)) then {
-            (Some(":UNALIGNED-LINEAR-ADDRESS"), 0 : int, 0 : int)
+            (flg, 0 : {|0|})
+        } else if not_bool(not_bool(check_alignment?) | address_aligned_p(the_sbits(48, lin_addr), 10, false)) then {
+            (Some(":UNALIGNED-LINEAR-ADDRESS"), 0 : {|0|})
         } else {
-            rml64(lin_addr, r_x, 0)
+            rml80(the_sbits(48, lin_addr), r_x)
         }
     }
 }
 
-val rime64 : (int, int, int, string, bool, int) -> (option(string), int, int) effect {escape, rmem, rreg}
+val rme128 : (range(0, 4), sbits(64), range(0, 5), string, bool) -> (option(string), int)
 
-function rime64 (proc_mode, eff_addr, seg_reg, r_x, check_alignment?, x86) = {
-    if proc_mode != 0 & seg_reg == 1 & r_x == ":R" & (let attr = loghead(16, seg_hidden_attri(seg_reg, 0)) : int in
-      let r = code_segment_descriptor_attributesbits_get_r(attr) : int in r == 0) then {
-        (Some(":EXECUTE-ONLY-CODE-SEGMENT"), 0 : int, 0 : int)
+function rme128 (proc_mode, eff_addr, seg_reg, r_x, check_alignment?) = {
+    if proc_mode != 0 & seg_reg == 1 & r_x == ":R" & (let attr = loghead(16, unsigned(seg_hidden_attrs[seg_reg])) : int
+    in
+    let r = code_segment_descriptor_attributesbits_get_r(get_slice_int(16, attr, 0)) : bits(1) in unsigned(r) == 0) then {
+        (Some(":EXECUTE-ONLY-CODE-SEGMENT"), 0 : {|0|})
     } else {
-        let (flg, lin_addr) = ea_to_la(proc_mode, eff_addr, seg_reg, 8, 0) : (option(string), int);
+        let (flg, lin_addr) = ea_to_la(proc_mode, eff_addr, seg_reg, 16) : (option(string), sbits(67));
         if is_some(flg) then {
-            (flg, 0 : int, 0 : int)
-        } else if not_bool(not_bool(check_alignment?) | address_aligned_p(lin_addr, 8, false)) then {
-            (Some(":UNALIGNED-LINEAR-ADDRESS"), 0 : int, 0 : int)
+            (flg, 0 : {|0|})
+        } else if not_bool(not_bool(check_alignment?) | address_aligned_p(the_sbits(48, lin_addr), 16, false)) then {
+            (Some(":UNALIGNED-LINEAR-ADDRESS"), 0 : {|0|})
         } else {
-            riml64(lin_addr, r_x, 0)
-        }
-    }
-}
-
-val rme80 : (int, int, int, string, bool, int) -> (option(string), int, int) effect {escape, rmem, rreg}
-
-function rme80 (proc_mode, eff_addr, seg_reg, r_x, check_alignment?, x86) = {
-    if proc_mode != 0 & seg_reg == 1 & r_x == ":R" & (let attr = loghead(16, seg_hidden_attri(seg_reg, 0)) : int in
-      let r = code_segment_descriptor_attributesbits_get_r(attr) : int in r == 0) then {
-        (Some(":EXECUTE-ONLY-CODE-SEGMENT"), 0 : int, 0 : int)
-    } else {
-        let (flg, lin_addr) = ea_to_la(proc_mode, eff_addr, seg_reg, 10, 0) : (option(string), int);
-        if is_some(flg) then {
-            (flg, 0 : int, 0 : int)
-        } else if not_bool(not_bool(check_alignment?) | address_aligned_p(lin_addr, 10, false)) then {
-            (Some(":UNALIGNED-LINEAR-ADDRESS"), 0 : int, 0 : int)
-        } else {
-            rml80(lin_addr, r_x, 0)
-        }
-    }
-}
-
-val rme128 : (int, int, int, string, bool, int) -> (option(string), int, int) effect {escape, rmem, rreg}
-
-function rme128 (proc_mode, eff_addr, seg_reg, r_x, check_alignment?, x86) = {
-    if proc_mode != 0 & seg_reg == 1 & r_x == ":R" & (let attr = loghead(16, seg_hidden_attri(seg_reg, 0)) : int in
-      let r = code_segment_descriptor_attributesbits_get_r(attr) : int in r == 0) then {
-        (Some(":EXECUTE-ONLY-CODE-SEGMENT"), 0 : int, 0 : int)
-    } else {
-        let (flg, lin_addr) = ea_to_la(proc_mode, eff_addr, seg_reg, 16, 0) : (option(string), int);
-        if is_some(flg) then {
-            (flg, 0 : int, 0 : int)
-        } else if not_bool(not_bool(check_alignment?) | address_aligned_p(lin_addr, 16, false)) then {
-            (Some(":UNALIGNED-LINEAR-ADDRESS"), 0 : int, 0 : int)
-        } else {
-            rml128(lin_addr, r_x, 0)
+            rml128(the_sbits(48, lin_addr), r_x)
         }
     }
 }
 
 struct struct_rme_size = {mem_ptr? : bool}
 
-val rme_size : (int, int, int, int, string, bool, int, struct_rme_size) -> (option(string), int, int) effect {escape, rmem, rreg}
+val rme_size : (range(0, 4), {|1, 2, 4, 6, 8, 10, 16|}, sbits(64), range(0, 5), string, bool, struct_rme_size) -> (option(string), int)
 
-function rme_size (proc_mode, nbytes, eff_addr, seg_reg, r_x, check_alignment?, x86, keywords) = {
-    if proc_mode != 0 & seg_reg == 1 & r_x == ":R" & (let attr = loghead(16, seg_hidden_attri(seg_reg, 0)) : int in
-      let r = code_segment_descriptor_attributesbits_get_r(attr) : int in r == 0) then {
-        (Some(":EXECUTE-ONLY-CODE-SEGMENT"), 0 : int, 0 : int)
+function rme_size (proc_mode, nbytes, eff_addr, seg_reg, r_x, check_alignment?, keywords) = {
+    if proc_mode != 0 & seg_reg == 1 & r_x == ":R" & (let attr = loghead(16, unsigned(seg_hidden_attrs[seg_reg])) : int
+    in
+    let r = code_segment_descriptor_attributesbits_get_r(get_slice_int(16, attr, 0)) : bits(1) in unsigned(r) == 0) then {
+        (Some(":EXECUTE-ONLY-CODE-SEGMENT"), 0 : {|0|})
     } else {
-        let (flg, lin_addr) = ea_to_la(proc_mode, eff_addr, seg_reg, nbytes, 0) : (option(string), int);
+        let (flg, lin_addr) = ea_to_la(proc_mode, eff_addr, seg_reg, nbytes) : (option(string), sbits(67));
         if is_some(flg) then {
-            (flg, 0 : int, 0 : int)
-        } else if not_bool(not_bool(check_alignment?) | address_aligned_p(lin_addr, nbytes, keywords.mem_ptr?)) then {
-            (Some(":UNALIGNED-LINEAR-ADDRESS"), 0 : int, 0 : int)
+            (flg, 0 : {|0|})
+        } else if not_bool(not_bool(check_alignment?) | address_aligned_p(the_sbits(48, lin_addr), nbytes, keywords.mem_ptr?)) then {
+            (Some(":UNALIGNED-LINEAR-ADDRESS"), 0 : {|0|})
         } else {
-            rml_size(nbytes, lin_addr, r_x, 0)
+            rml_size(nbytes, the_sbits(48, lin_addr), r_x)
         }
     }
 }
 
 struct struct_rime_size = {mem_ptr? : bool}
 
-val rime_size : (int, int, int, int, string, bool, int, struct_rime_size) -> (option(string), int, int) effect {escape, rmem, rreg}
+val rime_size : (range(0, 4), {|1, 2, 4, 8|}, sbits(64), range(0, 5), string, bool, struct_rime_size) -> (option(string), sbits(68))
 
-function rime_size (proc_mode, nbytes, eff_addr, seg_reg, r_x, check_alignment?, x86, keywords) = {
-    if proc_mode != 0 & seg_reg == 1 & r_x == ":R" & (let attr = loghead(16, seg_hidden_attri(seg_reg, 0)) : int in
-      let r = code_segment_descriptor_attributesbits_get_r(attr) : int in r == 0) then {
-        (Some(":EXECUTE-ONLY-CODE-SEGMENT"), 0 : int, 0 : int)
+function rime_size (proc_mode, nbytes, eff_addr, seg_reg, r_x, check_alignment?, keywords) = {
+    if proc_mode != 0 & seg_reg == 1 & r_x == ":R" & (let attr = loghead(16, unsigned(seg_hidden_attrs[seg_reg])) : int
+    in
+    let r = code_segment_descriptor_attributesbits_get_r(get_slice_int(16, attr, 0)) : bits(1) in unsigned(r) == 0) then {
+        (Some(":EXECUTE-ONLY-CODE-SEGMENT"), get_slice_int(68, 0, 0))
     } else {
-        let (flg, lin_addr) = ea_to_la(proc_mode, eff_addr, seg_reg, nbytes, 0) : (option(string), int);
+        let (elem0, elem1) = (let (flg, lin_addr) =
+          ea_to_la(proc_mode, eff_addr, seg_reg, nbytes) : (option(string), sbits(67))
+        in
+          if is_some(flg) then {
+              (flg, get_slice_int(67, 0, 0))
+          } else {
+              let (elem0, elem1) = (if not_bool(not_bool(check_alignment?) | address_aligned_p(the_sbits(48, lin_addr), nbytes, keywords.mem_ptr?)) then {
+                  (Some(":UNALIGNED-LINEAR-ADDRESS"), get_slice_int(66, 0, 0))
+              } else {
+                  let (elem0, elem1) = riml_size(nbytes, the_sbits(48, lin_addr), r_x) : (option(string), sbits(65));
+                  (elem0, the_sbits(66, elem1))
+              }) : (option(string), sbits(66));
+              (elem0, the_sbits(67, elem1))
+          }) : (option(string), sbits(67));
+        (elem0, the_sbits(68, elem1))
+    }
+}
+
+val wme08 : (range(0, 4), sbits(64), range(0, 5), bits(8)) -> option(string)
+
+function wme08 (proc_mode, eff_addr, seg_reg, sailval) = {
+    if proc_mode != 0 & (seg_reg == 1 | (let attr = loghead(16, unsigned(seg_hidden_attrs[seg_reg])) : int in
+    let w = data_segment_descriptor_attributesbits_get_w(get_slice_int(16, attr, 0)) : bits(1) in unsigned(w) == 0)) then {
+        Some(":NON-WRITABLE-SEGMENT")
+    } else {
+        let (flg, lin_addr) = ea_to_la(proc_mode, eff_addr, seg_reg, 1) : (option(string), sbits(67));
         if is_some(flg) then {
-            (flg, 0 : int, 0 : int)
-        } else if not_bool(not_bool(check_alignment?) | address_aligned_p(lin_addr, nbytes, keywords.mem_ptr?)) then {
-            (Some(":UNALIGNED-LINEAR-ADDRESS"), 0 : int, 0 : int)
+            flg
         } else {
-            riml_size(nbytes, lin_addr, r_x, 0)
+            wml08(the_sbits(48, lin_addr), sailval)
         }
     }
 }
 
-val wme08 : (int, int, int, int, int) -> (option(string), int) effect {eamem, escape, rreg, wmv}
+val wime08 : (range(0, 4), sbits(64), range(0, 5), sbits(8)) -> option(string)
 
-function wme08 (proc_mode, eff_addr, seg_reg, sailval, x86) = {
-    if proc_mode != 0 & (seg_reg == 1 | (let attr = loghead(16, seg_hidden_attri(seg_reg, 0)) : int in
-      let w = data_segment_descriptor_attributesbits_get_w(attr) : int in w == 0)) then {
-        (Some(":NON-WRITABLE-SEGMENT"), 0 : int)
+function wime08 (proc_mode, eff_addr, seg_reg, sailval) = {
+    if proc_mode != 0 & (seg_reg == 1 | (let attr = loghead(16, unsigned(seg_hidden_attrs[seg_reg])) : int in
+    let w = data_segment_descriptor_attributesbits_get_w(get_slice_int(16, attr, 0)) : bits(1) in unsigned(w) == 0)) then {
+        Some(":NON-WRITABLE-SEGMENT")
     } else {
-        let (flg, lin_addr) = ea_to_la(proc_mode, eff_addr, seg_reg, 1, 0) : (option(string), int);
+        let (flg, lin_addr) = ea_to_la(proc_mode, eff_addr, seg_reg, 1) : (option(string), sbits(67));
         if is_some(flg) then {
-            (flg, 0 : int)
+            flg
         } else {
-            wml08(lin_addr, sailval, 0)
+            wiml08(the_sbits(48, lin_addr), sailval)
         }
     }
 }
 
-val wime08 : (int, int, int, int, int) -> (option(string), int) effect {eamem, escape, rreg, wmv}
+val wme16 : (range(0, 4), sbits(64), range(0, 5), bits(16), bool) -> option(string)
 
-function wime08 (proc_mode, eff_addr, seg_reg, sailval, x86) = {
-    if proc_mode != 0 & (seg_reg == 1 | (let attr = loghead(16, seg_hidden_attri(seg_reg, 0)) : int in
-      let w = data_segment_descriptor_attributesbits_get_w(attr) : int in w == 0)) then {
-        (Some(":NON-WRITABLE-SEGMENT"), 0 : int)
+function wme16 (proc_mode, eff_addr, seg_reg, sailval, check_alignment?) = {
+    if proc_mode != 0 & (seg_reg == 1 | (let attr = loghead(16, unsigned(seg_hidden_attrs[seg_reg])) : int in
+    let w = data_segment_descriptor_attributesbits_get_w(get_slice_int(16, attr, 0)) : bits(1) in unsigned(w) == 0)) then {
+        Some(":NON-WRITABLE-SEGMENT")
     } else {
-        let (flg, lin_addr) = ea_to_la(proc_mode, eff_addr, seg_reg, 1, 0) : (option(string), int);
+        let (flg, lin_addr) = ea_to_la(proc_mode, eff_addr, seg_reg, 2) : (option(string), sbits(67));
         if is_some(flg) then {
-            (flg, 0 : int)
+            flg
+        } else if not_bool(not_bool(check_alignment?) | address_aligned_p(the_sbits(48, lin_addr), 2, false)) then {
+            Some(":UNALIGNED-LINEAR-ADDRESS")
         } else {
-            wiml08(lin_addr, sailval, 0)
+            wml16(the_sbits(48, lin_addr), sailval)
         }
     }
 }
 
-val wme16 : (int, int, int, int, bool, int) -> (option(string), int) effect {eamem, escape, rreg, wmv}
+val wime16 : (range(0, 4), sbits(64), range(0, 5), sbits(16), bool) -> option(string)
 
-function wme16 (proc_mode, eff_addr, seg_reg, sailval, check_alignment?, x86) = {
-    if proc_mode != 0 & (seg_reg == 1 | (let attr = loghead(16, seg_hidden_attri(seg_reg, 0)) : int in
-      let w = data_segment_descriptor_attributesbits_get_w(attr) : int in w == 0)) then {
-        (Some(":NON-WRITABLE-SEGMENT"), 0 : int)
+function wime16 (proc_mode, eff_addr, seg_reg, sailval, check_alignment?) = {
+    if proc_mode != 0 & (seg_reg == 1 | (let attr = loghead(16, unsigned(seg_hidden_attrs[seg_reg])) : int in
+    let w = data_segment_descriptor_attributesbits_get_w(get_slice_int(16, attr, 0)) : bits(1) in unsigned(w) == 0)) then {
+        Some(":NON-WRITABLE-SEGMENT")
     } else {
-        let (flg, lin_addr) = ea_to_la(proc_mode, eff_addr, seg_reg, 2, 0) : (option(string), int);
+        let (flg, lin_addr) = ea_to_la(proc_mode, eff_addr, seg_reg, 2) : (option(string), sbits(67));
         if is_some(flg) then {
-            (flg, 0 : int)
-        } else if not_bool(not_bool(check_alignment?) | address_aligned_p(lin_addr, 2, false)) then {
-            (Some(":UNALIGNED-LINEAR-ADDRESS"), 0 : int)
+            flg
+        } else if not_bool(not_bool(check_alignment?) | address_aligned_p(the_sbits(48, lin_addr), 2, false)) then {
+            Some(":UNALIGNED-LINEAR-ADDRESS")
         } else {
-            wml16(lin_addr, sailval, 0)
-        }
-    }
-}
-
-val wime16 : (int, int, int, int, bool, int) -> (option(string), int) effect {eamem, escape, rreg, wmv}
-
-function wime16 (proc_mode, eff_addr, seg_reg, sailval, check_alignment?, x86) = {
-    if proc_mode != 0 & (seg_reg == 1 | (let attr = loghead(16, seg_hidden_attri(seg_reg, 0)) : int in
-      let w = data_segment_descriptor_attributesbits_get_w(attr) : int in w == 0)) then {
-        (Some(":NON-WRITABLE-SEGMENT"), 0 : int)
-    } else {
-        let (flg, lin_addr) = ea_to_la(proc_mode, eff_addr, seg_reg, 2, 0) : (option(string), int);
-        if is_some(flg) then {
-            (flg, 0 : int)
-        } else if not_bool(not_bool(check_alignment?) | address_aligned_p(lin_addr, 2, false)) then {
-            (Some(":UNALIGNED-LINEAR-ADDRESS"), 0 : int)
-        } else {
-            wiml16(lin_addr, sailval, 0)
+            wiml16(the_sbits(48, lin_addr), sailval)
         }
     }
 }
 
 struct struct_wme32 = {mem_ptr? : bool}
 
-val wme32 : (int, int, int, int, bool, int, struct_wme32) -> (option(string), int) effect {eamem, escape, rreg, wmv}
+val wme32 : (range(0, 4), sbits(64), range(0, 5), bits(32), bool, struct_wme32) -> option(string)
 
-function wme32 (proc_mode, eff_addr, seg_reg, sailval, check_alignment?, x86, keywords) = {
-    if proc_mode != 0 & (seg_reg == 1 | (let attr = loghead(16, seg_hidden_attri(seg_reg, 0)) : int in
-      let w = data_segment_descriptor_attributesbits_get_w(attr) : int in w == 0)) then {
-        (Some(":NON-WRITABLE-SEGMENT"), 0 : int)
+function wme32 (proc_mode, eff_addr, seg_reg, sailval, check_alignment?, keywords) = {
+    if proc_mode != 0 & (seg_reg == 1 | (let attr = loghead(16, unsigned(seg_hidden_attrs[seg_reg])) : int in
+    let w = data_segment_descriptor_attributesbits_get_w(get_slice_int(16, attr, 0)) : bits(1) in unsigned(w) == 0)) then {
+        Some(":NON-WRITABLE-SEGMENT")
     } else {
-        let (flg, lin_addr) = ea_to_la(proc_mode, eff_addr, seg_reg, 4, 0) : (option(string), int);
+        let (flg, lin_addr) = ea_to_la(proc_mode, eff_addr, seg_reg, 4) : (option(string), sbits(67));
         if is_some(flg) then {
-            (flg, 0 : int)
-        } else if not_bool(not_bool(check_alignment?) | address_aligned_p(lin_addr, 4, keywords.mem_ptr?)) then {
-            (Some(":UNALIGNED-LINEAR-ADDRESS"), 0 : int)
+            flg
+        } else if not_bool(not_bool(check_alignment?) | address_aligned_p(the_sbits(48, lin_addr), 4, keywords.mem_ptr?)) then {
+            Some(":UNALIGNED-LINEAR-ADDRESS")
         } else {
-            wml32(lin_addr, sailval, 0)
+            wml32(the_sbits(48, lin_addr), sailval)
         }
     }
 }
 
 struct struct_wime32 = {mem_ptr? : bool}
 
-val wime32 : (int, int, int, int, bool, int, struct_wime32) -> (option(string), int) effect {eamem, escape, rreg, wmv}
+val wime32 : (range(0, 4), sbits(64), range(0, 5), sbits(32), bool, struct_wime32) -> option(string)
 
-function wime32 (proc_mode, eff_addr, seg_reg, sailval, check_alignment?, x86, keywords) = {
-    if proc_mode != 0 & (seg_reg == 1 | (let attr = loghead(16, seg_hidden_attri(seg_reg, 0)) : int in
-      let w = data_segment_descriptor_attributesbits_get_w(attr) : int in w == 0)) then {
-        (Some(":NON-WRITABLE-SEGMENT"), 0 : int)
+function wime32 (proc_mode, eff_addr, seg_reg, sailval, check_alignment?, keywords) = {
+    if proc_mode != 0 & (seg_reg == 1 | (let attr = loghead(16, unsigned(seg_hidden_attrs[seg_reg])) : int in
+    let w = data_segment_descriptor_attributesbits_get_w(get_slice_int(16, attr, 0)) : bits(1) in unsigned(w) == 0)) then {
+        Some(":NON-WRITABLE-SEGMENT")
     } else {
-        let (flg, lin_addr) = ea_to_la(proc_mode, eff_addr, seg_reg, 4, 0) : (option(string), int);
+        let (flg, lin_addr) = ea_to_la(proc_mode, eff_addr, seg_reg, 4) : (option(string), sbits(67));
         if is_some(flg) then {
-            (flg, 0 : int)
-        } else if not_bool(not_bool(check_alignment?) | address_aligned_p(lin_addr, 4, keywords.mem_ptr?)) then {
-            (Some(":UNALIGNED-LINEAR-ADDRESS"), 0 : int)
+            flg
+        } else if not_bool(not_bool(check_alignment?) | address_aligned_p(the_sbits(48, lin_addr), 4, keywords.mem_ptr?)) then {
+            Some(":UNALIGNED-LINEAR-ADDRESS")
         } else {
-            wiml32(lin_addr, sailval, 0)
+            wiml32(the_sbits(48, lin_addr), sailval)
         }
     }
 }
 
-val wme48 : (int, int, int, int, bool, int) -> (option(string), int) effect {eamem, escape, rreg, wmv}
+val wme48 : (range(0, 4), sbits(64), range(0, 5), bits(48), bool) -> option(string)
 
-function wme48 (proc_mode, eff_addr, seg_reg, sailval, check_alignment?, x86) = {
-    if proc_mode != 0 & (seg_reg == 1 | (let attr = loghead(16, seg_hidden_attri(seg_reg, 0)) : int in
-      let w = data_segment_descriptor_attributesbits_get_w(attr) : int in w == 0)) then {
-        (Some(":NON-WRITABLE-SEGMENT"), 0 : int)
+function wme48 (proc_mode, eff_addr, seg_reg, sailval, check_alignment?) = {
+    if proc_mode != 0 & (seg_reg == 1 | (let attr = loghead(16, unsigned(seg_hidden_attrs[seg_reg])) : int in
+    let w = data_segment_descriptor_attributesbits_get_w(get_slice_int(16, attr, 0)) : bits(1) in unsigned(w) == 0)) then {
+        Some(":NON-WRITABLE-SEGMENT")
     } else {
-        let (flg, lin_addr) = ea_to_la(proc_mode, eff_addr, seg_reg, 6, 0) : (option(string), int);
+        let (flg, lin_addr) = ea_to_la(proc_mode, eff_addr, seg_reg, 6) : (option(string), sbits(67));
         if is_some(flg) then {
-            (flg, 0 : int)
-        } else if not_bool(not_bool(check_alignment?) | address_aligned_p(lin_addr, 6, false)) then {
-            (Some(":UNALIGNED-LINEAR-ADDRESS"), 0 : int)
+            flg
+        } else if not_bool(not_bool(check_alignment?) | address_aligned_p(the_sbits(48, lin_addr), 6, false)) then {
+            Some(":UNALIGNED-LINEAR-ADDRESS")
         } else {
-            wml48(lin_addr, sailval, 0)
+            wml48(the_sbits(48, lin_addr), sailval)
         }
     }
 }
 
-val wme64 : (int, int, int, int, bool, int) -> (option(string), int) effect {eamem, escape, rreg, wmv}
+val wme64 : (range(0, 4), sbits(64), range(0, 5), bits(64), bool) -> option(string)
 
-function wme64 (proc_mode, eff_addr, seg_reg, sailval, check_alignment?, x86) = {
-    if proc_mode != 0 & (seg_reg == 1 | (let attr = loghead(16, seg_hidden_attri(seg_reg, 0)) : int in
-      let w = data_segment_descriptor_attributesbits_get_w(attr) : int in w == 0)) then {
-        (Some(":NON-WRITABLE-SEGMENT"), 0 : int)
+function wme64 (proc_mode, eff_addr, seg_reg, sailval, check_alignment?) = {
+    if proc_mode != 0 & (seg_reg == 1 | (let attr = loghead(16, unsigned(seg_hidden_attrs[seg_reg])) : int in
+    let w = data_segment_descriptor_attributesbits_get_w(get_slice_int(16, attr, 0)) : bits(1) in unsigned(w) == 0)) then {
+        Some(":NON-WRITABLE-SEGMENT")
     } else {
-        let (flg, lin_addr) = ea_to_la(proc_mode, eff_addr, seg_reg, 8, 0) : (option(string), int);
+        let (flg, lin_addr) = ea_to_la(proc_mode, eff_addr, seg_reg, 8) : (option(string), sbits(67));
         if is_some(flg) then {
-            (flg, 0 : int)
-        } else if not_bool(not_bool(check_alignment?) | address_aligned_p(lin_addr, 8, false)) then {
-            (Some(":UNALIGNED-LINEAR-ADDRESS"), 0 : int)
+            flg
+        } else if not_bool(not_bool(check_alignment?) | address_aligned_p(the_sbits(48, lin_addr), 8, false)) then {
+            Some(":UNALIGNED-LINEAR-ADDRESS")
         } else {
-            wml64(lin_addr, sailval, 0)
+            wml64(the_sbits(48, lin_addr), sailval)
         }
     }
 }
 
-val wime64 : (int, int, int, int, bool, int) -> (option(string), int) effect {eamem, escape, rreg, wmv}
+val wime64 : (range(0, 4), sbits(64), range(0, 5), sbits(64), bool) -> option(string)
 
-function wime64 (proc_mode, eff_addr, seg_reg, sailval, check_alignment?, x86) = {
-    if proc_mode != 0 & (seg_reg == 1 | (let attr = loghead(16, seg_hidden_attri(seg_reg, 0)) : int in
-      let w = data_segment_descriptor_attributesbits_get_w(attr) : int in w == 0)) then {
-        (Some(":NON-WRITABLE-SEGMENT"), 0 : int)
+function wime64 (proc_mode, eff_addr, seg_reg, sailval, check_alignment?) = {
+    if proc_mode != 0 & (seg_reg == 1 | (let attr = loghead(16, unsigned(seg_hidden_attrs[seg_reg])) : int in
+    let w = data_segment_descriptor_attributesbits_get_w(get_slice_int(16, attr, 0)) : bits(1) in unsigned(w) == 0)) then {
+        Some(":NON-WRITABLE-SEGMENT")
     } else {
-        let (flg, lin_addr) = ea_to_la(proc_mode, eff_addr, seg_reg, 8, 0) : (option(string), int);
+        let (flg, lin_addr) = ea_to_la(proc_mode, eff_addr, seg_reg, 8) : (option(string), sbits(67));
         if is_some(flg) then {
-            (flg, 0 : int)
-        } else if not_bool(not_bool(check_alignment?) | address_aligned_p(lin_addr, 8, false)) then {
-            (Some(":UNALIGNED-LINEAR-ADDRESS"), 0 : int)
+            flg
+        } else if not_bool(not_bool(check_alignment?) | address_aligned_p(the_sbits(48, lin_addr), 8, false)) then {
+            Some(":UNALIGNED-LINEAR-ADDRESS")
         } else {
-            wiml64(lin_addr, sailval, 0)
+            wiml64(the_sbits(48, lin_addr), sailval)
         }
     }
 }
 
-val wme80 : (int, int, int, int, bool, int) -> (option(string), int) effect {eamem, escape, rreg, wmv}
+val wme80 : (range(0, 4), sbits(64), range(0, 5), bits(80), bool) -> option(string)
 
-function wme80 (proc_mode, eff_addr, seg_reg, sailval, check_alignment?, x86) = {
-    if proc_mode != 0 & (seg_reg == 1 | (let attr = loghead(16, seg_hidden_attri(seg_reg, 0)) : int in
-      let w = data_segment_descriptor_attributesbits_get_w(attr) : int in w == 0)) then {
-        (Some(":NON-WRITABLE-SEGMENT"), 0 : int)
+function wme80 (proc_mode, eff_addr, seg_reg, sailval, check_alignment?) = {
+    if proc_mode != 0 & (seg_reg == 1 | (let attr = loghead(16, unsigned(seg_hidden_attrs[seg_reg])) : int in
+    let w = data_segment_descriptor_attributesbits_get_w(get_slice_int(16, attr, 0)) : bits(1) in unsigned(w) == 0)) then {
+        Some(":NON-WRITABLE-SEGMENT")
     } else {
-        let (flg, lin_addr) = ea_to_la(proc_mode, eff_addr, seg_reg, 10, 0) : (option(string), int);
+        let (flg, lin_addr) = ea_to_la(proc_mode, eff_addr, seg_reg, 10) : (option(string), sbits(67));
         if is_some(flg) then {
-            (flg, 0 : int)
-        } else if not_bool(not_bool(check_alignment?) | address_aligned_p(lin_addr, 10, false)) then {
-            (Some(":UNALIGNED-LINEAR-ADDRESS"), 0 : int)
+            flg
+        } else if not_bool(not_bool(check_alignment?) | address_aligned_p(the_sbits(48, lin_addr), 10, false)) then {
+            Some(":UNALIGNED-LINEAR-ADDRESS")
         } else {
-            wml80(lin_addr, sailval, 0)
+            wml80(the_sbits(48, lin_addr), sailval)
         }
     }
 }
 
-val wme128 : (int, int, int, int, bool, int) -> (option(string), int) effect {eamem, escape, rreg, wmv}
+val wme128 : (range(0, 4), sbits(64), range(0, 5), bits(128), bool) -> option(string)
 
-function wme128 (proc_mode, eff_addr, seg_reg, sailval, check_alignment?, x86) = {
-    if proc_mode != 0 & (seg_reg == 1 | (let attr = loghead(16, seg_hidden_attri(seg_reg, 0)) : int in
-      let w = data_segment_descriptor_attributesbits_get_w(attr) : int in w == 0)) then {
-        (Some(":NON-WRITABLE-SEGMENT"), 0 : int)
+function wme128 (proc_mode, eff_addr, seg_reg, sailval, check_alignment?) = {
+    if proc_mode != 0 & (seg_reg == 1 | (let attr = loghead(16, unsigned(seg_hidden_attrs[seg_reg])) : int in
+    let w = data_segment_descriptor_attributesbits_get_w(get_slice_int(16, attr, 0)) : bits(1) in unsigned(w) == 0)) then {
+        Some(":NON-WRITABLE-SEGMENT")
     } else {
-        let (flg, lin_addr) = ea_to_la(proc_mode, eff_addr, seg_reg, 16, 0) : (option(string), int);
+        let (flg, lin_addr) = ea_to_la(proc_mode, eff_addr, seg_reg, 16) : (option(string), sbits(67));
         if is_some(flg) then {
-            (flg, 0 : int)
-        } else if not_bool(not_bool(check_alignment?) | address_aligned_p(lin_addr, 16, false)) then {
-            (Some(":UNALIGNED-LINEAR-ADDRESS"), 0 : int)
+            flg
+        } else if not_bool(not_bool(check_alignment?) | address_aligned_p(the_sbits(48, lin_addr), 16, false)) then {
+            Some(":UNALIGNED-LINEAR-ADDRESS")
         } else {
-            wml128(lin_addr, sailval, 0)
+            wml128(the_sbits(48, lin_addr), sailval)
         }
     }
 }
 
 struct struct_wme_size = {mem_ptr? : bool}
 
-val wme_size : (int, int, int, int, int, bool, int, struct_wme_size) -> (option(string), int) effect {eamem, escape, rreg, wmv}
+val wme_size : (range(0, 4), {|1, 2, 4, 6, 8, 10, 16|}, sbits(64), range(0, 5), nat, bool, struct_wme_size) -> option(string)
 
-function wme_size (proc_mode, nbytes, eff_addr, seg_reg, sailval, check_alignment?, x86, keywords) = {
-    if proc_mode != 0 & (seg_reg == 1 | (let attr = loghead(16, seg_hidden_attri(seg_reg, 0)) : int in
-      let w = data_segment_descriptor_attributesbits_get_w(attr) : int in w == 0)) then {
-        (Some(":NON-WRITABLE-SEGMENT"), 0 : int)
+function wme_size (proc_mode, nbytes, eff_addr, seg_reg, sailval, check_alignment?, keywords) = {
+    if proc_mode != 0 & (seg_reg == 1 | (let attr = loghead(16, unsigned(seg_hidden_attrs[seg_reg])) : int in
+    let w = data_segment_descriptor_attributesbits_get_w(get_slice_int(16, attr, 0)) : bits(1) in unsigned(w) == 0)) then {
+        Some(":NON-WRITABLE-SEGMENT")
     } else {
-        let (flg, lin_addr) = ea_to_la(proc_mode, eff_addr, seg_reg, nbytes, 0) : (option(string), int);
+        let (flg, lin_addr) = ea_to_la(proc_mode, eff_addr, seg_reg, nbytes) : (option(string), sbits(67));
         if is_some(flg) then {
-            (flg, 0 : int)
-        } else if not_bool(not_bool(check_alignment?) | address_aligned_p(lin_addr, nbytes, keywords.mem_ptr?)) then {
-            (Some(":UNALIGNED-LINEAR-ADDRESS"), 0 : int)
+            flg
+        } else if not_bool(not_bool(check_alignment?) | address_aligned_p(the_sbits(48, lin_addr), nbytes, keywords.mem_ptr?)) then {
+            Some(":UNALIGNED-LINEAR-ADDRESS")
         } else {
-            wml_size(nbytes, lin_addr, sailval, 0)
+            wml_size(nbytes, the_sbits(48, lin_addr), sailval)
         }
     }
 }
 
 struct struct_wime_size = {mem_ptr? : bool}
 
-val wime_size : (int, int, int, int, int, bool, int, struct_wime_size) -> (option(string), int) effect {eamem, escape, rreg, wmv}
+val wime_size : (range(0, 4), {|1, 2, 4, 8|}, sbits(64), range(0, 5), int, bool, struct_wime_size) -> option(string)
 
-function wime_size (proc_mode, nbytes, eff_addr, seg_reg, sailval, check_alignment?, x86, keywords) = {
-    if proc_mode != 0 & (seg_reg == 1 | (let attr = loghead(16, seg_hidden_attri(seg_reg, 0)) : int in
-      let w = data_segment_descriptor_attributesbits_get_w(attr) : int in w == 0)) then {
-        (Some(":NON-WRITABLE-SEGMENT"), 0 : int)
+function wime_size (proc_mode, nbytes, eff_addr, seg_reg, sailval, check_alignment?, keywords) = {
+    if proc_mode != 0 & (seg_reg == 1 | (let attr = loghead(16, unsigned(seg_hidden_attrs[seg_reg])) : int in
+    let w = data_segment_descriptor_attributesbits_get_w(get_slice_int(16, attr, 0)) : bits(1) in unsigned(w) == 0)) then {
+        Some(":NON-WRITABLE-SEGMENT")
     } else {
-        let (flg, lin_addr) = ea_to_la(proc_mode, eff_addr, seg_reg, nbytes, 0) : (option(string), int);
+        let (flg, lin_addr) = ea_to_la(proc_mode, eff_addr, seg_reg, nbytes) : (option(string), sbits(67));
         if is_some(flg) then {
-            (flg, 0 : int)
-        } else if not_bool(not_bool(check_alignment?) | address_aligned_p(lin_addr, nbytes, keywords.mem_ptr?)) then {
-            (Some(":UNALIGNED-LINEAR-ADDRESS"), 0 : int)
+            flg
+        } else if not_bool(not_bool(check_alignment?) | address_aligned_p(the_sbits(48, lin_addr), nbytes, keywords.mem_ptr?)) then {
+            Some(":UNALIGNED-LINEAR-ADDRESS")
         } else {
-            wiml_size(nbytes, lin_addr, sailval, 0)
+            wiml_size(nbytes, the_sbits(48, lin_addr), sailval)
         }
     }
 }
