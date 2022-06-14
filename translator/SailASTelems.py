@@ -238,6 +238,9 @@ class SailLet(SailASTelem):
 	def getExpr(self):
 		return self.expr
 
+	def getBody(self):
+		return self.body
+
 	def resolveTypes(self, file, justPrint=False):
 		return
 		#file.write(f"Let Resolve Types - {self.varName.pp()}\n")
@@ -502,26 +505,16 @@ class SailApp(SailASTelem):
 		file.write(f"Formals: {[f.pp() for f in formalTypes]}\n")
 		file.write(f"Actuals: {[at.pp() for at in actualTypes]}\n\n")
 
-		if isinstance(self.fn, SailFn) and not justPrint:
-			# Go through terms resolving types if necessary
+		if not justPrint:
+			# Resolve unknown types of variables from the formals
+			# of the function, if we can
 			for i in range(len(self.actuals)):
 				fType = formalTypes[i]
 				aType = actualTypes[i]
-				# If neither are unknown, we need not do anything so continue:
-				if not (isinstance(fType, Sail_t_unknown) or isinstance(aType, Sail_t_unknown)):
-					continue
-				# If both are unknown, we can't do anything so continue:
-				if isinstance(fType, Sail_t_unknown) and isinstance(aType, Sail_t_unknown):
-					continue
-				# Otherwise, resolve the unknown var.  Note:
-				# - Only a SailBoundVar can have raw type of Sail_t_unknown, so we shoul be safe using its setType() method
-				#   TODO: No longer true...
-				# - self.fn must be a SailFn (not a SailHandwrittenFn) by this point.
-				unknownTerm = self.actuals[i] if isinstance(aType, Sail_t_unknown) else self.fn.getFormals()[i]
-				knownType = formalTypes[i] if isinstance(aType, Sail_t_unknown) else actualTypes[i]
-				if isinstance(unknownTerm, SailBoundVar):
-					unknownTerm.setType(knownType)
-				# TODO: Else?
+				if isUnknownType(aType) and \
+						not isUnknownType(fType) and \
+						isinstance(self.actuals[i], SailBoundVar):
+					self.actuals[i].setType(fType)
 
 	def resolve(self, resolvedType):
 		"""
@@ -732,25 +725,40 @@ class SailIf(SailASTelem):
 		self.thenTerm = thenTerm
 		self.elseTerm = elseTerm
 
-		self.resolveNilCB = None
+		self.type = None
 
 		self.coerceBranches()
 
-	### Required methods ###
+	def getCondition(self):
+		return self.ifTerm[0]
+
+	def getThenTerm(self):
+		return self.thenTerm[0]
+
+	def getElseTerm(self):
+		return self.elseTerm[0]
+
 	def getType(self):
-		# Extract types and check they're the same
-		thenType = self.thenTerm[0].getType()
-		elseType = self.elseTerm[0].getType()
-		if thenType != elseType:
-			merged = mergeTypes(thenType, elseType)
-			if merged is None:
-				print(f"Error: then type not compatible with else type.  then type: {ppType(thenType)}; else type: {ppType(elseType)}")
-				print(f"then term: {self.thenTerm[0].pp()}")
-				print(f"else term: {self.elseTerm[0].pp()}")
-				sys.exit()
-			return merged
-		else:
-			return thenType
+		if self.type is None:
+			# Extract types and check they're the same
+			thenType = self.thenTerm[0].getType()
+			elseType = self.elseTerm[0].getType()
+			if thenType != elseType:
+				merged = mergeTypes(thenType, elseType)
+				if merged is None:
+					print(f"Error: then type not compatible with else type.  then type: {ppType(thenType)}; else type: {ppType(elseType)}")
+					print(f"then term: {self.thenTerm[0].pp()}")
+					print(f"else term: {self.elseTerm[0].pp()}")
+					sys.exit()
+				self.type = merged
+			else:
+				self.type = thenType
+
+		return self.type
+
+	def setType(self, typ):
+		self.type = typ
+		self.coerceBranches()
 
 	def coerceBranches(self):
 		typ = self.getType()
@@ -781,6 +789,11 @@ class SailIf(SailASTelem):
 		selfSet = super().getChildrenByPred(p)
 
 		return set.union(ifSet, thenSet, elseSet, selfSet)
+
+	def resolveTypes(self, file, justPrint = False):
+		# If the condition is a variable with an unknown type, assume it is a Boolean
+		if isinstance(self.ifTerm[0], SailBoundVar) and isUnknownType(self.ifTerm[0].getType()):
+			self.ifTerm[0].setType(Sail_t_bool())
 
 	def pp(self):
 
@@ -889,7 +902,7 @@ class SailMatch(SailASTelem):
 		super().__init__()
 		self.var = var
 		self.matches = matches
-		self.setForceType(forceType)
+		self.type = forceType
 
 		# Convert the patterns to bool as required
 		if isinstance(self.var.getType(), Sail_t_option):
@@ -901,18 +914,17 @@ class SailMatch(SailASTelem):
 		exprs = [e for (_, e) in self.matches]
 		resolveNils(exprs)
 
-		self.resolveNilCB = None
-
 	### Custom methods ###
 	def getMatches(self):
 		return self.matches
 
-	def setForceType(self, ft):
-		self.forceType = ft
+	def setType(self, typ):
+		self.type = typ
+		self.coerceMatches()
 
 	### Required methods ###
 	def getType(self):
-		if self.forceType is None:
+		if self.type is None:
 			# Get the type of each expression and hope they're the same
 			typesWork, expr_t = checkTypesMatch([expr for (_, expr) in self.matches])
 
@@ -925,9 +937,9 @@ class SailMatch(SailASTelem):
 					print(f"\t{p.pp()}, {e.pp()}")
 				sys.exit()
 
-			return expr_t
-		else:
-			return self.forceType
+			self.type = expr_t
+
+		return self.type
 
 	def coerceMatches(self):
 		typ = self.getType()
@@ -1542,6 +1554,9 @@ def coerceExpr(expr, typ):
 		return someHelper(item) if item is not None else None
 	elif isNone(expr) and isinstance(typ, Sail_t_option):
 		return noneHelper(typ.getTyp())
+	elif isinstance(expr, SailIf) or isinstance(expr, SailMatch):
+		expr.setType(typ)
+		return expr
 	elif isinstance(expr, SailApp) and expr.getFn().getName().lower() == 'throw':
 		return expr
 	else:

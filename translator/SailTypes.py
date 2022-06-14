@@ -385,6 +385,9 @@ class Sail_t_unknown(SailType):
 def isUnknownType(t):
 	return isinstance(t, Sail_t_unknown) or t == None
 
+def isPrintableType(t):
+	return isinstance(t, SailType) and t.isPrintable()
+
 class Sail_t_error(SailType):
 	"""
 	A 'throw' may take on any value.  This class represents that value, but
@@ -396,14 +399,8 @@ class Sail_t_error(SailType):
 	def generalise(self):
 		return Sail_t_error()
 
-	def __eq__(self, other):
-		if issubclass(type(other), SailType):
-			return True
 
-		return False
 
-	def __hash__(self):
-		return id(self)
 
 	def pp(self):
 		"""
@@ -442,7 +439,7 @@ class Sail_t_bits(SailType):
 		self.signed = signed
 
 	def __eq__(self, other):
-		return type(self) == type(other) and self.length == other.length
+		return type(self) == type(other) and self.length == other.length and self.signed == other.signed
 	def __hash__(self):
 		return id(self)
 
@@ -593,12 +590,14 @@ class Sail_t_member(SailType):
 
 		# Compare the lists
 		membersEq = True
+		selfMembers = sorted(self.members)
+		otherMembers = sorted(other.members)
 		for i in range(len(self.members)):
-			item = self.members[i]
+			item = selfMembers[i]
 			if isinstance(item, int):
-				membersEq = (membersEq and item == other.members[i])
+				membersEq = (membersEq and item == otherMembers[i])
 			else: # String
-				membersEq = (membersEq and item.upper() == other.members[i].upper())
+				membersEq = (membersEq and item.upper() == otherMembers[i].upper())
 
 		return membersEq
 
@@ -673,6 +672,9 @@ class Sail_t_tuple(SailType):
 
 	def __eq__(self, other):
 		if type(self) != type(other):
+			return False
+
+		if len(self.subTypes) != len(other.subTypes):
 			return False
 
 		for i in range(len(self.subTypes)):
@@ -870,6 +872,8 @@ def mergeTypes(t1, t2):
 		return t1
 	elif isinstance(t1, Sail_t_unknown) or isinstance(t1, Sail_t_error):
 		return t2
+	elif isinstance(t1.generalise(), Sail_t_string) and isinstance(t2.generalise(), Sail_t_string):
+		return Sail_t_string()
 	else:
 		return None
 
@@ -883,6 +887,8 @@ def isSubType(t1, t2):
 		return True
 	elif isinstance(t1, Sail_t_member) and isinstance(t2, Sail_t_range) and t1.subType == Sail_t_member.INT:
 		return t2.low <= min(t1.members) and max(t1.members) <= t2.high
+	elif isinstance(t1, Sail_t_range) and isinstance(t2, Sail_t_member) and t2.subType == Sail_t_member.INT:
+		return isSubType(Sail_t_member(list(range(t1.low, t1.high))), t2)
 	elif isinstance(t1, Sail_t_range) and isinstance(t2, Sail_t_range):
 		return t2.low <= t1.low and t1.high <= t2.high
 	elif isRangeType(t1) and isinstance(t2, Sail_t_nat):

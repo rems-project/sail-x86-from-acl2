@@ -48,13 +48,14 @@ forced_return_types = {
 
 
 forced_argument_types = {
-        'wb-1': {'value': Sail_t_int()}
+        'wb-1': {'value': Sail_t_int()},
+        'canonical-address-p': {'lin-addr': Sail_t_int()}
 }
 
 forced_variable_types = {
         'check-alignment?': Sail_t_bool(),
         'inst-ac?': Sail_t_bool(),
-        'undefined-flags': Sail_t_bits(32),
+        'undefined-flags': Sail_t_bits(32)
 }
 
 '''

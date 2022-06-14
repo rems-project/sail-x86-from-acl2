@@ -166,8 +166,8 @@ http://www.cs.utexas.edu/users/moore/acl2/manuals/current/manual/index-seo.php/A
 */
 val unsigned_byte_p_int : (int, int) -> bool effect {escape}
 function unsigned_byte_p_int (bits, x) = {
-	assert(bits >= 0 & x >= 0);
-	x < pow2(bits)
+	assert(bits >= 0);
+	0 <= x & x < pow2(bits)
 }
 
 val unsigned_byte_p_bits : forall 'n, 'n >= 0. (int, bits('n)) -> bool

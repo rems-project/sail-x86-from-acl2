@@ -896,6 +896,7 @@ def num_op_gen(op, resultType, operandType=None, numOfArgs=None, infix=True):
 		- infix : bool
 	"""
 	def tr_num_op(ACL2ast, env):
+		nonlocal operandType, numOfArgs, infix
 		# Extract the arguments and perform rudimentary checks
 		args = ACL2ast[1:]
 		if not all(type(item) in [list, str, ACL2quote] for item in args): sys.exit(f"Error: type of num op argument not permitted: {ACL2ast}")
@@ -916,28 +917,31 @@ def num_op_gen(op, resultType, operandType=None, numOfArgs=None, infix=True):
 				print(f"Warning: could not infer type for argument in num op")
 				typesSail.append(Sail_t_int())
 
+		typesSail_pp = ", ".join([t.pp() for t in typesSail])
+
 		# Check we have at least 2 elements for the num op
 		if len(argsSail) < 2: sys.exit(f"Error: not enough arguments for num op {ACL2ast}")
 
-		nonlocal operandType
 		if operandType is None:
 			if len(argsSail) > 2:
-				operandType = resultType
+				mergedOperandType = resultType
 			else:
-				operandType = argsSail[0][0].getType()
-				for arg in argsSail[:-1]:
-					operandType = mergeTypes(operandType, arg[0].getType())
-					if operandType is None:
-						sys.exit(f"Error: cannot merge types in num op {ALC2ast}")
+				mergedOperandType = argsSail[0][0].getType()
+				for arg in argsSail[1:]:
+					mergedOperandType = mergeTypes(mergedOperandType, arg[0].getType())
+					if mergedOperandType is None:
+						sys.exit(f"Error: cannot merge types {typesSail_pp} in num op {ACL2ast}")
+		else:
+			mergedOperandType = operandType
 
 		for (i, arg) in enumerate(argsSail):
-			new = coerceExpr(arg[0], operandType)
+			new = coerceExpr(arg[0], mergedOperandType)
 			if new is None:
-				sys.exit(f"Error: cannot coerce operand ({arg[0].pp()} : {arg[0].getType().pp()}) to {operandType.pp()}")
+				sys.exit(f"Error: cannot coerce operand ({arg[0].pp()} : {arg[0].getType().pp()}) to {mergedOperandType.pp()}")
 			argsSail[i] = [new]
 
 		# Construct the base AST and remove those elements from the args/types lists
-		fnType = Sail_t_fn([operandType, operandType], resultType)
+		fnType = Sail_t_fn([mergedOperandType, mergedOperandType], resultType)
 		currentAST = [SailApp(
 						fn = SailHandwrittenFn(op, typ = fnType),
 						actuals = argsSail[-2] + argsSail[-1],
@@ -995,7 +999,7 @@ def _the_helper(theType, sailTerm):
 	except:
 		termType = Sail_t_unknown()
 
-	if termType == theType:
+	if isSubType(termType, theType):
 		retTerm = sailTerm[0]
 	# Select the correct Sail `the`
 	elif isinstance(theType, Sail_t_int):
