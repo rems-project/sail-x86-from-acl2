@@ -60,52 +60,44 @@ function trunc (n, x) = {
     sail_mask(8 * n, x)
 }
 
-val the_int : int -> int
+val nat_of_int : int -> nat
 
-function the_int i = {
-    i
-}
-
-val the_nat : int -> nat
-
-function the_nat i = {
+function nat_of_int i = {
     assert(i >= 0);
     i
 }
 
-val the_range : forall 'n 'm 'i, 'n <= 'm.
+val nfix : int -> nat
+
+function nfix i = {
+    if i >= 0 then {
+        i
+    } else 0
+}
+
+val check_range : forall 'n 'm 'i, 'n <= 'm.
   (int('n), int('m), int('i)) -> {'j, ('n <= 'j & 'j <= 'm & 'i == 'j). int('j)}
 
-function the_range (n, m, i) = {
+function check_range (n, m, i) = {
     assert(n <= i & i <= m);
     i
 }
 
-val bits_of_bits : forall 'n 'm, ('n >= 0 & 'm >= 0). (int('n), bits('m)) -> bits('n)
+val sail_mask_signed : forall 'len 'v, ('len >= 0 & 'v >= 0). (int('len), bits('v)) -> bits('len)
 
-function bits_of_bits (n, x) = {
-    sail_mask(n, x)
-}
-
-val bits_of_int : forall 'n, 'n >= 0. (int('n), int) -> bits('n)
-
-function bits_of_int (n, x) = {
-    get_slice_int(n, x, 0)
-}
-
-overload the_bits = {bits_of_bits, bits_of_int}
-
-val sbits_of_bits : forall 'n 'm, ('n > 0 & 'm >= 0). (int('n), bits('m)) -> bits('n)
-
-function sbits_of_bits (n, x) = {
-    if n <= length(x) then {
-        truncate(x, n)
+function sail_mask_signed (len, v) = {
+    if len <= length(v) then {
+        truncate(v, len)
     } else {
-        sail_sign_extend(x, n)
+        sail_sign_extend(v, len)
     }
 }
 
-overload the_sbits = {sbits_of_bits, bits_of_int}
+val bits_of_int : forall 'n, 'n >= 0. (int, int('n)) -> bits('n)
+
+function bits_of_int (x, n) = {
+    get_slice_int(n, x, 0)
+}
 
 val isEven : int -> bool
 
@@ -136,8 +128,8 @@ function in_list (x, xs) = {
 val unsigned_byte_p_int : (int, int) -> bool
 
 function unsigned_byte_p_int (bits, x) = {
-    assert(bits >= 0 & x >= 0);
-    x < pow2(bits)
+    assert(bits >= 0);
+    0 <= x & x < pow2(bits)
 }
 
 val unsigned_byte_p_bits : forall 'n, 'n >= 0. (int, bits('n)) -> bool
@@ -308,8 +300,6 @@ function binary_logext (size, i) = {
         negate(1)
     } else 0)
 }
-
-overload n_size = {bits_of_bits, bits_of_int}
 
 val ash_bits : forall 'n, 'n >= 0. (bits('n), int) -> bits('n)
 

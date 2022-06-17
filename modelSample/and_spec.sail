@@ -3,65 +3,65 @@ $include <string.sail>
 
 val gpr_and_spec_1 : (bits(8), bits(8), bits(32)) -> (bits(8), bits(32), bits(32)) effect {escape}
 function gpr_and_spec_1 (dst, src, input_rflags) =
-let dst = (n_size(8, dst)) : bits(8) in
-let src = (n_size(8, src)) : bits(8) in
-let input_rflags = (n32(input_rflags)) : bits(32) in
-let result = (slice(logand(dst, src), 0, 8)) : bits(8) in
-let cf = (0) : {|0|} in
-let pf = (pf_spec8(result)) : bits(1) in
-let zf = (the_bits(1, zf_spec(unsigned(result)))) : bits(1) in
-let sf = (sf_spec8(result)) : bits(1) in
-let of = (0) : {|0|} in
-let output_rflags = (change_rflagsbits(input_rflags, Some(get_slice_int(1, cf, 0)), None(), Some(pf), None(), None(), None(), Some(zf), Some(sf), None(), None(), None(), Some(get_slice_int(1, of, 0)), None(), None(), None(), None(), None(), None(), None(), None(), None(), None())) : bits(32) in
-let output_rflags = (n32(output_rflags)) : bits(32) in
-let undefined_flags = (set_rflagsbits_get_af(get_slice_int(1, 1, 0), get_slice_int(32, 0, 0))) : bits(32) in
+let dst : bits(8) = (0x08) in
+let src : bits(8) = (0x08) in
+let input_rflags : bits(32) = (n32(input_rflags)) in
+let result : bits(8) = (slice(logand(dst, src), 0, 8)) in
+let cf : {|0|} = (0) in
+let pf : bits(1) = (pf_spec8(result)) in
+let zf : bits(1) = (bits_of_int(zf_spec(unsigned(result)), 1)) in
+let sf : bits(1) = (sf_spec8(result)) in
+let of : {|0|} = (0) in
+let output_rflags : bits(32) = (change_rflagsbits(input_rflags, Some(bits_of_int(cf, 1)), None(), Some(pf), None(), None(), None(), Some(zf), Some(sf), None(), None(), None(), Some(bits_of_int(of, 1)), None(), None(), None(), None(), None(), None(), None(), None(), None(), None())) in
+let output_rflags : bits(32) = (n32(output_rflags)) in
+let undefined_flags : bits(32) = (set_rflagsbits_get_af(0b1, 0x0000_0000)) in
 (result, output_rflags, undefined_flags)
 
 val gpr_and_spec_2 : (bits(16), bits(16), bits(32)) -> (bits(16), bits(32), bits(32)) effect {escape}
 function gpr_and_spec_2 (dst, src, input_rflags) =
-let dst = (n_size(16, dst)) : bits(16) in
-let src = (n_size(16, src)) : bits(16) in
-let input_rflags = (n32(input_rflags)) : bits(32) in
-let result = (slice(logand(dst, src), 0, 16)) : bits(16) in
-let cf = (0) : {|0|} in
-let pf = (pf_spec16(result)) : bits(1) in
-let zf = (the_bits(1, zf_spec(unsigned(result)))) : bits(1) in
-let sf = (sf_spec16(result)) : bits(1) in
-let of = (0) : {|0|} in
-let output_rflags = (change_rflagsbits(input_rflags, Some(get_slice_int(1, cf, 0)), None(), Some(pf), None(), None(), None(), Some(zf), Some(sf), None(), None(), None(), Some(get_slice_int(1, of, 0)), None(), None(), None(), None(), None(), None(), None(), None(), None(), None())) : bits(32) in
-let output_rflags = (n32(output_rflags)) : bits(32) in
-let undefined_flags = (set_rflagsbits_get_af(get_slice_int(1, 1, 0), get_slice_int(32, 0, 0))) : bits(32) in
+let dst : bits(16) = (0x0010) in
+let src : bits(16) = (0x0010) in
+let input_rflags : bits(32) = (n32(input_rflags)) in
+let result : bits(16) = (slice(logand(dst, src), 0, 16)) in
+let cf : {|0|} = (0) in
+let pf : bits(1) = (pf_spec16(result)) in
+let zf : bits(1) = (bits_of_int(zf_spec(unsigned(result)), 1)) in
+let sf : bits(1) = (sf_spec16(result)) in
+let of : {|0|} = (0) in
+let output_rflags : bits(32) = (change_rflagsbits(input_rflags, Some(bits_of_int(cf, 1)), None(), Some(pf), None(), None(), None(), Some(zf), Some(sf), None(), None(), None(), Some(bits_of_int(of, 1)), None(), None(), None(), None(), None(), None(), None(), None(), None(), None())) in
+let output_rflags : bits(32) = (n32(output_rflags)) in
+let undefined_flags : bits(32) = (set_rflagsbits_get_af(0b1, 0x0000_0000)) in
 (result, output_rflags, undefined_flags)
 
 val gpr_and_spec_4 : (bits(32), bits(32), bits(32)) -> (bits(32), bits(32), bits(32)) effect {escape}
 function gpr_and_spec_4 (dst, src, input_rflags) =
-let dst = (n_size(32, dst)) : bits(32) in
-let src = (n_size(32, src)) : bits(32) in
-let input_rflags = (n32(input_rflags)) : bits(32) in
-let result = (slice(logand(dst, src), 0, 32)) : bits(32) in
-let cf = (0) : {|0|} in
-let pf = (pf_spec32(result)) : bits(1) in
-let zf = (the_bits(1, zf_spec(unsigned(result)))) : bits(1) in
-let sf = (sf_spec32(result)) : bits(1) in
-let of = (0) : {|0|} in
-let output_rflags = (change_rflagsbits(input_rflags, Some(get_slice_int(1, cf, 0)), None(), Some(pf), None(), None(), None(), Some(zf), Some(sf), None(), None(), None(), Some(get_slice_int(1, of, 0)), None(), None(), None(), None(), None(), None(), None(), None(), None(), None())) : bits(32) in
-let output_rflags = (n32(output_rflags)) : bits(32) in
-let undefined_flags = (set_rflagsbits_get_af(get_slice_int(1, 1, 0), get_slice_int(32, 0, 0))) : bits(32) in
+let dst : bits(32) = (0x0000_0020) in
+let src : bits(32) = (0x0000_0020) in
+let input_rflags : bits(32) = (n32(input_rflags)) in
+let result : bits(32) = (slice(logand(dst, src), 0, 32)) in
+let cf : {|0|} = (0) in
+let pf : bits(1) = (pf_spec32(result)) in
+let zf : bits(1) = (bits_of_int(zf_spec(unsigned(result)), 1)) in
+let sf : bits(1) = (sf_spec32(result)) in
+let of : {|0|} = (0) in
+let output_rflags : bits(32) = (change_rflagsbits(input_rflags, Some(bits_of_int(cf, 1)), None(), Some(pf), None(), None(), None(), Some(zf), Some(sf), None(), None(), None(), Some(bits_of_int(of, 1)), None(), None(), None(), None(), None(), None(), None(), None(), None(), None())) in
+let output_rflags : bits(32) = (n32(output_rflags)) in
+let undefined_flags : bits(32) = (set_rflagsbits_get_af(0b1, 0x0000_0000)) in
 (result, output_rflags, undefined_flags)
 
 val gpr_and_spec_8 : (bits(64), bits(64), bits(32)) -> (bits(64), bits(32), bits(32)) effect {escape}
 function gpr_and_spec_8 (dst, src, input_rflags) =
-let dst = (n_size(64, dst)) : bits(64) in
-let src = (n_size(64, src)) : bits(64) in
-let input_rflags = (n32(input_rflags)) : bits(32) in
-let result = (slice(logand(dst, src), 0, 64)) : bits(64) in
-let cf = (0) : {|0|} in
-let pf = (pf_spec64(result)) : bits(1) in
-let zf = (the_bits(1, zf_spec(unsigned(result)))) : bits(1) in
-let sf = (sf_spec64(result)) : bits(1) in
-let of = (0) : {|0|} in
-let output_rflags = (change_rflagsbits(input_rflags, Some(get_slice_int(1, cf, 0)), None(), Some(pf), None(), None(), None(), Some(zf), Some(sf), None(), None(), None(), Some(get_slice_int(1, of, 0)), None(), None(), None(), None(), None(), None(), None(), None(), None(), None())) : bits(32) in
-let output_rflags = (n32(output_rflags)) : bits(32) in
-let undefined_flags = (set_rflagsbits_get_af(get_slice_int(1, 1, 0), get_slice_int(32, 0, 0))) : bits(32) in
+let dst : bits(64) = (0x0000_0000_0000_0040) in
+let src : bits(64) = (0x0000_0000_0000_0040) in
+let input_rflags : bits(32) = (n32(input_rflags)) in
+let result : bits(64) = (slice(logand(dst, src), 0, 64)) in
+let cf : {|0|} = (0) in
+let pf : bits(1) = (pf_spec64(result)) in
+let zf : bits(1) = (bits_of_int(zf_spec(unsigned(result)), 1)) in
+let sf : bits(1) = (sf_spec64(result)) in
+let of : {|0|} = (0) in
+let output_rflags : bits(32) = (change_rflagsbits(input_rflags, Some(bits_of_int(cf, 1)), None(), Some(pf), None(), None(), None(), Some(zf), Some(sf), None(), None(), None(), Some(bits_of_int(of, 1)), None(), None(), None(), None(), None(), None(), None(), None(), None(), None())) in
+let output_rflags : bits(32) = (n32(output_rflags)) in
+let undefined_flags : bits(32) = (set_rflagsbits_get_af(0b1, 0x0000_0000)) in
 (result, output_rflags, undefined_flags)
 

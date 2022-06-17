@@ -63,14 +63,14 @@ function of_spec64 signed_raw_result = {
 val zf_spec : nat -> {|0, 1|}
 
 function zf_spec result = {
-    if get_slice_int(8, result, 0) == get_slice_int(8, 0, 0) then 1 else 0
+    if result == 0 then 1 else 0
 }
 
-val bitcount8 : bits(8) -> int
+val bitcount8 : bits(8) -> nat
 
 function bitcount8 x = {
     if x == 0 then 0 else {
-        unsigned(the_bits(1, loghead(1, unsigned(x)))) + the_range(0, 8, bitcount8(the_bits(8, logtail(1, unsigned(x)))))
+        unsigned(bits_of_int(loghead(1, unsigned(x)), 1)) + check_range(0, 8, bitcount8(bits_of_int(logtail(1, unsigned(x)), 8)))
     }
 }
 
@@ -137,159 +137,159 @@ function general_sf_spec_fn (result_nbits, result) = {
 val add_af_spec8 : (bits(8), bits(8)) -> bits(1)
 
 function add_af_spec8 (dst, src) = {
-    let dst_3_0 = slice(dst, 0, 4) : bits(4);
-    let src_3_0 = slice(src, 0, 4) : bits(4);
-    let add = the_bits(5, unsigned(dst_3_0) + unsigned(src_3_0)) : bits(5);
-    let af = bool_to_bit(15 < unsigned(add)) : bits(1);
+    let dst_3_0 : bits(4) = slice(dst, 0, 4);
+    let src_3_0 : bits(4) = slice(src, 0, 4);
+    let add : bits(5) = bits_of_int(unsigned(dst_3_0) + unsigned(src_3_0), 5);
+    let af : bits(1) = bool_to_bit(15 < unsigned(add));
     af
 }
 
 val add_af_spec16 : (bits(16), bits(16)) -> bits(1)
 
 function add_af_spec16 (dst, src) = {
-    let dst_3_0 = slice(dst, 0, 4) : bits(4);
-    let src_3_0 = slice(src, 0, 4) : bits(4);
-    let add = the_bits(5, unsigned(dst_3_0) + unsigned(src_3_0)) : bits(5);
-    let af = bool_to_bit(15 < unsigned(add)) : bits(1);
+    let dst_3_0 : bits(4) = slice(dst, 0, 4);
+    let src_3_0 : bits(4) = slice(src, 0, 4);
+    let add : bits(5) = bits_of_int(unsigned(dst_3_0) + unsigned(src_3_0), 5);
+    let af : bits(1) = bool_to_bit(15 < unsigned(add));
     af
 }
 
 val add_af_spec32 : (bits(32), bits(32)) -> bits(1)
 
 function add_af_spec32 (dst, src) = {
-    let dst_3_0 = slice(dst, 0, 4) : bits(4);
-    let src_3_0 = slice(src, 0, 4) : bits(4);
-    let add = the_bits(5, unsigned(dst_3_0) + unsigned(src_3_0)) : bits(5);
-    let af = bool_to_bit(15 < unsigned(add)) : bits(1);
+    let dst_3_0 : bits(4) = slice(dst, 0, 4);
+    let src_3_0 : bits(4) = slice(src, 0, 4);
+    let add : bits(5) = bits_of_int(unsigned(dst_3_0) + unsigned(src_3_0), 5);
+    let af : bits(1) = bool_to_bit(15 < unsigned(add));
     af
 }
 
 val add_af_spec64 : (bits(64), bits(64)) -> bits(1)
 
 function add_af_spec64 (dst, src) = {
-    let dst_3_0 = slice(dst, 0, 4) : bits(4);
-    let src_3_0 = slice(src, 0, 4) : bits(4);
-    let add = the_bits(5, unsigned(dst_3_0) + unsigned(src_3_0)) : bits(5);
-    let af = bool_to_bit(15 < unsigned(add)) : bits(1);
+    let dst_3_0 : bits(4) = slice(dst, 0, 4);
+    let src_3_0 : bits(4) = slice(src, 0, 4);
+    let add : bits(5) = bits_of_int(unsigned(dst_3_0) + unsigned(src_3_0), 5);
+    let af : bits(1) = bool_to_bit(15 < unsigned(add));
     af
 }
 
 val sub_af_spec8 : (bits(8), bits(8)) -> bits(1)
 
 function sub_af_spec8 (dst, src) = {
-    let dst_3_0 = slice(dst, 0, 4) : bits(4);
-    let src_3_0 = slice(src, 0, 4) : bits(4);
-    let sub = the_sbits(5, unsigned(dst_3_0) - unsigned(src_3_0)) : sbits(5);
-    let af = bool_to_bit(signed(sub) < 0) : bits(1);
+    let dst_3_0 : bits(4) = slice(dst, 0, 4);
+    let src_3_0 : bits(4) = slice(src, 0, 4);
+    let sub : sbits(5) = bits_of_int(unsigned(dst_3_0) - unsigned(src_3_0), 5);
+    let af : bits(1) = bool_to_bit(signed(sub) < 0);
     af
 }
 
 val sub_af_spec16 : (bits(16), bits(16)) -> bits(1)
 
 function sub_af_spec16 (dst, src) = {
-    let dst_3_0 = slice(dst, 0, 4) : bits(4);
-    let src_3_0 = slice(src, 0, 4) : bits(4);
-    let sub = the_sbits(5, unsigned(dst_3_0) - unsigned(src_3_0)) : sbits(5);
-    let af = bool_to_bit(signed(sub) < 0) : bits(1);
+    let dst_3_0 : bits(4) = slice(dst, 0, 4);
+    let src_3_0 : bits(4) = slice(src, 0, 4);
+    let sub : sbits(5) = bits_of_int(unsigned(dst_3_0) - unsigned(src_3_0), 5);
+    let af : bits(1) = bool_to_bit(signed(sub) < 0);
     af
 }
 
 val sub_af_spec32 : (bits(32), bits(32)) -> bits(1)
 
 function sub_af_spec32 (dst, src) = {
-    let dst_3_0 = slice(dst, 0, 4) : bits(4);
-    let src_3_0 = slice(src, 0, 4) : bits(4);
-    let sub = the_sbits(5, unsigned(dst_3_0) - unsigned(src_3_0)) : sbits(5);
-    let af = bool_to_bit(signed(sub) < 0) : bits(1);
+    let dst_3_0 : bits(4) = slice(dst, 0, 4);
+    let src_3_0 : bits(4) = slice(src, 0, 4);
+    let sub : sbits(5) = bits_of_int(unsigned(dst_3_0) - unsigned(src_3_0), 5);
+    let af : bits(1) = bool_to_bit(signed(sub) < 0);
     af
 }
 
 val sub_af_spec64 : (bits(64), bits(64)) -> bits(1)
 
 function sub_af_spec64 (dst, src) = {
-    let dst_3_0 = slice(dst, 0, 4) : bits(4);
-    let src_3_0 = slice(src, 0, 4) : bits(4);
-    let sub = the_sbits(5, unsigned(dst_3_0) - unsigned(src_3_0)) : sbits(5);
-    let af = bool_to_bit(signed(sub) < 0) : bits(1);
+    let dst_3_0 : bits(4) = slice(dst, 0, 4);
+    let src_3_0 : bits(4) = slice(src, 0, 4);
+    let sub : sbits(5) = bits_of_int(unsigned(dst_3_0) - unsigned(src_3_0), 5);
+    let af : bits(1) = bool_to_bit(signed(sub) < 0);
     af
 }
 
 val adc_af_spec8 : (bits(8), bits(8), bits(1)) -> bits(1)
 
 function adc_af_spec8 (dst, src, cf) = {
-    let dst_3_0 = slice(dst, 0, 4) : bits(4);
-    let src_3_0 = slice(src, 0, 4) : bits(4);
-    let adc = the_bits(6, unsigned(dst_3_0) + (unsigned(src_3_0) + unsigned(cf))) : bits(6);
-    let af = bool_to_bit(15 < unsigned(adc)) : bits(1);
+    let dst_3_0 : bits(4) = slice(dst, 0, 4);
+    let src_3_0 : bits(4) = slice(src, 0, 4);
+    let adc : bits(6) = bits_of_int(unsigned(dst_3_0) + (unsigned(src_3_0) + unsigned(cf)), 6);
+    let af : bits(1) = bool_to_bit(15 < unsigned(adc));
     af
 }
 
 val adc_af_spec16 : (bits(16), bits(16), bits(1)) -> bits(1)
 
 function adc_af_spec16 (dst, src, cf) = {
-    let dst_3_0 = slice(dst, 0, 4) : bits(4);
-    let src_3_0 = slice(src, 0, 4) : bits(4);
-    let adc = the_bits(6, unsigned(dst_3_0) + (unsigned(src_3_0) + unsigned(cf))) : bits(6);
-    let af = bool_to_bit(15 < unsigned(adc)) : bits(1);
+    let dst_3_0 : bits(4) = slice(dst, 0, 4);
+    let src_3_0 : bits(4) = slice(src, 0, 4);
+    let adc : bits(6) = bits_of_int(unsigned(dst_3_0) + (unsigned(src_3_0) + unsigned(cf)), 6);
+    let af : bits(1) = bool_to_bit(15 < unsigned(adc));
     af
 }
 
 val adc_af_spec32 : (bits(32), bits(32), bits(1)) -> bits(1)
 
 function adc_af_spec32 (dst, src, cf) = {
-    let dst_3_0 = slice(dst, 0, 4) : bits(4);
-    let src_3_0 = slice(src, 0, 4) : bits(4);
-    let adc = the_bits(6, unsigned(dst_3_0) + (unsigned(src_3_0) + unsigned(cf))) : bits(6);
-    let af = bool_to_bit(15 < unsigned(adc)) : bits(1);
+    let dst_3_0 : bits(4) = slice(dst, 0, 4);
+    let src_3_0 : bits(4) = slice(src, 0, 4);
+    let adc : bits(6) = bits_of_int(unsigned(dst_3_0) + (unsigned(src_3_0) + unsigned(cf)), 6);
+    let af : bits(1) = bool_to_bit(15 < unsigned(adc));
     af
 }
 
 val adc_af_spec64 : (bits(64), bits(64), bits(1)) -> bits(1)
 
 function adc_af_spec64 (dst, src, cf) = {
-    let dst_3_0 = slice(dst, 0, 4) : bits(4);
-    let src_3_0 = slice(src, 0, 4) : bits(4);
-    let adc = the_bits(6, unsigned(dst_3_0) + (unsigned(src_3_0) + unsigned(cf))) : bits(6);
-    let af = bool_to_bit(15 < unsigned(adc)) : bits(1);
+    let dst_3_0 : bits(4) = slice(dst, 0, 4);
+    let src_3_0 : bits(4) = slice(src, 0, 4);
+    let adc : bits(6) = bits_of_int(unsigned(dst_3_0) + (unsigned(src_3_0) + unsigned(cf)), 6);
+    let af : bits(1) = bool_to_bit(15 < unsigned(adc));
     af
 }
 
 val sbb_af_spec8 : (bits(8), bits(8), bits(1)) -> bits(1)
 
 function sbb_af_spec8 (dst, src, cf) = {
-    let dst_3_0 = slice(dst, 0, 4) : bits(4);
-    let src_3_0 = slice(src, 0, 4) : bits(4);
-    let sbb = (unsigned(dst_3_0) - (unsigned(src_3_0) + unsigned(the_bits(4, cf)))) : int;
-    let af = bool_to_bit(sbb < 0) : bits(1);
+    let dst_3_0 : bits(4) = slice(dst, 0, 4);
+    let src_3_0 : bits(4) = slice(src, 0, 4);
+    let sbb : int = unsigned(dst_3_0) - (unsigned(src_3_0) + unsigned(sail_zero_extend(cf, 4)));
+    let af : bits(1) = bool_to_bit(sbb < 0);
     af
 }
 
 val sbb_af_spec16 : (bits(16), bits(16), bits(1)) -> bits(1)
 
 function sbb_af_spec16 (dst, src, cf) = {
-    let dst_3_0 = slice(dst, 0, 4) : bits(4);
-    let src_3_0 = slice(src, 0, 4) : bits(4);
-    let sbb = (unsigned(dst_3_0) - (unsigned(src_3_0) + unsigned(the_bits(4, cf)))) : int;
-    let af = bool_to_bit(sbb < 0) : bits(1);
+    let dst_3_0 : bits(4) = slice(dst, 0, 4);
+    let src_3_0 : bits(4) = slice(src, 0, 4);
+    let sbb : int = unsigned(dst_3_0) - (unsigned(src_3_0) + unsigned(sail_zero_extend(cf, 4)));
+    let af : bits(1) = bool_to_bit(sbb < 0);
     af
 }
 
 val sbb_af_spec32 : (bits(32), bits(32), bits(1)) -> bits(1)
 
 function sbb_af_spec32 (dst, src, cf) = {
-    let dst_3_0 = slice(dst, 0, 4) : bits(4);
-    let src_3_0 = slice(src, 0, 4) : bits(4);
-    let sbb = (unsigned(dst_3_0) - (unsigned(src_3_0) + unsigned(the_bits(4, cf)))) : int;
-    let af = bool_to_bit(sbb < 0) : bits(1);
+    let dst_3_0 : bits(4) = slice(dst, 0, 4);
+    let src_3_0 : bits(4) = slice(src, 0, 4);
+    let sbb : int = unsigned(dst_3_0) - (unsigned(src_3_0) + unsigned(sail_zero_extend(cf, 4)));
+    let af : bits(1) = bool_to_bit(sbb < 0);
     af
 }
 
 val sbb_af_spec64 : (bits(64), bits(64), bits(1)) -> bits(1)
 
 function sbb_af_spec64 (dst, src, cf) = {
-    let dst_3_0 = slice(dst, 0, 4) : bits(4);
-    let src_3_0 = slice(src, 0, 4) : bits(4);
-    let sbb = (unsigned(dst_3_0) - (unsigned(src_3_0) + unsigned(the_bits(4, cf)))) : int;
-    let af = bool_to_bit(sbb < 0) : bits(1);
+    let dst_3_0 : bits(4) = slice(dst, 0, 4);
+    let src_3_0 : bits(4) = slice(src, 0, 4);
+    let sbb : int = unsigned(dst_3_0) - (unsigned(src_3_0) + unsigned(sail_zero_extend(cf, 4)));
+    let af : bits(1) = bool_to_bit(sbb < 0);
     af
 }

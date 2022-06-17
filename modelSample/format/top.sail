@@ -17,7 +17,7 @@ $include "./topfp.sail"
 val x86_hlt : (range(0, 4), sbits(48), sbits(48), bits(52), bits(8), bits(8), bits(8), bits(8)) -> unit
 
 function x86_hlt (proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode, modr_m, sib) = {
-    let ctx = "X86-HLT" : string;
+    let ctx : string = "X86-HLT";
     write_iptr(proc_mode, temp_rip);
     throw(Emsg("Model state error: :LEGAL-HALT"))
 }
@@ -25,22 +25,22 @@ function x86_hlt (proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode, mo
 val x86_cmc_clc_stc_cld_std : (range(0, 4), sbits(48), sbits(48), bits(52), bits(8), bits(8), bits(8), bits(8)) -> unit
 
 function x86_cmc_clc_stc_cld_std (proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode, modr_m, sib) = {
-    let ctx = "X86-CMC/CLC/STC/CLD/STD" : string;
+    let ctx : string = "X86-CMC/CLC/STC/CLD/STD";
     (match opcode {
-      245 => let cf =
-        the_bits(1, let rflags_var = rflags : bits(32) in the_bits(2, rflagsbits_get_cf(rflags_var))) : bits(1)
+      245 => let cf : bits(1) =
+        truncate(let rflags_var : bits(32) = rflags in sail_zero_extend(rflagsbits_get_cf(rflags_var), 2), 1)
       in
-      let not_cf = (if the_bits(8, cf) == get_slice_int(8, 1, 0) then 0 else 1) : {|0, 1|} in
-      let rflags_var = rflags : bits(32) in
-      let new_rflags = set_rflagsbits_get_cf(get_slice_int(1, not_cf, 0), rflags_var) : bits(32) in rflags = new_rflags,
-      248 => let rflags_var = rflags : bits(32) in
-      let new_rflags = set_rflagsbits_get_cf(get_slice_int(1, 0, 0), rflags_var) : bits(32) in rflags = new_rflags,
-      249 => let rflags_var = rflags : bits(32) in
-      let new_rflags = set_rflagsbits_get_cf(get_slice_int(1, 1, 0), rflags_var) : bits(32) in rflags = new_rflags,
-      252 => let rflags_var = rflags : bits(32) in
-      let new_rflags = set_rflagsbits_get_df(get_slice_int(1, 0, 0), rflags_var) : bits(32) in rflags = new_rflags,
-      _ => let rflags_var = rflags : bits(32) in
-      let new_rflags = set_rflagsbits_get_df(get_slice_int(1, 1, 0), rflags_var) : bits(32) in rflags = new_rflags
+      let not_cf : {|0, 1|} = if cf == 0b1 then 0 else 1 in
+      let rflags_var : bits(32) = rflags in
+      let new_rflags : bits(32) = set_rflagsbits_get_cf(bits_of_int(not_cf, 1), rflags_var) in rflags = new_rflags,
+      248 => let rflags_var : bits(32) = rflags in
+      let new_rflags : bits(32) = set_rflagsbits_get_cf(0b0, rflags_var) in rflags = new_rflags,
+      249 => let rflags_var : bits(32) = rflags in
+      let new_rflags : bits(32) = set_rflagsbits_get_cf(0b1, rflags_var) in rflags = new_rflags,
+      252 => let rflags_var : bits(32) = rflags in
+      let new_rflags : bits(32) = set_rflagsbits_get_df(0b0, rflags_var) in rflags = new_rflags,
+      _ => let rflags_var : bits(32) = rflags in
+      let new_rflags : bits(32) = set_rflagsbits_get_df(0b1, rflags_var) in rflags = new_rflags
     }) : unit;
     write_iptr(proc_mode, temp_rip)
 }
@@ -48,16 +48,16 @@ function x86_cmc_clc_stc_cld_std (proc_mode, start_rip, temp_rip, prefixes, rex_
 val x86_sahf : (range(0, 4), sbits(48), sbits(48), bits(52), bits(8), bits(8), bits(8), bits(8)) -> unit
 
 function x86_sahf (proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode, modr_m, sib) = {
-    let ctx = "X86-SAHF" : string;
-    let ax = rr16(get_slice_int(4, 0, 0)) : bits(16);
-    let ah = the_bits(8, ash(unsigned(ax), -8)) : bits(8);
-    let rflags_var = rflags : bits(32);
-    let cf = rflagsbits_get_cf(the_bits(32, ah)) : bits(1);
-    let pf = rflagsbits_get_pf(the_bits(32, ah)) : bits(1);
-    let af = rflagsbits_get_af(the_bits(32, ah)) : bits(1);
-    let zf = rflagsbits_get_zf(the_bits(32, ah)) : bits(1);
-    let sf = rflagsbits_get_sf(the_bits(32, ah)) : bits(1);
-    let new_rflags = set_rflagsbits_get_cf(cf, set_rflagsbits_get_pf(pf, set_rflagsbits_get_af(af, set_rflagsbits_get_zf(zf, set_rflagsbits_get_sf(sf, rflags_var))))) : bits(32);
+    let ctx : string = "X86-SAHF";
+    let ax : bits(16) = rr16(0x0);
+    let ah : bits(8) = bits_of_int(ash(unsigned(ax), -8), 8);
+    let rflags_var : bits(32) = rflags;
+    let cf : bits(1) = rflagsbits_get_cf(sail_zero_extend(ah, 32));
+    let pf : bits(1) = rflagsbits_get_pf(sail_zero_extend(ah, 32));
+    let af : bits(1) = rflagsbits_get_af(sail_zero_extend(ah, 32));
+    let zf : bits(1) = rflagsbits_get_zf(sail_zero_extend(ah, 32));
+    let sf : bits(1) = rflagsbits_get_sf(sail_zero_extend(ah, 32));
+    let new_rflags : bits(32) = set_rflagsbits_get_cf(cf, set_rflagsbits_get_pf(pf, set_rflagsbits_get_af(af, set_rflagsbits_get_zf(zf, set_rflagsbits_get_sf(sf, rflags_var)))));
     rflags = new_rflags;
     write_iptr(proc_mode, temp_rip)
 }
@@ -65,16 +65,16 @@ function x86_sahf (proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode, m
 val x86_lahf : (range(0, 4), sbits(48), sbits(48), bits(52), bits(8), bits(8), bits(8), bits(8)) -> unit
 
 function x86_lahf (proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode, modr_m, sib) = {
-    let ctx = "X86-LAHF" : string;
-    let rflags_var = rflags : bits(32);
-    let cf = rflagsbits_get_cf(rflags_var) : bits(1);
-    let pf = rflagsbits_get_pf(rflags_var) : bits(1);
-    let af = rflagsbits_get_af(rflags_var) : bits(1);
-    let zf = rflagsbits_get_zf(rflags_var) : bits(1);
-    let sf = rflagsbits_get_sf(rflags_var) : bits(1);
-    let new_ah = the_bits(8, set_rflagsbits_get_cf(cf, set_rflagsbits_get_res1(get_slice_int(1, 1, 0), set_rflagsbits_get_pf(pf, set_rflagsbits_get_res2(get_slice_int(1, 0, 0), set_rflagsbits_get_af(af, set_rflagsbits_get_res3(get_slice_int(1, 0, 0), set_rflagsbits_get_zf(zf, set_rflagsbits_get_sf(sf, get_slice_int(32, 0, 0)))))))))) : bits(8);
-    let ax = rr16(get_slice_int(4, 0, 0)) : bits(16);
-    let new_ax = the_bits(16, logior(unsigned(logand(get_slice_int(16, 255, 0), ax)), ash(unsigned(new_ah), 8))) : bits(16);
-    wr16(get_slice_int(4, 0, 0), new_ax);
+    let ctx : string = "X86-LAHF";
+    let rflags_var : bits(32) = rflags;
+    let cf : bits(1) = rflagsbits_get_cf(rflags_var);
+    let pf : bits(1) = rflagsbits_get_pf(rflags_var);
+    let af : bits(1) = rflagsbits_get_af(rflags_var);
+    let zf : bits(1) = rflagsbits_get_zf(rflags_var);
+    let sf : bits(1) = rflagsbits_get_sf(rflags_var);
+    let new_ah : bits(8) = truncate(set_rflagsbits_get_cf(cf, set_rflagsbits_get_res1(0b1, set_rflagsbits_get_pf(pf, set_rflagsbits_get_res2(0b0, set_rflagsbits_get_af(af, set_rflagsbits_get_res3(0b0, set_rflagsbits_get_zf(zf, set_rflagsbits_get_sf(sf, 0x00000000)))))))), 8);
+    let ax : bits(16) = rr16(0x0);
+    let new_ax : bits(16) = bits_of_int(logior(unsigned(logand(0x00ff, ax)), ash(unsigned(new_ah), 8)), 16);
+    wr16(0x0, new_ax);
     write_iptr(proc_mode, temp_rip)
 }

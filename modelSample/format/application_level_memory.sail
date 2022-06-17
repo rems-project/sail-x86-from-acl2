@@ -1,6 +1,6 @@
 $include "./state_field_thms.sail"
 
-val canonical_address_p : sbits(48) -> bool
+val canonical_address_p : int -> bool
 
 function canonical_address_p lin_addr = {
     signed_byte_p(48, lin_addr)
@@ -9,18 +9,18 @@ function canonical_address_p lin_addr = {
 val rvm08 : sbits(48) -> (option(string), bits(8))
 
 function rvm08 addr = {
-    if canonical_address_p(addr) then {
-        (None() : option(string), memi(the_bits(64, n48(addr))))
+    if canonical_address_p(signed(addr)) then {
+        (None() : option(string), memi(sail_zero_extend(n48(addr), 64)))
     } else {
-        (Some("rvm08"), get_slice_int(8, 0, 0))
+        (Some("rvm08"), 0x00)
     }
 }
 
 val wvm08 : (sbits(48), bits(8)) -> option(string)
 
 function wvm08 (addr, sailval) = {
-    if canonical_address_p(addr) then {
-        let x86 = bang_memi(the_bits(64, n48(addr)), n08(sailval)) : unit;
+    if canonical_address_p(signed(addr)) then {
+        let x86 : unit = bang_memi(sail_zero_extend(n48(addr), 64), n08(sailval));
         None() : option(string)
     } else {
         Some("wvm08")

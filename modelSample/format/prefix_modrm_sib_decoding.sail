@@ -4,7 +4,7 @@ $include "./dispatch_macros.sail"
 val get_one_byte_prefix_array_code : bits(8) -> {|0, 1, 2, 3, 4|}
 
 function get_one_byte_prefix_array_code byte = {
-    [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 4, 3, 2, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 0, 0, 0, 0, 0, 0, 0, 2, 0, 0, 0, 0, 0, 0, 0, 2, 0, 0, 0, 0, 0, 0, 0, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0] : vector(256, dec, {|0, 1, 2, 3, 4|})[the_range(0, 255, loghead(8, unsigned(byte)))]
+    [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 4, 3, 2, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 0, 0, 0, 0, 0, 0, 0, 2, 0, 0, 0, 0, 0, 0, 0, 2, 0, 0, 0, 0, 0, 0, 0, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0] : vector(256, dec, {|0, 1, 2, 3, 4|})[check_range(0, 255, loghead(8, unsigned(byte)))]
 }
 
 val compute_mandatory_prefix_for_two_byte_opcode : (range(0, 4), bits(8), bits(52)) -> bits(8)
@@ -31,7 +31,7 @@ function n32_bit_mode_one_byte_opcode_modr_m_p opcode = {
 val one_byte_opcode_modr_m_p : (range(0, 4), bits(8)) -> bool
 
 function one_byte_opcode_modr_m_p (proc_mode, opcode) = {
-    if get_slice_int(8, proc_mode, 0) == get_slice_int(8, 0, 0) then {
+    if proc_mode == 0 then {
         n64_bit_mode_one_byte_opcode_modr_m_p(opcode)
     } else {
         n32_bit_mode_one_byte_opcode_modr_m_p(opcode)
@@ -63,7 +63,7 @@ function n32_bit_mode_two_byte_opcode_modr_m_p (mandatory_prefix, opcode) = {
 val two_byte_opcode_modr_m_p : (range(0, 4), bits(8), bits(8)) -> bool
 
 function two_byte_opcode_modr_m_p (proc_mode, mandatory_prefix, opcode) = {
-    if get_slice_int(8, proc_mode, 0) == get_slice_int(8, 0, 0) then {
+    if proc_mode == 0 then {
         n64_bit_mode_two_byte_opcode_modr_m_p(mandatory_prefix, opcode)
     } else {
         n32_bit_mode_two_byte_opcode_modr_m_p(mandatory_prefix, opcode)
@@ -73,15 +73,14 @@ function two_byte_opcode_modr_m_p (proc_mode, mandatory_prefix, opcode) = {
 val vex_opcode_modr_m_p : (bits(24), bits(8)) -> bool
 
 function vex_opcode_modr_m_p (vex_prefixes, opcode) = {
-    if not_bool(opcode == get_slice_int(8, 119, 0)) then true else {
-        not_bool(vex_prefixes_map_p(get_slice_int(16, 15, 0), vex_prefixes))
+    if not_bool(opcode == 0x77) then true else {
+        not_bool(vex_prefixes_map_p(0x000f, vex_prefixes))
     }
 }
 
 val x86_decode_sib_p : (bits(8), bool) -> bool
 
 function x86_decode_sib_p (modr_m, n16_bit_addressp) = {
-    not_bool(n16_bit_addressp) & (let r_m = modr_m_get_r_m(modr_m) : bits(3) in
-    let mod_var = modr_m_get_mod(modr_m) : bits(2) in
-      the_bits(1, r_m) == get_slice_int(1, 4, 0) & not_bool(the_bits(1, mod_var) == get_slice_int(1, 3, 0)))
+    not_bool(n16_bit_addressp) & (let r_m : bits(3) = modr_m_get_r_m(modr_m) in
+    let mod_var : bits(2) = modr_m_get_mod(modr_m) in r_m == 0b100 & not_bool(mod_var == 0b11))
 }

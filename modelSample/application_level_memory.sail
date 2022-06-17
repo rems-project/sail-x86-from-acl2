@@ -7,20 +7,20 @@ $include "state_field_thms.sail"
  bit by the microarchitecture ( represented by the constant 
  @ ( ' *max-linear-address-size* ' ) in these books ) are set to either all ones or 
  all zeros.</p>*/
-val canonical_address_p : (sbits(48)) -> bool effect {escape}
+val canonical_address_p : (int) -> bool effect {escape}
 function canonical_address_p (lin_addr) =
 signed_byte_p(48, lin_addr)
 
 val rvm08 : (sbits(48)) -> (option(string), bits(8)) effect {escape, rmem, rreg}
 function rvm08 (addr) =
-if canonical_address_p(addr)
-then (None() : option(string), memi(the_bits(64, n48(addr))))
-else (Some("rvm08"), get_slice_int(8, 0, 0))
+if canonical_address_p(signed(addr))
+then (None() : option(string), memi(sail_zero_extend(n48(addr), 64)))
+else (Some("rvm08"), 0x00)
 
 val wvm08 : (sbits(48), bits(8)) -> option(string) effect {eamem, escape, rreg, wmv}
 function wvm08 (addr, sailval) =
-if canonical_address_p(addr)
-then let x86 = (bang_memi(the_bits(64, n48(addr)), n08(sailval))) : unit in
+if canonical_address_p(signed(addr))
+then let x86 : unit = (bang_memi(sail_zero_extend(n48(addr), 64), n08(sailval))) in
 None() : option(string)
 else Some("wvm08")
 

@@ -86,34 +86,34 @@ function set_prefixes_get_nxt (splicebits, inputbits) = {
 val change_prefixes : (bits(52), option(bits(4)), option(bits(8)), option(bits(8)), option(bits(8)), option(bits(8)), option(bits(8)), option(bits(8))) -> bits(52)
 
 function change_prefixes (input_bits, input_num, input_lck, input_rep, input_seg, input_opr, input_adr, input_nxt) = {
-    let output_num = (match input_num {
+    let output_num : bits(52) = match input_num {
       Some(input_num) => set_prefixes_get_num(input_num, input_bits),
       _ => input_bits
-    }) : bits(52) : bits(52);
-    let output_lck = (match input_lck {
+    };
+    let output_lck : bits(52) = match input_lck {
       Some(input_lck) => set_prefixes_get_lck(input_lck, output_num),
       _ => output_num
-    }) : bits(52) : bits(52);
-    let output_rep = (match input_rep {
+    };
+    let output_rep : bits(52) = match input_rep {
       Some(input_rep) => set_prefixes_get_rep(input_rep, output_lck),
       _ => output_lck
-    }) : bits(52) : bits(52);
-    let output_seg = (match input_seg {
+    };
+    let output_seg : bits(52) = match input_seg {
       Some(input_seg) => set_prefixes_get_seg(input_seg, output_rep),
       _ => output_rep
-    }) : bits(52) : bits(52);
-    let output_opr = (match input_opr {
+    };
+    let output_opr : bits(52) = match input_opr {
       Some(input_opr) => set_prefixes_get_opr(input_opr, output_seg),
       _ => output_seg
-    }) : bits(52) : bits(52);
-    let output_adr = (match input_adr {
+    };
+    let output_adr : bits(52) = match input_adr {
       Some(input_adr) => set_prefixes_get_adr(input_adr, output_opr),
       _ => output_opr
-    }) : bits(52) : bits(52);
-    let output_nxt = (match input_nxt {
+    };
+    let output_nxt : bits(52) = match input_nxt {
       Some(input_nxt) => set_prefixes_get_nxt(input_nxt, output_adr),
       _ => output_adr
-    }) : bits(52) : bits(52);
+    };
     output_nxt
 }
 
@@ -156,26 +156,26 @@ function set_vex_prefixes_get_byte2 (splicebits, inputbits) = {
 val change_vex_prefixes : (bits(24), option(bits(8)), option(bits(8)), option(bits(8))) -> bits(24)
 
 function change_vex_prefixes (input_bits, input_byte0, input_byte1, input_byte2) = {
-    let output_byte0 = (match input_byte0 {
+    let output_byte0 : bits(24) = match input_byte0 {
       Some(input_byte0) => set_vex_prefixes_get_byte0(input_byte0, input_bits),
       _ => input_bits
-    }) : bits(24) : bits(24);
-    let output_byte1 = (match input_byte1 {
+    };
+    let output_byte1 : bits(24) = match input_byte1 {
       Some(input_byte1) => set_vex_prefixes_get_byte1(input_byte1, output_byte0),
       _ => output_byte0
-    }) : bits(24) : bits(24);
-    let output_byte2 = (match input_byte2 {
+    };
+    let output_byte2 : bits(24) = match input_byte2 {
       Some(input_byte2) => set_vex_prefixes_get_byte2(input_byte2, output_byte1),
       _ => output_byte1
-    }) : bits(24) : bits(24);
+    };
     output_byte2
 }
 
 val vex_prefixes_byte0_p : bits(24) -> bool
 
 function vex_prefixes_byte0_p vex_prefixes = {
-    let byte0 = vex_prefixes_get_byte0(vex_prefixes) : bits(8);
-    byte0 == get_slice_int(8, 197, 0) | byte0 == get_slice_int(8, 196, 0)
+    let byte0 : bits(8) = vex_prefixes_get_byte0(vex_prefixes);
+    byte0 == 0xc5 | byte0 == 0xc4
 }
 
 val vex2_byte1_get_pp : bits(8) -> bits(2)
@@ -229,22 +229,22 @@ function set_vex2_byte1_get_r (splicebits, inputbits) = {
 val change_vex2_byte1 : (bits(8), option(bits(2)), option(bits(1)), option(bits(4)), option(bits(1))) -> bits(8)
 
 function change_vex2_byte1 (input_bits, input_pp, input_l, input_vvvv, input_r) = {
-    let output_pp = (match input_pp {
+    let output_pp : bits(8) = match input_pp {
       Some(input_pp) => set_vex2_byte1_get_pp(input_pp, input_bits),
       _ => input_bits
-    }) : bits(8) : bits(8);
-    let output_l = (match input_l {
+    };
+    let output_l : bits(8) = match input_l {
       Some(input_l) => set_vex2_byte1_get_l(input_l, output_pp),
       _ => output_pp
-    }) : bits(8) : bits(8);
-    let output_vvvv = (match input_vvvv {
+    };
+    let output_vvvv : bits(8) = match input_vvvv {
       Some(input_vvvv) => set_vex2_byte1_get_vvvv(input_vvvv, output_l),
       _ => output_l
-    }) : bits(8) : bits(8);
-    let output_r = (match input_r {
+    };
+    let output_r : bits(8) = match input_r {
       Some(input_r) => set_vex2_byte1_get_r(input_r, output_vvvv),
       _ => output_vvvv
-    }) : bits(8) : bits(8);
+    };
     output_r
 }
 
@@ -299,22 +299,22 @@ function set_vex3_byte1_get_r (splicebits, inputbits) = {
 val change_vex3_byte1 : (bits(8), option(bits(5)), option(bits(1)), option(bits(1)), option(bits(1))) -> bits(8)
 
 function change_vex3_byte1 (input_bits, input_m_mmmm, input_b, input_x, input_r) = {
-    let output_m_mmmm = (match input_m_mmmm {
+    let output_m_mmmm : bits(8) = match input_m_mmmm {
       Some(input_m_mmmm) => set_vex3_byte1_get_m_mmmm(input_m_mmmm, input_bits),
       _ => input_bits
-    }) : bits(8) : bits(8);
-    let output_b = (match input_b {
+    };
+    let output_b : bits(8) = match input_b {
       Some(input_b) => set_vex3_byte1_get_b(input_b, output_m_mmmm),
       _ => output_m_mmmm
-    }) : bits(8) : bits(8);
-    let output_x = (match input_x {
+    };
+    let output_x : bits(8) = match input_x {
       Some(input_x) => set_vex3_byte1_get_x(input_x, output_b),
       _ => output_b
-    }) : bits(8) : bits(8);
-    let output_r = (match input_r {
+    };
+    let output_r : bits(8) = match input_r {
       Some(input_r) => set_vex3_byte1_get_r(input_r, output_x),
       _ => output_x
-    }) : bits(8) : bits(8);
+    };
     output_r
 }
 
@@ -369,67 +369,67 @@ function set_vex3_byte2_get_w (splicebits, inputbits) = {
 val change_vex3_byte2 : (bits(8), option(bits(2)), option(bits(1)), option(bits(4)), option(bits(1))) -> bits(8)
 
 function change_vex3_byte2 (input_bits, input_pp, input_l, input_vvvv, input_w) = {
-    let output_pp = (match input_pp {
+    let output_pp : bits(8) = match input_pp {
       Some(input_pp) => set_vex3_byte2_get_pp(input_pp, input_bits),
       _ => input_bits
-    }) : bits(8) : bits(8);
-    let output_l = (match input_l {
+    };
+    let output_l : bits(8) = match input_l {
       Some(input_l) => set_vex3_byte2_get_l(input_l, output_pp),
       _ => output_pp
-    }) : bits(8) : bits(8);
-    let output_vvvv = (match input_vvvv {
+    };
+    let output_vvvv : bits(8) = match input_vvvv {
       Some(input_vvvv) => set_vex3_byte2_get_vvvv(input_vvvv, output_l),
       _ => output_l
-    }) : bits(8) : bits(8);
-    let output_w = (match input_w {
+    };
+    let output_w : bits(8) = match input_w {
       Some(input_w) => set_vex3_byte2_get_w(input_w, output_vvvv),
       _ => output_vvvv
-    }) : bits(8) : bits(8);
+    };
     output_w
 }
 
 val vex_prefixes_map_p : (bits(16), bits(24)) -> bool
 
 function vex_prefixes_map_p (bytes, vex_prefixes) = {
-    let byte0 = vex_prefixes_get_byte0(vex_prefixes) : bits(8);
-    let byte1 = vex_prefixes_get_byte1(vex_prefixes) : bits(8);
+    let byte0 : bits(8) = vex_prefixes_get_byte0(vex_prefixes);
+    let byte1 : bits(8) = vex_prefixes_get_byte1(vex_prefixes);
     (match bytes {
-      15 => byte0 == get_slice_int(8, 197, 0) | byte0 == get_slice_int(8, 196, 0) & the_bits(8, vex3_byte1_get_m_mmmm(byte1)) == get_slice_int(8, 1, 0),
-      _ => byte0 == get_slice_int(8, 196, 0) & (if the_bits(8, bytes) == get_slice_int(8, 3896, 0) then {
-          the_bits(8, vex3_byte1_get_m_mmmm(byte1)) == get_slice_int(8, 2, 0)
+      15 => byte0 == 0xc5 | byte0 == 0xc4 & (vex3_byte1_get_m_mmmm(byte1) == 0b00001) : bool,
+      _ => byte0 == 0xc4 & (if bytes == 0x0f38 then {
+          (vex3_byte1_get_m_mmmm(byte1) == 0b00010) : bool
       } else {
-          the_bits(8, vex3_byte1_get_m_mmmm(byte1)) == get_slice_int(8, 3, 0)
+          (vex3_byte1_get_m_mmmm(byte1) == 0b00011) : bool
       })
     }) : bool
 }
 
-val vex_get_vvvv : bits(24) -> sbits(5)
+val vex_get_vvvv : bits(24) -> sbits(4)
 
 function vex_get_vvvv vex_prefixes = {
     (match vex_prefixes_get_byte0(vex_prefixes) {
-      197 => the_bits(5, vex2_byte1_get_vvvv(vex_prefixes_get_byte1(vex_prefixes))),
-      196 => the_bits(5, vex3_byte2_get_vvvv(vex_prefixes_get_byte2(vex_prefixes))),
-      _ => get_slice_int(5, -1, 0)
-    }) : sbits(5)
+      197 => vex2_byte1_get_vvvv(vex_prefixes_get_byte1(vex_prefixes)),
+      196 => vex3_byte2_get_vvvv(vex_prefixes_get_byte2(vex_prefixes)),
+      _ => 0xf
+    }) : sbits(4)
 }
 
-val vex_get_l : bits(24) -> sbits(3)
+val vex_get_l : bits(24) -> sbits(2)
 
 function vex_get_l vex_prefixes = {
     (match vex_prefixes_get_byte0(vex_prefixes) {
-      197 => the_bits(3, vex2_byte1_get_l(vex_prefixes_get_byte1(vex_prefixes))),
-      196 => the_bits(3, vex3_byte2_get_l(vex_prefixes_get_byte2(vex_prefixes))),
-      _ => get_slice_int(3, -1, 0)
-    }) : sbits(3)
+      197 => sail_sign_extend(vex2_byte1_get_l(vex_prefixes_get_byte1(vex_prefixes)), 2),
+      196 => sail_sign_extend(vex3_byte2_get_l(vex_prefixes_get_byte2(vex_prefixes)), 2),
+      _ => 0b11
+    }) : sbits(2)
 }
 
 val vex_get_pp : bits(24) -> sbits(3)
 
 function vex_get_pp vex_prefixes = {
     (match vex_prefixes_get_byte0(vex_prefixes) {
-      197 => the_bits(3, vex2_byte1_get_pp(vex_prefixes_get_byte1(vex_prefixes))),
-      196 => the_bits(3, vex3_byte2_get_pp(vex_prefixes_get_byte2(vex_prefixes))),
-      _ => get_slice_int(3, -1, 0)
+      197 => sail_sign_extend(vex2_byte1_get_pp(vex_prefixes_get_byte1(vex_prefixes)), 3),
+      196 => sail_sign_extend(vex3_byte2_get_pp(vex_prefixes_get_byte2(vex_prefixes)), 3),
+      _ => 0b111
     }) : sbits(3)
 }
 
@@ -438,7 +438,7 @@ val vex_get_w : bits(24) -> bits(1)
 function vex_get_w vex_prefixes = {
     (match vex_prefixes_get_byte0(vex_prefixes) {
       196 => vex3_byte2_get_w(vex_prefixes_get_byte2(vex_prefixes)),
-      _ => get_slice_int(1, 0, 0)
+      _ => 0b0
     }) : bits(1)
 }
 
@@ -493,22 +493,22 @@ function set_evex_prefixes_get_byte3 (splicebits, inputbits) = {
 val change_evex_prefixes : (bits(32), option(bits(8)), option(bits(8)), option(bits(8)), option(bits(8))) -> bits(32)
 
 function change_evex_prefixes (input_bits, input_byte0, input_byte1, input_byte2, input_byte3) = {
-    let output_byte0 = (match input_byte0 {
+    let output_byte0 : bits(32) = match input_byte0 {
       Some(input_byte0) => set_evex_prefixes_get_byte0(input_byte0, input_bits),
       _ => input_bits
-    }) : bits(32) : bits(32);
-    let output_byte1 = (match input_byte1 {
+    };
+    let output_byte1 : bits(32) = match input_byte1 {
       Some(input_byte1) => set_evex_prefixes_get_byte1(input_byte1, output_byte0),
       _ => output_byte0
-    }) : bits(32) : bits(32);
-    let output_byte2 = (match input_byte2 {
+    };
+    let output_byte2 : bits(32) = match input_byte2 {
       Some(input_byte2) => set_evex_prefixes_get_byte2(input_byte2, output_byte1),
       _ => output_byte1
-    }) : bits(32) : bits(32);
-    let output_byte3 = (match input_byte3 {
+    };
+    let output_byte3 : bits(32) = match input_byte3 {
       Some(input_byte3) => set_evex_prefixes_get_byte3(input_byte3, output_byte2),
       _ => output_byte2
-    }) : bits(32) : bits(32);
+    };
     output_byte3
 }
 
@@ -587,30 +587,30 @@ function set_evex_byte1_get_r (splicebits, inputbits) = {
 val change_evex_byte1 : (bits(8), option(bits(2)), option(bits(2)), option(bits(1)), option(bits(1)), option(bits(1)), option(bits(1))) -> bits(8)
 
 function change_evex_byte1 (input_bits, input_mm, input_res, input_r_prime, input_b, input_x, input_r) = {
-    let output_mm = (match input_mm {
+    let output_mm : bits(8) = match input_mm {
       Some(input_mm) => set_evex_byte1_get_mm(input_mm, input_bits),
       _ => input_bits
-    }) : bits(8) : bits(8);
-    let output_res = (match input_res {
+    };
+    let output_res : bits(8) = match input_res {
       Some(input_res) => set_evex_byte1_get_res(input_res, output_mm),
       _ => output_mm
-    }) : bits(8) : bits(8);
-    let output_r_prime = (match input_r_prime {
+    };
+    let output_r_prime : bits(8) = match input_r_prime {
       Some(input_r_prime) => set_evex_byte1_get_r_prime(input_r_prime, output_res),
       _ => output_res
-    }) : bits(8) : bits(8);
-    let output_b = (match input_b {
+    };
+    let output_b : bits(8) = match input_b {
       Some(input_b) => set_evex_byte1_get_b(input_b, output_r_prime),
       _ => output_r_prime
-    }) : bits(8) : bits(8);
-    let output_x = (match input_x {
+    };
+    let output_x : bits(8) = match input_x {
       Some(input_x) => set_evex_byte1_get_x(input_x, output_b),
       _ => output_b
-    }) : bits(8) : bits(8);
-    let output_r = (match input_r {
+    };
+    let output_r : bits(8) = match input_r {
       Some(input_r) => set_evex_byte1_get_r(input_r, output_x),
       _ => output_x
-    }) : bits(8) : bits(8);
+    };
     output_r
 }
 
@@ -665,22 +665,22 @@ function set_evex_byte2_get_w (splicebits, inputbits) = {
 val change_evex_byte2 : (bits(8), option(bits(2)), option(bits(1)), option(bits(4)), option(bits(1))) -> bits(8)
 
 function change_evex_byte2 (input_bits, input_pp, input_res, input_vvvv, input_w) = {
-    let output_pp = (match input_pp {
+    let output_pp : bits(8) = match input_pp {
       Some(input_pp) => set_evex_byte2_get_pp(input_pp, input_bits),
       _ => input_bits
-    }) : bits(8) : bits(8);
-    let output_res = (match input_res {
+    };
+    let output_res : bits(8) = match input_res {
       Some(input_res) => set_evex_byte2_get_res(input_res, output_pp),
       _ => output_pp
-    }) : bits(8) : bits(8);
-    let output_vvvv = (match input_vvvv {
+    };
+    let output_vvvv : bits(8) = match input_vvvv {
       Some(input_vvvv) => set_evex_byte2_get_vvvv(input_vvvv, output_res),
       _ => output_res
-    }) : bits(8) : bits(8);
-    let output_w = (match input_w {
+    };
+    let output_w : bits(8) = match input_w {
       Some(input_w) => set_evex_byte2_get_w(input_w, output_vvvv),
       _ => output_vvvv
-    }) : bits(8) : bits(8);
+    };
     output_w
 }
 
@@ -747,26 +747,26 @@ function set_evex_byte3_get_z (splicebits, inputbits) = {
 val change_evex_byte3 : (bits(8), option(bits(3)), option(bits(1)), option(bits(1)), option(bits(2)), option(bits(1))) -> bits(8)
 
 function change_evex_byte3 (input_bits, input_aaa, input_v_prime, input_b, input_vl_rc, input_z) = {
-    let output_aaa = (match input_aaa {
+    let output_aaa : bits(8) = match input_aaa {
       Some(input_aaa) => set_evex_byte3_get_aaa(input_aaa, input_bits),
       _ => input_bits
-    }) : bits(8) : bits(8);
-    let output_v_prime = (match input_v_prime {
+    };
+    let output_v_prime : bits(8) = match input_v_prime {
       Some(input_v_prime) => set_evex_byte3_get_v_prime(input_v_prime, output_aaa),
       _ => output_aaa
-    }) : bits(8) : bits(8);
-    let output_b = (match input_b {
+    };
+    let output_b : bits(8) = match input_b {
       Some(input_b) => set_evex_byte3_get_b(input_b, output_v_prime),
       _ => output_v_prime
-    }) : bits(8) : bits(8);
-    let output_vl_rc = (match input_vl_rc {
+    };
+    let output_vl_rc : bits(8) = match input_vl_rc {
       Some(input_vl_rc) => set_evex_byte3_get_vl_rc(input_vl_rc, output_b),
       _ => output_b
-    }) : bits(8) : bits(8);
-    let output_z = (match input_z {
+    };
+    let output_z : bits(8) = match input_z {
       Some(input_z) => set_evex_byte3_get_z(input_z, output_vl_rc),
       _ => output_vl_rc
-    }) : bits(8) : bits(8);
+    };
     output_z
 }
 
@@ -839,18 +839,18 @@ function set_modr_m_get_mod (splicebits, inputbits) = {
 val change_modr_m : (bits(8), option(bits(3)), option(bits(3)), option(bits(2))) -> bits(8)
 
 function change_modr_m (input_bits, input_r_m, input_reg, input_mod) = {
-    let output_r_m = (match input_r_m {
+    let output_r_m : bits(8) = match input_r_m {
       Some(input_r_m) => set_modr_m_get_r_m(input_r_m, input_bits),
       _ => input_bits
-    }) : bits(8) : bits(8);
-    let output_reg = (match input_reg {
+    };
+    let output_reg : bits(8) = match input_reg {
       Some(input_reg) => set_modr_m_get_reg(input_reg, output_r_m),
       _ => output_r_m
-    }) : bits(8) : bits(8);
-    let output_mod = (match input_mod {
+    };
+    let output_mod : bits(8) = match input_mod {
       Some(input_mod) => set_modr_m_get_mod(input_mod, output_reg),
       _ => output_reg
-    }) : bits(8) : bits(8);
+    };
     output_mod
 }
 
@@ -893,18 +893,18 @@ function set_sib_get_scale (splicebits, inputbits) = {
 val change_sib : (bits(8), option(bits(3)), option(bits(3)), option(bits(2))) -> bits(8)
 
 function change_sib (input_bits, input_base, input_index, input_scale) = {
-    let output_base = (match input_base {
+    let output_base : bits(8) = match input_base {
       Some(input_base) => set_sib_get_base(input_base, input_bits),
       _ => input_bits
-    }) : bits(8) : bits(8);
-    let output_index = (match input_index {
+    };
+    let output_index : bits(8) = match input_index {
       Some(input_index) => set_sib_get_index(input_index, output_base),
       _ => output_base
-    }) : bits(8) : bits(8);
-    let output_scale = (match input_scale {
+    };
+    let output_scale : bits(8) = match input_scale {
       Some(input_scale) => set_sib_get_scale(input_scale, output_index),
       _ => output_index
-    }) : bits(8) : bits(8);
+    };
     output_scale
 }
 
@@ -1175,94 +1175,94 @@ function set_rflagsbits_get_res5 (splicebits, inputbits) = {
 val change_rflagsbits : (bits(32), option(bits(1)), option(bits(1)), option(bits(1)), option(bits(1)), option(bits(1)), option(bits(1)), option(bits(1)), option(bits(1)), option(bits(1)), option(bits(1)), option(bits(1)), option(bits(1)), option(bits(2)), option(bits(1)), option(bits(1)), option(bits(1)), option(bits(1)), option(bits(1)), option(bits(1)), option(bits(1)), option(bits(1)), option(bits(10))) -> bits(32)
 
 function change_rflagsbits (input_bits, input_cf, input_res1, input_pf, input_res2, input_af, input_res3, input_zf, input_sf, input_tf, input_intf, input_df, input_of, input_iopl, input_nt, input_res4, input_rf, input_vm, input_ac, input_vif, input_vip, input_id, input_res5) = {
-    let output_cf = (match input_cf {
+    let output_cf : bits(32) = match input_cf {
       Some(input_cf) => set_rflagsbits_get_cf(input_cf, input_bits),
       _ => input_bits
-    }) : bits(32) : bits(32);
-    let output_res1 = (match input_res1 {
+    };
+    let output_res1 : bits(32) = match input_res1 {
       Some(input_res1) => set_rflagsbits_get_res1(input_res1, output_cf),
       _ => output_cf
-    }) : bits(32) : bits(32);
-    let output_pf = (match input_pf {
+    };
+    let output_pf : bits(32) = match input_pf {
       Some(input_pf) => set_rflagsbits_get_pf(input_pf, output_res1),
       _ => output_res1
-    }) : bits(32) : bits(32);
-    let output_res2 = (match input_res2 {
+    };
+    let output_res2 : bits(32) = match input_res2 {
       Some(input_res2) => set_rflagsbits_get_res2(input_res2, output_pf),
       _ => output_pf
-    }) : bits(32) : bits(32);
-    let output_af = (match input_af {
+    };
+    let output_af : bits(32) = match input_af {
       Some(input_af) => set_rflagsbits_get_af(input_af, output_res2),
       _ => output_res2
-    }) : bits(32) : bits(32);
-    let output_res3 = (match input_res3 {
+    };
+    let output_res3 : bits(32) = match input_res3 {
       Some(input_res3) => set_rflagsbits_get_res3(input_res3, output_af),
       _ => output_af
-    }) : bits(32) : bits(32);
-    let output_zf = (match input_zf {
+    };
+    let output_zf : bits(32) = match input_zf {
       Some(input_zf) => set_rflagsbits_get_zf(input_zf, output_res3),
       _ => output_res3
-    }) : bits(32) : bits(32);
-    let output_sf = (match input_sf {
+    };
+    let output_sf : bits(32) = match input_sf {
       Some(input_sf) => set_rflagsbits_get_sf(input_sf, output_zf),
       _ => output_zf
-    }) : bits(32) : bits(32);
-    let output_tf = (match input_tf {
+    };
+    let output_tf : bits(32) = match input_tf {
       Some(input_tf) => set_rflagsbits_get_tf(input_tf, output_sf),
       _ => output_sf
-    }) : bits(32) : bits(32);
-    let output_intf = (match input_intf {
+    };
+    let output_intf : bits(32) = match input_intf {
       Some(input_intf) => set_rflagsbits_get_intf(input_intf, output_tf),
       _ => output_tf
-    }) : bits(32) : bits(32);
-    let output_df = (match input_df {
+    };
+    let output_df : bits(32) = match input_df {
       Some(input_df) => set_rflagsbits_get_df(input_df, output_intf),
       _ => output_intf
-    }) : bits(32) : bits(32);
-    let output_of = (match input_of {
+    };
+    let output_of : bits(32) = match input_of {
       Some(input_of) => set_rflagsbits_get_of(input_of, output_df),
       _ => output_df
-    }) : bits(32) : bits(32);
-    let output_iopl = (match input_iopl {
+    };
+    let output_iopl : bits(32) = match input_iopl {
       Some(input_iopl) => set_rflagsbits_get_iopl(input_iopl, output_of),
       _ => output_of
-    }) : bits(32) : bits(32);
-    let output_nt = (match input_nt {
+    };
+    let output_nt : bits(32) = match input_nt {
       Some(input_nt) => set_rflagsbits_get_nt(input_nt, output_iopl),
       _ => output_iopl
-    }) : bits(32) : bits(32);
-    let output_res4 = (match input_res4 {
+    };
+    let output_res4 : bits(32) = match input_res4 {
       Some(input_res4) => set_rflagsbits_get_res4(input_res4, output_nt),
       _ => output_nt
-    }) : bits(32) : bits(32);
-    let output_rf = (match input_rf {
+    };
+    let output_rf : bits(32) = match input_rf {
       Some(input_rf) => set_rflagsbits_get_rf(input_rf, output_res4),
       _ => output_res4
-    }) : bits(32) : bits(32);
-    let output_vm = (match input_vm {
+    };
+    let output_vm : bits(32) = match input_vm {
       Some(input_vm) => set_rflagsbits_get_vm(input_vm, output_rf),
       _ => output_rf
-    }) : bits(32) : bits(32);
-    let output_ac = (match input_ac {
+    };
+    let output_ac : bits(32) = match input_ac {
       Some(input_ac) => set_rflagsbits_get_ac(input_ac, output_vm),
       _ => output_vm
-    }) : bits(32) : bits(32);
-    let output_vif = (match input_vif {
+    };
+    let output_vif : bits(32) = match input_vif {
       Some(input_vif) => set_rflagsbits_get_vif(input_vif, output_ac),
       _ => output_ac
-    }) : bits(32) : bits(32);
-    let output_vip = (match input_vip {
+    };
+    let output_vip : bits(32) = match input_vip {
       Some(input_vip) => set_rflagsbits_get_vip(input_vip, output_vif),
       _ => output_vif
-    }) : bits(32) : bits(32);
-    let output_id = (match input_id {
+    };
+    let output_id : bits(32) = match input_id {
       Some(input_id) => set_rflagsbits_get_id(input_id, output_vip),
       _ => output_vip
-    }) : bits(32) : bits(32);
-    let output_res5 = (match input_res5 {
+    };
+    let output_res5 : bits(32) = match input_res5 {
       Some(input_res5) => set_rflagsbits_get_res5(input_res5, output_id),
       _ => output_id
-    }) : bits(32) : bits(32);
+    };
     output_res5
 }
 
@@ -1437,62 +1437,62 @@ function set_cr0bits_get_pg (splicebits, inputbits) = {
 val change_cr0bits : (bits(32), option(bits(1)), option(bits(1)), option(bits(1)), option(bits(1)), option(bits(1)), option(bits(1)), option(bits(10)), option(bits(1)), option(bits(1)), option(bits(1)), option(bits(10)), option(bits(1)), option(bits(1)), option(bits(1))) -> bits(32)
 
 function change_cr0bits (input_bits, input_pe, input_mp, input_em, input_ts, input_et, input_ne, input_res1, input_wp, input_res2, input_am, input_res3, input_nw, input_cd, input_pg) = {
-    let output_pe = (match input_pe {
+    let output_pe : bits(32) = match input_pe {
       Some(input_pe) => set_cr0bits_get_pe(input_pe, input_bits),
       _ => input_bits
-    }) : bits(32) : bits(32);
-    let output_mp = (match input_mp {
+    };
+    let output_mp : bits(32) = match input_mp {
       Some(input_mp) => set_cr0bits_get_mp(input_mp, output_pe),
       _ => output_pe
-    }) : bits(32) : bits(32);
-    let output_em = (match input_em {
+    };
+    let output_em : bits(32) = match input_em {
       Some(input_em) => set_cr0bits_get_em(input_em, output_mp),
       _ => output_mp
-    }) : bits(32) : bits(32);
-    let output_ts = (match input_ts {
+    };
+    let output_ts : bits(32) = match input_ts {
       Some(input_ts) => set_cr0bits_get_ts(input_ts, output_em),
       _ => output_em
-    }) : bits(32) : bits(32);
-    let output_et = (match input_et {
+    };
+    let output_et : bits(32) = match input_et {
       Some(input_et) => set_cr0bits_get_et(input_et, output_ts),
       _ => output_ts
-    }) : bits(32) : bits(32);
-    let output_ne = (match input_ne {
+    };
+    let output_ne : bits(32) = match input_ne {
       Some(input_ne) => set_cr0bits_get_ne(input_ne, output_et),
       _ => output_et
-    }) : bits(32) : bits(32);
-    let output_res1 = (match input_res1 {
+    };
+    let output_res1 : bits(32) = match input_res1 {
       Some(input_res1) => set_cr0bits_get_res1(input_res1, output_ne),
       _ => output_ne
-    }) : bits(32) : bits(32);
-    let output_wp = (match input_wp {
+    };
+    let output_wp : bits(32) = match input_wp {
       Some(input_wp) => set_cr0bits_get_wp(input_wp, output_res1),
       _ => output_res1
-    }) : bits(32) : bits(32);
-    let output_res2 = (match input_res2 {
+    };
+    let output_res2 : bits(32) = match input_res2 {
       Some(input_res2) => set_cr0bits_get_res2(input_res2, output_wp),
       _ => output_wp
-    }) : bits(32) : bits(32);
-    let output_am = (match input_am {
+    };
+    let output_am : bits(32) = match input_am {
       Some(input_am) => set_cr0bits_get_am(input_am, output_res2),
       _ => output_res2
-    }) : bits(32) : bits(32);
-    let output_res3 = (match input_res3 {
+    };
+    let output_res3 : bits(32) = match input_res3 {
       Some(input_res3) => set_cr0bits_get_res3(input_res3, output_am),
       _ => output_am
-    }) : bits(32) : bits(32);
-    let output_nw = (match input_nw {
+    };
+    let output_nw : bits(32) = match input_nw {
       Some(input_nw) => set_cr0bits_get_nw(input_nw, output_res3),
       _ => output_res3
-    }) : bits(32) : bits(32);
-    let output_cd = (match input_cd {
+    };
+    let output_cd : bits(32) = match input_cd {
       Some(input_cd) => set_cr0bits_get_cd(input_cd, output_nw),
       _ => output_nw
-    }) : bits(32) : bits(32);
-    let output_pg = (match input_pg {
+    };
+    let output_pg : bits(32) = match input_pg {
       Some(input_pg) => set_cr0bits_get_pg(input_pg, output_cd),
       _ => output_cd
-    }) : bits(32) : bits(32);
+    };
     output_pg
 }
 
@@ -1571,30 +1571,30 @@ function set_cr3bits_get_res3 (splicebits, inputbits) = {
 val change_cr3bits : (bits(64), option(bits(3)), option(bits(1)), option(bits(1)), option(bits(7)), option(bits(40)), option(bits(12))) -> bits(64)
 
 function change_cr3bits (input_bits, input_res1, input_pwt, input_pcd, input_res2, input_pdb, input_res3) = {
-    let output_res1 = (match input_res1 {
+    let output_res1 : bits(64) = match input_res1 {
       Some(input_res1) => set_cr3bits_get_res1(input_res1, input_bits),
       _ => input_bits
-    }) : bits(64) : bits(64);
-    let output_pwt = (match input_pwt {
+    };
+    let output_pwt : bits(64) = match input_pwt {
       Some(input_pwt) => set_cr3bits_get_pwt(input_pwt, output_res1),
       _ => output_res1
-    }) : bits(64) : bits(64);
-    let output_pcd = (match input_pcd {
+    };
+    let output_pcd : bits(64) = match input_pcd {
       Some(input_pcd) => set_cr3bits_get_pcd(input_pcd, output_pwt),
       _ => output_pwt
-    }) : bits(64) : bits(64);
-    let output_res2 = (match input_res2 {
+    };
+    let output_res2 : bits(64) = match input_res2 {
       Some(input_res2) => set_cr3bits_get_res2(input_res2, output_pcd),
       _ => output_pcd
-    }) : bits(64) : bits(64);
-    let output_pdb = (match input_pdb {
+    };
+    let output_pdb : bits(64) = match input_pdb {
       Some(input_pdb) => set_cr3bits_get_pdb(input_pdb, output_res2),
       _ => output_res2
-    }) : bits(64) : bits(64);
-    let output_res3 = (match input_res3 {
+    };
+    let output_res3 : bits(64) = match input_res3 {
       Some(input_res3) => set_cr3bits_get_res3(input_res3, output_pdb),
       _ => output_pdb
-    }) : bits(64) : bits(64);
+    };
     output_res3
 }
 
@@ -1865,94 +1865,94 @@ function set_cr4bits_get_smap (splicebits, inputbits) = {
 val change_cr4bits : (bits(22), option(bits(1)), option(bits(1)), option(bits(1)), option(bits(1)), option(bits(1)), option(bits(1)), option(bits(1)), option(bits(1)), option(bits(1)), option(bits(1)), option(bits(1)), option(bits(1)), option(bits(1)), option(bits(1)), option(bits(1)), option(bits(1)), option(bits(1)), option(bits(1)), option(bits(1)), option(bits(1)), option(bits(1)), option(bits(1))) -> bits(22)
 
 function change_cr4bits (input_bits, input_vme, input_pvi, input_tsd, input_de, input_pse, input_pae, input_mce, input_pge, input_pce, input_osfxsr, input_osxmmexcpt, input_umip, input_la57, input_vmxe, input_smxe, input_res1, input_fsgsbase, input_pcide, input_osxsave, input_res2, input_smep, input_smap) = {
-    let output_vme = (match input_vme {
+    let output_vme : bits(22) = match input_vme {
       Some(input_vme) => set_cr4bits_get_vme(input_vme, input_bits),
       _ => input_bits
-    }) : bits(22) : bits(22);
-    let output_pvi = (match input_pvi {
+    };
+    let output_pvi : bits(22) = match input_pvi {
       Some(input_pvi) => set_cr4bits_get_pvi(input_pvi, output_vme),
       _ => output_vme
-    }) : bits(22) : bits(22);
-    let output_tsd = (match input_tsd {
+    };
+    let output_tsd : bits(22) = match input_tsd {
       Some(input_tsd) => set_cr4bits_get_tsd(input_tsd, output_pvi),
       _ => output_pvi
-    }) : bits(22) : bits(22);
-    let output_de = (match input_de {
+    };
+    let output_de : bits(22) = match input_de {
       Some(input_de) => set_cr4bits_get_de(input_de, output_tsd),
       _ => output_tsd
-    }) : bits(22) : bits(22);
-    let output_pse = (match input_pse {
+    };
+    let output_pse : bits(22) = match input_pse {
       Some(input_pse) => set_cr4bits_get_pse(input_pse, output_de),
       _ => output_de
-    }) : bits(22) : bits(22);
-    let output_pae = (match input_pae {
+    };
+    let output_pae : bits(22) = match input_pae {
       Some(input_pae) => set_cr4bits_get_pae(input_pae, output_pse),
       _ => output_pse
-    }) : bits(22) : bits(22);
-    let output_mce = (match input_mce {
+    };
+    let output_mce : bits(22) = match input_mce {
       Some(input_mce) => set_cr4bits_get_mce(input_mce, output_pae),
       _ => output_pae
-    }) : bits(22) : bits(22);
-    let output_pge = (match input_pge {
+    };
+    let output_pge : bits(22) = match input_pge {
       Some(input_pge) => set_cr4bits_get_pge(input_pge, output_mce),
       _ => output_mce
-    }) : bits(22) : bits(22);
-    let output_pce = (match input_pce {
+    };
+    let output_pce : bits(22) = match input_pce {
       Some(input_pce) => set_cr4bits_get_pce(input_pce, output_pge),
       _ => output_pge
-    }) : bits(22) : bits(22);
-    let output_osfxsr = (match input_osfxsr {
+    };
+    let output_osfxsr : bits(22) = match input_osfxsr {
       Some(input_osfxsr) => set_cr4bits_get_osfxsr(input_osfxsr, output_pce),
       _ => output_pce
-    }) : bits(22) : bits(22);
-    let output_osxmmexcpt = (match input_osxmmexcpt {
+    };
+    let output_osxmmexcpt : bits(22) = match input_osxmmexcpt {
       Some(input_osxmmexcpt) => set_cr4bits_get_osxmmexcpt(input_osxmmexcpt, output_osfxsr),
       _ => output_osfxsr
-    }) : bits(22) : bits(22);
-    let output_umip = (match input_umip {
+    };
+    let output_umip : bits(22) = match input_umip {
       Some(input_umip) => set_cr4bits_get_umip(input_umip, output_osxmmexcpt),
       _ => output_osxmmexcpt
-    }) : bits(22) : bits(22);
-    let output_la57 = (match input_la57 {
+    };
+    let output_la57 : bits(22) = match input_la57 {
       Some(input_la57) => set_cr4bits_get_la57(input_la57, output_umip),
       _ => output_umip
-    }) : bits(22) : bits(22);
-    let output_vmxe = (match input_vmxe {
+    };
+    let output_vmxe : bits(22) = match input_vmxe {
       Some(input_vmxe) => set_cr4bits_get_vmxe(input_vmxe, output_la57),
       _ => output_la57
-    }) : bits(22) : bits(22);
-    let output_smxe = (match input_smxe {
+    };
+    let output_smxe : bits(22) = match input_smxe {
       Some(input_smxe) => set_cr4bits_get_smxe(input_smxe, output_vmxe),
       _ => output_vmxe
-    }) : bits(22) : bits(22);
-    let output_res1 = (match input_res1 {
+    };
+    let output_res1 : bits(22) = match input_res1 {
       Some(input_res1) => set_cr4bits_get_res1(input_res1, output_smxe),
       _ => output_smxe
-    }) : bits(22) : bits(22);
-    let output_fsgsbase = (match input_fsgsbase {
+    };
+    let output_fsgsbase : bits(22) = match input_fsgsbase {
       Some(input_fsgsbase) => set_cr4bits_get_fsgsbase(input_fsgsbase, output_res1),
       _ => output_res1
-    }) : bits(22) : bits(22);
-    let output_pcide = (match input_pcide {
+    };
+    let output_pcide : bits(22) = match input_pcide {
       Some(input_pcide) => set_cr4bits_get_pcide(input_pcide, output_fsgsbase),
       _ => output_fsgsbase
-    }) : bits(22) : bits(22);
-    let output_osxsave = (match input_osxsave {
+    };
+    let output_osxsave : bits(22) = match input_osxsave {
       Some(input_osxsave) => set_cr4bits_get_osxsave(input_osxsave, output_pcide),
       _ => output_pcide
-    }) : bits(22) : bits(22);
-    let output_res2 = (match input_res2 {
+    };
+    let output_res2 : bits(22) = match input_res2 {
       Some(input_res2) => set_cr4bits_get_res2(input_res2, output_osxsave),
       _ => output_osxsave
-    }) : bits(22) : bits(22);
-    let output_smep = (match input_smep {
+    };
+    let output_smep : bits(22) = match input_smep {
       Some(input_smep) => set_cr4bits_get_smep(input_smep, output_res2),
       _ => output_res2
-    }) : bits(22) : bits(22);
-    let output_smap = (match input_smap {
+    };
+    let output_smap : bits(22) = match input_smap {
       Some(input_smap) => set_cr4bits_get_smap(input_smap, output_smep),
       _ => output_smep
-    }) : bits(22) : bits(22);
+    };
     output_smap
 }
 
@@ -1971,10 +1971,10 @@ function set_cr8bits_get_cr8_trpl (splicebits, inputbits) = {
 val change_cr8bits : (bits(4), option(bits(4))) -> bits(4)
 
 function change_cr8bits (input_bits, input_cr8_trpl) = {
-    let output_cr8_trpl = (match input_cr8_trpl {
+    let output_cr8_trpl : bits(4) = match input_cr8_trpl {
       Some(input_cr8_trpl) => set_cr8bits_get_cr8_trpl(input_cr8_trpl, input_bits),
       _ => input_bits
-    }) : bits(4) : bits(4);
+    };
     output_cr8_trpl
 }
 
@@ -2113,50 +2113,50 @@ function set_xcr0bits_get_res2 (splicebits, inputbits) = {
 val change_xcr0bits : (bits(64), option(bits(1)), option(bits(1)), option(bits(1)), option(bits(1)), option(bits(1)), option(bits(1)), option(bits(1)), option(bits(1)), option(bits(1)), option(bits(1)), option(bits(54))) -> bits(64)
 
 function change_xcr0bits (input_bits, input_fpu_mmx_state, input_sse_state, input_avx_state, input_bndreg_state, input_bndcsr_state, input_opmask_state, input_zmm_hi256_state, input_hi16_zmm_state, input_res1, input_pkru_state, input_res2) = {
-    let output_fpu_mmx_state = (match input_fpu_mmx_state {
+    let output_fpu_mmx_state : bits(64) = match input_fpu_mmx_state {
       Some(input_fpu_mmx_state) => set_xcr0bits_get_fpu_mmx_state(input_fpu_mmx_state, input_bits),
       _ => input_bits
-    }) : bits(64) : bits(64);
-    let output_sse_state = (match input_sse_state {
+    };
+    let output_sse_state : bits(64) = match input_sse_state {
       Some(input_sse_state) => set_xcr0bits_get_sse_state(input_sse_state, output_fpu_mmx_state),
       _ => output_fpu_mmx_state
-    }) : bits(64) : bits(64);
-    let output_avx_state = (match input_avx_state {
+    };
+    let output_avx_state : bits(64) = match input_avx_state {
       Some(input_avx_state) => set_xcr0bits_get_avx_state(input_avx_state, output_sse_state),
       _ => output_sse_state
-    }) : bits(64) : bits(64);
-    let output_bndreg_state = (match input_bndreg_state {
+    };
+    let output_bndreg_state : bits(64) = match input_bndreg_state {
       Some(input_bndreg_state) => set_xcr0bits_get_bndreg_state(input_bndreg_state, output_avx_state),
       _ => output_avx_state
-    }) : bits(64) : bits(64);
-    let output_bndcsr_state = (match input_bndcsr_state {
+    };
+    let output_bndcsr_state : bits(64) = match input_bndcsr_state {
       Some(input_bndcsr_state) => set_xcr0bits_get_bndcsr_state(input_bndcsr_state, output_bndreg_state),
       _ => output_bndreg_state
-    }) : bits(64) : bits(64);
-    let output_opmask_state = (match input_opmask_state {
+    };
+    let output_opmask_state : bits(64) = match input_opmask_state {
       Some(input_opmask_state) => set_xcr0bits_get_opmask_state(input_opmask_state, output_bndcsr_state),
       _ => output_bndcsr_state
-    }) : bits(64) : bits(64);
-    let output_zmm_hi256_state = (match input_zmm_hi256_state {
+    };
+    let output_zmm_hi256_state : bits(64) = match input_zmm_hi256_state {
       Some(input_zmm_hi256_state) => set_xcr0bits_get_zmm_hi256_state(input_zmm_hi256_state, output_opmask_state),
       _ => output_opmask_state
-    }) : bits(64) : bits(64);
-    let output_hi16_zmm_state = (match input_hi16_zmm_state {
+    };
+    let output_hi16_zmm_state : bits(64) = match input_hi16_zmm_state {
       Some(input_hi16_zmm_state) => set_xcr0bits_get_hi16_zmm_state(input_hi16_zmm_state, output_zmm_hi256_state),
       _ => output_zmm_hi256_state
-    }) : bits(64) : bits(64);
-    let output_res1 = (match input_res1 {
+    };
+    let output_res1 : bits(64) = match input_res1 {
       Some(input_res1) => set_xcr0bits_get_res1(input_res1, output_hi16_zmm_state),
       _ => output_hi16_zmm_state
-    }) : bits(64) : bits(64);
-    let output_pkru_state = (match input_pkru_state {
+    };
+    let output_pkru_state : bits(64) = match input_pkru_state {
       Some(input_pkru_state) => set_xcr0bits_get_pkru_state(input_pkru_state, output_res1),
       _ => output_res1
-    }) : bits(64) : bits(64);
-    let output_res2 = (match input_res2 {
+    };
+    let output_res2 : bits(64) = match input_res2 {
       Some(input_res2) => set_xcr0bits_get_res2(input_res2, output_pkru_state),
       _ => output_pkru_state
-    }) : bits(64) : bits(64);
+    };
     output_res2
 }
 
@@ -2235,29 +2235,29 @@ function set_ia32_eferbits_get_nxe (splicebits, inputbits) = {
 val change_ia32_eferbits : (bits(12), option(bits(1)), option(bits(7)), option(bits(1)), option(bits(1)), option(bits(1)), option(bits(1))) -> bits(12)
 
 function change_ia32_eferbits (input_bits, input_sce, input_res1, input_lme, input_res2, input_lma, input_nxe) = {
-    let output_sce = (match input_sce {
+    let output_sce : bits(12) = match input_sce {
       Some(input_sce) => set_ia32_eferbits_get_sce(input_sce, input_bits),
       _ => input_bits
-    }) : bits(12) : bits(12);
-    let output_res1 = (match input_res1 {
+    };
+    let output_res1 : bits(12) = match input_res1 {
       Some(input_res1) => set_ia32_eferbits_get_res1(input_res1, output_sce),
       _ => output_sce
-    }) : bits(12) : bits(12);
-    let output_lme = (match input_lme {
+    };
+    let output_lme : bits(12) = match input_lme {
       Some(input_lme) => set_ia32_eferbits_get_lme(input_lme, output_res1),
       _ => output_res1
-    }) : bits(12) : bits(12);
-    let output_res2 = (match input_res2 {
+    };
+    let output_res2 : bits(12) = match input_res2 {
       Some(input_res2) => set_ia32_eferbits_get_res2(input_res2, output_lme),
       _ => output_lme
-    }) : bits(12) : bits(12);
-    let output_lma = (match input_lma {
+    };
+    let output_lma : bits(12) = match input_lma {
       Some(input_lma) => set_ia32_eferbits_get_lma(input_lma, output_res2),
       _ => output_res2
-    }) : bits(12) : bits(12);
-    let output_nxe = (match input_nxe {
+    };
+    let output_nxe : bits(12) = match input_nxe {
       Some(input_nxe) => set_ia32_eferbits_get_nxe(input_nxe, output_lma),
       _ => output_lma
-    }) : bits(12) : bits(12);
+    };
     output_nxe
 }

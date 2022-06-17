@@ -5,7 +5,7 @@ $include "sub_spec.sail"
 $include "or_spec.sail"
 $include "and_spec.sail"
 $include "xor_spec.sail"
-val gpr_arith_logic_spec_1 : ({|0, 2, 4, 6, 8, 1, 3, 5, 7|}, bits(8), bits(8), bits(32)) -> (bits(8), bits(32), bits(32)) effect {escape}
+val gpr_arith_logic_spec_1 : ({|0, 1, 2, 3, 4, 5, 6, 7, 8|}, bits(8), bits(8), bits(32)) -> (bits(8), bits(32), bits(32)) effect {escape}
 function gpr_arith_logic_spec_1 (operation, dst, src, input_rflags) =
 (match operation {
 0 => gpr_add_spec_1(dst, src, input_rflags),
@@ -17,10 +17,10 @@ function gpr_arith_logic_spec_1 (operation, dst, src, input_rflags) =
 6 => gpr_sbb_spec_1(dst, src, input_rflags),
 7 => gpr_and_spec_1(dst, src, input_rflags),
 8 => gpr_sub_spec_1(dst, src, input_rflags),
-_ => (get_slice_int(8, 0, 0), get_slice_int(32, 0, 0), get_slice_int(32, 0, 0))
+_ => (0x00, 0x0000_0000, 0x0000_0000)
 }) : (bits(8), bits(32), bits(32))
 
-val gpr_arith_logic_spec_2 : ({|0, 2, 4, 6, 8, 1, 3, 5, 7|}, bits(16), bits(16), bits(32)) -> (bits(16), bits(32), bits(32)) effect {escape}
+val gpr_arith_logic_spec_2 : ({|0, 1, 2, 3, 4, 5, 6, 7, 8|}, bits(16), bits(16), bits(32)) -> (bits(16), bits(32), bits(32)) effect {escape}
 function gpr_arith_logic_spec_2 (operation, dst, src, input_rflags) =
 (match operation {
 0 => gpr_add_spec_2(dst, src, input_rflags),
@@ -32,10 +32,10 @@ function gpr_arith_logic_spec_2 (operation, dst, src, input_rflags) =
 6 => gpr_sbb_spec_2(dst, src, input_rflags),
 7 => gpr_and_spec_2(dst, src, input_rflags),
 8 => gpr_sub_spec_2(dst, src, input_rflags),
-_ => (get_slice_int(16, 0, 0), get_slice_int(32, 0, 0), get_slice_int(32, 0, 0))
+_ => (0x0000, 0x0000_0000, 0x0000_0000)
 }) : (bits(16), bits(32), bits(32))
 
-val gpr_arith_logic_spec_4 : ({|0, 2, 4, 6, 8, 1, 3, 5, 7|}, bits(32), bits(32), bits(32)) -> (bits(32), bits(32), bits(32)) effect {escape}
+val gpr_arith_logic_spec_4 : ({|0, 1, 2, 3, 4, 5, 6, 7, 8|}, bits(32), bits(32), bits(32)) -> (bits(32), bits(32), bits(32)) effect {escape}
 function gpr_arith_logic_spec_4 (operation, dst, src, input_rflags) =
 (match operation {
 0 => gpr_add_spec_4(dst, src, input_rflags),
@@ -47,10 +47,10 @@ function gpr_arith_logic_spec_4 (operation, dst, src, input_rflags) =
 6 => gpr_sbb_spec_4(dst, src, input_rflags),
 7 => gpr_and_spec_4(dst, src, input_rflags),
 8 => gpr_sub_spec_4(dst, src, input_rflags),
-_ => (get_slice_int(32, 0, 0), get_slice_int(32, 0, 0), get_slice_int(32, 0, 0))
+_ => (0x0000_0000, 0x0000_0000, 0x0000_0000)
 }) : (bits(32), bits(32), bits(32))
 
-val gpr_arith_logic_spec_8 : ({|0, 2, 4, 6, 8, 1, 3, 5, 7|}, bits(64), bits(64), bits(32)) -> (bits(64), bits(32), bits(32)) effect {escape}
+val gpr_arith_logic_spec_8 : ({|0, 1, 2, 3, 4, 5, 6, 7, 8|}, bits(64), bits(64), bits(32)) -> (bits(64), bits(32), bits(32)) effect {escape}
 function gpr_arith_logic_spec_8 (operation, dst, src, input_rflags) =
 (match operation {
 0 => gpr_add_spec_8(dst, src, input_rflags),
@@ -62,7 +62,7 @@ function gpr_arith_logic_spec_8 (operation, dst, src, input_rflags) =
 6 => gpr_sbb_spec_8(dst, src, input_rflags),
 7 => gpr_and_spec_8(dst, src, input_rflags),
 8 => gpr_sub_spec_8(dst, src, input_rflags),
-_ => (get_slice_int(64, 0, 0), get_slice_int(32, 0, 0), get_slice_int(32, 0, 0))
+_ => (0x0000_0000_0000_0000, 0x0000_0000, 0x0000_0000)
 }) : (bits(64), bits(32), bits(32))
 
 /*Semantics of general-purpose arithmetic and logical instructions*/
