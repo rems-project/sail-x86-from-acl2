@@ -110,33 +110,27 @@ function bit_to_bool (b) = match b {
 val trunc : forall 'n 'm, 'n in {1, 2, 4, 8, 16} & 'm > 0. (int('n), bits('m)) -> bits(8 * 'n)
 function trunc (n, x) = sail_mask(8 * n, x)
 
-val the_int : (int) -> int
-function the_int i = i
-
-val the_nat : (int) -> nat effect {escape}
-function the_nat i = {
+val nat_of_int : (int) -> nat effect {escape}
+function nat_of_int i = {
 	assert (i >= 0);
 	i
 }
 
-val the_range : forall 'n 'm 'i, 'n <= 'm. (int('n), int('m), int('i)) -> {'j, 'n <= 'j & 'j <= 'm & 'i == 'j. int('j)} effect {escape}
-function the_range(n, m, i) = {
+val nfix : int -> nat
+function nfix i = if i >= 0 then i else 0
+
+val check_range : forall 'n 'm 'i, 'n <= 'm. (int('n), int('m), int('i)) -> {'j, 'n <= 'j & 'j <= 'm & 'i == 'j. int('j)} effect {escape}
+function check_range(n, m, i) = {
 	assert(n <= i & i <= m);
 	i
 }
 
-val bits_of_bits : forall 'n 'm, 'n >= 0 & 'm >= 0. (int('n), bits('m)) -> bits('n)
-function bits_of_bits (n, x) = sail_mask(n, x)
+val sail_mask_signed : forall 'len 'v, 'len >= 0 & 'v >= 0. (int('len), bits('v)) -> bits('len)
 
-val bits_of_int : forall 'n, 'n >= 0. (int('n), int) -> bits('n)
-function bits_of_int (n, x) = get_slice_int(n, x, 0)
+function sail_mask_signed(len, v) = if len <= length(v) then truncate(v, len) else sail_sign_extend(v, len)
 
-overload the_bits = {bits_of_bits, bits_of_int}
-
-val sbits_of_bits : forall 'n 'm, 'n > 0 & 'm >= 0. (int('n), bits('m)) -> bits('n)
-function sbits_of_bits (n, x) = if (n <= length(x)) then truncate(x, n) else sail_sign_extend(x, n)
-
-overload the_sbits = {sbits_of_bits, bits_of_int}
+val bits_of_int : forall 'n, 'n >= 0. (int, int('n)) -> bits('n)
+function bits_of_int (x, n) = get_slice_int(n, x, 0)
 
 val isEven : int -> bool
 function isEven x =
@@ -405,19 +399,6 @@ function binary_logext (size, i) = {
 
 /*-----------------------------------------------------------------*/
 /*
-n-size.  Defined in `utilities.lisp` and simply generates, for
-example `(n08 x)` from `n-size 8 x`.  We find that `n08 x` is, under
-`:logic` simply `loghead 8 x`.
-
-See: http://www.cs.utexas.edu/users/moore/acl2/manuals/current/manual/index-seo.php/X86ISA____N08
-
-TODO: maybe do this automatically by evaluating `np-def-n` in
-`utilities.lisp`
-*/
-overload n_size = {bits_of_bits, bits_of_int}
-
-/*-----------------------------------------------------------------*/
-/*
 ash
 
 See: http://www.cs.utexas.edu/users/moore/acl2/manuals/current/manual/?topic=COMMON-LISP____ASH
@@ -550,7 +531,7 @@ function genericBitstructUpdater (width, spliceBits, low, inputBits) =
         [inputBits with (low + width - 1) .. low = spliceBits]
 
 // Registers
-register rip : bits(64)
+register rip : sbits(48)
 
 // In ACL2 rgfi() is often called with a `defconst` argument.  E.g.
 //      ` (rgfi *rax*) `
@@ -568,24 +549,24 @@ register rip : bits(64)
 // See here for some hints on rgfi:
 // http://www.cs.utexas.edu/users/moore/acl2/manuals/current/manual/index-seo.php/X86ISA____GPRS-READS-AND-WRITES?path=3532/29063/10660/6710/25183
 
-register rax : bits(64)
-register rbx : bits(64)
-register rcx : bits(64)
-register rdx : bits(64)
-register rsi : bits(64)
-register rdi : bits(64)
-register rsp : bits(64)
-register rbp : bits(64)
-register r8 : bits(64)
-register r9 : bits(64)
-register r10 : bits(64)
-register r11 : bits(64)
-register r12 : bits(64)
-register r13 : bits(64)
-register r14 : bits(64)
-register r15 : bits(64)
+register rax : sbits(64)
+register rbx : sbits(64)
+register rcx : sbits(64)
+register rdx : sbits(64)
+register rsi : sbits(64)
+register rdi : sbits(64)
+register rsp : sbits(64)
+register rbp : sbits(64)
+register r8 : sbits(64)
+register r9 : sbits(64)
+register r10 : sbits(64)
+register r11 : sbits(64)
+register r12 : sbits(64)
+register r13 : sbits(64)
+register r14 : sbits(64)
+register r15 : sbits(64)
 
-val rgfi : (int) -> bits(64) effect {escape, rreg}
+val rgfi : (int) -> sbits(64) effect {escape, rreg}
 function rgfi (regNum) = {
 	assert(0 <= regNum & regNum < 16);
     match regNum {
@@ -609,7 +590,7 @@ function rgfi (regNum) = {
     }
 }
 
-val write_rgfi : (int, bits(64)) -> unit effect {escape, wreg}
+val write_rgfi : (int, sbits(64)) -> unit effect {escape, wreg}
 function write_rgfi (regNum, val_to_write) = {
 	assert(0 <= regNum & regNum < 16);
 	match regNum {

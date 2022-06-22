@@ -36,13 +36,6 @@ outputFolder = '/auto/homes/tb592/REMS/sail-x86-from-acl2/model'
 
 
 '''
-Output path to the translation of `utilities.lisp`, which is handled manually
-by `generateUtils.py`.
-'''
-utilitiesFile = os.path.join(outputFolder, "utils.sail")
-
-
-'''
 Output paths for file which log data about the type resolution algorithm
 '''
 unresolvedTypesFile = '/auto/homes/tb592/REMS/sail-x86-from-acl2/unresolvedTypes.txt'
@@ -80,7 +73,7 @@ print_acl2_interactions = False
 '''
 Check all necessary paths have been specified and mbe_branch is well-formed.
 '''
-if any([path is None for path in [acl2Process, outputFolder, unresolvedTypesFile, utilitiesFile]]):
+if any([path is None for path in [acl2Process, outputFolder, unresolvedTypesFile]]):
 	sys.exit("Please specify file paths in config_files.py")
 
 if mbe_branch not in [':logic', ':exec']:

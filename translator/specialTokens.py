@@ -994,37 +994,7 @@ def _the_helper(theType, sailTerm):
 	if type(sailTerm) not in [str, list]: sys.exit(f"Error: `the` term not a string or list - {sailTerm}")
 	if isinstance(sailTerm, list) and len(sailTerm) != 1: sys.exit(f"Error: `the` list not length - {sailTerm}")
 
-	try:
-		termType = sailTerm[0].getType()
-	except:
-		termType = Sail_t_unknown()
-
-	if isSubType(termType, theType):
-		retTerm = sailTerm[0]
-	# Select the correct Sail `the`
-	elif isinstance(theType, Sail_t_int):
-		retTerm = coerceExpr(sailTerm[0], theType)
-	elif isinstance(theType, Sail_t_nat):
-		fnType = Sail_t_fn([Sail_t_int()], theType, {'escape'})
-		retTerm = SailApp(fn = SailHandwrittenFn(name="the_nat", typ=fnType), actuals = sailTerm)
-	elif isinstance(theType, Sail_t_range):
-		(low, high) = theType.getRange()
-		# Preserve existing constraints on the Sail term, e.g. don't
-		# cast {|1, 2, 4|} to range(1, 4), which would lose information
-		resultType = intersectTypes(termType, theType)
-		if resultType is None:
-			print(f"Warning: Failed to determine result type of `the_range({low}, {high}, {sailTerm[0].pp()})`")
-			resultType = theType
-		fnType = Sail_t_fn([Sail_t_int(), Sail_t_int(), Sail_t_int()], resultType, {'escape'})
-		fn = SailHandwrittenFn(name="the_range", typ=fnType)
-		retTerm = SailApp(fn=fn, actuals=[SailNumLit(low), SailNumLit(high), sailTerm[0]])
-	elif isinstance(theType, Sail_t_bits) and theType.length is not None:
-		fnName = "the_sbits" if theType.signed else "the_bits"
-		fnType = Sail_t_fn([Sail_t_int(), termType], theType, {'escape'})
-		fn = SailHandwrittenFn(name=fnName, typ=fnType)
-		retTerm = SailApp(fn=fn, actuals=[SailNumLit(theType.length), sailTerm[0]])
-	else:
-		sys.exit(f"Error: unexpected type spec in `the` - {theType} in {sailTerm}")
+	retTerm = coerceExpr(sailTerm[0], theType)
 
 	if retTerm is None:
 		sys.exit(f"Error: failed to coerce {sailTerm[0].pp()} to {theType.pp()} in `the`")
@@ -1036,8 +1006,8 @@ def tr_the(ACL2ast, env):
 	"""
 	In ACL2, `(the <type-spec> <form>)` indicates that `form` has type
 	`type-spec`.  In ACL2 this is proved statically, it is translated as a
-	dynamic type check in Sail.  Also ee `the_int`, `the_nat` and `the_range`
-	in handwritten.sail.
+	type annotation in Sail where possible, or a dynamic check otherwise,
+	e.g. see nat_of_int in handwritten.sail.
 
 	See: http://www.cs.utexas.edu/users/moore/acl2/manuals/current/manual/?topic=COMMON-LISP____THE
 	"""
@@ -1360,7 +1330,15 @@ def _bstar_helper(bindersRemaining, results, env):
 					boundVars.extend(env.pushToBindings([name], typ))
 					boundNames.append(name)
 					(sailThe, env, _) = tr_the(ident, env)
-					afters.append((name, sailThe[0]))
+					sailTyp = sailThe[0].getType()
+					if typ is not None and typ[0] == sailTyp:
+						print(f"Debug: Skipping coercion {sailThe[0].pp()} : {sailTyp.pp()} from type {typ[0].pp()}")
+					else:
+						# Add a type coercion after the
+						# let-binding if we don't have
+						# the right type already
+						print(f"Debug: Adding coercion {sailThe[0].pp()} : {sailTyp.pp()} from type {typ[0].pp()}")
+						afters.append((name, sailThe[0]))
 				else:
 					sys.exit(f"Unknown type of mv binder - {ident}")
 
@@ -1441,7 +1419,7 @@ def _bstar_helper(bindersRemaining, results, env):
 			bodySail = _the_helper(theType, bodySail)
 
 			# Determine the actual type (which, in particular in
-			# the case of the_range, might be inferred to be more
+			# the case of check_range, might be inferred to be more
 			# precise, e.g. {|1, 2, 4|} instead of range(1, 4)
 			actualType = bodySail[0].getType()
 
@@ -1478,14 +1456,17 @@ def _bstar_helper(bindersRemaining, results, env):
 			bodySail, env, _ = transform.transformACL2asttoSail(binding[1], env)
 
 			# Recurse on the rest of the list
-			recusedSail, env = _bstar_helper(bindersRemaining[1:], results, env)
+			recursedSail, env = _bstar_helper(bindersRemaining[1:], results, env)
 
 			# Create Sail term
-			# E.g. `if [cond] then [body] else [recursed]`
-			toReturn = SailIf(
-				ifTerm=condSail,
-				thenTerm=bodySail,
-				elseTerm=recusedSail)
+			if throwsException(bodySail[0]):
+				ifExp = SailIf(ifTerm=condSail, thenTerm=bodySail, elseTerm=[SailUnitLit()])
+				if isinstance(recursedSail[0], SailBlock):
+					# Merge blocks
+					recursedSail = recursedSail[0].getExprs() + recursedSail[1:]
+				toReturn = SailBlock([ifExp] + recursedSail)
+			else:
+				toReturn = SailIf(ifTerm=condSail, thenTerm=bodySail, elseTerm=recursedSail)
 		# Something else
 		else:
 			sys.exit(f"Error : Unrecognised binder in b* - {b} in \n{bindersRemaining}")
@@ -1665,22 +1646,22 @@ def tr_def_inst(ACL2ast, env):
 
 def get_register_info(name):
 	register_types = {
-		# Name		        (Width, number of elements)
-		'rip':		        (64, None),
-		'rflags':	        (32, None),
-		'rgfi':		        (64, 16),
-		'msr':		        (64, 7),
-		'seg-visible':	        (16, 6),
-		'seg-hidden-attr':	(16, 6),
-		'seg-hidden-base':	(64, 6),
-		'seg-hidden-limit':	(32, 6),
-		'ssr-visible':	        (16, 2),
-		'ssr-hidden-attr':	(16, 2),
-		'ssr-hidden-base':	(64, 2),
-		'ssr-hidden-limit':	(32, 2),
-		'zmm':			(512, 32),
-		'ctr':			(64, 17),
-		'str':			(80, 2),
+		# Name		        (Width,	signed,	number of elements)
+		'rip':		        (48,	True,	None),
+		'rflags':	        (32,	False,	None),
+		'rgfi':		        (64,	True,	16),
+		'msr':		        (64,	False,	7),
+		'seg-visible':	        (16,	False,	6),
+		'seg-hidden-attr':	(16,	False,	6),
+		'seg-hidden-base':	(64,	False,	6),
+		'seg-hidden-limit':	(32,	False,	6),
+		'ssr-visible':	        (16,	False,	2),
+		'ssr-hidden-attr':	(16,	False,	2),
+		'ssr-hidden-base':	(64,	False,	2),
+		'ssr-hidden-limit':	(32,	False,	2),
+		'zmm':			(512,	False,	32),
+		'ctr':			(64,	False,	17),
+		'str':			(80,	False,	2),
 	}
 
 	if name[0] == '!' or name[0] == ':':
@@ -1692,7 +1673,7 @@ def get_register_info(name):
 		name = name[:-1]
 
 	try:
-		(width, nElems) = register_types[name.lower()]
+		(width, signed, nElems) = register_types[name.lower()]
 	except:
 		sys.exit(f"Error: Register {name} unknown")
 
@@ -1701,34 +1682,31 @@ def get_register_info(name):
 
 	sanitisedName = utils.sanitiseSymbol(name, avoidShadowed=False)
 
-	return (sanitisedName, width, nElems)
+	return (sanitisedName, width, signed, nElems)
 
-def tr_register_read(ACL2ast, env):
-	(name, width, nElems) = get_register_info(ACL2ast[0])
-	elemType = Sail_t_bits(width)
+def _register_access_helper(ACL2ast, env):
+	(name, width, signed, nElems) = get_register_info(ACL2ast[0])
+	elemType = Sail_t_bits(width, signed=signed)
 	regType = elemType if nElems is None else Sail_t_vector(nElems, elemType)
 	regSail = SailBoundVar(name, regType, sanitise=False)
 	if nElems is None:
+		tokensConsumed = 1
 		readSail = regSail
-	if nElems is not None:
+	else:
+		tokensConsumed = 2
 		index = ACL2ast[1]
 		(indexSail, env, _) = transform.transformACL2asttoSail(index, env)
 		readSail = SailVectorProject(regSail, indexSail[0])
+	return readSail, elemType, env, tokensConsumed
+
+def tr_register_read(ACL2ast, env):
+	(readSail, _, env, _) = _register_access_helper(ACL2ast, env)
 	return [readSail], env, len(ACL2ast)
 
 def tr_register_write(ACL2ast, env):
-	name = ACL2ast[0]
-	(name, width, nElems) = get_register_info(name)
-	elemType = Sail_t_bits(width)
-	regType = elemType if nElems is None else Sail_t_vector(nElems, elemType)
-	regSail = SailBoundVar(name, regType, sanitise=False)
-	if nElems is None:
-		lhsSail = regSail
-	else:
-		index = ACL2ast[1]
-		(indexSail, env, _) = transform.transformACL2asttoSail(index, env)
-		lhsSail = SailVectorProject(regSail, indexSail[0])
-	rhs = ACL2ast[1] if nElems is None else ACL2ast[2]
+	(lhsSail, elemType, env, nAccessTokens) = _register_access_helper(ACL2ast, env)
+	# Convert ACL2 token after the access tokens to the expression for the right-hand side
+	rhs = ACL2ast[nAccessTokens]
 	(valueSail, env, _) = transform.transformACL2asttoSail(rhs, env)
 	rhsSail = coerceExpr(valueSail[0], elemType)
 	if rhsSail is None:
@@ -2278,6 +2256,9 @@ def errorHelper(msg):
 	)
 
 
+def throwsException(sailExp):
+	return isinstance(sailExp, SailApp) and sailExp.getFn().getName() == 'throw'
+
 def tr_er(ACL2ast, env):
 	"""
 	Translate `er` as an inline exception.  See errorHelper() docstring for
@@ -2320,8 +2301,7 @@ def tr_fault_fresh(ACL2ast, env):
 def tr_ifix(ACL2ast, env):
 	"""
 	Technically `ifix x` returns x if x is an integer, otherwise 0.  We
-	simply assert statically that it should be an int using `the_int` in
-	handwritten.sail.
+	make sure it is an integer using _the_helper.
 
 	See: http://www.cs.utexas.edu/users/moore/acl2/manuals/current/manual/?topic=ACL2____IFIX
 	"""
@@ -2332,15 +2312,56 @@ def tr_ifix(ACL2ast, env):
 
 def tr_nfix(ACL2ast, env):
 	"""
-	As per `tr_ifix` but we use `the_nat` instead.
+	`nfix x` returns x if x is positive, otherwise 0.
+	We coerce the argument to a numeric type (it could be a bitvector).  If
+	we statically know that the type is nonnegative, we can directly coerce
+	to nat, otherwise we coerce to int and call nfix (which dynamically
+	clips the value to 0 if it is negative).
 
 	See: http://www.cs.utexas.edu/users/moore/acl2/manuals/current/manual/?topic=ACL2____NFIX
-
-	TODO: make this function return 0 when the value is negative in line with the spec at:
 	"""
 	(sailArg, env, _) = transform.transformACL2asttoSail(ACL2ast[1], env)
-	toReturn = _the_helper(Sail_t_int(), sailArg)
-	return toReturn, env, len(ACL2ast)
+	sailType = sailArg[0].getType()
+	if isNonnegativeType(sailType):
+		toReturn = coerceExpr(sailArg[0], Sail_t_nat())
+		if toReturn is None:
+			sys.exit(f"Error: Failed to coerce {sailArg[0].pp()} to `nat` in `nfix`")
+	else:
+		coercedArg = coerceExpr(sailArg[0], Sail_t_int())
+		if coercedArg is None:
+			sys.exit(f"Error: Failed to coerce {sailArg[0].pp()} to `int` in `nfix`")
+		fn = SailHandwrittenFn("nfix", Sail_t_fn([Sail_t_int()], Sail_t_nat()))
+		toReturn = SailApp(fn, [coercedArg])
+	return [toReturn], env, len(ACL2ast)
+
+
+def gen_coercion_to_bits(size, signed=False):
+	def tr(ACL2ast, env):
+		(targetSail, env, _) = transform.transformACL2asttoSail(ACL2ast[1], env)
+		retType = Sail_t_bits(size, signed=signed)
+		toReturn = coerceExpr(targetSail[0], retType)
+		if toReturn is None:
+			sys.exit(f"Error: Failed to coerce {targetSail[0].pp()} to {retType.pp()} in `gen_coercion_to_bits`")
+		return [toReturn], env, len(ACL2ast)
+	return tr
+
+def tr_n_size(ACL2ast, env):
+	"""
+	`n-size 8 x` generates `n08 x`.  We assume that the size argument is
+	constant, and coerce to the bitvector type with the corresponding
+	length.
+
+	See: http://www.cs.utexas.edu/users/moore/acl2/manuals/current/manual/index-seo.php/X86ISA____N08
+	"""
+	(sizeSail, env, _) = transform.transformACL2asttoSail(ACL2ast[1], env)
+	(targetSail, env, _) = transform.transformACL2asttoSail(ACL2ast[2], env)
+	if isinstance(sizeSail[0], SailNumLit):
+		# pass the target to gen_coercion_bits (without the constant size argument)
+		ACL2ast = [ACL2ast[0]] + ACL2ast[2:]
+		return gen_coercion_to_bits(sizeSail[0].getNum())(ACL2ast, env)
+	else:
+		sys.exit(f"Error: Non-constant size {sizeSail[0].pp()} in `n-size`")
+	return [toReturn], env, len(ACL2ast)
 
 
 def tr_progn(ACL2ast, env):
@@ -2624,12 +2645,17 @@ def tr_trunc(ACL2ast, env):
 	(operandSail, env, _) = transform.transformACL2asttoSail(ACL2ast[2], env)
 	operandSail = operandSail[0]
 
-	if isRangeType(nBytesSail.getType()):
+	# `trunc` seems to interpret the first argument as the number of bytes
+	# if it is a power of two between 1 and 16, and as the number of bits
+	# otherwise;  is this a bug?  Either way, it seems that `trunc` is only
+	# used for powers of two in the current slice of the model.  Let's keep
+	# checking that.
+	if isSubType(nBytesSail.getType(), Sail_t_member([1, 2, 4, 8, 16])):
 		(low, high) = getRangeOfType(nBytesSail.getType())
 		nBytes = high
 		isConstant = (low == high)
 	else:
-		sys.exit(f"Error: Could not determine number of bytes for `trunc` from argument {args[0].pp()}")
+		sys.exit(f"Error: Unexpected number of bytes for `trunc` in argument {args[0].pp()}")
 	# If the result bitvector type has variable length, coerce to the maximum possible length for now
 	# TODO: Handle variable length bitvectors properly
 	resultType = Sail_t_bits(8 * nBytes)

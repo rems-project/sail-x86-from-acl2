@@ -1,6 +1,5 @@
 from specialTokens import *
 from handwritten_tokens import *
-import generateUtils
 
 """
 This file collects the translation functions.  Each function below collects
@@ -11,8 +10,6 @@ translation functions related to a different type of token.  Namely:
  	(e.g. `define`).
  -  Handwritten Token: these tokens link to the handwritten Sail functions in
  	handwritten.sail.
- -  Utilities: utilities.lisp is translated using generateUtils.py.  The
- 	generated functions are registered here.
  -  Macros: these tokens are registered as macros and are expanded at
  	translate-time.
  -  Unimplemented: these tokens also link to the handwritten Sail functions in
@@ -91,7 +88,8 @@ def specialTokens():
 		'!!ms-fresh': 		tr_ms_fresh,  # `!!ms-fresh` etc. are macros defined in `decoding-and-spec-utils.lisp`
 		'!!fault-fresh': 	tr_fault_fresh,  # Again, macro defined in `decoding-and-spec-utils.lisp`
 		'ifix': 			tr_ifix,
-		'nfix': 			tr_nfix,
+		'nfix':				tr_nfix,
+		'n-size':			tr_n_size,
 		'progn': 			tr_progn,
 		'aref1': 			tr_aref1,
 		'with-output': 		tr_with_output,
@@ -129,6 +127,16 @@ def specialTokens():
 	name_to_fn_map = {}
 	for name in manualDefinitions:
 		name_to_fn_map[name.upper()] = manualDefinitions[name]
+
+	# Generate number/bitvector conversions
+	numsToGenerate = [1, 2, 3, 4, 5, 6, 8, 9, 11, 12, 16, 17, 18, 20, 21, 22, 24, 25, 26, 27, 28, 30, 32, 33, 35, 43, 44, 45, 47, 48, 49, 51, 52, 55, 59, 60, 64, 65, 80, 112, 120, 128, 256, 512]
+	for i in numsToGenerate:
+		n_num = "n{:02d}".format(i)
+		i_num = "i{:02d}".format(i)
+		n_to_i = n_num + "-to-" + i_num
+		name_to_fn_map[n_num.upper()] = gen_coercion_to_bits(i, signed=False)
+		name_to_fn_map[i_num.upper()] = gen_coercion_to_bits(i, signed=True)
+		name_to_fn_map[n_to_i.upper()] = gen_coercion_to_bits(i, signed=True)
 
 	register_accessors = [
 		'rip',
@@ -202,7 +210,6 @@ def handwritten():
 		return {'func': func, 'numOfArgs': numOfArgs, 'coerceActuals': coerceActuals}
 
 	dependentHandwrittenDefs = {
-		'n-size'	: dependent_fn(n_size_fn, 2),
 		'logbitp'	: dependent_fn(logbitp_fn, 2, coerceActuals=True),
 		'logbit'	: dependent_fn(logbit_fn, 2, coerceActuals=True),
 	}
@@ -211,19 +218,6 @@ def handwritten():
 		name_to_fn_map[name] = apply_dependent_fn_gen(fn['func'], fn['numOfArgs'], coerceActuals=fn['coerceActuals'])
 
 	return name_to_fn_map
-
-def utils():
-	"""
-	Translate utilities.lisp and register the generated functions here.
-	"""
-	# Generate utility functions, converting names to uppercase and using
-	# apply_fn_gen()
-	name_to_fn_map = {}
-	for (name, handwrittenFn) in generateUtils.generate(includeHeader=False):
-		name_to_fn_map[name.upper()] = apply_fn_gen(handwrittenFn, handwrittenFn.getNumFormals())
-
-	return name_to_fn_map
-
 
 def macros():
 	"""
@@ -287,6 +281,5 @@ def loadManualEnv():
 	"""
 	return {**specialTokens(),
 			**handwritten(),
-			**utils(),
 			**macros(),
 			**unimplemented()}

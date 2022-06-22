@@ -279,12 +279,15 @@ class SailLet(SailASTelem):
 		return set.union(varSet, exprSet, bodySet, selfSet)
 
 	def pp(self):
-		# Force a type annotation of the expression to avoid type variable
-		# escape errors.
-		pp_var = self.varName.pp()
 		exprTyp = self.expr[0].getType()
-		pp_typ = f" : {ppType(exprTyp)}" if exprTyp.isPrintable() else ""
-		pp_expr = f"({self.expr[0].pp()})" + pp_typ
+		pp_typ = f" : {ppType(exprTyp)}" if isPrintableType(exprTyp) else ""
+		pp_var = self.varName.pp() + pp_typ
+		if isinstance(self.expr[0], SailMatch):
+			# SailMatch prints a type annotation by default, but we
+			# already have one on the LHS
+			pp_expr = f"({self.expr[0].pp(withAnnotation=False)})"
+		else:
+			pp_expr = f"({self.expr[0].pp()})"
 		pp_body = self.body[0].pp()
 		
 		return f"let {pp_var} = {pp_expr} in\n{pp_body}"
@@ -475,17 +478,19 @@ class SailBoundVar(SailASTelem):
 
 class SailApp(SailASTelem):
 	"""Represents function application in sail"""
-	def __init__(self, fn, actuals, infix=False):
+	def __init__(self, fn, actuals, infix=False, retType=None):
 		"""
 		Args:
 			- fn : SailFn | SailHandwrittenFn
 			- actuals : [SailAstElems]
 			- infix : Bool
+			- retTyp : SailTyp (to override the return type)
 		"""
 		super().__init__()
 		self.fn = fn
 		self.actuals = actuals
 		self.infix = infix
+		self.retType = retType
 
 	### Custom methods ###
 	def getFn(self):
@@ -493,6 +498,9 @@ class SailApp(SailASTelem):
 
 	def getActuals(self):
 		return self.actuals
+
+	def isInfix(self):
+		return self.infix
 
 	def resolveTypes(self, file, justPrint = False):
 		"""
@@ -533,9 +541,15 @@ class SailApp(SailASTelem):
 
 	### Required methods ###
 	def getType(self):
-		if self.fn.getType() is None:
+		if self.retType is not None:
+			return self.retType
+		elif self.fn.getType() is None:
 			sys.exit(f"Error: function {self.fn.getName()} has not RHS type - you may need to specify it yourself")
-		return self.fn.getType().getRHS()
+		else:
+			return self.fn.getType().getRHS()
+
+	def setType(self, typ):
+		self.retType = typ
 
 	def getEffects(self, ctx):
 		# Check if function has any associated effects
@@ -612,6 +626,47 @@ class SailNumLit(SailASTelem):
 
 	def pp(self):
 		return str(self.num)
+
+
+class SailBitsLit(SailASTelem):
+	"""A bitvector literal"""
+	def __init__(self, width, value, signed):
+		"""
+		Args:
+			- width : int
+			- value : int
+		"""
+		super().__init__()
+		if type(width) != int or type(value) != int:
+			print(f"Error: SailBitsLit({width}, {value})")
+			raise
+		self.width = width
+		self.value = value
+		self.signed = signed
+
+	### Custom methods ###
+	def getValue(self):
+		return self.value
+
+	### Required methods ###
+	def getType(self):
+		return Sail_t_bits(self.width, signed=self.signed)
+
+	def getEffects(self, ctx):
+		return set([])
+
+	def pp(self):
+		# Convert to two's complement, if necessary
+		value = self.value if self.value >= 0 else ((2 ** self.width) + self.value)
+		if self.width % 4 == 0:
+			width = int(self.width / 4)
+			numUnderscores = int((width - 1) / 4)
+			formatStr = f"0x{{:0{width + numUnderscores}_x}}"
+		else:
+			width = self.width
+			numUnderscores = int((width - 1) / 4)
+			formatStr = f"0b{{:0{width + numUnderscores}_b}}"
+		return formatStr.format(value)
 
 
 class SailBoolLit(SailASTelem):
@@ -880,13 +935,14 @@ class SailTuple(SailASTelem):
 
 		return set.union(itemsSet, selfSet)
 
-	def pp(self):
+	def pp(self, withAnnotations=False):
 		itemStrings = []
-		for i in self.subItems:
-			if isinstance(i, SailNumLit):
-				itemStrings.append(f"{i.pp()} : {i.getType().pp()}")
+		for e in self.subItems:
+			if withAnnotations and isPrintableType(e.getType()):
+				pp = f"{e.pp()} : {e.getType().pp()}"
 			else:
-				itemStrings.append(i.pp())
+				pp = f"{e.pp()}"
+			itemStrings.append(pp)
 		return f"({', '.join([i for i in itemStrings])})"
 
 
@@ -966,7 +1022,7 @@ class SailMatch(SailASTelem):
 
 		return set.union(varSet, matchesSet, selfSet)
 
-	def pp(self):
+	def pp(self, withAnnotation=True):
 		# Partial constant folding.  If the variable is actually a string,
 		# then we can just use the appropriate expression directly.  This is
 		# common when flgi, !flgi and !flgi-undefined have been macro expanded.
@@ -984,9 +1040,9 @@ class SailMatch(SailASTelem):
 		together = f"{headerLine}\n{matchLines}\n}}"
 
 		# Add a type annotation
-		withAnnotation = f"({together}) : {ppType(self.getType())}"
+		annotated = f"({together}) : {ppType(self.getType())}"
 
-		return withAnnotation
+		return annotated if withAnnotation else together
 
 
 class SailStruct(SailASTelem):
@@ -1487,7 +1543,6 @@ def saveSail(SailAST, path, name, env, includeHeaders):
 
 		if includeHeaders:
 			f.write('$include "handwritten.sail"\n')
-			f.write('$include "utils.sail"\n\n')
 
 		f.write(pp)
 
@@ -1497,23 +1552,35 @@ def saveSail(SailAST, path, name, env, includeHeaders):
 		print(f"Successfully saved file path: {path}; name: {name}")
 
 def coerceExpr(expr, typ):
-	etyp = expr.getType()
+	try:
+		etyp = expr.getType()
+	except:
+		print(f"coerceExpr: Cannot get type of {expr.pp()}")
+		return None
 	if etyp is None or isinstance(etyp, Sail_t_unknown):
+		print(f"coerceExpr: Cannot coerce expression {expr.pp()} with unknown type")
 		return None
 	elif isSubType(etyp, typ):
 		return expr
 	elif isNumeric(etyp) and not isNonnegativeType(etyp) and isinstance(typ, Sail_t_nat):
 		fntyp = Sail_t_fn([Sail_t_int()], typ)
-		return SailApp(SailHandwrittenFn("the_nat", fntyp), [expr])
+		return SailApp(SailHandwrittenFn("nat_of_int", fntyp), [expr])
 	elif isNumeric(etyp) and isRangeType(typ):
 		(low, high) = getRangeOfType(typ)
-		fntyp = Sail_t_fn([Sail_t_int(), Sail_t_int(), etyp], typ)
+		# Preserve existing constraints on the expression type, e.g. if
+		# we have a set-constrained integer
+		retTyp = intersectTypes(etyp, typ)
+		fntyp = Sail_t_fn([Sail_t_int(), Sail_t_int(), etyp], retTyp)
 		args = [SailNumLit(low), SailNumLit(high), expr]
-		return SailApp(SailHandwrittenFn("the_range", fntyp), args)
+		return SailApp(SailHandwrittenFn("check_range", fntyp), args)
+	elif isinstance(expr, SailNumLit) and isinstance(typ, Sail_t_bits) and typ.length is not None:
+		return SailBitsLit(typ.length, expr.getNum(), typ.signed)
+	elif isinstance(expr, SailBitsLit) and isinstance(typ, Sail_t_bits) and typ.length is not None:
+		return SailBitsLit(typ.length, expr.getValue(), typ.signed)
 	elif isNumeric(etyp) and isinstance(typ, Sail_t_bits) and typ.length is not None:
-		fntyp = Sail_t_fn([Sail_t_int(), Sail_t_int(), Sail_t_int()], typ)
-		args = [SailNumLit(typ.length), expr, SailNumLit(0)]
-		return SailApp(SailHandwrittenFn("get_slice_int", fntyp), args)
+		fntyp = Sail_t_fn([Sail_t_int(), Sail_t_int()], typ)
+		args = [expr, SailNumLit(typ.length)]
+		return SailApp(SailHandwrittenFn("bits_of_int", fntyp), args)
 	elif isinstance(etyp, Sail_t_bits) and isNumeric(typ):
 		if etyp.length is None:
 			castTyp = Sail_t_nat()
@@ -1527,10 +1594,39 @@ def coerceExpr(expr, typ):
 		innerExpr = SailApp(SailHandwrittenFn(fn, Sail_t_fn([etyp], innerTyp)), [expr])
 		return coerceExpr(innerExpr, typ)
 	elif isinstance(etyp, Sail_t_bits) and isinstance(typ, Sail_t_bits) and typ.length is not None:
-		# TODO: What about coercing from signed to unsigned?
-		fn = 'the_sbits' if etyp.signed and typ.signed else 'the_bits'
-		fntyp = Sail_t_fn([Sail_t_int(), etyp], typ)
-		args = [SailNumLit(typ.length), expr]
+		if etyp.length is not None:
+			if typ.length < etyp.length:
+				fn = 'truncate'
+			elif typ.length == etyp.length and isinstance(expr, SailBoundVar):
+				# If we have a variable with the right
+				# bitvector length, we don't need a cast, but
+				# return a fresh copy with the new type
+				# (including signedness)
+				return SailBoundVar(expr.getName(), typ=typ)
+			elif typ.length == etyp.length and isinstance(expr, SailApp):
+				# Similarly for function calls returning a
+				# bitvector of the right length;  no cast
+				# needed, but remember signedness
+				return SailApp(expr.getFn(), expr.getActuals(), infix=expr.isInfix(), retType=typ)
+			else:
+				# Zero-extend unsigned bitvectors, sign-extend signed bitvectors
+				# What about coercing signed to unsigned
+				# bitvectors?  It looks like those coercions
+				# occuring in the ACL2 source do
+				# sign-extension, usually with explicit
+				# comments to that effect (e.g. the
+				# sign-extension of `imm` in
+				# `x86-add/adc/sub/sbb/or/and/xor/cmp-test-rAX-I`),
+				# so we sign-extend in that case.
+				fn = 'sail_sign_extend' if etyp.signed else 'sail_zero_extend'
+			fntyp = Sail_t_fn([etyp, Sail_t_int()], typ)
+			args = [expr, SailNumLit(typ.length)]
+		else:
+			fn = 'sail_mask_signed' if etyp.signed else 'sail_mask'
+			fntyp = Sail_t_fn([Sail_t_int(), etyp], typ)
+			args = [SailNumLit(typ.length), expr]
+		if not(typ.signed) and etyp.signed and fn != 'truncate':
+			print(f"coerceExpr: Sign-extending {expr.pp()} to unsigned {typ.pp()}")
 		return SailApp(SailHandwrittenFn(fn, fntyp), args)
 	elif isinstance(expr, SailTuple) and isinstance(typ, Sail_t_tuple):
 		elems = []
@@ -1560,6 +1656,7 @@ def coerceExpr(expr, typ):
 	elif isinstance(expr, SailApp) and expr.getFn().getName().lower() == 'throw':
 		return expr
 	else:
+		print(f"coerceExpr: Cannot coerce {expr.pp()} to {typ.pp()}")
 		return None
 
 def coerceExprs(exprs, typs):

@@ -276,6 +276,9 @@ def isNonnegativeType(t):
 			(isinstance(t, Sail_t_member) and t.subType == Sail_t_member.INT and all(m >= 0 for m in t.members)) or \
 			(isinstance(t, Sail_t_bits) and t.signed == False)
 
+def isSignedType(t):
+	return not(isNonnegativeType(t))
+
 def isString(st):
 	"""
 	Tests if SailType `st` is a string.
@@ -614,7 +617,7 @@ class Sail_t_member(SailType):
 
 	def pp(self):
 		if self.subType == Sail_t_member.INT:
-			inner = ', '.join([str(item) for item in self.members])
+			inner = ', '.join([str(item) for item in sorted(self.members)])
 			return f"{{|{inner}|}}"
 		elif self.subType == Sail_t_member.STR:
 			# Don't think we can have member of string so just generalise to string
@@ -845,12 +848,18 @@ def mergeTypes(t1, t2):
 		(l2, h2) = getRangeOfType(t2)
 		return Sail_t_range(min(l1, l2), max(h1, h2))
 	elif isBitvectorType(t1) and isBitvectorType(t2):
-		length = max(getBitvectorSize(t1), getBitvectorSize(t2))
-		if (isNonnegativeType(t1) and not isNonnegativeType(t2)) or \
-				(isNonnegativeType(t2) and not isNonnegativeType(t1)):
-			# Allow an extra bit if we merge signed and unsigned types
-			length = length + 1
-		signed = not isNonnegativeType(t1) or not isNonnegativeType(t2)
+		signed = isSignedType(t1) or isSignedType(t2)
+		length1 = getBitvectorSize(t1)
+		length2 = getBitvectorSize(t2)
+		if isNonnegativeType(t1) and isSignedType(t2):
+			# Add a bit to the unsigned type when merging with a
+			# signed type, so that the MSB can be a sign bit
+			print(f"mergeTypes: Adding a bit to {t1.pp()} when merging with {t2.pp()}")
+			length1 = length1 + 1
+		if isSignedType(t1) and isNonnegativeType(t2):
+			print(f"mergeTypes: Adding a bit to {t2.pp()} when merging with {t1.pp()}")
+			length2 = length2 + 2
+		length = max(length1, length2)
 		return Sail_t_bits(length, signed=signed) if length > 0 else None
 	elif (isNumeric(t1) and isNumeric(t2)) \
 	     or (isNumeric(t1) and isinstance(t2, Sail_t_bits)) \

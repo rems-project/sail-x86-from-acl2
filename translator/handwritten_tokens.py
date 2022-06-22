@@ -36,6 +36,8 @@ signed_byte_p = SailHandwrittenFn(
 					'signed_byte_p',
 					Sail_t_fn([Sail_t_int(), Sail_t_int()], Sail_t_bool(), {'escape'}))
 
+nfix_fn = SailHandwrittenFn('nfix', Sail_t_fn([Sail_t_int()], Sail_t_nat()))
+
 not_fn = SailHandwrittenFn(
 			'not_bool',
 			Sail_t_fn([Sail_t_bool()], Sail_t_bool()))
@@ -80,11 +82,6 @@ binary_logxor_fn = SailHandwrittenFn(
 binary_logext_fn = SailHandwrittenFn(
 				'binary_logext',
 				Sail_t_fn([Sail_t_int(), Sail_t_int()], Sail_t_int()))
-
-def n_size_fn(args, env):
-	resultType = Sail_t_bits(args[0].getNum()) if isinstance(args[0], SailNumLit) else Sail_t_int()
-	return SailHandwrittenFn('n_size', Sail_t_fn([Sail_t_int(), resultType], resultType))
-
 
 ash_fn = SailHandwrittenFn(
 	'ash',
@@ -133,11 +130,11 @@ write_rip_fn = SailHandwrittenFn(
 
 rgfi_fn = SailHandwrittenFn(
 						'rgfi',
-						Sail_t_fn([Sail_t_int()], Sail_t_bits(64), {'escape', 'rreg'}))
+						Sail_t_fn([Sail_t_int()], Sail_t_bits(64, signed=True), {'escape', 'rreg'}))
 
 write_rgfi_fn = SailHandwrittenFn(
 						'write_rgfi',
-						Sail_t_fn([Sail_t_int(), Sail_t_bits(64)], Sail_t_unit(), {'escape', 'wreg'}))
+						Sail_t_fn([Sail_t_int(), Sail_t_bits(64, signed=True)], Sail_t_unit(), {'escape', 'wreg'}))
 
 msri_fn = SailHandwrittenFn(
 	'msri',
