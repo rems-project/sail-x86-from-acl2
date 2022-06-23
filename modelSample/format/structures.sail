@@ -403,22 +403,22 @@ function vex_prefixes_map_p (bytes, vex_prefixes) = {
     }) : bool
 }
 
-val vex_get_vvvv : bits(24) -> sbits(4)
+val vex_get_vvvv : bits(24) -> sbits(5)
 
 function vex_get_vvvv vex_prefixes = {
     (match vex_prefixes_get_byte0(vex_prefixes) {
-      197 => vex2_byte1_get_vvvv(vex_prefixes_get_byte1(vex_prefixes)),
-      196 => vex3_byte2_get_vvvv(vex_prefixes_get_byte2(vex_prefixes)),
-      _ => 0xf
-    }) : sbits(4)
+      197 => sail_zero_extend(vex2_byte1_get_vvvv(vex_prefixes_get_byte1(vex_prefixes)), 5),
+      196 => sail_zero_extend(vex3_byte2_get_vvvv(vex_prefixes_get_byte2(vex_prefixes)), 5),
+      _ => 0b11111
+    }) : sbits(5)
 }
 
 val vex_get_l : bits(24) -> sbits(2)
 
 function vex_get_l vex_prefixes = {
     (match vex_prefixes_get_byte0(vex_prefixes) {
-      197 => sail_sign_extend(vex2_byte1_get_l(vex_prefixes_get_byte1(vex_prefixes)), 2),
-      196 => sail_sign_extend(vex3_byte2_get_l(vex_prefixes_get_byte2(vex_prefixes)), 2),
+      197 => sail_zero_extend(vex2_byte1_get_l(vex_prefixes_get_byte1(vex_prefixes)), 2),
+      196 => sail_zero_extend(vex3_byte2_get_l(vex_prefixes_get_byte2(vex_prefixes)), 2),
       _ => 0b11
     }) : sbits(2)
 }
@@ -427,8 +427,8 @@ val vex_get_pp : bits(24) -> sbits(3)
 
 function vex_get_pp vex_prefixes = {
     (match vex_prefixes_get_byte0(vex_prefixes) {
-      197 => sail_sign_extend(vex2_byte1_get_pp(vex_prefixes_get_byte1(vex_prefixes)), 3),
-      196 => sail_sign_extend(vex3_byte2_get_pp(vex_prefixes_get_byte2(vex_prefixes)), 3),
+      197 => sail_zero_extend(vex2_byte1_get_pp(vex_prefixes_get_byte1(vex_prefixes)), 3),
+      196 => sail_zero_extend(vex3_byte2_get_pp(vex_prefixes_get_byte2(vex_prefixes)), 3),
       _ => 0b111
     }) : sbits(3)
 }

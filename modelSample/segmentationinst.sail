@@ -35,7 +35,7 @@ let increment_rip_by : bits(3) = (bits_of_int(increment_rip_by, 3)) in
 { if is_some(flg0)
 then throw(Emsg("Model state error: :X86-OPERAND-FROM-MODR/M-AND-SIB-BYTES"))
 else ();
-let (flg, temp_rip) : (option(string), sbits(49)) = (add_to_iptr(proc_mode, temp_rip, sail_sign_extend(increment_rip_by, 48))) in
+let (flg, temp_rip) : (option(string), sbits(49)) = (add_to_iptr(proc_mode, temp_rip, sail_zero_extend(increment_rip_by, 48))) in
 let temp_rip : sbits(48) = (truncate(temp_rip, 48)) in
 { if is_some(flg)
 then throw(Emsg("Model state error: :RIP-INCREMENT-ERROR"))
@@ -106,7 +106,7 @@ let increment_rip_by : bits(3) = (bits_of_int(increment_rip_by, 3)) in
 { if is_some(flg0)
 then throw(Emsg("Model state error: :X86-OPERAND-FROM-MODR/M-AND-SIB-BYTES"))
 else ();
-let (flg, temp_rip) : (option(string), sbits(49)) = (add_to_iptr(proc_mode, temp_rip, sail_sign_extend(increment_rip_by, 48))) in
+let (flg, temp_rip) : (option(string), sbits(49)) = (add_to_iptr(proc_mode, temp_rip, sail_zero_extend(increment_rip_by, 48))) in
 let temp_rip : sbits(48) = (truncate(temp_rip, 48)) in
 { if is_some(flg)
 then throw(Emsg("Model state error: :RIP-INCREMENT-ERROR"))
@@ -175,7 +175,7 @@ let increment_rip_by : bits(3) = (bits_of_int(increment_rip_by, 3)) in
 { if is_some(flg0)
 then throw(Emsg("Model state error: :X86-OPERAND-FROM-MODR/M-AND-SIB-BYTES"))
 else ();
-let (flg, temp_rip) : (option(string), sbits(49)) = (add_to_iptr(proc_mode, temp_rip, sail_sign_extend(increment_rip_by, 48))) in
+let (flg, temp_rip) : (option(string), sbits(49)) = (add_to_iptr(proc_mode, temp_rip, sail_zero_extend(increment_rip_by, 48))) in
 let temp_rip : sbits(48) = (truncate(temp_rip, 48)) in
 { if is_some(flg)
 then throw(Emsg("Model state error: :RIP-INCREMENT-ERROR"))
@@ -194,7 +194,7 @@ else ();
 let gdtr : bits(80) = (strs[0]) in
 let gdtr_base : bits(64) = (if (proc_mode) == (0)
 then gdtr_idtrbits_get_base_addr(gdtr)
-else sail_zero_extend(n32(truncate(gdtr_idtrbits_get_base_addr(gdtr), 32)), 64)) in
+else sail_zero_extend(truncate(gdtr_idtrbits_get_base_addr(gdtr), 32), 64)) in
 let gdtr_limit : bits(16) = (gdtr_idtrbits_get_limit(gdtr)) in
 let largest_address : int = ((ash(unsigned(sel_index), 3)) + (if (proc_mode) == (0)
 then 15

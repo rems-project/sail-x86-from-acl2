@@ -2,11 +2,11 @@
 val sal_shl_spec_8 : (bits(8), bits(6), bits(32)) -> (bits(8), bits(32), bits(32))
 
 function sal_shl_spec_8 (dst, src, input_rflags) = {
-    let dst : bits(8) = 0x08;
-    let src : bits(6) = 0b000110;
-    let input_rflags : bits(32) = n32(input_rflags);
+    let dst : bits(8) = dst;
+    let src : bits(6) = src;
+    let input_rflags : bits(32) = input_rflags;
     let raw_result : int = ash(unsigned(dst), unsigned(src));
-    let result : bits(8) = 0x08;
+    let result : bits(8) = bits_of_int(raw_result, 8);
     let (output_rflags, undefined_flags) : (bits(32), bits(32)) = match src {
       0 => (input_rflags, 0x00000000),
       1 => let cf : bits(1) = slice(dst, 7, 1) in
@@ -35,19 +35,19 @@ function sal_shl_spec_8 (dst, src, input_rflags) = {
           (output_rflags, undefined_flags)
       }
     };
-    let output_rflags : bits(32) = n32(output_rflags);
-    let undefined_flags : bits(32) = n32(undefined_flags);
+    let output_rflags : bits(32) = output_rflags;
+    let undefined_flags : bits(32) = undefined_flags;
     (result, output_rflags, undefined_flags)
 }
 
 val sal_shl_spec_16 : (bits(16), bits(6), bits(32)) -> (bits(16), bits(32), bits(32))
 
 function sal_shl_spec_16 (dst, src, input_rflags) = {
-    let dst : bits(16) = 0x0010;
-    let src : bits(6) = 0b000110;
-    let input_rflags : bits(32) = n32(input_rflags);
+    let dst : bits(16) = dst;
+    let src : bits(6) = src;
+    let input_rflags : bits(32) = input_rflags;
     let raw_result : int = ash(unsigned(dst), unsigned(src));
-    let result : bits(16) = 0x0010;
+    let result : bits(16) = bits_of_int(raw_result, 16);
     let (output_rflags, undefined_flags) : (bits(32), bits(32)) = match src {
       0 => (input_rflags, 0x00000000),
       1 => let cf : bits(1) = slice(dst, 15, 1) in
@@ -76,19 +76,19 @@ function sal_shl_spec_16 (dst, src, input_rflags) = {
           (output_rflags, undefined_flags)
       }
     };
-    let output_rflags : bits(32) = n32(output_rflags);
-    let undefined_flags : bits(32) = n32(undefined_flags);
+    let output_rflags : bits(32) = output_rflags;
+    let undefined_flags : bits(32) = undefined_flags;
     (result, output_rflags, undefined_flags)
 }
 
 val sal_shl_spec_32 : (bits(32), bits(6), bits(32)) -> (bits(32), bits(32), bits(32))
 
 function sal_shl_spec_32 (dst, src, input_rflags) = {
-    let dst : bits(32) = 0x00000020;
-    let src : bits(6) = 0b000110;
-    let input_rflags : bits(32) = n32(input_rflags);
+    let dst : bits(32) = dst;
+    let src : bits(6) = src;
+    let input_rflags : bits(32) = input_rflags;
     let raw_result : int = ash(unsigned(dst), unsigned(src));
-    let result : bits(32) = 0x00000020;
+    let result : bits(32) = bits_of_int(raw_result, 32);
     let (output_rflags, undefined_flags) : (bits(32), bits(32)) = match src {
       0 => (input_rflags, 0x00000000),
       1 => let cf : bits(1) = slice(dst, 31, 1) in
@@ -117,19 +117,19 @@ function sal_shl_spec_32 (dst, src, input_rflags) = {
           (output_rflags, undefined_flags)
       }
     };
-    let output_rflags : bits(32) = n32(output_rflags);
-    let undefined_flags : bits(32) = n32(undefined_flags);
+    let output_rflags : bits(32) = output_rflags;
+    let undefined_flags : bits(32) = undefined_flags;
     (result, output_rflags, undefined_flags)
 }
 
 val sal_shl_spec_64 : (bits(64), bits(6), bits(32)) -> (bits(64), bits(32), bits(32))
 
 function sal_shl_spec_64 (dst, src, input_rflags) = {
-    let dst : bits(64) = 0x0000000000000040;
-    let src : bits(6) = 0b000110;
-    let input_rflags : bits(32) = n32(input_rflags);
+    let dst : bits(64) = dst;
+    let src : bits(6) = src;
+    let input_rflags : bits(32) = input_rflags;
     let raw_result : int = ash(unsigned(dst), unsigned(src));
-    let result : bits(64) = 0x0000000000000040;
+    let result : bits(64) = bits_of_int(raw_result, 64);
     let (output_rflags, undefined_flags) : (bits(32), bits(32)) = match src {
       0 => (input_rflags, 0x00000000),
       1 => let cf : bits(1) = slice(dst, 63, 1) in
@@ -158,8 +158,8 @@ function sal_shl_spec_64 (dst, src, input_rflags) = {
           (output_rflags, undefined_flags)
       }
     };
-    let output_rflags : bits(32) = n32(output_rflags);
-    let undefined_flags : bits(32) = n32(undefined_flags);
+    let output_rflags : bits(32) = output_rflags;
+    let undefined_flags : bits(32) = undefined_flags;
     (result, output_rflags, undefined_flags)
 }
 
@@ -187,12 +187,12 @@ function sal_shl_spec (size, dst, src, input_rflags) = {
 val shr_spec_8 : (bits(8), bits(6), bits(32)) -> (bits(8), bits(32), bits(32))
 
 function shr_spec_8 (dst, src, input_rflags) = {
-    let dst : bits(8) = 0x08;
-    let src : bits(6) = 0b000110;
-    let input_rflags : bits(32) = n32(input_rflags);
+    let dst : bits(8) = dst;
+    let src : bits(6) = src;
+    let input_rflags : bits(32) = input_rflags;
     let neg_src : sbits(9) = bits_of_int(negate(unsigned(src)), 9);
     let raw_result : bits(8) = bits_of_int(ash(unsigned(dst), signed(neg_src)), 8);
-    let result : bits(8) = 0x08;
+    let result : bits(8) = raw_result;
     let (output_rflags, undefined_flags) : (bits(32), bits(32)) = match src {
       0 => (input_rflags, 0x00000000),
       1 => let cf : bits(1) = slice(dst, 0, 1) in
@@ -221,20 +221,20 @@ function shr_spec_8 (dst, src, input_rflags) = {
           (output_rflags, undefined_flags)
       }
     };
-    let output_rflags : bits(32) = n32(output_rflags);
-    let undefined_flags : bits(32) = n32(undefined_flags);
+    let output_rflags : bits(32) = output_rflags;
+    let undefined_flags : bits(32) = undefined_flags;
     (result, output_rflags, undefined_flags)
 }
 
 val shr_spec_16 : (bits(16), bits(6), bits(32)) -> (bits(16), bits(32), bits(32))
 
 function shr_spec_16 (dst, src, input_rflags) = {
-    let dst : bits(16) = 0x0010;
-    let src : bits(6) = 0b000110;
-    let input_rflags : bits(32) = n32(input_rflags);
+    let dst : bits(16) = dst;
+    let src : bits(6) = src;
+    let input_rflags : bits(32) = input_rflags;
     let neg_src : sbits(17) = bits_of_int(negate(unsigned(src)), 17);
     let raw_result : bits(16) = bits_of_int(ash(unsigned(dst), signed(neg_src)), 16);
-    let result : bits(16) = 0x0010;
+    let result : bits(16) = raw_result;
     let (output_rflags, undefined_flags) : (bits(32), bits(32)) = match src {
       0 => (input_rflags, 0x00000000),
       1 => let cf : bits(1) = slice(dst, 0, 1) in
@@ -263,20 +263,20 @@ function shr_spec_16 (dst, src, input_rflags) = {
           (output_rflags, undefined_flags)
       }
     };
-    let output_rflags : bits(32) = n32(output_rflags);
-    let undefined_flags : bits(32) = n32(undefined_flags);
+    let output_rflags : bits(32) = output_rflags;
+    let undefined_flags : bits(32) = undefined_flags;
     (result, output_rflags, undefined_flags)
 }
 
 val shr_spec_32 : (bits(32), bits(6), bits(32)) -> (bits(32), bits(32), bits(32))
 
 function shr_spec_32 (dst, src, input_rflags) = {
-    let dst : bits(32) = 0x00000020;
-    let src : bits(6) = 0b000110;
-    let input_rflags : bits(32) = n32(input_rflags);
+    let dst : bits(32) = dst;
+    let src : bits(6) = src;
+    let input_rflags : bits(32) = input_rflags;
     let neg_src : sbits(33) = bits_of_int(negate(unsigned(src)), 33);
     let raw_result : bits(32) = bits_of_int(ash(unsigned(dst), signed(neg_src)), 32);
-    let result : bits(32) = 0x00000020;
+    let result : bits(32) = raw_result;
     let (output_rflags, undefined_flags) : (bits(32), bits(32)) = match src {
       0 => (input_rflags, 0x00000000),
       1 => let cf : bits(1) = slice(dst, 0, 1) in
@@ -305,20 +305,20 @@ function shr_spec_32 (dst, src, input_rflags) = {
           (output_rflags, undefined_flags)
       }
     };
-    let output_rflags : bits(32) = n32(output_rflags);
-    let undefined_flags : bits(32) = n32(undefined_flags);
+    let output_rflags : bits(32) = output_rflags;
+    let undefined_flags : bits(32) = undefined_flags;
     (result, output_rflags, undefined_flags)
 }
 
 val shr_spec_64 : (bits(64), bits(6), bits(32)) -> (bits(64), bits(32), bits(32))
 
 function shr_spec_64 (dst, src, input_rflags) = {
-    let dst : bits(64) = 0x0000000000000040;
-    let src : bits(6) = 0b000110;
-    let input_rflags : bits(32) = n32(input_rflags);
+    let dst : bits(64) = dst;
+    let src : bits(6) = src;
+    let input_rflags : bits(32) = input_rflags;
     let neg_src : sbits(65) = bits_of_int(negate(unsigned(src)), 65);
     let raw_result : bits(64) = bits_of_int(ash(unsigned(dst), signed(neg_src)), 64);
-    let result : bits(64) = 0x0000000000000040;
+    let result : bits(64) = raw_result;
     let (output_rflags, undefined_flags) : (bits(32), bits(32)) = match src {
       0 => (input_rflags, 0x00000000),
       1 => let cf : bits(1) = slice(dst, 0, 1) in
@@ -347,8 +347,8 @@ function shr_spec_64 (dst, src, input_rflags) = {
           (output_rflags, undefined_flags)
       }
     };
-    let output_rflags : bits(32) = n32(output_rflags);
-    let undefined_flags : bits(32) = n32(undefined_flags);
+    let output_rflags : bits(32) = output_rflags;
+    let undefined_flags : bits(32) = undefined_flags;
     (result, output_rflags, undefined_flags)
 }
 
@@ -375,9 +375,9 @@ function shr_spec (size, dst, src, input_rflags) = {
 val sar_spec_8 : (bits(8), bits(6), bits(32)) -> (bits(8), bits(32), bits(32))
 
 function sar_spec_8 (dst, src, input_rflags) = {
-    let dst : bits(8) = 0x08;
-    let src : bits(6) = 0b000110;
-    let input_rflags : bits(32) = n32(input_rflags);
+    let dst : bits(8) = dst;
+    let src : bits(6) = src;
+    let input_rflags : bits(32) = input_rflags;
     let neg_src : sbits(9) = bits_of_int(negate(unsigned(src)), 9);
     let raw_result_not_sign_extended : bits(8) = bits_of_int(ash(unsigned(dst), signed(neg_src)), 8);
     let raw_result : int = if logbit(7, dst) == 0b1 then {
@@ -385,7 +385,7 @@ function sar_spec_8 (dst, src, input_rflags) = {
     } else {
         unsigned(raw_result_not_sign_extended)
     };
-    let result : bits(8) = 0x08;
+    let result : bits(8) = bits_of_int(raw_result, 8);
     let (output_rflags, undefined_flags) : (bits(32), bits(32)) = match src {
       0 => (input_rflags, 0x00000000),
       1 => let cf : bits(1) = slice(dst, 0, 1) in
@@ -414,17 +414,17 @@ function sar_spec_8 (dst, src, input_rflags) = {
           (output_rflags, undefined_flags)
       }
     };
-    let output_rflags : bits(32) = n32(output_rflags);
-    let undefined_flags : bits(32) = n32(undefined_flags);
+    let output_rflags : bits(32) = output_rflags;
+    let undefined_flags : bits(32) = undefined_flags;
     (result, output_rflags, undefined_flags)
 }
 
 val sar_spec_16 : (bits(16), bits(6), bits(32)) -> (bits(16), bits(32), bits(32))
 
 function sar_spec_16 (dst, src, input_rflags) = {
-    let dst : bits(16) = 0x0010;
-    let src : bits(6) = 0b000110;
-    let input_rflags : bits(32) = n32(input_rflags);
+    let dst : bits(16) = dst;
+    let src : bits(6) = src;
+    let input_rflags : bits(32) = input_rflags;
     let neg_src : sbits(17) = bits_of_int(negate(unsigned(src)), 17);
     let raw_result_not_sign_extended : bits(16) = bits_of_int(ash(unsigned(dst), signed(neg_src)), 16);
     let raw_result : int = if logbit(15, dst) == 0b1 then {
@@ -432,7 +432,7 @@ function sar_spec_16 (dst, src, input_rflags) = {
     } else {
         unsigned(raw_result_not_sign_extended)
     };
-    let result : bits(16) = 0x0010;
+    let result : bits(16) = bits_of_int(raw_result, 16);
     let (output_rflags, undefined_flags) : (bits(32), bits(32)) = match src {
       0 => (input_rflags, 0x00000000),
       1 => let cf : bits(1) = slice(dst, 0, 1) in
@@ -461,17 +461,17 @@ function sar_spec_16 (dst, src, input_rflags) = {
           (output_rflags, undefined_flags)
       }
     };
-    let output_rflags : bits(32) = n32(output_rflags);
-    let undefined_flags : bits(32) = n32(undefined_flags);
+    let output_rflags : bits(32) = output_rflags;
+    let undefined_flags : bits(32) = undefined_flags;
     (result, output_rflags, undefined_flags)
 }
 
 val sar_spec_32 : (bits(32), bits(6), bits(32)) -> (bits(32), bits(32), bits(32))
 
 function sar_spec_32 (dst, src, input_rflags) = {
-    let dst : bits(32) = 0x00000020;
-    let src : bits(6) = 0b000110;
-    let input_rflags : bits(32) = n32(input_rflags);
+    let dst : bits(32) = dst;
+    let src : bits(6) = src;
+    let input_rflags : bits(32) = input_rflags;
     let neg_src : sbits(33) = bits_of_int(negate(unsigned(src)), 33);
     let raw_result_not_sign_extended : bits(32) = bits_of_int(ash(unsigned(dst), signed(neg_src)), 32);
     let raw_result : int = if logbit(31, dst) == 0b1 then {
@@ -479,7 +479,7 @@ function sar_spec_32 (dst, src, input_rflags) = {
     } else {
         unsigned(raw_result_not_sign_extended)
     };
-    let result : bits(32) = 0x00000020;
+    let result : bits(32) = bits_of_int(raw_result, 32);
     let (output_rflags, undefined_flags) : (bits(32), bits(32)) = match src {
       0 => (input_rflags, 0x00000000),
       1 => let cf : bits(1) = slice(dst, 0, 1) in
@@ -508,17 +508,17 @@ function sar_spec_32 (dst, src, input_rflags) = {
           (output_rflags, undefined_flags)
       }
     };
-    let output_rflags : bits(32) = n32(output_rflags);
-    let undefined_flags : bits(32) = n32(undefined_flags);
+    let output_rflags : bits(32) = output_rflags;
+    let undefined_flags : bits(32) = undefined_flags;
     (result, output_rflags, undefined_flags)
 }
 
 val sar_spec_64 : (bits(64), bits(6), bits(32)) -> (bits(64), bits(32), bits(32))
 
 function sar_spec_64 (dst, src, input_rflags) = {
-    let dst : bits(64) = 0x0000000000000040;
-    let src : bits(6) = 0b000110;
-    let input_rflags : bits(32) = n32(input_rflags);
+    let dst : bits(64) = dst;
+    let src : bits(6) = src;
+    let input_rflags : bits(32) = input_rflags;
     let neg_src : sbits(65) = bits_of_int(negate(unsigned(src)), 65);
     let raw_result_not_sign_extended : bits(64) = bits_of_int(ash(unsigned(dst), signed(neg_src)), 64);
     let raw_result : int = if logbit(63, dst) == 0b1 then {
@@ -526,7 +526,7 @@ function sar_spec_64 (dst, src, input_rflags) = {
     } else {
         unsigned(raw_result_not_sign_extended)
     };
-    let result : bits(64) = 0x0000000000000040;
+    let result : bits(64) = bits_of_int(raw_result, 64);
     let (output_rflags, undefined_flags) : (bits(32), bits(32)) = match src {
       0 => (input_rflags, 0x00000000),
       1 => let cf : bits(1) = slice(dst, 0, 1) in
@@ -555,8 +555,8 @@ function sar_spec_64 (dst, src, input_rflags) = {
           (output_rflags, undefined_flags)
       }
     };
-    let output_rflags : bits(32) = n32(output_rflags);
-    let undefined_flags : bits(32) = n32(undefined_flags);
+    let output_rflags : bits(32) = output_rflags;
+    let undefined_flags : bits(32) = undefined_flags;
     (result, output_rflags, undefined_flags)
 }
 
@@ -583,12 +583,12 @@ function sar_spec (size, dst, src, input_rflags) = {
 val shld_spec_16 : (bits(16), bits(16), bits(6), bits(32)) -> (bits(16), bool, bits(32), bits(32))
 
 function shld_spec_16 (dst, src, cnt, input_rflags) = {
-    let dst : bits(16) = 0x0010;
-    let src : bits(16) = 0x0010;
-    let cnt : bits(6) = 0b000110;
-    let input_rflags : bits(32) = n32(input_rflags);
+    let dst : bits(16) = dst;
+    let src : bits(16) = src;
+    let cnt : bits(6) = cnt;
+    let input_rflags : bits(32) = input_rflags;
     let dst_src : bits(32) = logior(bits_of_int(ash(unsigned(dst), 16), 32), sail_zero_extend(src, 32));
-    let output_dst : bits(16) = 0x0010;
+    let output_dst : bits(16) = bits_of_int(ash(unsigned(dst_src), unsigned(sail_zero_extend(cnt, 16))), 16);
     let (output_rflags, undefined_flags) : (bits(32), bits(32)) = match cnt {
       0 => (input_rflags, 0x00000000),
       1 => let cf : bits(1) = slice(dst, 15, 1) in
@@ -614,20 +614,20 @@ function shld_spec_16 (dst, src, cnt, input_rflags) = {
           (output_rflags, undefined_flags)
       }
     };
-    let output_rflags : bits(32) = n32(output_rflags);
-    let undefined_flags : bits(32) = n32(undefined_flags);
+    let output_rflags : bits(32) = output_rflags;
+    let undefined_flags : bits(32) = undefined_flags;
     (output_dst, unsigned(cnt) > 16, output_rflags, undefined_flags)
 }
 
 val shld_spec_32 : (bits(32), bits(32), bits(6), bits(32)) -> (bits(32), bool, bits(32), bits(32))
 
 function shld_spec_32 (dst, src, cnt, input_rflags) = {
-    let dst : bits(32) = 0x00000020;
-    let src : bits(32) = 0x00000020;
-    let cnt : bits(6) = 0b000110;
-    let input_rflags : bits(32) = n32(input_rflags);
+    let dst : bits(32) = dst;
+    let src : bits(32) = src;
+    let cnt : bits(6) = cnt;
+    let input_rflags : bits(32) = input_rflags;
     let dst_src : bits(64) = logior(bits_of_int(ash(unsigned(dst), 32), 64), sail_zero_extend(src, 64));
-    let output_dst : bits(32) = 0x00000020;
+    let output_dst : bits(32) = bits_of_int(ash(unsigned(dst_src), unsigned(sail_zero_extend(cnt, 32))), 32);
     let (output_rflags, undefined_flags) : (bits(32), bits(32)) = match cnt {
       0 => (input_rflags, 0x00000000),
       1 => let cf : bits(1) = slice(dst, 31, 1) in
@@ -653,20 +653,20 @@ function shld_spec_32 (dst, src, cnt, input_rflags) = {
           (output_rflags, undefined_flags)
       }
     };
-    let output_rflags : bits(32) = n32(output_rflags);
-    let undefined_flags : bits(32) = n32(undefined_flags);
+    let output_rflags : bits(32) = output_rflags;
+    let undefined_flags : bits(32) = undefined_flags;
     (output_dst, unsigned(cnt) > 32, output_rflags, undefined_flags)
 }
 
 val shld_spec_64 : (bits(64), bits(64), bits(6), bits(32)) -> (bits(64), bool, bits(32), bits(32))
 
 function shld_spec_64 (dst, src, cnt, input_rflags) = {
-    let dst : bits(64) = 0x0000000000000040;
-    let src : bits(64) = 0x0000000000000040;
-    let cnt : bits(6) = 0b000110;
-    let input_rflags : bits(32) = n32(input_rflags);
+    let dst : bits(64) = dst;
+    let src : bits(64) = src;
+    let cnt : bits(6) = cnt;
+    let input_rflags : bits(32) = input_rflags;
     let dst_src : bits(128) = logior(bits_of_int(ash(unsigned(dst), 64), 128), sail_zero_extend(src, 128));
-    let output_dst : bits(64) = 0x0000000000000040;
+    let output_dst : bits(64) = bits_of_int(ash(unsigned(dst_src), unsigned(sail_zero_extend(cnt, 64))), 64);
     let (output_rflags, undefined_flags) : (bits(32), bits(32)) = match cnt {
       0 => (input_rflags, 0x00000000),
       1 => let cf : bits(1) = slice(dst, 63, 1) in
@@ -692,8 +692,8 @@ function shld_spec_64 (dst, src, cnt, input_rflags) = {
           (output_rflags, undefined_flags)
       }
     };
-    let output_rflags : bits(32) = n32(output_rflags);
-    let undefined_flags : bits(32) = n32(undefined_flags);
+    let output_rflags : bits(32) = output_rflags;
+    let undefined_flags : bits(32) = undefined_flags;
     (output_dst, unsigned(cnt) > 64, output_rflags, undefined_flags)
 }
 
@@ -717,13 +717,13 @@ function shld_spec (size, dst, src, cnt, input_rflags) = {
 val shrd_spec_16 : (bits(16), bits(16), bits(6), bits(32)) -> (bits(16), bool, bits(32), bits(32))
 
 function shrd_spec_16 (dst, src, cnt, input_rflags) = {
-    let dst : bits(16) = 0x0010;
-    let src : bits(16) = 0x0010;
-    let cnt : bits(6) = 0b000110;
-    let input_rflags : bits(32) = n32(input_rflags);
+    let dst : bits(16) = dst;
+    let src : bits(16) = src;
+    let cnt : bits(6) = cnt;
+    let input_rflags : bits(32) = input_rflags;
     let src_dst : bits(32) = logior(bits_of_int(ash(unsigned(src), 16), 32), sail_zero_extend(dst, 32));
     let neg_cnt : sbits(17) = bits_of_int(negate(unsigned(cnt)), 17);
-    let output_dst : bits(16) = 0x0010;
+    let output_dst : bits(16) = bits_of_int(ash(unsigned(src_dst), signed(neg_cnt)), 16);
     let (output_rflags, undefined_flags) : (bits(32), bits(32)) = match cnt {
       0 => (input_rflags, 0x00000000),
       1 => let cf : bits(1) = slice(dst, 0, 1) in
@@ -749,21 +749,21 @@ function shrd_spec_16 (dst, src, cnt, input_rflags) = {
           (output_rflags, undefined_flags)
       }
     };
-    let output_rflags : bits(32) = n32(output_rflags);
-    let undefined_flags : bits(32) = n32(undefined_flags);
+    let output_rflags : bits(32) = output_rflags;
+    let undefined_flags : bits(32) = undefined_flags;
     (output_dst, unsigned(cnt) > 16, output_rflags, undefined_flags)
 }
 
 val shrd_spec_32 : (bits(32), bits(32), bits(6), bits(32)) -> (bits(32), bool, bits(32), bits(32))
 
 function shrd_spec_32 (dst, src, cnt, input_rflags) = {
-    let dst : bits(32) = 0x00000020;
-    let src : bits(32) = 0x00000020;
-    let cnt : bits(6) = 0b000110;
-    let input_rflags : bits(32) = n32(input_rflags);
+    let dst : bits(32) = dst;
+    let src : bits(32) = src;
+    let cnt : bits(6) = cnt;
+    let input_rflags : bits(32) = input_rflags;
     let src_dst : bits(64) = logior(bits_of_int(ash(unsigned(src), 32), 64), sail_zero_extend(dst, 64));
     let neg_cnt : sbits(33) = bits_of_int(negate(unsigned(cnt)), 33);
-    let output_dst : bits(32) = 0x00000020;
+    let output_dst : bits(32) = bits_of_int(ash(unsigned(src_dst), signed(neg_cnt)), 32);
     let (output_rflags, undefined_flags) : (bits(32), bits(32)) = match cnt {
       0 => (input_rflags, 0x00000000),
       1 => let cf : bits(1) = slice(dst, 0, 1) in
@@ -789,21 +789,21 @@ function shrd_spec_32 (dst, src, cnt, input_rflags) = {
           (output_rflags, undefined_flags)
       }
     };
-    let output_rflags : bits(32) = n32(output_rflags);
-    let undefined_flags : bits(32) = n32(undefined_flags);
+    let output_rflags : bits(32) = output_rflags;
+    let undefined_flags : bits(32) = undefined_flags;
     (output_dst, unsigned(cnt) > 32, output_rflags, undefined_flags)
 }
 
 val shrd_spec_64 : (bits(64), bits(64), bits(6), bits(32)) -> (bits(64), bool, bits(32), bits(32))
 
 function shrd_spec_64 (dst, src, cnt, input_rflags) = {
-    let dst : bits(64) = 0x0000000000000040;
-    let src : bits(64) = 0x0000000000000040;
-    let cnt : bits(6) = 0b000110;
-    let input_rflags : bits(32) = n32(input_rflags);
+    let dst : bits(64) = dst;
+    let src : bits(64) = src;
+    let cnt : bits(6) = cnt;
+    let input_rflags : bits(32) = input_rflags;
     let src_dst : bits(128) = logior(bits_of_int(ash(unsigned(src), 64), 128), sail_zero_extend(dst, 128));
     let neg_cnt : sbits(65) = bits_of_int(negate(unsigned(cnt)), 65);
-    let output_dst : bits(64) = 0x0000000000000040;
+    let output_dst : bits(64) = bits_of_int(ash(unsigned(src_dst), signed(neg_cnt)), 64);
     let (output_rflags, undefined_flags) : (bits(32), bits(32)) = match cnt {
       0 => (input_rflags, 0x00000000),
       1 => let cf : bits(1) = slice(dst, 0, 1) in
@@ -829,8 +829,8 @@ function shrd_spec_64 (dst, src, cnt, input_rflags) = {
           (output_rflags, undefined_flags)
       }
     };
-    let output_rflags : bits(32) = n32(output_rflags);
-    let undefined_flags : bits(32) = n32(undefined_flags);
+    let output_rflags : bits(32) = output_rflags;
+    let undefined_flags : bits(32) = undefined_flags;
     (output_dst, unsigned(cnt) > 64, output_rflags, undefined_flags)
 }
 

@@ -100,7 +100,7 @@ then if (d_b) == (0b1)
 then 4294967295
 else 65535
 else limit) in
-(n32(bits_of_int(base, 32)), lower, upper)) in
+(bits_of_int(base, 32), lower, upper)) in
 (sail_zero_extend(elem0, 64), elem1, elem2),
 _ => (0x0000_0000_0000_0000, 0, 0)
 }) : (bits(64), int, int)
@@ -239,7 +239,7 @@ function ea_to_la (proc_mode, eff_addr, seg_reg, nbytes) =
 (match proc_mode {
 0 => let lin_addr : sbits(64) = (if ((seg_reg) == (4)) | ((seg_reg) == (5))
 then let (base, _, _) : (bits(64), int, int) = (segment_base_and_bounds(0, seg_reg)) in
-let lin_addr : sbits(64) = (I64(bits_of_int((unsigned(base)) + (unsigned(n64(eff_addr))), 64))) in
+let lin_addr : sbits(64) = (bits_of_int((unsigned(base)) + (unsigned(eff_addr)), 64)) in
 lin_addr
 else eff_addr) in
 if not_bool(canonical_address_p(signed(lin_addr)))
@@ -255,9 +255,9 @@ let first_addr : sbits(64) = (eff_addr) in
 let last_addr : int = ((signed(eff_addr)) + ((nbytes) + (-1))) in
 if not_bool(((unsigned(lower_bound)) <= (signed(first_addr))) & ((last_addr) <= (unsigned(upper_bound))))
 then (Some(":SEGMENT-LIMIT-FAIL"), 0x0000_0000)
-else let lin_addr : bits(32) = (n32(bits_of_int((unsigned(base)) + (unsigned(truncate(eff_addr, 32))), 32))) in
+else let lin_addr : bits(32) = (bits_of_int((unsigned(base)) + (unsigned(truncate(eff_addr, 32))), 32)) in
 (None() : option(string), lin_addr)) in
-(elem0, sail_sign_extend(elem1, 64)),
+(elem0, sail_zero_extend(elem1, 64)),
 _ => (Some(":UNIMPLEMENTED-PROC-MODE"), 0x0000_0000_0000_0000)
 }) : (option(string), sbits(64))
 

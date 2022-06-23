@@ -40,7 +40,7 @@ function segment_base_and_bounds (proc_mode, seg_reg) = {
               limit
           }
         in
-          (n32(bits_of_int(base, 32)), lower, upper)
+          (bits_of_int(base, 32), lower, upper)
       in
         (sail_zero_extend(elem0, 64), elem1, elem2),
       _ => (0x0000000000000000, 0, 0)
@@ -54,7 +54,7 @@ function ea_to_la (proc_mode, eff_addr, seg_reg, nbytes) = {
       0 => let lin_addr : sbits(64) =
         if seg_reg == 4 | seg_reg == 5 then {
             let (base, _, _) : (bits(64), int, int) = segment_base_and_bounds(0, seg_reg);
-            let lin_addr : sbits(64) = I64(bits_of_int(unsigned(base) + unsigned(n64(eff_addr)), 64));
+            let lin_addr : sbits(64) = bits_of_int(unsigned(base) + unsigned(eff_addr), 64);
             lin_addr
         } else {
             eff_addr
@@ -78,12 +78,12 @@ function ea_to_la (proc_mode, eff_addr, seg_reg, nbytes) = {
             if not_bool(unsigned(lower_bound) <= signed(first_addr) & last_addr <= unsigned(upper_bound)) then {
                 (Some(":SEGMENT-LIMIT-FAIL"), 0x00000000)
             } else {
-                let lin_addr : bits(32) = n32(bits_of_int(unsigned(base) + unsigned(truncate(eff_addr, 32)), 32));
+                let lin_addr : bits(32) = bits_of_int(unsigned(base) + unsigned(truncate(eff_addr, 32)), 32);
                 (None() : option(string), lin_addr)
             }
         }
       in
-        (elem0, sail_sign_extend(elem1, 64)),
+        (elem0, sail_zero_extend(elem1, 64)),
       _ => (Some(":UNIMPLEMENTED-PROC-MODE"), 0x0000000000000000)
     }) : (option(string), sbits(64))
 }

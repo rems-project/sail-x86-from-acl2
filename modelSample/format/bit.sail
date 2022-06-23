@@ -19,7 +19,7 @@ function x86_bt_0f_a3 (proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcod
     };
     let increment_rip_by : bits(3) = bits_of_int(increment_rip_by, 3);
     if is_some(flg0) then throw(Emsg("Model state error: :X86-EFFECTIVE-ADDR-ERROR"));
-    let (flg, temp_rip) : (option(string), sbits(49)) = add_to_iptr(proc_mode, temp_rip, sail_sign_extend(increment_rip_by, 48));
+    let (flg, temp_rip) : (option(string), sbits(49)) = add_to_iptr(proc_mode, temp_rip, sail_zero_extend(increment_rip_by, 48));
     let temp_rip : sbits(48) = truncate(temp_rip, 48);
     if is_some(flg) then throw(Emsg("Model state error: :RIP-INCREMENT-ERROR"));
     let badlength? : option(int) = check_instruction_length(start_rip, temp_rip, 0b000);
@@ -28,10 +28,10 @@ function x86_bt_0f_a3 (proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcod
         (None() : option(string), mod(unsigned(bitoffset), ash(operand_size, 3)), unsigned(rgfi_size(bits_of_int(operand_size, 4), reg_index(r_m, rex_byte, 0b00), rex_byte)))
     } else {
         let bitoffset_int : sbits(64) = match operand_size {
-          1 => sail_sign_extend(n08_to_i08(truncate(bitoffset, 8)), 64),
-          2 => sail_sign_extend(n16_to_i16(truncate(bitoffset, 16)), 64),
-          4 => sail_sign_extend(n32_to_i32(truncate(bitoffset, 32)), 64),
-          _ => n64_to_i64(bitoffset)
+          1 => sail_sign_extend(truncate(bitoffset, 8), 64),
+          2 => sail_sign_extend(truncate(bitoffset, 16), 64),
+          4 => sail_sign_extend(truncate(bitoffset, 32), 64),
+          _ => bitoffset
         };
         let bitoffset_int_abs : int = abs(signed(bitoffset_int));
         let bitnumber : int = mod(bitoffset_int_abs, 8);
@@ -80,7 +80,7 @@ function x86_bt_0f_ba (proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcod
     let (flg0, bitbase, increment_rip_by, addr) : (option(string), int, {|0, 1, 2, 4|}, sbits(64)) = x86_operand_from_modr_m_and_sib_bytes(proc_mode, 0b0, operand_size, inst_ac?, false, seg_reg, p4?, temp_rip, rex_byte, r_m, mod_var, sib, 0b001);
     let increment_rip_by : bits(3) = bits_of_int(increment_rip_by, 3);
     if is_some(flg0) then throw(Emsg("Model state error: :X86-OPERAND-FROM-MODR/M-AND-SIB-BYTES"));
-    let (flg, temp_rip) : (option(string), sbits(49)) = add_to_iptr(proc_mode, temp_rip, sail_sign_extend(increment_rip_by, 48));
+    let (flg, temp_rip) : (option(string), sbits(49)) = add_to_iptr(proc_mode, temp_rip, sail_zero_extend(increment_rip_by, 48));
     let temp_rip : sbits(48) = truncate(temp_rip, 48);
     if is_some(flg) then throw(Emsg("Model state error: :RIP-INCREMENT-ERROR"));
     let (flg1, bitoffset) : (option(string), int) = rme_size(proc_mode, 1, sail_sign_extend(temp_rip, 64), 1, ":X", false, struct { mem_ptr? = false });

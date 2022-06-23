@@ -423,41 +423,41 @@ function genericBitstructUpdater (width, spliceBits, low, inputBits) = {
     [inputBits with (low + width - 1) .. low = spliceBits]
 }
 
-register rip : bits(64)
+register rip : sbits(48)
 
-register rax : bits(64)
+register rax : sbits(64)
 
-register rbx : bits(64)
+register rbx : sbits(64)
 
-register rcx : bits(64)
+register rcx : sbits(64)
 
-register rdx : bits(64)
+register rdx : sbits(64)
 
-register rsi : bits(64)
+register rsi : sbits(64)
 
-register rdi : bits(64)
+register rdi : sbits(64)
 
-register rsp : bits(64)
+register rsp : sbits(64)
 
-register rbp : bits(64)
+register rbp : sbits(64)
 
-register r8 : bits(64)
+register r8 : sbits(64)
 
-register r9 : bits(64)
+register r9 : sbits(64)
 
-register r10 : bits(64)
+register r10 : sbits(64)
 
-register r11 : bits(64)
+register r11 : sbits(64)
 
-register r12 : bits(64)
+register r12 : sbits(64)
 
-register r13 : bits(64)
+register r13 : sbits(64)
 
-register r14 : bits(64)
+register r14 : sbits(64)
 
-register r15 : bits(64)
+register r15 : sbits(64)
 
-val rgfi : int -> bits(64)
+val rgfi : int -> sbits(64)
 
 function rgfi regNum = {
     assert(0 <= regNum & regNum < 16);
@@ -482,7 +482,7 @@ function rgfi regNum = {
     }
 }
 
-val write_rgfi : (int, bits(64)) -> unit
+val write_rgfi : (int, sbits(64)) -> unit
 
 function write_rgfi (regNum, val_to_write) = {
     assert(0 <= regNum & regNum < 16);

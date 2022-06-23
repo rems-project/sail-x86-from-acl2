@@ -46,7 +46,7 @@ rb(1, signed(lin_addr), r_x)
 val riml08 : (sbits(48), string) -> (option(string), sbits(8)) effect {escape, rmem, rreg}
 function riml08 (lin_addr, r_x) =
 let (flag, sailval) : (option(string), int) = (rml08(lin_addr, r_x)) in
-(flag, n08_to_i08(bits_of_int(sailval, 8)))
+(flag, bits_of_int(sailval, 8))
 
 val wml08 : (sbits(48), bits(8)) -> option(string) effect {eamem, escape, rreg, wmv}
 function wml08 (lin_addr, sailval) =
@@ -54,7 +54,7 @@ wb(1, signed(lin_addr), ":W", unsigned(sailval))
 
 val wiml08 : (sbits(48), sbits(8)) -> option(string) effect {eamem, escape, rreg, wmv}
 function wiml08 (lin_addr, sailval) =
-wml08(lin_addr, n08(sailval))
+wml08(lin_addr, sailval)
 
 val rml16 : (sbits(48), string) -> (option(string), int) effect {escape, rmem, rreg}
 function rml16 (lin_addr, r_x) =
@@ -66,7 +66,7 @@ else (Some("rml16"), 0)
 val riml16 : (sbits(48), string) -> (option(string), sbits(16)) effect {escape, rmem, rreg}
 function riml16 (lin_addr, r_x) =
 let (flag, sailval) : (option(string), int) = (rml16(lin_addr, r_x)) in
-(flag, n16_to_i16(bits_of_int(sailval, 16)))
+(flag, bits_of_int(sailval, 16))
 
 val wml16 : (sbits(48), bits(16)) -> option(string) effect {eamem, escape, rreg, wmv}
 function wml16 (lin_addr, sailval) =
@@ -79,7 +79,7 @@ else Some("wml16")
 
 val wiml16 : (sbits(48), sbits(16)) -> option(string) effect {eamem, escape, rreg, wmv}
 function wiml16 (lin_addr, sailval) =
-wml16(lin_addr, n16(sailval))
+wml16(lin_addr, sailval)
 
 val rml32 : (sbits(48), string) -> (option(string), int) effect {escape, rmem, rreg}
 function rml32 (lin_addr, r_x) =
@@ -93,7 +93,7 @@ else (Some("rml32"), 0)
 val riml32 : (sbits(48), string) -> (option(string), sbits(32)) effect {escape, rmem, rreg}
 function riml32 (lin_addr, r_x) =
 let (flag, sailval) : (option(string), int) = (rml32(lin_addr, r_x)) in
-(flag, n32_to_i32(bits_of_int(sailval, 32)))
+(flag, bits_of_int(sailval, 32))
 
 val wml32 : (sbits(48), bits(32)) -> option(string) effect {eamem, escape, rreg, wmv}
 function wml32 (lin_addr, sailval) =
@@ -106,7 +106,7 @@ else Some("wml32")
 
 val wiml32 : (sbits(48), sbits(32)) -> option(string) effect {eamem, escape, rreg, wmv}
 function wiml32 (lin_addr, sailval) =
-wml32(lin_addr, n32(sailval))
+wml32(lin_addr, sailval)
 
 val rml48 : (sbits(48), string) -> (option(string), int) effect {escape, rmem, rreg}
 function rml48 (lin_addr, r_x) =
@@ -138,7 +138,7 @@ else (Some("rml64"), 0)
 val riml64 : (sbits(48), string) -> (option(string), sbits(64)) effect {escape, rmem, rreg}
 function riml64 (lin_addr, r_x) =
 let (flag, sailval) : (option(string), int) = (rml64(lin_addr, r_x)) in
-(flag, n64_to_i64(bits_of_int(sailval, 64)))
+(flag, bits_of_int(sailval, 64))
 
 val wml64 : (sbits(48), bits(64)) -> option(string) effect {eamem, escape, rreg, wmv}
 function wml64 (lin_addr, sailval) =
@@ -151,7 +151,7 @@ else Some("wml64")
 
 val wiml64 : (sbits(48), sbits(64)) -> option(string) effect {eamem, escape, rreg, wmv}
 function wiml64 (lin_addr, sailval) =
-wml64(lin_addr, n64(sailval))
+wml64(lin_addr, sailval)
 
 val rml80 : (sbits(48), string) -> (option(string), int) effect {escape, rmem, rreg}
 function rml80 (lin_addr, r_x) =

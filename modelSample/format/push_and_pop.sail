@@ -4,7 +4,7 @@ val x86_push_general_register : (range(0, 4), sbits(48), sbits(48), bits(52), bi
 function x86_push_general_register (proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode, modr_m, sib) = {
     let ctx : string = "X86-PUSH-GENERAL-REGISTER";
     let operand_size : {|1, 2, 4, 8|} = select_operand_size(proc_mode, false, rex_byte, false, prefixes, true, true, false);
-    let rsp_var : bits(64) = read_sptr(proc_mode);
+    let rsp_var : sbits(64) = read_sptr(proc_mode);
     let (flg, new_rsp) : (option(string), sbits(64)) = add_to_sptr(proc_mode, rsp_var, bits_of_int(negate(operand_size), 64));
     if is_some(flg) then throw(Emsg("A fault occurred.  Original ACL2 AST:\n['!!FAULT-FRESH', ':SS', '0', ':PUSH', 'FLG']"));
     let reg : int = loghead(3, unsigned(opcode));
@@ -27,14 +27,14 @@ function x86_push_ev (proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode
     let p2 : bits(8) = prefixes_get_seg(prefixes);
     let p4? : bool = 0x67 == prefixes_get_adr(prefixes);
     let operand_size : {|1, 2, 4, 8|} = select_operand_size(proc_mode, false, rex_byte, false, prefixes, true, true, false);
-    let rsp_var : bits(64) = read_sptr(proc_mode);
+    let rsp_var : sbits(64) = read_sptr(proc_mode);
     let (flg, new_rsp) : (option(string), sbits(64)) = add_to_sptr(proc_mode, rsp_var, bits_of_int(negate(operand_size), 64));
     if is_some(flg) then throw(Emsg("A fault occurred.  Original ACL2 AST:\n['!!FAULT-FRESH', ':SS', '0', ':PUSH', 'FLG']"));
     let seg_reg : {|0, 1, 2, 3, 4, 5|} = select_segment_register(proc_mode, p2, p4?, mod_var, r_m, sib);
     let (flg0, e, increment_rip_by, e_addr) : (option(string), int, {|0, 1, 2, 4|}, sbits(64)) = x86_operand_from_modr_m_and_sib_bytes(proc_mode, 0b0, operand_size, true, false, seg_reg, p4?, temp_rip, rex_byte, r_m, mod_var, sib, 0b000);
     let increment_rip_by : bits(3) = bits_of_int(increment_rip_by, 3);
     if is_some(flg0) then throw(Emsg("Model state error: :X86-OPERAND-FROM-MODR/M-AND-SIB-BYTES"));
-    let (flg, temp_rip) : (option(string), sbits(49)) = add_to_iptr(proc_mode, temp_rip, sail_sign_extend(increment_rip_by, 48));
+    let (flg, temp_rip) : (option(string), sbits(49)) = add_to_iptr(proc_mode, temp_rip, sail_zero_extend(increment_rip_by, 48));
     if is_some(flg) then throw(Emsg("A fault occurred.  Original ACL2 AST:\n['!!FAULT-FRESH', ':GP', '0', ':INCREMENT-IP-ERROR', 'FLG']"));
     let badlength? : option(int) = check_instruction_length(start_rip, truncate(temp_rip, 48), 0b000);
     if is_some(badlength?) then throw(Emsg("A fault occurred.  Original ACL2 AST:\n['!!FAULT-FRESH', ':GP', '0', ':INSTRUCTION-LENGTH', 'BADLENGTH?']"));
@@ -51,7 +51,7 @@ function x86_push_i (proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode,
     let byte_imm? : bool = opcode == 0x6a;
     let imm_size : {|1, 2, 4, 8|} = select_operand_size(proc_mode, byte_imm?, rex_byte, true, prefixes, false, false, false);
     let operand_size : {|1, 2, 4, 8|} = select_operand_size(proc_mode, false, rex_byte, false, prefixes, true, true, false);
-    let rsp_var : bits(64) = read_sptr(proc_mode);
+    let rsp_var : sbits(64) = read_sptr(proc_mode);
     let (flg, new_rsp) : (option(string), sbits(64)) = add_to_sptr(proc_mode, rsp_var, bits_of_int(negate(operand_size), 64));
     if is_some(flg) then throw(Emsg("A fault occurred.  Original ACL2 AST:\n['!!FAULT-FRESH', ':SS', '0', ':PUSH', 'FLG']"));
     let (flg0, imm) : (option(string), sbits(64)) = rime_size(proc_mode, imm_size, sail_sign_extend(temp_rip, 64), 1, ":X", false, struct { mem_ptr? = false });
@@ -73,7 +73,7 @@ val x86_push_segment_register : (range(0, 4), sbits(48), sbits(48), bits(52), bi
 function x86_push_segment_register (proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode, modr_m, sib) = {
     let ctx : string = "X86-PUSH-SEGMENT-REGISTER";
     let operand_size : {|1, 2, 4, 8|} = select_operand_size(proc_mode, false, rex_byte, false, prefixes, true, true, false);
-    let rsp_var : bits(64) = read_sptr(proc_mode);
+    let rsp_var : sbits(64) = read_sptr(proc_mode);
     let (flg, new_rsp) : (option(string), sbits(64)) = add_to_sptr(proc_mode, rsp_var, bits_of_int(negate(operand_size), 64));
     if is_some(flg) then throw(Emsg("A fault occurred.  Original ACL2 AST:\n['!!FAULT-FRESH', ':SS', '0', ':PUSH', 'FLG']"));
     let sailval : bits(16) = seg_visibles[(match opcode {
@@ -97,7 +97,7 @@ val x86_pop_general_register : (range(0, 4), sbits(48), sbits(48), bits(52), bit
 function x86_pop_general_register (proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode, modr_m, sib) = {
     let ctx : string = "X86-POP-GENERAL-REGISTER";
     let operand_size : {|1, 2, 4, 8|} = select_operand_size(proc_mode, false, rex_byte, false, prefixes, true, true, false);
-    let rsp_var : bits(64) = read_sptr(proc_mode);
+    let rsp_var : sbits(64) = read_sptr(proc_mode);
     let (flg, new_rsp) : (option(string), sbits(64)) = add_to_sptr(proc_mode, rsp_var, bits_of_int(operand_size, 64));
     if is_some(flg) then throw(Emsg("A fault occurred.  Original ACL2 AST:\n['!!FAULT-FRESH', ':SS', '0', ':POP', 'FLG']"));
     let (flg0, sailval) : (option(string), int) = rme_size(proc_mode, operand_size, rsp_var, 2, ":R", alignment_checking_enabled_p(), struct { mem_ptr? = false });
@@ -120,7 +120,7 @@ function x86_pop_ev (proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode,
     let p2 : bits(8) = prefixes_get_seg(prefixes);
     let p4? : bool = 0x67 == prefixes_get_adr(prefixes);
     let operand_size : {|1, 2, 4, 8|} = select_operand_size(proc_mode, false, rex_byte, false, prefixes, true, true, false);
-    let rsp_var : bits(64) = read_sptr(proc_mode);
+    let rsp_var : sbits(64) = read_sptr(proc_mode);
     let (flg, new_rsp) : (option(string), sbits(64)) = add_to_sptr(proc_mode, rsp_var, bits_of_int(operand_size, 64));
     if is_some(flg) then throw(Emsg("A fault occurred.  Original ACL2 AST:\n['!!FAULT-FRESH', ':SS', '0', ':POP', 'FLG']"));
     let check_alignment? : bool = alignment_checking_enabled_p();
@@ -134,7 +134,7 @@ function x86_pop_ev (proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode,
     let increment_rip_by : bits(3) = bits_of_int(increment_rip_by, 3);
     if is_some(flg1) then throw(Emsg("Model state error: :X86-EFFECTIVE-ADDR-ERROR"));
     let seg_reg : {|0, 1, 2, 3, 4, 5|} = select_segment_register(proc_mode, p2, p4?, mod_var, r_m, sib);
-    let (flg, temp_rip) : (option(string), sbits(49)) = add_to_iptr(proc_mode, temp_rip, sail_sign_extend(increment_rip_by, 48));
+    let (flg, temp_rip) : (option(string), sbits(49)) = add_to_iptr(proc_mode, temp_rip, sail_zero_extend(increment_rip_by, 48));
     if is_some(flg) then throw(Emsg("A fault occurred.  Original ACL2 AST:\n['!!FAULT-FRESH', ':GP', '0', ':INCREMENT-IP-ERROR', 'FLG']"));
     let badlength? : option(int) = check_instruction_length(start_rip, truncate(temp_rip, 48), 0b000);
     if is_some(badlength?) then throw(Emsg("A fault occurred.  Original ACL2 AST:\n['!!FAULT-FRESH', ':GP', '0', ':INSTRUCTION-LENGTH', 'BADLENGTH?']"));
@@ -149,7 +149,7 @@ val x86_pushf : (range(0, 4), sbits(48), sbits(48), bits(52), bits(8), bits(8), 
 function x86_pushf (proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode, modr_m, sib) = {
     let ctx : string = "X86-PUSHF";
     let operand_size : {|1, 2, 4, 8|} = select_operand_size(proc_mode, false, rex_byte, false, prefixes, true, true, false);
-    let rsp_var : bits(64) = read_sptr(proc_mode);
+    let rsp_var : sbits(64) = read_sptr(proc_mode);
     let (flg, new_rsp) : (option(string), sbits(64)) = add_to_sptr(proc_mode, rsp_var, bits_of_int(negate(operand_size), 64));
     if is_some(flg) then throw(Emsg("A fault occurred.  Original ACL2 AST:\n['!!FAULT-FRESH', ':SS', '0', ':PUSH', 'FLG']"));
     let eflags : bits(32) = rflags;
@@ -168,7 +168,7 @@ val x86_popf : (range(0, 4), sbits(48), sbits(48), bits(52), bits(8), bits(8), b
 function x86_popf (proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode, modr_m, sib) = {
     let ctx : string = "X86-POPF";
     let operand_size : {|1, 2, 4, 8|} = select_operand_size(proc_mode, false, rex_byte, false, prefixes, true, true, false);
-    let rsp_var : bits(64) = read_sptr(proc_mode);
+    let rsp_var : sbits(64) = read_sptr(proc_mode);
     let (flg, new_rsp) : (option(string), sbits(64)) = add_to_sptr(proc_mode, rsp_var, bits_of_int(operand_size, 64));
     if is_some(flg) then throw(Emsg("A fault occurred.  Original ACL2 AST:\n['!!FAULT-FRESH', ':SS', '0', ':PUSH', 'FLG']"));
     let (flg0, sailval) : (option(string), int) = rme_size(proc_mode, operand_size, rsp_var, 2, ":R", alignment_checking_enabled_p(), struct { mem_ptr? = false });
@@ -204,7 +204,7 @@ val x86_pusha : (range(0, 4), sbits(48), sbits(48), bits(52), bits(8), bits(8), 
 function x86_pusha (proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode, modr_m, sib) = {
     let ctx : string = "X86-PUSHA";
     let operand_size : {|2, 4|} = check_range(2, 4, select_operand_size(proc_mode, false, 0x00, false, prefixes, false, false, false));
-    let rsp_var : bits(64) = read_sptr(proc_mode);
+    let rsp_var : sbits(64) = read_sptr(proc_mode);
     let eax_ax : bits(64) = rgfi_size(bits_of_int(operand_size, 4), 0x0, 0x00);
     let ecx_cx : bits(64) = rgfi_size(bits_of_int(operand_size, 4), 0x1, 0x00);
     let edx_dx : bits(64) = rgfi_size(bits_of_int(operand_size, 4), 0x2, 0x00);
@@ -256,7 +256,7 @@ val x86_popa : (range(0, 4), sbits(48), sbits(48), bits(52), bits(8), bits(8), b
 function x86_popa (proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode, modr_m, sib) = {
     let ctx : string = "X86-POPA";
     let operand_size : {|2, 4|} = check_range(2, 4, select_operand_size(proc_mode, false, 0x00, false, prefixes, false, false, false));
-    let rsp_var : bits(64) = read_sptr(proc_mode);
+    let rsp_var : sbits(64) = read_sptr(proc_mode);
     let check_alignment? : bool = alignment_checking_enabled_p();
     let (flg, edi_di) : (option(string), int) = rme_size(proc_mode, operand_size, rsp_var, 2, ":R", check_alignment?, struct { mem_ptr? = false });
     if is_some(flg) then throw(Emsg("This error is generated by the translator and represents a more detailed error that occurred in `push-and-pop.lisp`"));

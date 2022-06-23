@@ -49,7 +49,7 @@ let increment_rip_by : bits(3) = (bits_of_int(increment_rip_by, 3)) in
 { if is_some(flg)
 then throw(Emsg("Model state error: :X86-OPERAND-FROM-MODR/M-AND-SIB-BYTES-ERROR"))
 else ();
-let (flg, temp_rip) : (option(string), sbits(49)) = (add_to_iptr(proc_mode, temp_rip, sail_sign_extend(increment_rip_by, 48))) in
+let (flg, temp_rip) : (option(string), sbits(49)) = (add_to_iptr(proc_mode, temp_rip, sail_zero_extend(increment_rip_by, 48))) in
 let temp_rip : sbits(48) = (truncate(temp_rip, 48)) in
 { if is_some(flg)
 then throw(Emsg("Model state error: :RIP-INCREMENT-ERROR"))
@@ -60,7 +60,7 @@ then throw(Emsg("A fault occurred.  Original ACL2 AST:
 ['!!FAULT-FRESH', ':GP', '0', ':INSTRUCTION-LENGTH', 'BADLENGTH?']"))
 else ();
 let jmp_addr : int = (if (proc_mode) == (0)
-then signed(I64(bits_of_int(jmp_addr, 64)))
+then signed(bits_of_int(jmp_addr, 64))
 else jmp_addr) in
 { if not_bool(if (proc_mode) == (0)
 then canonical_address_p(jmp_addr)
@@ -133,7 +133,7 @@ let badlength? : option(int) = (check_instruction_length(start_rip, temp_rip, in
 then throw(Emsg("A fault occurred.  Original ACL2 AST:
 ['!!FAULT-FRESH', ':GP', '0', ':INSTRUCTION-LENGTH', 'BADLENGTH?']"))
 else ();
-let selector : bits(16) = (n16(bits_of_int(mem, 16))) in
+let selector : bits(16) = (bits_of_int(mem, 16)) in
 let offset = (get_slice_int(ash(offset_size, 3), mem, 16)) in
 let sel_index : bits(13) = (segment_selectorbits_get_index(selector)) in
 let sel_ti : bits(1) = (segment_selectorbits_get_ti(selector)) in
@@ -146,14 +146,14 @@ let (dt_base_addr, dt_limit) : (bits(64), bits(32)) = (if (sel_ti) == (0b0)
 then let (elem0, elem1) : (bits(64), bits(16)) = (let gdtr : bits(80) = (strs[0]) in
 let gdtr_base : bits(64) = (if (proc_mode) == (0)
 then gdtr_idtrbits_get_base_addr(gdtr)
-else sail_zero_extend(n32(truncate(gdtr_idtrbits_get_base_addr(gdtr), 32)), 64)) in
+else sail_zero_extend(truncate(gdtr_idtrbits_get_base_addr(gdtr), 32), 64)) in
 let gdtr_limit : bits(16) = (gdtr_idtrbits_get_limit(gdtr)) in
 (gdtr_base, gdtr_limit)) in
 (elem0, sail_zero_extend(elem1, 32))
 else let ldtr_base : bits(64) = (ssr_hidden_bases[0]) in
 let ldtr_base : bits(64) = (if (proc_mode) == (0)
 then ldtr_base
-else sail_zero_extend(n32(truncate(ldtr_base, 32)), 64)) in
+else sail_zero_extend(truncate(ldtr_base, 32), 64)) in
 let ldtr_limit : bits(32) = (ssr_hidden_limits[0]) in
 (ldtr_base, ldtr_limit)) in
 let largest_address : int = ((ash(unsigned(sel_index), 3)) + (7)) in
@@ -199,9 +199,9 @@ then throw(Emsg("A fault occurred.  Original ACL2 AST:
 ['!!FAULT-FRESH', ':NP', 'SEL-INDEX', ':CODE-SEGMENT-NOT-PRESENT', 'SEL-INDEX']"))
 else ();
 let jmp_addr : sbits(64) = (match offset_size {
-2 => sail_sign_extend(n16(sail_mask(16, offset)), 64),
-4 => sail_sign_extend(n32(sail_mask(32, offset)), 64),
-_ => I64(sail_mask(64, offset))
+2 => sail_zero_extend(sail_mask(16, offset), 64),
+4 => sail_zero_extend(sail_mask(32, offset), 64),
+_ => sail_mask(64, offset)
 }) in
 let jmp_addr_ok : bool = (if (proc_mode) == (0)
 then canonical_address_p(signed(jmp_addr))
@@ -264,14 +264,14 @@ then let (elem0, elem1) : (bits(64), bits(16)) = (let gdtr : bits(80) = (strs[0]
 let gdtr_base : bits(64) = (gdtr_idtrbits_get_base_addr(gdtr)) in
 let gdtr_base : bits(64) = (if (proc_mode) == (0)
 then gdtr_base
-else sail_zero_extend(n32(truncate(gdtr_base, 32)), 64)) in
+else sail_zero_extend(truncate(gdtr_base, 32), 64)) in
 let gdtr_limit : bits(16) = (gdtr_idtrbits_get_limit(gdtr)) in
 (gdtr_base, gdtr_limit)) in
 (elem0, sail_zero_extend(elem1, 32))
 else let ldtr_base : bits(64) = (ssr_hidden_bases[0]) in
 let ldtr_base : bits(64) = (if (proc_mode) == (0)
 then ldtr_base
-else sail_zero_extend(n32(truncate(ldtr_base, 32)), 64)) in
+else sail_zero_extend(truncate(ldtr_base, 32), 64)) in
 let ldtr_limit : bits(32) = (ssr_hidden_limits[0]) in
 (ldtr_base, ldtr_limit)) in
 let largest_address : int = ((ash(unsigned(cs_sel_index), 3)) + (7)) in
@@ -305,8 +305,8 @@ let call_gate_offset63_32 : bits(32) = (call_gate_descriptorbits_get_offset63_32
 let call_gate_offset31_0 : int = (changeSlice(ash(unsigned(call_gate_offset31_16), 16), 0, 16, unsigned(call_gate_offset15_0))) in
 let call_gate_offset : int = (changeSlice(ash(unsigned(call_gate_offset63_32), 32), 0, 32, call_gate_offset31_0)) in
 let jmp_addr : int = (match offset_size {
-2 => unsigned(n16(bits_of_int(call_gate_offset, 16))),
-4 => unsigned(n32(bits_of_int(call_gate_offset, 32))),
+2 => unsigned(bits_of_int(call_gate_offset, 16)),
+4 => unsigned(bits_of_int(call_gate_offset, 32)),
 _ => call_gate_offset
 }) in
 { if not_bool(canonical_address_p(jmp_addr))

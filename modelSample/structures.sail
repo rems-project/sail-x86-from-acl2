@@ -315,21 +315,21 @@ else ((vex3_byte1_get_m_mmmm(byte1)) == (0b0_0011)) : bool)
 
 /*Get the @ ( ' VVVV ' ) field of @ ( ' vex-prefixes ' ) ; cognizant of the two- 
  or three-byte VEX prefixes form*/
-val vex_get_vvvv : (bits(24)) -> sbits(4)
+val vex_get_vvvv : (bits(24)) -> sbits(5)
 function vex_get_vvvv (vex_prefixes) =
 (match vex_prefixes_get_byte0(vex_prefixes) {
-197 => vex2_byte1_get_vvvv(vex_prefixes_get_byte1(vex_prefixes)),
-196 => vex3_byte2_get_vvvv(vex_prefixes_get_byte2(vex_prefixes)),
-_ => 0xf
-}) : sbits(4)
+197 => sail_zero_extend(vex2_byte1_get_vvvv(vex_prefixes_get_byte1(vex_prefixes)), 5),
+196 => sail_zero_extend(vex3_byte2_get_vvvv(vex_prefixes_get_byte2(vex_prefixes)), 5),
+_ => 0b1_1111
+}) : sbits(5)
 
 /*Get the @ ( ' L ' ) field of @ ( ' vex-prefixes ' ) ; cognizant of the two- or 
  three-byte VEX prefixes form*/
 val vex_get_l : (bits(24)) -> sbits(2)
 function vex_get_l (vex_prefixes) =
 (match vex_prefixes_get_byte0(vex_prefixes) {
-197 => sail_sign_extend(vex2_byte1_get_l(vex_prefixes_get_byte1(vex_prefixes)), 2),
-196 => sail_sign_extend(vex3_byte2_get_l(vex_prefixes_get_byte2(vex_prefixes)), 2),
+197 => sail_zero_extend(vex2_byte1_get_l(vex_prefixes_get_byte1(vex_prefixes)), 2),
+196 => sail_zero_extend(vex3_byte2_get_l(vex_prefixes_get_byte2(vex_prefixes)), 2),
 _ => 0b11
 }) : sbits(2)
 
@@ -338,8 +338,8 @@ _ => 0b11
 val vex_get_pp : (bits(24)) -> sbits(3)
 function vex_get_pp (vex_prefixes) =
 (match vex_prefixes_get_byte0(vex_prefixes) {
-197 => sail_sign_extend(vex2_byte1_get_pp(vex_prefixes_get_byte1(vex_prefixes)), 3),
-196 => sail_sign_extend(vex3_byte2_get_pp(vex_prefixes_get_byte2(vex_prefixes)), 3),
+197 => sail_zero_extend(vex2_byte1_get_pp(vex_prefixes_get_byte1(vex_prefixes)), 3),
+196 => sail_zero_extend(vex3_byte2_get_pp(vex_prefixes_get_byte2(vex_prefixes)), 3),
 _ => 0b111
 }) : sbits(3)
 

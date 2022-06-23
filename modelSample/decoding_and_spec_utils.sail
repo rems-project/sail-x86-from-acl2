@@ -30,14 +30,14 @@ $include "other_non_det.sail"
  </p>*/
 val read_iptr : (range(0, 4)) -> sbits(48) effect {escape}
 function read_iptr (proc_mode) =
-let iptr : sbits(48) = (truncate(rip, 48)) in
+let iptr : sbits(48) = (rip) in
 (match proc_mode {
 0 => iptr,
-1 => sail_sign_extend(let cs_attr : bits(16) = (seg_hidden_attrs[1]) in
+1 => sail_zero_extend(let cs_attr : bits(16) = (seg_hidden_attrs[1]) in
 let cs_d : bits(1) = (code_segment_descriptor_attributesbits_get_d(cs_attr)) in
 if (cs_d) == (0b1)
-then n32(truncate(iptr, 32))
-else sail_zero_extend(n16(truncate(iptr, 16)), 32), 48),
+then truncate(iptr, 32)
+else sail_zero_extend(truncate(iptr, 16), 32), 48),
 _ => 0x0000_0000_0000
 }) : sbits(48)
 
@@ -80,7 +80,7 @@ else (Some(":NON-CANONICAL-INSTRUCTION-POINTER"), 0b0_0000_0000_0000_0000_0000_0
 if ((0) <= (signed(iptr_plus_delta))) & ((signed(iptr_plus_delta)) <= (unsigned(cs_limit)))
 then (None() : option(string), truncate(iptr_plus_delta, 32))
 else (Some(":OUT-OF-SEGMENT-INSTRUCTION-POINTER"), 0x0000_0000)) in
-(elem0, sail_sign_extend(elem1, 49)),
+(elem0, sail_zero_extend(elem1, 49)),
 _ => (Some(":UNIMPLEMENTED-PROC-MODE"), 0b0_0000_0000_0000_0000_0000_0000_0000_0000_0000_0000_0000_0000)
 }) : (option(string), sbits(49))
 
@@ -162,15 +162,15 @@ _ => (Some(":UNIMPLEMENTED-PROC-MODE"), 0b0_0000_0000_0000_0000_0000_0000_0000_0
 val write_iptr : (range(0, 4), sbits(48)) -> unit effect {escape}
 function write_iptr (proc_mode, iptr) =
 (match proc_mode {
-0 => rip = sail_zero_extend(iptr, 64),
+0 => rip = iptr,
 1 => let cs_attr : bits(16) = (seg_hidden_attrs[1]) in
 let cs_d : bits(1) = (code_segment_descriptor_attributesbits_get_d(cs_attr)) in
 if (cs_d) == (0b1)
-then { rip = sail_zero_extend(n32(truncate(iptr, 32)), 64)
+then { rip = sail_zero_extend(truncate(iptr, 32), 48)
 }
-else { let rip_var : sbits(48) = (truncate(rip, 48)) in
-let rip_new : sbits(48) = (changeSlice(rip_var, 0, 16, n16(truncate(iptr, 16)))) in
-rip = sail_zero_extend(rip_new, 64)
+else { let rip_var : sbits(48) = (rip) in
+let rip_new : sbits(48) = (changeSlice(rip_var, 0, 16, truncate(iptr, 16))) in
+rip = rip_new
 },
 _ => ()
 }) : unit
@@ -204,18 +204,18 @@ _ => ()
  It does not seem to make sense 
  to change the stack address size on a per-instruction basis. 
  </p>*/
-val read_sptr : (range(0, 4)) -> bits(64) effect {escape, rreg}
+val read_sptr : (range(0, 4)) -> sbits(64) effect {escape, rreg}
 function read_sptr (proc_mode) =
-let sptr : bits(64) = (rgfi(4)) in
+let sptr : sbits(64) = (rgfi(4)) in
 (match proc_mode {
 0 => sptr,
 1 => sail_zero_extend(let ss_attr : bits(16) = (seg_hidden_attrs[2]) in
 let ss_b : bits(1) = (data_segment_descriptor_attributesbits_get_d_b(ss_attr)) in
 if (ss_b) == (0b1)
-then n32(truncate(sptr, 32))
-else sail_zero_extend(n16(truncate(sptr, 16)), 32), 64),
+then truncate(sptr, 32)
+else sail_zero_extend(truncate(sptr, 16), 32), 64),
 _ => 0x0000_0000_0000_0000
-}) : bits(64)
+}) : sbits(64)
 
 /*Add a specified amount to a stack pointer.*/
 /*<p> 
@@ -257,7 +257,7 @@ val add_to_sptr : (range(0, 4), sbits(64), sbits(64)) -> (option(string), sbits(
 function add_to_sptr (proc_mode, sptr, delta) =
 let sptr_plus_delta : sbits(65) = (bits_of_int((signed(sptr)) + (signed(delta)), 65)) in
 (match proc_mode {
-0 => let sptr_plus_delta : sbits(64) = (I64(truncate(sptr_plus_delta, 64))) in
+0 => let sptr_plus_delta : sbits(64) = (truncate(sptr_plus_delta, 64)) in
 if canonical_address_p(signed(sptr_plus_delta))
 then (None() : option(string), sptr_plus_delta)
 else (Some(":NON-CANONICAL-STACK-ADDRESS"), 0x0000_0000_0000_0000),
@@ -274,12 +274,12 @@ then 4294967295
 else 65535, 32)
 else ss_limit) in
 let sptr_plus_delta : bits(32) = (if (ss_b) == (0b1)
-then n32(truncate(sptr_plus_delta, 32))
-else sail_zero_extend(n16(truncate(sptr_plus_delta, 16)), 32)) in
+then truncate(sptr_plus_delta, 32)
+else sail_zero_extend(truncate(sptr_plus_delta, 16), 32)) in
 if not_bool(((ss_lower) <= (unsigned(sptr_plus_delta))) & ((unsigned(sptr_plus_delta)) <= (unsigned(ss_upper))))
 then (Some(":OUT-OF-SEGMENT-STACK-ADDRESS"), 0x0000_0000)
 else (None() : option(string), sptr_plus_delta)) in
-(elem0, sail_sign_extend(elem1, 64)),
+(elem0, sail_zero_extend(elem1, 64)),
 _ => (Some(":UNIMPLEMENTED-PROC-MODE"), 0x0000_0000_0000_0000)
 }) : (option(string), sbits(64))
 
@@ -340,10 +340,10 @@ function write_sptr (proc_mode, sptr) =
 1 => let ss_attr : bits(16) = (seg_hidden_attrs[2]) in
 let ss_b : bits(1) = (data_segment_descriptor_attributesbits_get_d_b(ss_attr)) in
 if (ss_b) == (0b1)
-then { write_rgfi(4, sail_zero_extend(n32(truncate(sptr, 32)), 64))
+then { write_rgfi(4, sail_zero_extend(truncate(sptr, 32), 64))
 }
-else { let rsp_var : bits(64) = (rgfi(4)) in
-let rsp_new : bits(64) = (changeSlice(rsp_var, 0, 16, n16(truncate(sptr, 16)))) in
+else { let rsp_var : sbits(64) = (rgfi(4)) in
+let rsp_new : sbits(64) = (changeSlice(rsp_var, 0, 16, truncate(sptr, 16))) in
 write_rgfi(4, rsp_new)
 },
 _ => ()
@@ -415,7 +415,7 @@ val x86_effective_addr_from_sib : (range(0, 4), sbits(48), bits(8), bits(2), bit
 function x86_effective_addr_from_sib (proc_mode, temp_rip, rex_byte, mod_var, sib) =
 let b : bits(3) = (sib_get_base(sib)) in
 let check_alignment? : bool = (false) in
-let (flg, base, displacement, nrip_bytes) : (option(string), bits(64), sbits(64), {|0, 1, 4|}) = (match mod_var {
+let (flg, base, displacement, nrip_bytes) : (option(string), sbits(64), sbits(64), {|0, 1, 4|}) = (match mod_var {
 0 => if (b) == (0b101)
 then let (elem0, elem1, elem2, elem3) : (option(string), {|0|}, sbits(64), {|0, 4|}) = (let (flg0, dword) : (option(string), sbits(64)) = (rime_size(proc_mode, 4, sail_sign_extend(temp_rip, 64), 1, ":X", check_alignment?, struct {mem_ptr? = false})) in
 if is_some(flg0)
@@ -444,11 +444,11 @@ let index : sbits(64) = (match ix {
 4 => 0x0000_0000_0000_0000,
 _ => if (proc_mode) == (0)
 then rgfi(unsigned(ix))
-else sail_sign_extend(I32(truncate(rgfi(unsigned(ix)), 32)), 64)
+else sail_sign_extend(truncate(rgfi(unsigned(ix)), 32), 64)
 }) in
 let scale : bits(2) = (sib_get_scale(sib)) in
 let scaled_index : int = (ash(signed(index), unsigned(scale))) in
-let effective_addr : int = ((unsigned(base)) + (scaled_index)) in
+let effective_addr : int = ((signed(base)) + (scaled_index)) in
 (flg, effective_addr, displacement, nrip_bytes)
 
 /*Calculate the displacement for 
@@ -513,51 +513,51 @@ let si : bits(16) = (rr16(0x6)) in
 let (flg, disp, increment_rip_by) : (option(string), sbits(64), {|0, 1, 2|}) = (x86_effective_addr_16_disp(proc_mode, temp_rip, mod_var)) in
 if is_some(flg)
 then (flg, 0x0000, 0)
-else (None() : option(string), n16(bits_of_int((unsigned(bx)) + ((unsigned(si)) + (signed(disp))), 16)), increment_rip_by),
+else (None() : option(string), bits_of_int((unsigned(bx)) + ((unsigned(si)) + (signed(disp))), 16), increment_rip_by),
 1 => let bx : bits(16) = (rr16(0x3)) in
 let di : bits(16) = (rr16(0x7)) in
 let (flg, disp, increment_rip_by) : (option(string), sbits(64), {|0, 1, 2|}) = (x86_effective_addr_16_disp(proc_mode, temp_rip, mod_var)) in
 if is_some(flg)
 then (flg, 0x0000, 0)
-else (None() : option(string), n16(bits_of_int((unsigned(bx)) + ((unsigned(di)) + (signed(disp))), 16)), increment_rip_by),
+else (None() : option(string), bits_of_int((unsigned(bx)) + ((unsigned(di)) + (signed(disp))), 16), increment_rip_by),
 2 => let bp : bits(16) = (rr16(0x5)) in
 let si : bits(16) = (rr16(0x6)) in
 let (flg, disp, increment_rip_by) : (option(string), sbits(64), {|0, 1, 2|}) = (x86_effective_addr_16_disp(proc_mode, temp_rip, mod_var)) in
 if is_some(flg)
 then (flg, 0x0000, 0)
-else (None() : option(string), n16(bits_of_int((unsigned(bp)) + ((unsigned(si)) + (signed(disp))), 16)), increment_rip_by),
+else (None() : option(string), bits_of_int((unsigned(bp)) + ((unsigned(si)) + (signed(disp))), 16), increment_rip_by),
 3 => let bp : bits(16) = (rr16(0x5)) in
 let di : bits(16) = (rr16(0x7)) in
 let (flg, disp, increment_rip_by) : (option(string), sbits(64), {|0, 1, 2|}) = (x86_effective_addr_16_disp(proc_mode, temp_rip, mod_var)) in
 if is_some(flg)
 then (flg, 0x0000, 0)
-else (None() : option(string), n16(bits_of_int((unsigned(bp)) + ((unsigned(di)) + (signed(disp))), 16)), increment_rip_by),
+else (None() : option(string), bits_of_int((unsigned(bp)) + ((unsigned(di)) + (signed(disp))), 16), increment_rip_by),
 4 => let si : bits(16) = (rr16(0x6)) in
 let (flg, disp, increment_rip_by) : (option(string), sbits(64), {|0, 1, 2|}) = (x86_effective_addr_16_disp(proc_mode, temp_rip, mod_var)) in
 if is_some(flg)
 then (flg, 0x0000, 0)
-else (None() : option(string), n16(bits_of_int((unsigned(si)) + (signed(disp)), 16)), increment_rip_by),
+else (None() : option(string), bits_of_int((unsigned(si)) + (signed(disp)), 16), increment_rip_by),
 5 => let di : bits(16) = (rr16(0x7)) in
 let (flg, disp, increment_rip_by) : (option(string), sbits(64), {|0, 1, 2|}) = (x86_effective_addr_16_disp(proc_mode, temp_rip, mod_var)) in
 if is_some(flg)
 then (flg, 0x0000, 0)
-else (None() : option(string), n16(bits_of_int((unsigned(di)) + (signed(disp)), 16)), increment_rip_by),
+else (None() : option(string), bits_of_int((unsigned(di)) + (signed(disp)), 16), increment_rip_by),
 6 => (match mod_var {
 0 => let (flg, disp) : (option(string), sbits(64)) = (rime_size(proc_mode, 2, sail_sign_extend(temp_rip, 64), 1, ":X", false, struct {mem_ptr? = false})) in
 if is_some(flg)
 then (flg, 0x0000, 0)
-else (None() : option(string), n16(truncate(disp, 16)), 2),
+else (None() : option(string), truncate(disp, 16), 2),
 _ => let bp : bits(16) = (rr16(0x5)) in
 let (flg, disp, increment_rip_by) : (option(string), sbits(64), {|0, 1, 2|}) = (x86_effective_addr_16_disp(proc_mode, temp_rip, mod_var)) in
 if is_some(flg)
 then (flg, 0x0000, 0)
-else (None() : option(string), n16(bits_of_int((unsigned(bp)) + (signed(disp)), 16)), increment_rip_by)
+else (None() : option(string), bits_of_int((unsigned(bp)) + (signed(disp)), 16), increment_rip_by)
 }) : (option(string), bits(16), {|0, 1, 2|}),
 7 => let bx : bits(16) = (rr16(0x3)) in
 let (flg, disp, increment_rip_by) : (option(string), sbits(64), {|0, 1, 2|}) = (x86_effective_addr_16_disp(proc_mode, temp_rip, mod_var)) in
 if is_some(flg)
 then (flg, 0x0000, 0)
-else (None() : option(string), n16(bits_of_int((unsigned(bx)) + (signed(disp)), 16)), increment_rip_by),
+else (None() : option(string), bits_of_int((unsigned(bx)) + (signed(disp)), 16), increment_rip_by),
 _ => (Some(":R/M-OUT-OF-RANGE"), 0x0000, 0)
 }) : (option(string), bits(16), {|0, 1, 2|})
 
@@ -624,36 +624,36 @@ then (flg, 0, 0x0000_0000_0000_0000, 0)
 else (None() : option(string), 0, dword, 4)) in
 (elem0, bits_of_int(elem1, 49), elem2, elem3)) in
 (elem0, signed(elem1), elem2, elem3),
-_ => (None() : option(string), unsigned(if (proc_mode) == (0)
+_ => (None() : option(string), signed(if (proc_mode) == (0)
 then rgfi(unsigned(reg_index(r_m, rex_byte, 0b00)))
 else sail_zero_extend(rr32(sail_zero_extend(r_m, 4)), 64)), 0x0000_0000_0000_0000, 0)
 }) : (option(string), int, sbits(64), {|0, 1, 4|}),
 1 => (match r_m {
 4 => x86_effective_addr_from_sib(proc_mode, temp_rip, rex_byte, mod_var, sib),
-_ => let (elem0, elem1, elem2, elem3) : (option(string), bits(64), sbits(64), {|1|}) = (let (flg2, byte2) : (option(string), sbits(64)) = (rime_size(proc_mode, 1, sail_sign_extend(temp_rip, 64), 1, ":X", false, struct {mem_ptr? = false})) in
-let reg : bits(64) = (if (proc_mode) == (0)
+_ => let (elem0, elem1, elem2, elem3) : (option(string), sbits(64), sbits(64), {|1|}) = (let (flg2, byte2) : (option(string), sbits(64)) = (rime_size(proc_mode, 1, sail_sign_extend(temp_rip, 64), 1, ":X", false, struct {mem_ptr? = false})) in
+let reg : sbits(64) = (if (proc_mode) == (0)
 then rgfi(unsigned(reg_index(r_m, rex_byte, 0b00)))
 else sail_zero_extend(rr32(sail_zero_extend(r_m, 4)), 64)) in
 (flg2, reg, byte2, 1)) in
-(elem0, unsigned(elem1), elem2, elem3)
+(elem0, signed(elem1), elem2, elem3)
 }) : (option(string), int, sbits(64), {|0, 1, 4|}),
 2 => (match r_m {
 4 => x86_effective_addr_from_sib(proc_mode, temp_rip, rex_byte, mod_var, sib),
-_ => let (elem0, elem1, elem2, elem3) : (option(string), bits(64), sbits(64), {|4|}) = (let (flg1, dword) : (option(string), sbits(64)) = (rime_size(proc_mode, 4, sail_sign_extend(temp_rip, 64), 1, ":X", false, struct {mem_ptr? = false})) in
-let reg : bits(64) = (if (proc_mode) == (0)
+_ => let (elem0, elem1, elem2, elem3) : (option(string), sbits(64), sbits(64), {|4|}) = (let (flg1, dword) : (option(string), sbits(64)) = (rime_size(proc_mode, 4, sail_sign_extend(temp_rip, 64), 1, ":X", false, struct {mem_ptr? = false})) in
+let reg : sbits(64) = (if (proc_mode) == (0)
 then rgfi(unsigned(reg_index(r_m, rex_byte, 0b00)))
 else sail_zero_extend(rr32(sail_zero_extend(r_m, 4)), 64)) in
 (flg1, reg, dword, 4)) in
-(elem0, unsigned(elem1), elem2, elem3)
+(elem0, signed(elem1), elem2, elem3)
 }) : (option(string), int, sbits(64), {|0, 1, 4|}),
 _ => (Some("mod-value-wrong"), 0, 0x0000_0000_0000_0000, 0)
 }) in
 let dst_base : int = ((addr) + (signed(displacement))) in
 let dst_base : sbits(64) = (if (proc_mode) == (0)
 then if p4
-then sail_sign_extend(n32(bits_of_int(dst_base, 32)), 64)
-else n64_to_i64(n64(bits_of_int(dst_base, 64)))
-else sail_sign_extend(n32(bits_of_int(dst_base, 32)), 64)) in
+then sail_zero_extend(bits_of_int(dst_base, 32), 64)
+else bits_of_int(dst_base, 64)
+else sail_zero_extend(bits_of_int(dst_base, 32), 64)) in
 (flg, dst_base, increment_rip_by)
 
 /*Effective address calculation.*/
@@ -668,7 +668,7 @@ if (2) == (select_address_size(proc_mode, if p4
 then true
 else false))
 then let (elem0, elem1, elem2) : (option(string), bits(16), {|0, 1, 2|}) = (x86_effective_addr_16(proc_mode, temp_rip, r_m, mod_var)) in
-(elem0, sail_sign_extend(elem1, 64), elem2)
+(elem0, sail_zero_extend(elem1, 64), elem2)
 else x86_effective_addr_32_64(proc_mode, p4, temp_rip, rex_byte, r_m, mod_var, sib, num_imm_bytes)
 
 /*Functions to fetch and read operands from an instruction, 
@@ -711,7 +711,7 @@ else x86_effective_addr_32_64(proc_mode, p4, temp_rip, rex_byte, r_m, mod_var, s
  reference made from privilege level 3.</blockquote>*/
 val alignment_checking_enabled_p : unit -> bool effect {escape}
 function alignment_checking_enabled_p () =
-let cr0 : bits(32) = (n32(truncate(ctrs[0], 32))) in
+let cr0 : bits(32) = (truncate(ctrs[0], 32)) in
 let am : bits(1) = (cr0bits_get_am(cr0)) in
 let ac : bits(2) = (let rflags_var : bits(32) = (rflags) in
 sail_zero_extend(rflagsbits_get_ac(rflags_var), 2)) in

@@ -14,7 +14,7 @@ val x86_push_general_register : (range(0, 4), sbits(48), sbits(48), bits(52), bi
 function x86_push_general_register (proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode, modr_m, sib) =
 let ctx : string = ("X86-PUSH-GENERAL-REGISTER") in
 let operand_size : {|1, 2, 4, 8|} = (select_operand_size(proc_mode, false, rex_byte, false, prefixes, true, true, false)) in
-let rsp_var : bits(64) = (read_sptr(proc_mode)) in
+let rsp_var : sbits(64) = (read_sptr(proc_mode)) in
 let (flg, new_rsp) : (option(string), sbits(64)) = (add_to_sptr(proc_mode, rsp_var, bits_of_int(negate(operand_size), 64))) in
 { if is_some(flg)
 then throw(Emsg("A fault occurred.  Original ACL2 AST:
@@ -58,7 +58,7 @@ let reg : bits(3) = (modr_m_get_reg(modr_m)) in
 let p2 : bits(8) = (prefixes_get_seg(prefixes)) in
 let p4? : bool = ((0x67) == (prefixes_get_adr(prefixes))) in
 let operand_size : {|1, 2, 4, 8|} = (select_operand_size(proc_mode, false, rex_byte, false, prefixes, true, true, false)) in
-let rsp_var : bits(64) = (read_sptr(proc_mode)) in
+let rsp_var : sbits(64) = (read_sptr(proc_mode)) in
 let (flg, new_rsp) : (option(string), sbits(64)) = (add_to_sptr(proc_mode, rsp_var, bits_of_int(negate(operand_size), 64))) in
 { if is_some(flg)
 then throw(Emsg("A fault occurred.  Original ACL2 AST:
@@ -70,7 +70,7 @@ let increment_rip_by : bits(3) = (bits_of_int(increment_rip_by, 3)) in
 { if is_some(flg0)
 then throw(Emsg("Model state error: :X86-OPERAND-FROM-MODR/M-AND-SIB-BYTES"))
 else ();
-let (flg, temp_rip) : (option(string), sbits(49)) = (add_to_iptr(proc_mode, temp_rip, sail_sign_extend(increment_rip_by, 48))) in
+let (flg, temp_rip) : (option(string), sbits(49)) = (add_to_iptr(proc_mode, temp_rip, sail_zero_extend(increment_rip_by, 48))) in
 { if is_some(flg)
 then throw(Emsg("A fault occurred.  Original ACL2 AST:
 ['!!FAULT-FRESH', ':GP', '0', ':INCREMENT-IP-ERROR', 'FLG']"))
@@ -113,7 +113,7 @@ let ctx : string = ("X86-PUSH-I") in
 let byte_imm? : bool = ((opcode) == (0x6a)) in
 let imm_size : {|1, 2, 4, 8|} = (select_operand_size(proc_mode, byte_imm?, rex_byte, true, prefixes, false, false, false)) in
 let operand_size : {|1, 2, 4, 8|} = (select_operand_size(proc_mode, false, rex_byte, false, prefixes, true, true, false)) in
-let rsp_var : bits(64) = (read_sptr(proc_mode)) in
+let rsp_var : sbits(64) = (read_sptr(proc_mode)) in
 let (flg, new_rsp) : (option(string), sbits(64)) = (add_to_sptr(proc_mode, rsp_var, bits_of_int(negate(operand_size), 64))) in
 { if is_some(flg)
 then throw(Emsg("A fault occurred.  Original ACL2 AST:
@@ -177,7 +177,7 @@ val x86_push_segment_register : (range(0, 4), sbits(48), sbits(48), bits(52), bi
 function x86_push_segment_register (proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode, modr_m, sib) =
 let ctx : string = ("X86-PUSH-SEGMENT-REGISTER") in
 let operand_size : {|1, 2, 4, 8|} = (select_operand_size(proc_mode, false, rex_byte, false, prefixes, true, true, false)) in
-let rsp_var : bits(64) = (read_sptr(proc_mode)) in
+let rsp_var : sbits(64) = (read_sptr(proc_mode)) in
 let (flg, new_rsp) : (option(string), sbits(64)) = (add_to_sptr(proc_mode, rsp_var, bits_of_int(negate(operand_size), 64))) in
 { if is_some(flg)
 then throw(Emsg("A fault occurred.  Original ACL2 AST:
@@ -215,7 +215,7 @@ val x86_pop_general_register : (range(0, 4), sbits(48), sbits(48), bits(52), bit
 function x86_pop_general_register (proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode, modr_m, sib) =
 let ctx : string = ("X86-POP-GENERAL-REGISTER") in
 let operand_size : {|1, 2, 4, 8|} = (select_operand_size(proc_mode, false, rex_byte, false, prefixes, true, true, false)) in
-let rsp_var : bits(64) = (read_sptr(proc_mode)) in
+let rsp_var : sbits(64) = (read_sptr(proc_mode)) in
 let (flg, new_rsp) : (option(string), sbits(64)) = (add_to_sptr(proc_mode, rsp_var, bits_of_int(operand_size, 64))) in
 { if is_some(flg)
 then throw(Emsg("A fault occurred.  Original ACL2 AST:
@@ -259,7 +259,7 @@ let reg : bits(3) = (modr_m_get_reg(modr_m)) in
 let p2 : bits(8) = (prefixes_get_seg(prefixes)) in
 let p4? : bool = ((0x67) == (prefixes_get_adr(prefixes))) in
 let operand_size : {|1, 2, 4, 8|} = (select_operand_size(proc_mode, false, rex_byte, false, prefixes, true, true, false)) in
-let rsp_var : bits(64) = (read_sptr(proc_mode)) in
+let rsp_var : sbits(64) = (read_sptr(proc_mode)) in
 let (flg, new_rsp) : (option(string), sbits(64)) = (add_to_sptr(proc_mode, rsp_var, bits_of_int(operand_size, 64))) in
 { if is_some(flg)
 then throw(Emsg("A fault occurred.  Original ACL2 AST:
@@ -278,7 +278,7 @@ let increment_rip_by : bits(3) = (bits_of_int(increment_rip_by, 3)) in
 then throw(Emsg("Model state error: :X86-EFFECTIVE-ADDR-ERROR"))
 else ();
 let seg_reg : {|0, 1, 2, 3, 4, 5|} = (select_segment_register(proc_mode, p2, p4?, mod_var, r_m, sib)) in
-let (flg, temp_rip) : (option(string), sbits(49)) = (add_to_iptr(proc_mode, temp_rip, sail_sign_extend(increment_rip_by, 48))) in
+let (flg, temp_rip) : (option(string), sbits(49)) = (add_to_iptr(proc_mode, temp_rip, sail_zero_extend(increment_rip_by, 48))) in
 { if is_some(flg)
 then throw(Emsg("A fault occurred.  Original ACL2 AST:
 ['!!FAULT-FRESH', ':GP', '0', ':INCREMENT-IP-ERROR', 'FLG']"))
@@ -305,7 +305,7 @@ val x86_pushf : (range(0, 4), sbits(48), sbits(48), bits(52), bits(8), bits(8), 
 function x86_pushf (proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode, modr_m, sib) =
 let ctx : string = ("X86-PUSHF") in
 let operand_size : {|1, 2, 4, 8|} = (select_operand_size(proc_mode, false, rex_byte, false, prefixes, true, true, false)) in
-let rsp_var : bits(64) = (read_sptr(proc_mode)) in
+let rsp_var : sbits(64) = (read_sptr(proc_mode)) in
 let (flg, new_rsp) : (option(string), sbits(64)) = (add_to_sptr(proc_mode, rsp_var, bits_of_int(negate(operand_size), 64))) in
 { if is_some(flg)
 then throw(Emsg("A fault occurred.  Original ACL2 AST:
@@ -329,7 +329,7 @@ val x86_popf : (range(0, 4), sbits(48), sbits(48), bits(52), bits(8), bits(8), b
 function x86_popf (proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode, modr_m, sib) =
 let ctx : string = ("X86-POPF") in
 let operand_size : {|1, 2, 4, 8|} = (select_operand_size(proc_mode, false, rex_byte, false, prefixes, true, true, false)) in
-let rsp_var : bits(64) = (read_sptr(proc_mode)) in
+let rsp_var : sbits(64) = (read_sptr(proc_mode)) in
 let (flg, new_rsp) : (option(string), sbits(64)) = (add_to_sptr(proc_mode, rsp_var, bits_of_int(operand_size, 64))) in
 { if is_some(flg)
 then throw(Emsg("A fault occurred.  Original ACL2 AST:
@@ -390,7 +390,7 @@ val x86_pusha : (range(0, 4), sbits(48), sbits(48), bits(52), bits(8), bits(8), 
 function x86_pusha (proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode, modr_m, sib) =
 let ctx : string = ("X86-PUSHA") in
 let operand_size : {|2, 4|} = (check_range(2, 4, select_operand_size(proc_mode, false, 0x00, false, prefixes, false, false, false))) in
-let rsp_var : bits(64) = (read_sptr(proc_mode)) in
+let rsp_var : sbits(64) = (read_sptr(proc_mode)) in
 let eax_ax : bits(64) = (rgfi_size(bits_of_int(operand_size, 4), 0x0, 0x00)) in
 let ecx_cx : bits(64) = (rgfi_size(bits_of_int(operand_size, 4), 0x1, 0x00)) in
 let edx_dx : bits(64) = (rgfi_size(bits_of_int(operand_size, 4), 0x2, 0x00)) in
@@ -511,7 +511,7 @@ val x86_popa : (range(0, 4), sbits(48), sbits(48), bits(52), bits(8), bits(8), b
 function x86_popa (proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode, modr_m, sib) =
 let ctx : string = ("X86-POPA") in
 let operand_size : {|2, 4|} = (check_range(2, 4, select_operand_size(proc_mode, false, 0x00, false, prefixes, false, false, false))) in
-let rsp_var : bits(64) = (read_sptr(proc_mode)) in
+let rsp_var : sbits(64) = (read_sptr(proc_mode)) in
 let check_alignment? : bool = (alignment_checking_enabled_p()) in
 let (flg, edi_di) : (option(string), int) = (rme_size(proc_mode, operand_size, rsp_var, 2, ":R", check_alignment?, struct {mem_ptr? = false})) in
 { if is_some(flg)

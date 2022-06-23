@@ -3,11 +3,11 @@ $include <string.sail>
 
 val sal_shl_spec_8 : (bits(8), bits(6), bits(32)) -> (bits(8), bits(32), bits(32)) effect {escape}
 function sal_shl_spec_8 (dst, src, input_rflags) =
-let dst : bits(8) = (0x08) in
-let src : bits(6) = (0b00_0110) in
-let input_rflags : bits(32) = (n32(input_rflags)) in
+let dst : bits(8) = (dst) in
+let src : bits(6) = (src) in
+let input_rflags : bits(32) = (input_rflags) in
 let raw_result : int = (ash(unsigned(dst), unsigned(src))) in
-let result : bits(8) = (0x08) in
+let result : bits(8) = (bits_of_int(raw_result, 8)) in
 let (output_rflags, undefined_flags) : (bits(32), bits(32)) = (match src {
 0 => (input_rflags, 0x0000_0000),
 1 => let cf : bits(1) = (slice(dst, 7, 1)) in
@@ -33,17 +33,17 @@ let output_rflags : bits(32) = (change_rflagsbits(input_rflags, Some(cf), None()
 let undefined_flags : bits(32) = (change_rflagsbits(0x0000_0000, None(), None(), None(), None(), Some(0b1), None(), None(), None(), None(), None(), None(), Some(0b1), None(), None(), None(), None(), None(), None(), None(), None(), None(), None())) in
 (output_rflags, undefined_flags)
 }) in
-let output_rflags : bits(32) = (n32(output_rflags)) in
-let undefined_flags : bits(32) = (n32(undefined_flags)) in
+let output_rflags : bits(32) = (output_rflags) in
+let undefined_flags : bits(32) = (undefined_flags) in
 (result, output_rflags, undefined_flags)
 
 val sal_shl_spec_16 : (bits(16), bits(6), bits(32)) -> (bits(16), bits(32), bits(32)) effect {escape}
 function sal_shl_spec_16 (dst, src, input_rflags) =
-let dst : bits(16) = (0x0010) in
-let src : bits(6) = (0b00_0110) in
-let input_rflags : bits(32) = (n32(input_rflags)) in
+let dst : bits(16) = (dst) in
+let src : bits(6) = (src) in
+let input_rflags : bits(32) = (input_rflags) in
 let raw_result : int = (ash(unsigned(dst), unsigned(src))) in
-let result : bits(16) = (0x0010) in
+let result : bits(16) = (bits_of_int(raw_result, 16)) in
 let (output_rflags, undefined_flags) : (bits(32), bits(32)) = (match src {
 0 => (input_rflags, 0x0000_0000),
 1 => let cf : bits(1) = (slice(dst, 15, 1)) in
@@ -69,17 +69,17 @@ let output_rflags : bits(32) = (change_rflagsbits(input_rflags, Some(cf), None()
 let undefined_flags : bits(32) = (change_rflagsbits(0x0000_0000, None(), None(), None(), None(), Some(0b1), None(), None(), None(), None(), None(), None(), Some(0b1), None(), None(), None(), None(), None(), None(), None(), None(), None(), None())) in
 (output_rflags, undefined_flags)
 }) in
-let output_rflags : bits(32) = (n32(output_rflags)) in
-let undefined_flags : bits(32) = (n32(undefined_flags)) in
+let output_rflags : bits(32) = (output_rflags) in
+let undefined_flags : bits(32) = (undefined_flags) in
 (result, output_rflags, undefined_flags)
 
 val sal_shl_spec_32 : (bits(32), bits(6), bits(32)) -> (bits(32), bits(32), bits(32)) effect {escape}
 function sal_shl_spec_32 (dst, src, input_rflags) =
-let dst : bits(32) = (0x0000_0020) in
-let src : bits(6) = (0b00_0110) in
-let input_rflags : bits(32) = (n32(input_rflags)) in
+let dst : bits(32) = (dst) in
+let src : bits(6) = (src) in
+let input_rflags : bits(32) = (input_rflags) in
 let raw_result : int = (ash(unsigned(dst), unsigned(src))) in
-let result : bits(32) = (0x0000_0020) in
+let result : bits(32) = (bits_of_int(raw_result, 32)) in
 let (output_rflags, undefined_flags) : (bits(32), bits(32)) = (match src {
 0 => (input_rflags, 0x0000_0000),
 1 => let cf : bits(1) = (slice(dst, 31, 1)) in
@@ -105,17 +105,17 @@ let output_rflags : bits(32) = (change_rflagsbits(input_rflags, Some(cf), None()
 let undefined_flags : bits(32) = (change_rflagsbits(0x0000_0000, None(), None(), None(), None(), Some(0b1), None(), None(), None(), None(), None(), None(), Some(0b1), None(), None(), None(), None(), None(), None(), None(), None(), None(), None())) in
 (output_rflags, undefined_flags)
 }) in
-let output_rflags : bits(32) = (n32(output_rflags)) in
-let undefined_flags : bits(32) = (n32(undefined_flags)) in
+let output_rflags : bits(32) = (output_rflags) in
+let undefined_flags : bits(32) = (undefined_flags) in
 (result, output_rflags, undefined_flags)
 
 val sal_shl_spec_64 : (bits(64), bits(6), bits(32)) -> (bits(64), bits(32), bits(32)) effect {escape}
 function sal_shl_spec_64 (dst, src, input_rflags) =
-let dst : bits(64) = (0x0000_0000_0000_0040) in
-let src : bits(6) = (0b00_0110) in
-let input_rflags : bits(32) = (n32(input_rflags)) in
+let dst : bits(64) = (dst) in
+let src : bits(6) = (src) in
+let input_rflags : bits(32) = (input_rflags) in
 let raw_result : int = (ash(unsigned(dst), unsigned(src))) in
-let result : bits(64) = (0x0000_0000_0000_0040) in
+let result : bits(64) = (bits_of_int(raw_result, 64)) in
 let (output_rflags, undefined_flags) : (bits(32), bits(32)) = (match src {
 0 => (input_rflags, 0x0000_0000),
 1 => let cf : bits(1) = (slice(dst, 63, 1)) in
@@ -141,8 +141,8 @@ let output_rflags : bits(32) = (change_rflagsbits(input_rflags, Some(cf), None()
 let undefined_flags : bits(32) = (change_rflagsbits(0x0000_0000, None(), None(), None(), None(), Some(0b1), None(), None(), None(), None(), None(), None(), Some(0b1), None(), None(), None(), None(), None(), None(), None(), None(), None(), None())) in
 (output_rflags, undefined_flags)
 }) in
-let output_rflags : bits(32) = (n32(output_rflags)) in
-let undefined_flags : bits(32) = (n32(undefined_flags)) in
+let output_rflags : bits(32) = (output_rflags) in
+let undefined_flags : bits(32) = (undefined_flags) in
 (result, output_rflags, undefined_flags)
 
 /*Specification for the @ ( ' SAL/SHL ' ) instruction*/
@@ -174,12 +174,12 @@ _ => (0x0000_0000_0000_0000, 0x0000_0000, 0x0000_0000)
 
 val shr_spec_8 : (bits(8), bits(6), bits(32)) -> (bits(8), bits(32), bits(32)) effect {escape}
 function shr_spec_8 (dst, src, input_rflags) =
-let dst : bits(8) = (0x08) in
-let src : bits(6) = (0b00_0110) in
-let input_rflags : bits(32) = (n32(input_rflags)) in
+let dst : bits(8) = (dst) in
+let src : bits(6) = (src) in
+let input_rflags : bits(32) = (input_rflags) in
 let neg_src : sbits(9) = (bits_of_int(negate(unsigned(src)), 9)) in
 let raw_result : bits(8) = (bits_of_int(ash(unsigned(dst), signed(neg_src)), 8)) in
-let result : bits(8) = (0x08) in
+let result : bits(8) = (raw_result) in
 let (output_rflags, undefined_flags) : (bits(32), bits(32)) = (match src {
 0 => (input_rflags, 0x0000_0000),
 1 => let cf : bits(1) = (slice(dst, 0, 1)) in
@@ -205,18 +205,18 @@ let output_rflags : bits(32) = (change_rflagsbits(input_rflags, Some(cf), None()
 let undefined_flags : bits(32) = (change_rflagsbits(0x0000_0000, None(), None(), None(), None(), Some(0b1), None(), None(), None(), None(), None(), None(), Some(0b1), None(), None(), None(), None(), None(), None(), None(), None(), None(), None())) in
 (output_rflags, undefined_flags)
 }) in
-let output_rflags : bits(32) = (n32(output_rflags)) in
-let undefined_flags : bits(32) = (n32(undefined_flags)) in
+let output_rflags : bits(32) = (output_rflags) in
+let undefined_flags : bits(32) = (undefined_flags) in
 (result, output_rflags, undefined_flags)
 
 val shr_spec_16 : (bits(16), bits(6), bits(32)) -> (bits(16), bits(32), bits(32)) effect {escape}
 function shr_spec_16 (dst, src, input_rflags) =
-let dst : bits(16) = (0x0010) in
-let src : bits(6) = (0b00_0110) in
-let input_rflags : bits(32) = (n32(input_rflags)) in
+let dst : bits(16) = (dst) in
+let src : bits(6) = (src) in
+let input_rflags : bits(32) = (input_rflags) in
 let neg_src : sbits(17) = (bits_of_int(negate(unsigned(src)), 17)) in
 let raw_result : bits(16) = (bits_of_int(ash(unsigned(dst), signed(neg_src)), 16)) in
-let result : bits(16) = (0x0010) in
+let result : bits(16) = (raw_result) in
 let (output_rflags, undefined_flags) : (bits(32), bits(32)) = (match src {
 0 => (input_rflags, 0x0000_0000),
 1 => let cf : bits(1) = (slice(dst, 0, 1)) in
@@ -242,18 +242,18 @@ let output_rflags : bits(32) = (change_rflagsbits(input_rflags, Some(cf), None()
 let undefined_flags : bits(32) = (change_rflagsbits(0x0000_0000, None(), None(), None(), None(), Some(0b1), None(), None(), None(), None(), None(), None(), Some(0b1), None(), None(), None(), None(), None(), None(), None(), None(), None(), None())) in
 (output_rflags, undefined_flags)
 }) in
-let output_rflags : bits(32) = (n32(output_rflags)) in
-let undefined_flags : bits(32) = (n32(undefined_flags)) in
+let output_rflags : bits(32) = (output_rflags) in
+let undefined_flags : bits(32) = (undefined_flags) in
 (result, output_rflags, undefined_flags)
 
 val shr_spec_32 : (bits(32), bits(6), bits(32)) -> (bits(32), bits(32), bits(32)) effect {escape}
 function shr_spec_32 (dst, src, input_rflags) =
-let dst : bits(32) = (0x0000_0020) in
-let src : bits(6) = (0b00_0110) in
-let input_rflags : bits(32) = (n32(input_rflags)) in
+let dst : bits(32) = (dst) in
+let src : bits(6) = (src) in
+let input_rflags : bits(32) = (input_rflags) in
 let neg_src : sbits(33) = (bits_of_int(negate(unsigned(src)), 33)) in
 let raw_result : bits(32) = (bits_of_int(ash(unsigned(dst), signed(neg_src)), 32)) in
-let result : bits(32) = (0x0000_0020) in
+let result : bits(32) = (raw_result) in
 let (output_rflags, undefined_flags) : (bits(32), bits(32)) = (match src {
 0 => (input_rflags, 0x0000_0000),
 1 => let cf : bits(1) = (slice(dst, 0, 1)) in
@@ -279,18 +279,18 @@ let output_rflags : bits(32) = (change_rflagsbits(input_rflags, Some(cf), None()
 let undefined_flags : bits(32) = (change_rflagsbits(0x0000_0000, None(), None(), None(), None(), Some(0b1), None(), None(), None(), None(), None(), None(), Some(0b1), None(), None(), None(), None(), None(), None(), None(), None(), None(), None())) in
 (output_rflags, undefined_flags)
 }) in
-let output_rflags : bits(32) = (n32(output_rflags)) in
-let undefined_flags : bits(32) = (n32(undefined_flags)) in
+let output_rflags : bits(32) = (output_rflags) in
+let undefined_flags : bits(32) = (undefined_flags) in
 (result, output_rflags, undefined_flags)
 
 val shr_spec_64 : (bits(64), bits(6), bits(32)) -> (bits(64), bits(32), bits(32)) effect {escape}
 function shr_spec_64 (dst, src, input_rflags) =
-let dst : bits(64) = (0x0000_0000_0000_0040) in
-let src : bits(6) = (0b00_0110) in
-let input_rflags : bits(32) = (n32(input_rflags)) in
+let dst : bits(64) = (dst) in
+let src : bits(6) = (src) in
+let input_rflags : bits(32) = (input_rflags) in
 let neg_src : sbits(65) = (bits_of_int(negate(unsigned(src)), 65)) in
 let raw_result : bits(64) = (bits_of_int(ash(unsigned(dst), signed(neg_src)), 64)) in
-let result : bits(64) = (0x0000_0000_0000_0040) in
+let result : bits(64) = (raw_result) in
 let (output_rflags, undefined_flags) : (bits(32), bits(32)) = (match src {
 0 => (input_rflags, 0x0000_0000),
 1 => let cf : bits(1) = (slice(dst, 0, 1)) in
@@ -316,8 +316,8 @@ let output_rflags : bits(32) = (change_rflagsbits(input_rflags, Some(cf), None()
 let undefined_flags : bits(32) = (change_rflagsbits(0x0000_0000, None(), None(), None(), None(), Some(0b1), None(), None(), None(), None(), None(), None(), Some(0b1), None(), None(), None(), None(), None(), None(), None(), None(), None(), None())) in
 (output_rflags, undefined_flags)
 }) in
-let output_rflags : bits(32) = (n32(output_rflags)) in
-let undefined_flags : bits(32) = (n32(undefined_flags)) in
+let output_rflags : bits(32) = (output_rflags) in
+let undefined_flags : bits(32) = (undefined_flags) in
 (result, output_rflags, undefined_flags)
 
 /*Specification for the @ ( ' SHR ' ) instruction*/
@@ -349,15 +349,15 @@ _ => (0x0000_0000_0000_0000, 0x0000_0000, 0x0000_0000)
 
 val sar_spec_8 : (bits(8), bits(6), bits(32)) -> (bits(8), bits(32), bits(32)) effect {escape}
 function sar_spec_8 (dst, src, input_rflags) =
-let dst : bits(8) = (0x08) in
-let src : bits(6) = (0b00_0110) in
-let input_rflags : bits(32) = (n32(input_rflags)) in
+let dst : bits(8) = (dst) in
+let src : bits(6) = (src) in
+let input_rflags : bits(32) = (input_rflags) in
 let neg_src : sbits(9) = (bits_of_int(negate(unsigned(src)), 9)) in
 let raw_result_not_sign_extended : bits(8) = (bits_of_int(ash(unsigned(dst), signed(neg_src)), 8)) in
 let raw_result : int = (if (logbit(7, dst)) == (0b1)
 then loghead(8, ash(binary_logext(8, unsigned(dst)), signed(neg_src)))
 else unsigned(raw_result_not_sign_extended)) in
-let result : bits(8) = (0x08) in
+let result : bits(8) = (bits_of_int(raw_result, 8)) in
 let (output_rflags, undefined_flags) : (bits(32), bits(32)) = (match src {
 0 => (input_rflags, 0x0000_0000),
 1 => let cf : bits(1) = (slice(dst, 0, 1)) in
@@ -383,21 +383,21 @@ let output_rflags : bits(32) = (change_rflagsbits(input_rflags, Some(cf), None()
 let undefined_flags : bits(32) = (change_rflagsbits(0x0000_0000, None(), None(), None(), None(), Some(0b1), None(), None(), None(), None(), None(), None(), Some(0b1), None(), None(), None(), None(), None(), None(), None(), None(), None(), None())) in
 (output_rflags, undefined_flags)
 }) in
-let output_rflags : bits(32) = (n32(output_rflags)) in
-let undefined_flags : bits(32) = (n32(undefined_flags)) in
+let output_rflags : bits(32) = (output_rflags) in
+let undefined_flags : bits(32) = (undefined_flags) in
 (result, output_rflags, undefined_flags)
 
 val sar_spec_16 : (bits(16), bits(6), bits(32)) -> (bits(16), bits(32), bits(32)) effect {escape}
 function sar_spec_16 (dst, src, input_rflags) =
-let dst : bits(16) = (0x0010) in
-let src : bits(6) = (0b00_0110) in
-let input_rflags : bits(32) = (n32(input_rflags)) in
+let dst : bits(16) = (dst) in
+let src : bits(6) = (src) in
+let input_rflags : bits(32) = (input_rflags) in
 let neg_src : sbits(17) = (bits_of_int(negate(unsigned(src)), 17)) in
 let raw_result_not_sign_extended : bits(16) = (bits_of_int(ash(unsigned(dst), signed(neg_src)), 16)) in
 let raw_result : int = (if (logbit(15, dst)) == (0b1)
 then loghead(16, ash(binary_logext(16, unsigned(dst)), signed(neg_src)))
 else unsigned(raw_result_not_sign_extended)) in
-let result : bits(16) = (0x0010) in
+let result : bits(16) = (bits_of_int(raw_result, 16)) in
 let (output_rflags, undefined_flags) : (bits(32), bits(32)) = (match src {
 0 => (input_rflags, 0x0000_0000),
 1 => let cf : bits(1) = (slice(dst, 0, 1)) in
@@ -423,21 +423,21 @@ let output_rflags : bits(32) = (change_rflagsbits(input_rflags, Some(cf), None()
 let undefined_flags : bits(32) = (change_rflagsbits(0x0000_0000, None(), None(), None(), None(), Some(0b1), None(), None(), None(), None(), None(), None(), Some(0b1), None(), None(), None(), None(), None(), None(), None(), None(), None(), None())) in
 (output_rflags, undefined_flags)
 }) in
-let output_rflags : bits(32) = (n32(output_rflags)) in
-let undefined_flags : bits(32) = (n32(undefined_flags)) in
+let output_rflags : bits(32) = (output_rflags) in
+let undefined_flags : bits(32) = (undefined_flags) in
 (result, output_rflags, undefined_flags)
 
 val sar_spec_32 : (bits(32), bits(6), bits(32)) -> (bits(32), bits(32), bits(32)) effect {escape}
 function sar_spec_32 (dst, src, input_rflags) =
-let dst : bits(32) = (0x0000_0020) in
-let src : bits(6) = (0b00_0110) in
-let input_rflags : bits(32) = (n32(input_rflags)) in
+let dst : bits(32) = (dst) in
+let src : bits(6) = (src) in
+let input_rflags : bits(32) = (input_rflags) in
 let neg_src : sbits(33) = (bits_of_int(negate(unsigned(src)), 33)) in
 let raw_result_not_sign_extended : bits(32) = (bits_of_int(ash(unsigned(dst), signed(neg_src)), 32)) in
 let raw_result : int = (if (logbit(31, dst)) == (0b1)
 then loghead(32, ash(binary_logext(32, unsigned(dst)), signed(neg_src)))
 else unsigned(raw_result_not_sign_extended)) in
-let result : bits(32) = (0x0000_0020) in
+let result : bits(32) = (bits_of_int(raw_result, 32)) in
 let (output_rflags, undefined_flags) : (bits(32), bits(32)) = (match src {
 0 => (input_rflags, 0x0000_0000),
 1 => let cf : bits(1) = (slice(dst, 0, 1)) in
@@ -463,21 +463,21 @@ let output_rflags : bits(32) = (change_rflagsbits(input_rflags, Some(cf), None()
 let undefined_flags : bits(32) = (change_rflagsbits(0x0000_0000, None(), None(), None(), None(), Some(0b1), None(), None(), None(), None(), None(), None(), Some(0b1), None(), None(), None(), None(), None(), None(), None(), None(), None(), None())) in
 (output_rflags, undefined_flags)
 }) in
-let output_rflags : bits(32) = (n32(output_rflags)) in
-let undefined_flags : bits(32) = (n32(undefined_flags)) in
+let output_rflags : bits(32) = (output_rflags) in
+let undefined_flags : bits(32) = (undefined_flags) in
 (result, output_rflags, undefined_flags)
 
 val sar_spec_64 : (bits(64), bits(6), bits(32)) -> (bits(64), bits(32), bits(32)) effect {escape}
 function sar_spec_64 (dst, src, input_rflags) =
-let dst : bits(64) = (0x0000_0000_0000_0040) in
-let src : bits(6) = (0b00_0110) in
-let input_rflags : bits(32) = (n32(input_rflags)) in
+let dst : bits(64) = (dst) in
+let src : bits(6) = (src) in
+let input_rflags : bits(32) = (input_rflags) in
 let neg_src : sbits(65) = (bits_of_int(negate(unsigned(src)), 65)) in
 let raw_result_not_sign_extended : bits(64) = (bits_of_int(ash(unsigned(dst), signed(neg_src)), 64)) in
 let raw_result : int = (if (logbit(63, dst)) == (0b1)
 then loghead(64, ash(binary_logext(64, unsigned(dst)), signed(neg_src)))
 else unsigned(raw_result_not_sign_extended)) in
-let result : bits(64) = (0x0000_0000_0000_0040) in
+let result : bits(64) = (bits_of_int(raw_result, 64)) in
 let (output_rflags, undefined_flags) : (bits(32), bits(32)) = (match src {
 0 => (input_rflags, 0x0000_0000),
 1 => let cf : bits(1) = (slice(dst, 0, 1)) in
@@ -503,8 +503,8 @@ let output_rflags : bits(32) = (change_rflagsbits(input_rflags, Some(cf), None()
 let undefined_flags : bits(32) = (change_rflagsbits(0x0000_0000, None(), None(), None(), None(), Some(0b1), None(), None(), None(), None(), None(), None(), Some(0b1), None(), None(), None(), None(), None(), None(), None(), None(), None(), None())) in
 (output_rflags, undefined_flags)
 }) in
-let output_rflags : bits(32) = (n32(output_rflags)) in
-let undefined_flags : bits(32) = (n32(undefined_flags)) in
+let output_rflags : bits(32) = (output_rflags) in
+let undefined_flags : bits(32) = (undefined_flags) in
 (result, output_rflags, undefined_flags)
 
 /*Specification for the @ ( ' SAR ' ) instruction*/
@@ -538,12 +538,12 @@ _ => (0x0000_0000_0000_0000, 0x0000_0000, 0x0000_0000)
 
 val shld_spec_16 : (bits(16), bits(16), bits(6), bits(32)) -> (bits(16), bool, bits(32), bits(32)) effect {escape}
 function shld_spec_16 (dst, src, cnt, input_rflags) =
-let dst : bits(16) = (0x0010) in
-let src : bits(16) = (0x0010) in
-let cnt : bits(6) = (0b00_0110) in
-let input_rflags : bits(32) = (n32(input_rflags)) in
+let dst : bits(16) = (dst) in
+let src : bits(16) = (src) in
+let cnt : bits(6) = (cnt) in
+let input_rflags : bits(32) = (input_rflags) in
 let dst_src : bits(32) = (logior(bits_of_int(ash(unsigned(dst), 16), 32), sail_zero_extend(src, 32))) in
-let output_dst : bits(16) = (0x0010) in
+let output_dst : bits(16) = (bits_of_int(ash(unsigned(dst_src), unsigned(sail_zero_extend(cnt, 16))), 16)) in
 let (output_rflags, undefined_flags) : (bits(32), bits(32)) = (match cnt {
 0 => (input_rflags, 0x0000_0000),
 1 => let cf : bits(1) = (slice(dst, 15, 1)) in
@@ -568,18 +568,18 @@ else let output_rflags : bits(32) = (input_rflags) in
 let undefined_flags : bits(32) = (set_rflagsbits_get_cf(0b1, set_rflagsbits_get_of(0b1, set_rflagsbits_get_pf(0b1, set_rflagsbits_get_zf(0b1, set_rflagsbits_get_sf(0b1, set_rflagsbits_get_af(0b1, input_rflags))))))) in
 (output_rflags, undefined_flags)
 }) in
-let output_rflags : bits(32) = (n32(output_rflags)) in
-let undefined_flags : bits(32) = (n32(undefined_flags)) in
+let output_rflags : bits(32) = (output_rflags) in
+let undefined_flags : bits(32) = (undefined_flags) in
 (output_dst, (unsigned(cnt)) > (16), output_rflags, undefined_flags)
 
 val shld_spec_32 : (bits(32), bits(32), bits(6), bits(32)) -> (bits(32), bool, bits(32), bits(32)) effect {escape}
 function shld_spec_32 (dst, src, cnt, input_rflags) =
-let dst : bits(32) = (0x0000_0020) in
-let src : bits(32) = (0x0000_0020) in
-let cnt : bits(6) = (0b00_0110) in
-let input_rflags : bits(32) = (n32(input_rflags)) in
+let dst : bits(32) = (dst) in
+let src : bits(32) = (src) in
+let cnt : bits(6) = (cnt) in
+let input_rflags : bits(32) = (input_rflags) in
 let dst_src : bits(64) = (logior(bits_of_int(ash(unsigned(dst), 32), 64), sail_zero_extend(src, 64))) in
-let output_dst : bits(32) = (0x0000_0020) in
+let output_dst : bits(32) = (bits_of_int(ash(unsigned(dst_src), unsigned(sail_zero_extend(cnt, 32))), 32)) in
 let (output_rflags, undefined_flags) : (bits(32), bits(32)) = (match cnt {
 0 => (input_rflags, 0x0000_0000),
 1 => let cf : bits(1) = (slice(dst, 31, 1)) in
@@ -604,18 +604,18 @@ else let output_rflags : bits(32) = (input_rflags) in
 let undefined_flags : bits(32) = (set_rflagsbits_get_cf(0b1, set_rflagsbits_get_of(0b1, set_rflagsbits_get_pf(0b1, set_rflagsbits_get_zf(0b1, set_rflagsbits_get_sf(0b1, set_rflagsbits_get_af(0b1, input_rflags))))))) in
 (output_rflags, undefined_flags)
 }) in
-let output_rflags : bits(32) = (n32(output_rflags)) in
-let undefined_flags : bits(32) = (n32(undefined_flags)) in
+let output_rflags : bits(32) = (output_rflags) in
+let undefined_flags : bits(32) = (undefined_flags) in
 (output_dst, (unsigned(cnt)) > (32), output_rflags, undefined_flags)
 
 val shld_spec_64 : (bits(64), bits(64), bits(6), bits(32)) -> (bits(64), bool, bits(32), bits(32)) effect {escape}
 function shld_spec_64 (dst, src, cnt, input_rflags) =
-let dst : bits(64) = (0x0000_0000_0000_0040) in
-let src : bits(64) = (0x0000_0000_0000_0040) in
-let cnt : bits(6) = (0b00_0110) in
-let input_rflags : bits(32) = (n32(input_rflags)) in
+let dst : bits(64) = (dst) in
+let src : bits(64) = (src) in
+let cnt : bits(6) = (cnt) in
+let input_rflags : bits(32) = (input_rflags) in
 let dst_src : bits(128) = (logior(bits_of_int(ash(unsigned(dst), 64), 128), sail_zero_extend(src, 128))) in
-let output_dst : bits(64) = (0x0000_0000_0000_0040) in
+let output_dst : bits(64) = (bits_of_int(ash(unsigned(dst_src), unsigned(sail_zero_extend(cnt, 64))), 64)) in
 let (output_rflags, undefined_flags) : (bits(32), bits(32)) = (match cnt {
 0 => (input_rflags, 0x0000_0000),
 1 => let cf : bits(1) = (slice(dst, 63, 1)) in
@@ -640,8 +640,8 @@ else let output_rflags : bits(32) = (input_rflags) in
 let undefined_flags : bits(32) = (set_rflagsbits_get_cf(0b1, set_rflagsbits_get_of(0b1, set_rflagsbits_get_pf(0b1, set_rflagsbits_get_zf(0b1, set_rflagsbits_get_sf(0b1, set_rflagsbits_get_af(0b1, input_rflags))))))) in
 (output_rflags, undefined_flags)
 }) in
-let output_rflags : bits(32) = (n32(output_rflags)) in
-let undefined_flags : bits(32) = (n32(undefined_flags)) in
+let output_rflags : bits(32) = (output_rflags) in
+let undefined_flags : bits(32) = (undefined_flags) in
 (output_dst, (unsigned(cnt)) > (64), output_rflags, undefined_flags)
 
 /*Specification for the @ ( ' SHLD ' ) instruction.*/
@@ -658,13 +658,13 @@ _ => (0x0000_0000_0000_0000, false, 0x0000_0000, 0x0000_0000)
 
 val shrd_spec_16 : (bits(16), bits(16), bits(6), bits(32)) -> (bits(16), bool, bits(32), bits(32)) effect {escape}
 function shrd_spec_16 (dst, src, cnt, input_rflags) =
-let dst : bits(16) = (0x0010) in
-let src : bits(16) = (0x0010) in
-let cnt : bits(6) = (0b00_0110) in
-let input_rflags : bits(32) = (n32(input_rflags)) in
+let dst : bits(16) = (dst) in
+let src : bits(16) = (src) in
+let cnt : bits(6) = (cnt) in
+let input_rflags : bits(32) = (input_rflags) in
 let src_dst : bits(32) = (logior(bits_of_int(ash(unsigned(src), 16), 32), sail_zero_extend(dst, 32))) in
 let neg_cnt : sbits(17) = (bits_of_int(negate(unsigned(cnt)), 17)) in
-let output_dst : bits(16) = (0x0010) in
+let output_dst : bits(16) = (bits_of_int(ash(unsigned(src_dst), signed(neg_cnt)), 16)) in
 let (output_rflags, undefined_flags) : (bits(32), bits(32)) = (match cnt {
 0 => (input_rflags, 0x0000_0000),
 1 => let cf : bits(1) = (slice(dst, 0, 1)) in
@@ -689,19 +689,19 @@ else let output_rflags : bits(32) = (input_rflags) in
 let undefined_flags : bits(32) = (set_rflagsbits_get_cf(0b1, set_rflagsbits_get_of(0b1, set_rflagsbits_get_pf(0b1, set_rflagsbits_get_zf(0b1, set_rflagsbits_get_sf(0b1, set_rflagsbits_get_af(0b1, input_rflags))))))) in
 (output_rflags, undefined_flags)
 }) in
-let output_rflags : bits(32) = (n32(output_rflags)) in
-let undefined_flags : bits(32) = (n32(undefined_flags)) in
+let output_rflags : bits(32) = (output_rflags) in
+let undefined_flags : bits(32) = (undefined_flags) in
 (output_dst, (unsigned(cnt)) > (16), output_rflags, undefined_flags)
 
 val shrd_spec_32 : (bits(32), bits(32), bits(6), bits(32)) -> (bits(32), bool, bits(32), bits(32)) effect {escape}
 function shrd_spec_32 (dst, src, cnt, input_rflags) =
-let dst : bits(32) = (0x0000_0020) in
-let src : bits(32) = (0x0000_0020) in
-let cnt : bits(6) = (0b00_0110) in
-let input_rflags : bits(32) = (n32(input_rflags)) in
+let dst : bits(32) = (dst) in
+let src : bits(32) = (src) in
+let cnt : bits(6) = (cnt) in
+let input_rflags : bits(32) = (input_rflags) in
 let src_dst : bits(64) = (logior(bits_of_int(ash(unsigned(src), 32), 64), sail_zero_extend(dst, 64))) in
 let neg_cnt : sbits(33) = (bits_of_int(negate(unsigned(cnt)), 33)) in
-let output_dst : bits(32) = (0x0000_0020) in
+let output_dst : bits(32) = (bits_of_int(ash(unsigned(src_dst), signed(neg_cnt)), 32)) in
 let (output_rflags, undefined_flags) : (bits(32), bits(32)) = (match cnt {
 0 => (input_rflags, 0x0000_0000),
 1 => let cf : bits(1) = (slice(dst, 0, 1)) in
@@ -726,19 +726,19 @@ else let output_rflags : bits(32) = (input_rflags) in
 let undefined_flags : bits(32) = (set_rflagsbits_get_cf(0b1, set_rflagsbits_get_of(0b1, set_rflagsbits_get_pf(0b1, set_rflagsbits_get_zf(0b1, set_rflagsbits_get_sf(0b1, set_rflagsbits_get_af(0b1, input_rflags))))))) in
 (output_rflags, undefined_flags)
 }) in
-let output_rflags : bits(32) = (n32(output_rflags)) in
-let undefined_flags : bits(32) = (n32(undefined_flags)) in
+let output_rflags : bits(32) = (output_rflags) in
+let undefined_flags : bits(32) = (undefined_flags) in
 (output_dst, (unsigned(cnt)) > (32), output_rflags, undefined_flags)
 
 val shrd_spec_64 : (bits(64), bits(64), bits(6), bits(32)) -> (bits(64), bool, bits(32), bits(32)) effect {escape}
 function shrd_spec_64 (dst, src, cnt, input_rflags) =
-let dst : bits(64) = (0x0000_0000_0000_0040) in
-let src : bits(64) = (0x0000_0000_0000_0040) in
-let cnt : bits(6) = (0b00_0110) in
-let input_rflags : bits(32) = (n32(input_rflags)) in
+let dst : bits(64) = (dst) in
+let src : bits(64) = (src) in
+let cnt : bits(6) = (cnt) in
+let input_rflags : bits(32) = (input_rflags) in
 let src_dst : bits(128) = (logior(bits_of_int(ash(unsigned(src), 64), 128), sail_zero_extend(dst, 128))) in
 let neg_cnt : sbits(65) = (bits_of_int(negate(unsigned(cnt)), 65)) in
-let output_dst : bits(64) = (0x0000_0000_0000_0040) in
+let output_dst : bits(64) = (bits_of_int(ash(unsigned(src_dst), signed(neg_cnt)), 64)) in
 let (output_rflags, undefined_flags) : (bits(32), bits(32)) = (match cnt {
 0 => (input_rflags, 0x0000_0000),
 1 => let cf : bits(1) = (slice(dst, 0, 1)) in
@@ -763,8 +763,8 @@ else let output_rflags : bits(32) = (input_rflags) in
 let undefined_flags : bits(32) = (set_rflagsbits_get_cf(0b1, set_rflagsbits_get_of(0b1, set_rflagsbits_get_pf(0b1, set_rflagsbits_get_zf(0b1, set_rflagsbits_get_sf(0b1, set_rflagsbits_get_af(0b1, input_rflags))))))) in
 (output_rflags, undefined_flags)
 }) in
-let output_rflags : bits(32) = (n32(output_rflags)) in
-let undefined_flags : bits(32) = (n32(undefined_flags)) in
+let output_rflags : bits(32) = (output_rflags) in
+let undefined_flags : bits(32) = (undefined_flags) in
 (output_dst, (unsigned(cnt)) > (64), output_rflags, undefined_flags)
 
 /*Specification for the @ ( ' SHRD ' ) instruction.*/

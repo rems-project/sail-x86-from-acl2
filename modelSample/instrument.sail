@@ -1,63 +1,56 @@
-/*
-To use this file in the interpreter you must first load the sail file contain the x86 step function
-You also need to load an ELF file to do anything useful.
-*/
-
 $ifndef _DEFAULT_DEC
 	default Order dec
 $endif
 
 $include <prelude.sail>
 $include <string.sail>
-$include "out.sail"
 $include "instrumentFns.sail"
 
-register haltAddrReg : int
+register haltAddrReg : sbits(48)
 
 // Set 64 bit mode
 val initialise_64_bit_mode : unit -> unit effect {escape, rreg, wreg}
 function initialise_64_bit_mode () = {
-	let x = write_msri(0, set_ia32_eferbits_get_lma(1,  msri(0,0)), 0) in
-	let x = write_seg_hidden_attri(1, set_code_segment_descriptor_attributesbits_get_l(1, seg_hidden_attri(1,0)), 0) in
-	()
+	msrs[0] = sail_zero_extend(set_ia32_eferbits_get_lma(0b1, truncate(msrs[0], 12)), 64);
+	seg_hidden_attrs[1] = set_code_segment_descriptor_attributesbits_get_l(0b1, seg_hidden_attrs[1])
 }
 
 // Initialise state for the add1 example
 val initialiseState : unit -> unit effect {escape, wreg, rreg}
 function initialiseState () = {
 	// Set rip
-	x = write_rip(4195933, 0);
+	rip = sail_zero_extend(0x40065D, 48);
 
 	// rdi = 1
-	x = write_rgfi(7, 1, 0);
+	write_rgfi(7, sail_zero_extend(0b1, 64));
 
 	// rsp = 2 ^ 45
-	x = write_rgfi(4, pow2(45), 0);
+	write_rgfi(4, sail_shiftleft(sail_zero_extend(0b1, 64), 45));
 
 	// rflags = 2
-	x = write_rflags(2, 0);
+	rflags = sail_zero_extend(0x2, 32);
 
 	// Set 64 bit mode
 	initialise_64_bit_mode();
 
 	// Set halt address
-	haltAddrReg = 4195938
+	haltAddrReg = sail_zero_extend(0x400662, 48)
 }
 
 // Initialise state for the K-framework example
 val initialiseState2 : unit -> unit effect {escape, wreg, rreg}
 function initialiseState2 () = {
 	// Set rip
-	x = write_rip(4194867, 0); // Original start to this file: 4194867; the instruction which fails in the interpreter: 4196698
+	rip = bits_of_int(4194867, 48); // Original start to this file: 4194867; the instruction which fails in the interpreter: 4196698
 
 	// rdi = 1
 	//x = write_rgfi(7, 1, 0);
 
 	// rsp = 2 ^ 45
-	x = write_rgfi(4, pow2(45), 0);
+	write_rgfi(4, sail_shiftleft(sail_zero_extend(0b1, 64), 45));
 
 	// rflags = 2
-	x = write_rflags(2, 0);
+	rflags = sail_zero_extend(0x2, 32);
 
 	// Set 64 bit mode
 	initialise_64_bit_mode()
@@ -68,19 +61,19 @@ val __SetConfig : (string, int) -> unit effect {escape, rreg, wreg}
 function __SetConfig (arg, value) =
 	match () {
 		() if arg == "rip" => {
-			x = write_rip(value, 0)
+			rip = get_slice_int(48, value, 0)
 		},
 		() if arg == "rdi" => {
-			x = write_rgfi(7, value, 0)
+			write_rgfi(7, get_slice_int(64, value, 0))
 		},
 		() if arg == "rsp" => {
-			x = write_rgfi(4, value, 0)
+			write_rgfi(4, get_slice_int(64, value, 0))
 		},
 		() if arg == "rflags" => {
-			x = write_rflags(value, 0)
+			rflags = get_slice_int(32, value, 0)
 		},
 		() if arg == "ha" => {
-			haltAddrReg = value
+			haltAddrReg = get_slice_int(48, value, 0)
 		},
 		() if arg == "set64bit" => {
 			// Ignore the value
@@ -100,7 +93,7 @@ val doEverything : unit -> unit effect {eamem, escape, rmem, rreg, undef, wmv, w
 function doEverything () = {
 	//initialiseState();
 	//steps = x86_run_halt(4195938, 10000, 0, true, false, 0); // 4195938 for original example; 4197494 for test.s; 4194880 for debug.s
-	steps = x86_run_halt(haltAddrReg, 10000, 0, true, false, 0);
+	steps = x86_run_halt(haltAddrReg, 10000, true, false, 0);
 	print_int("Steps = ", steps);
 }
 

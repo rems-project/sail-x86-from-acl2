@@ -5,8 +5,6 @@ $endif
 $include <prelude.sail>
 $include <string.sail>
 $include "handwritten.sail"
-$include "utils.sail"
-
 $include "top.sail"
 $include "two_byte_opcodes_dispatch.sail"
 

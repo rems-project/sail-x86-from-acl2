@@ -3,9 +3,9 @@ val reg_index : (bits(3), bits(8), bits(2)) -> bits(4)
 
 function reg_index (reg, rex_byte, index) = {
     if logbitp(unsigned(index), rex_byte) then {
-        logior(0x8, sail_zero_extend(n03(reg), 4))
+        logior(0x8, sail_zero_extend(reg, 4))
     } else {
-        sail_zero_extend(n03(reg), 4)
+        sail_zero_extend(reg, 4)
     }
 }
 
@@ -13,10 +13,10 @@ val rr08 : (bits(4), bits(8)) -> bits(8)
 
 function rr08 (reg, rex) = {
     if not_bool(rex == 0x00) | unsigned(reg) < 4 then {
-        let qword : bits(64) = rgfi(unsigned(reg));
-        n08(truncate(qword, 8))
+        let qword : sbits(64) = rgfi(unsigned(reg));
+        truncate(qword, 8)
     } else {
-        let qword : bits(64) = rgfi(unsigned(bits_of_int(unsigned(reg) - 4, 4)));
+        let qword : sbits(64) = rgfi(unsigned(bits_of_int(unsigned(reg) - 4, 4)));
         slice(qword, 8, 8)
     }
 }
@@ -24,51 +24,51 @@ function rr08 (reg, rex) = {
 val rr16 : bits(4) -> bits(16)
 
 function rr16 reg = {
-    n16(truncate(rgfi(unsigned(reg)), 16))
+    truncate(rgfi(unsigned(reg)), 16)
 }
 
 val rr32 : bits(4) -> bits(32)
 
 function rr32 reg = {
-    n32(truncate(rgfi(unsigned(reg)), 32))
+    truncate(rgfi(unsigned(reg)), 32)
 }
 
 val rr64 : bits(4) -> bits(64)
 
 function rr64 reg = {
-    n64(rgfi(unsigned(reg)))
+    rgfi(unsigned(reg))
 }
 
 val wr08 : (bits(4), bits(8), bits(8)) -> unit
 
 function wr08 (reg, rex, byte) = {
     if not_bool(rex == 0x00) | unsigned(reg) < 4 then {
-        let qword : bits(64) = rgfi(unsigned(reg));
-        write_rgfi(unsigned(reg), n64_to_i64(changeSlice(slice(qword, 0, 64), 0, 8, byte)))
+        let qword : sbits(64) = rgfi(unsigned(reg));
+        write_rgfi(unsigned(reg), changeSlice(slice(qword, 0, 64), 0, 8, byte))
     } else {
         let index : bits(4) = bits_of_int(unsigned(reg) - 4, 4);
-        let qword : bits(64) = rgfi(unsigned(index));
-        write_rgfi(unsigned(index), n64_to_i64(changeSlice(slice(qword, 0, 64), 8, 8, byte)))
+        let qword : sbits(64) = rgfi(unsigned(index));
+        write_rgfi(unsigned(index), changeSlice(slice(qword, 0, 64), 8, 8, byte))
     }
 }
 
 val wr16 : (bits(4), bits(16)) -> unit
 
 function wr16 (reg, sailval) = {
-    let qword : bits(64) = rgfi(unsigned(reg));
-    write_rgfi(unsigned(reg), n64_to_i64(changeSlice(slice(qword, 0, 64), 0, 16, sailval)))
+    let qword : sbits(64) = rgfi(unsigned(reg));
+    write_rgfi(unsigned(reg), changeSlice(slice(qword, 0, 64), 0, 16, sailval))
 }
 
 val wr32 : (bits(4), bits(32)) -> unit
 
 function wr32 (reg, sailval) = {
-    write_rgfi(unsigned(reg), sail_zero_extend(n32(sailval), 64))
+    write_rgfi(unsigned(reg), sail_zero_extend(sailval, 64))
 }
 
 val wr64 : (bits(4), bits(64)) -> unit
 
 function wr64 (reg, sailval) = {
-    write_rgfi(unsigned(reg), n64_to_i64(sailval))
+    write_rgfi(unsigned(reg), sailval)
 }
 
 val rgfi_size : (bits(4), bits(4), bits(8)) -> bits(64)
@@ -98,19 +98,19 @@ function write_rgfi_size (nbytes, index, sailval, rex) = {
 val rz32 : bits(5) -> bits(32)
 
 function rz32 reg = {
-    n32(truncate(zmms[unsigned(reg)], 32))
+    truncate(zmms[unsigned(reg)], 32)
 }
 
 val rz64 : bits(5) -> bits(64)
 
 function rz64 reg = {
-    n64(truncate(zmms[unsigned(reg)], 64))
+    truncate(zmms[unsigned(reg)], 64)
 }
 
 val rz128 : bits(5) -> bits(128)
 
 function rz128 reg = {
-    n128(truncate(zmms[unsigned(reg)], 128))
+    truncate(zmms[unsigned(reg)], 128)
 }
 
 struct struct_wz32 = {regtype : int}
@@ -125,7 +125,7 @@ function wz32 (reg, sailval, keywords) = {
       3 => loghead(256, unsigned(data)),
       _ => unsigned(data)
     };
-    let sailval : bits(32) = n32(sailval);
+    let sailval : bits(32) = sailval;
     zmms[unsigned(reg)] = bits_of_int(changeSlice(data, 0, 32, unsigned(sailval)), 512)
 }
 
@@ -141,7 +141,7 @@ function wz64 (reg, sailval, keywords) = {
       3 => loghead(256, unsigned(data)),
       _ => unsigned(data)
     };
-    let sailval : bits(64) = n64(sailval);
+    let sailval : bits(64) = sailval;
     zmms[unsigned(reg)] = bits_of_int(changeSlice(data, 0, 64, unsigned(sailval)), 512)
 }
 
@@ -157,7 +157,7 @@ function wz128 (reg, sailval, keywords) = {
       3 => loghead(256, unsigned(data)),
       _ => unsigned(data)
     };
-    let sailval : bits(128) = n128(sailval);
+    let sailval : bits(128) = sailval;
     zmms[unsigned(reg)] = bits_of_int(changeSlice(data, 0, 128, unsigned(sailval)), 512)
 }
 
@@ -235,15 +235,15 @@ val undef_flg : unit -> bits(1)
 
 function undef_flg () = {
     let sailval : nat = undef_flg_logic();
-    n01(bits_of_int(sailval, 1))
+    bits_of_int(sailval, 1)
 }
 
 val write_user_rflags : (bits(32), bits(32)) -> unit
 
 function write_user_rflags (user_flags_vector, undefined_mask) = {
-    let user_flags_vector : bits(32) = n32(user_flags_vector);
-    let undefined_mask : bits(32) = n32(undefined_mask);
-    let input_rflags : bits(32) = n32(rflags);
+    let user_flags_vector : bits(32) = user_flags_vector;
+    let undefined_mask : bits(32) = undefined_mask;
+    let input_rflags : bits(32) = rflags;
     if rflagsbits_get_cf(undefined_mask) == 0b1 then {
         let rflags_var : bits(32) = rflags;
         let sailval : bits(1) = undef_flg();

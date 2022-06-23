@@ -58,7 +58,7 @@ val riml08 : (sbits(48), string) -> (option(string), sbits(8))
 
 function riml08 (lin_addr, r_x) = {
     let (flag, sailval) : (option(string), int) = rml08(lin_addr, r_x);
-    (flag, n08_to_i08(bits_of_int(sailval, 8)))
+    (flag, bits_of_int(sailval, 8))
 }
 
 val wml08 : (sbits(48), bits(8)) -> option(string)
@@ -70,7 +70,7 @@ function wml08 (lin_addr, sailval) = {
 val wiml08 : (sbits(48), sbits(8)) -> option(string)
 
 function wiml08 (lin_addr, sailval) = {
-    wml08(lin_addr, n08(sailval))
+    wml08(lin_addr, sailval)
 }
 
 val rml16 : (sbits(48), string) -> (option(string), int)
@@ -88,7 +88,7 @@ val riml16 : (sbits(48), string) -> (option(string), sbits(16))
 
 function riml16 (lin_addr, r_x) = {
     let (flag, sailval) : (option(string), int) = rml16(lin_addr, r_x);
-    (flag, n16_to_i16(bits_of_int(sailval, 16)))
+    (flag, bits_of_int(sailval, 16))
 }
 
 val wml16 : (sbits(48), bits(16)) -> option(string)
@@ -109,7 +109,7 @@ function wml16 (lin_addr, sailval) = {
 val wiml16 : (sbits(48), sbits(16)) -> option(string)
 
 function wiml16 (lin_addr, sailval) = {
-    wml16(lin_addr, n16(sailval))
+    wml16(lin_addr, sailval)
 }
 
 val rml32 : (sbits(48), string) -> (option(string), int)
@@ -131,7 +131,7 @@ val riml32 : (sbits(48), string) -> (option(string), sbits(32))
 
 function riml32 (lin_addr, r_x) = {
     let (flag, sailval) : (option(string), int) = rml32(lin_addr, r_x);
-    (flag, n32_to_i32(bits_of_int(sailval, 32)))
+    (flag, bits_of_int(sailval, 32))
 }
 
 val wml32 : (sbits(48), bits(32)) -> option(string)
@@ -152,7 +152,7 @@ function wml32 (lin_addr, sailval) = {
 val wiml32 : (sbits(48), sbits(32)) -> option(string)
 
 function wiml32 (lin_addr, sailval) = {
-    wml32(lin_addr, n32(sailval))
+    wml32(lin_addr, sailval)
 }
 
 val rml48 : (sbits(48), string) -> (option(string), int)
@@ -204,7 +204,7 @@ val riml64 : (sbits(48), string) -> (option(string), sbits(64))
 
 function riml64 (lin_addr, r_x) = {
     let (flag, sailval) : (option(string), int) = rml64(lin_addr, r_x);
-    (flag, n64_to_i64(bits_of_int(sailval, 64)))
+    (flag, bits_of_int(sailval, 64))
 }
 
 val wml64 : (sbits(48), bits(64)) -> option(string)
@@ -225,7 +225,7 @@ function wml64 (lin_addr, sailval) = {
 val wiml64 : (sbits(48), sbits(64)) -> option(string)
 
 function wiml64 (lin_addr, sailval) = {
-    wml64(lin_addr, n64(sailval))
+    wml64(lin_addr, sailval)
 }
 
 val rml80 : (sbits(48), string) -> (option(string), int)

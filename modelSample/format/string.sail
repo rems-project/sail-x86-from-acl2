@@ -16,22 +16,22 @@ function x86_movs (proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode, m
     let select_byte_operand : bool = 0xa4 == opcode;
     let operand_size : {|1, 2, 4, 8|} = select_operand_size(proc_mode, select_byte_operand, rex_byte, false, prefixes, false, false, false);
     let counter_addr_size_2_4? : bool = counter_addr_size == 2 | counter_addr_size == 4;
-    let src_addr : bits(64) = if counter_addr_size_2_4? then {
-        rgfi_size(bits_of_int(counter_addr_size, 4), 0x6, rex_byte)
+    let src_addr : sbits(65) = if counter_addr_size_2_4? then {
+        sail_zero_extend(rgfi_size(bits_of_int(counter_addr_size, 4), 0x6, rex_byte), 65)
     } else {
-        rgfi(6)
+        sail_sign_extend(rgfi(6), 65)
     };
-    if not_bool(counter_addr_size_2_4?) & not_bool(canonical_address_p(unsigned(src_addr))) then throw(Emsg("Model state error: :SRC-ADDR-NOT-CANONICAL"));
+    if not_bool(counter_addr_size_2_4?) & not_bool(canonical_address_p(signed(src_addr))) then throw(Emsg("Model state error: :SRC-ADDR-NOT-CANONICAL"));
     let inst_ac? : bool = alignment_checking_enabled_p();
     let seg_reg : {|0, 1, 2, 3, 4, 5|} = select_segment_register(proc_mode, p2, p4?, mod_var, r_m, sib);
-    let (flg0, src) : (option(string), int) = rme_size(proc_mode, operand_size, src_addr, seg_reg, ":R", inst_ac?, struct { mem_ptr? = false });
+    let (flg0, src) : (option(string), int) = rme_size(proc_mode, operand_size, truncate(src_addr, 64), seg_reg, ":R", inst_ac?, struct { mem_ptr? = false });
     if is_some(flg0) then throw(Emsg("Model state error: :SRC-RME-SIZE-ERROR"));
-    let dst_addr : bits(64) = if counter_addr_size_2_4? then {
-        rgfi_size(bits_of_int(counter_addr_size, 4), 0x7, rex_byte)
+    let dst_addr : sbits(65) = if counter_addr_size_2_4? then {
+        sail_zero_extend(rgfi_size(bits_of_int(counter_addr_size, 4), 0x7, rex_byte), 65)
     } else {
-        rgfi(7)
+        sail_sign_extend(rgfi(7), 65)
     };
-    if not_bool(counter_addr_size_2_4?) & not_bool(canonical_address_p(unsigned(dst_addr))) then throw(Emsg("Model state error: :DST-ADDR-NOT-CANONICAL"));
+    if not_bool(counter_addr_size_2_4?) & not_bool(canonical_address_p(signed(dst_addr))) then throw(Emsg("Model state error: :DST-ADDR-NOT-CANONICAL"));
     let original_dst_addr : sbits(48) = truncate(dst_addr, 48);
     let (src_addr, dst_addr) : (int, int) = match operand_size {
       1 => if df == 0b0 then {
@@ -85,14 +85,14 @@ function x86_movs (proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode, m
       _ => write_iptr(proc_mode, temp_rip)
     }) : unit;
     (match counter_addr_size {
-      2 => write_rgfi_size(0x2, 0x6, unsigned(n16(truncate(src_addr, 16))), rex_byte),
-      4 => write_rgfi_size(0x4, 0x6, unsigned(n32(truncate(src_addr, 32))), rex_byte),
-      _ => write_rgfi(6, sail_zero_extend(src_addr, 64))
+      2 => write_rgfi_size(0x2, 0x6, unsigned(truncate(src_addr, 16)), rex_byte),
+      4 => write_rgfi_size(0x4, 0x6, unsigned(truncate(src_addr, 32)), rex_byte),
+      _ => write_rgfi(6, sail_sign_extend(src_addr, 64))
     }) : unit;
     (match counter_addr_size {
-      2 => write_rgfi_size(0x2, 0x7, unsigned(n16(truncate(dst_addr, 16))), rex_byte),
-      4 => write_rgfi_size(0x4, 0x7, unsigned(n32(truncate(dst_addr, 32))), rex_byte),
-      _ => write_rgfi(7, sail_zero_extend(dst_addr, 64))
+      2 => write_rgfi_size(0x2, 0x7, unsigned(truncate(dst_addr, 16)), rex_byte),
+      4 => write_rgfi_size(0x4, 0x7, unsigned(truncate(dst_addr, 32)), rex_byte),
+      _ => write_rgfi(7, sail_sign_extend(dst_addr, 64))
     }) : unit
 }
 
@@ -113,23 +113,23 @@ function x86_cmps (proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode, m
     let select_byte_operand : bool = 0xa6 == opcode;
     let operand_size : {|1, 2, 4, 8|} = select_operand_size(proc_mode, select_byte_operand, rex_byte, false, prefixes, false, false, false);
     let counter_addr_size_2_4? : bool = counter_addr_size == 2 | counter_addr_size == 4;
-    let src_addr : bits(64) = if counter_addr_size_2_4? then {
-        rgfi_size(bits_of_int(counter_addr_size, 4), 0x6, rex_byte)
+    let src_addr : sbits(65) = if counter_addr_size_2_4? then {
+        sail_zero_extend(rgfi_size(bits_of_int(counter_addr_size, 4), 0x6, rex_byte), 65)
     } else {
-        rgfi(6)
+        sail_sign_extend(rgfi(6), 65)
     };
-    if not_bool(counter_addr_size_2_4?) & not_bool(canonical_address_p(unsigned(src_addr))) then throw(Emsg("Model state error: :SRC-ADDR-NOT-CANONICAL"));
+    if not_bool(counter_addr_size_2_4?) & not_bool(canonical_address_p(signed(src_addr))) then throw(Emsg("Model state error: :SRC-ADDR-NOT-CANONICAL"));
     let inst_ac? : bool = alignment_checking_enabled_p();
     let seg_reg : {|0, 1, 2, 3, 4, 5|} = select_segment_register(proc_mode, p2, p4?, mod_var, r_m, sib);
-    let (flg0, src) : (option(string), int) = rme_size(proc_mode, operand_size, src_addr, seg_reg, ":R", inst_ac?, struct { mem_ptr? = false });
+    let (flg0, src) : (option(string), int) = rme_size(proc_mode, operand_size, truncate(src_addr, 64), seg_reg, ":R", inst_ac?, struct { mem_ptr? = false });
     if is_some(flg0) then throw(Emsg("Model state error: :SRC-RME-SIZE-ERROR"));
-    let dst_addr : bits(64) = if counter_addr_size_2_4? then {
-        rgfi_size(bits_of_int(counter_addr_size, 4), 0x7, rex_byte)
+    let dst_addr : sbits(65) = if counter_addr_size_2_4? then {
+        sail_zero_extend(rgfi_size(bits_of_int(counter_addr_size, 4), 0x7, rex_byte), 65)
     } else {
-        rgfi(7)
+        sail_sign_extend(rgfi(7), 65)
     };
-    if not_bool(counter_addr_size_2_4?) & not_bool(canonical_address_p(unsigned(dst_addr))) then throw(Emsg("Model state error: :DST-ADDR-NOT-CANONICAL"));
-    let (flg0, dst) : (option(string), int) = rme_size(proc_mode, operand_size, dst_addr, 0, ":R", inst_ac?, struct { mem_ptr? = false });
+    if not_bool(counter_addr_size_2_4?) & not_bool(canonical_address_p(signed(dst_addr))) then throw(Emsg("Model state error: :DST-ADDR-NOT-CANONICAL"));
+    let (flg0, dst) : (option(string), int) = rme_size(proc_mode, operand_size, truncate(dst_addr, 64), 0, ":R", inst_ac?, struct { mem_ptr? = false });
     if is_some(flg0) then throw(Emsg("Model state error: :DST-RME-SIZE-ERROR"));
     let input_rflags : bits(32) = rflags;
     let (result, output_rflags, undefined_flags) : (bits(64), bits(32), bits(32)) = match operand_size {
@@ -198,14 +198,14 @@ function x86_cmps (proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode, m
       _ => write_iptr(proc_mode, temp_rip)
     }) : unit;
     (match counter_addr_size {
-      2 => write_rgfi_size(0x2, 0x6, unsigned(n16(truncate(src_addr, 16))), rex_byte),
-      4 => write_rgfi_size(0x4, 0x6, unsigned(n32(truncate(src_addr, 32))), rex_byte),
-      _ => write_rgfi(6, sail_zero_extend(src_addr, 64))
+      2 => write_rgfi_size(0x2, 0x6, unsigned(truncate(src_addr, 16)), rex_byte),
+      4 => write_rgfi_size(0x4, 0x6, unsigned(truncate(src_addr, 32)), rex_byte),
+      _ => write_rgfi(6, sail_sign_extend(src_addr, 64))
     }) : unit;
     (match counter_addr_size {
-      2 => write_rgfi_size(0x2, 0x7, unsigned(n16(truncate(dst_addr, 16))), rex_byte),
-      4 => write_rgfi_size(0x4, 0x7, unsigned(n32(truncate(dst_addr, 32))), rex_byte),
-      _ => write_rgfi(7, sail_zero_extend(dst_addr, 64))
+      2 => write_rgfi_size(0x2, 0x7, unsigned(truncate(dst_addr, 16)), rex_byte),
+      4 => write_rgfi_size(0x4, 0x7, unsigned(truncate(dst_addr, 32)), rex_byte),
+      _ => write_rgfi(7, sail_sign_extend(dst_addr, 64))
     }) : unit
 }
 
@@ -220,17 +220,17 @@ function x86_stos (proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode, m
     let df : bits(1) = truncate(let rflags_var : bits(32) = rflags in sail_zero_extend(rflagsbits_get_df(rflags_var), 2), 1);
     let counter_addr_size : {|2, 4, 8|} = select_address_size(proc_mode, p4?);
     let counter_addr_size_2_4? : bool = counter_addr_size == 2 | counter_addr_size == 4;
-    let dst_addr : bits(64) = if counter_addr_size_2_4? then {
-        rgfi_size(bits_of_int(counter_addr_size, 4), 0x7, rex_byte)
+    let dst_addr : sbits(65) = if counter_addr_size_2_4? then {
+        sail_zero_extend(rgfi_size(bits_of_int(counter_addr_size, 4), 0x7, rex_byte), 65)
     } else {
-        rgfi(7)
+        sail_sign_extend(rgfi(7), 65)
     };
-    if not_bool(counter_addr_size_2_4?) & not_bool(canonical_address_p(unsigned(dst_addr))) then throw(Emsg("Model state error: :DST-ADDR-NOT-CANONICAL"));
+    if not_bool(counter_addr_size_2_4?) & not_bool(canonical_address_p(signed(dst_addr))) then throw(Emsg("Model state error: :DST-ADDR-NOT-CANONICAL"));
     let select_byte_operand : bool = 0xaa == opcode;
     let operand_size : {|1, 2, 4, 8|} = select_operand_size(proc_mode, select_byte_operand, rex_byte, false, prefixes, false, false, false);
     let rax_var : bits(64) = rgfi_size(bits_of_int(operand_size, 4), 0x0, rex_byte);
     let inst_ac? : bool = alignment_checking_enabled_p();
-    let flg0 : option(string) = wme_size(proc_mode, operand_size, dst_addr, 0, unsigned(rax_var), inst_ac?, struct { mem_ptr? = false });
+    let flg0 : option(string) = wme_size(proc_mode, operand_size, truncate(dst_addr, 64), 0, unsigned(rax_var), inst_ac?, struct { mem_ptr? = false });
     if is_some(flg0) then throw(Emsg("Model state error: :WME-SIZE-ERROR"));
     let dst_addr : sbits(49) = bits_of_int((match operand_size {
       1 => if df == 0b0 then {
@@ -280,8 +280,8 @@ function x86_stos (proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode, m
       _ => write_iptr(proc_mode, temp_rip)
     }) : unit;
     (match counter_addr_size {
-      2 => write_rgfi_size(0x2, 0x7, unsigned(n16(truncate(dst_addr, 16))), rex_byte),
-      4 => write_rgfi_size(0x4, 0x7, unsigned(n32(truncate(dst_addr, 32))), rex_byte),
-      _ => write_rgfi(7, sail_zero_extend(dst_addr, 64))
+      2 => write_rgfi_size(0x2, 0x7, unsigned(truncate(dst_addr, 16)), rex_byte),
+      4 => write_rgfi_size(0x4, 0x7, unsigned(truncate(dst_addr, 32)), rex_byte),
+      _ => write_rgfi(7, sail_sign_extend(dst_addr, 64))
     }) : unit
 }
