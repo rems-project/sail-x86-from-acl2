@@ -79,7 +79,7 @@ function idiv_spec_8 (dst, src) = {
     let src_int : sbits(8) = src;
     let quotient_int : sbits(17) = bits_of_int(tdiv_int(signed(dst_int), signed(src_int)), 17);
     let remainder_int : sbits(8) = bits_of_int(tmod_int(signed(dst_int), signed(src_int)), 8);
-    let overflow? : bool = signed(quotient_int) < -127 | 128 < signed(quotient_int);
+    let overflow? : bool = signed(quotient_int) < -128 | 127 < signed(quotient_int);
     if overflow? then {
         (true, 0x00, 0x00)
     } else {
@@ -96,7 +96,7 @@ function idiv_spec_16 (dst, src) = {
     let src_int : sbits(16) = src;
     let quotient_int : sbits(33) = bits_of_int(tdiv_int(signed(dst_int), signed(src_int)), 33);
     let remainder_int : sbits(16) = bits_of_int(tmod_int(signed(dst_int), signed(src_int)), 16);
-    let overflow? : bool = signed(quotient_int) < -32767 | 32768 < signed(quotient_int);
+    let overflow? : bool = signed(quotient_int) < -32768 | 32767 < signed(quotient_int);
     if overflow? then {
         (true, 0x0000, 0x0000)
     } else {
@@ -113,7 +113,7 @@ function idiv_spec_32 (dst, src) = {
     let src_int : sbits(32) = src;
     let quotient_int : sbits(65) = bits_of_int(tdiv_int(signed(dst_int), signed(src_int)), 65);
     let remainder_int : sbits(32) = bits_of_int(tmod_int(signed(dst_int), signed(src_int)), 32);
-    let overflow? : bool = signed(quotient_int) < -2147483647 | 2147483648 < signed(quotient_int);
+    let overflow? : bool = signed(quotient_int) < -2147483648 | 2147483647 < signed(quotient_int);
     if overflow? then {
         (true, 0x00000000, 0x00000000)
     } else {
@@ -130,7 +130,7 @@ function idiv_spec_64 (dst, src) = {
     let src_int : sbits(64) = src;
     let quotient_int : sbits(129) = bits_of_int(tdiv_int(signed(dst_int), signed(src_int)), 129);
     let remainder_int : sbits(64) = bits_of_int(tmod_int(signed(dst_int), signed(src_int)), 64);
-    let overflow? : bool = signed(quotient_int) < -9223372036854775807 | 9223372036854775808 < signed(quotient_int);
+    let overflow? : bool = signed(quotient_int) < -9223372036854775808 | 9223372036854775807 < signed(quotient_int);
     if overflow? then {
         (true, 0x0000000000000000, 0x0000000000000000)
     } else {

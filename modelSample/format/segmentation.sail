@@ -51,7 +51,7 @@ function segment_base_and_bounds (proc_mode, seg_reg) = {
     }) : (bits(64), int, int)
 }
 
-val ea_to_la : (range(0, 4), sbits(64), range(0, 5), {|1, 2, 4, 6, 8, 10, 16|}) -> (option(string), sbits(64))
+val ea_to_la : (range(0, 4), sbits(64), range(0, 5), {|1, 2, 4, 6, 8, 10, 16, 32, 64|}) -> (option(string), sbits(64))
 
 function ea_to_la (proc_mode, eff_addr, seg_reg, nbytes) = {
     (match proc_mode {

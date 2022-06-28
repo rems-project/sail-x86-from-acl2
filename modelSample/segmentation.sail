@@ -234,7 +234,7 @@ _ => (0x0000_0000_0000_0000, 0, 0)
  The null segment selector check is skipped in 64-bit mode 
  ( see Intel manual, May ' 18, Volume 3, Section 5.4.1.1 ) . 
  </p>*/
-val ea_to_la : (range(0, 4), sbits(64), range(0, 5), {|1, 2, 4, 6, 8, 10, 16|}) -> (option(string), sbits(64)) effect {escape}
+val ea_to_la : (range(0, 4), sbits(64), range(0, 5), {|1, 2, 4, 6, 8, 10, 16, 32, 64|}) -> (option(string), sbits(64)) effect {escape}
 function ea_to_la (proc_mode, eff_addr, seg_reg, nbytes) =
 (match proc_mode {
 0 => { let lin_addr : sbits(64) = { (if ((seg_reg) == (4)) | ((seg_reg) == (5))

@@ -31,7 +31,7 @@ $include "segmentation.sail"
  If the operand size is 1, 2, 8, or 16, 
  it cannot be a memory pointer of the form m16:xx. 
  </p>*/
-val address_aligned_p : (sbits(48), {|1, 2, 4, 6, 8, 10, 16|}, bool) -> bool
+val address_aligned_p : (sbits(48), {|1, 2, 4, 6, 8, 10, 16, 32, 64|}, bool) -> bool
 function address_aligned_p (addr, operand_size, memory_ptr?) =
 (match operand_size {
 1 => true,
@@ -39,7 +39,7 @@ function address_aligned_p (addr, operand_size, memory_ptr?) =
 10 => (logand(addr, 0x0000_0000_0007)) == (0x0000_0000_0000),
 _ => { if (memory_ptr?) & ((operand_size) == (4))
 then (logand(addr, 0x0000_0000_0001)) == (0x0000_0000_0000)
-else (logand(addr, bits_of_int(check_range(0, 15, (operand_size) - (1)), 48))) == (0x0000_0000_0000) }
+else (logand(addr, bits_of_int(check_range(0, 65, (operand_size) - (1)), 48))) == (0x0000_0000_0000) }
 }) : bool
 
 /*Read an unsigned 8-bit value from memory via an effective address.*/
@@ -306,7 +306,7 @@ else rml128(truncate(lin_addr, 48), r_x)
  access is allowed. The only case in which it is not allowed is when a 
  read access is attempted on an execute-only code segment, in 32-bit 
  mode. In 64-bit mode, the R bit of the code segment descriptor is 
- ignored; see Atmel manual, Dec ' 17, Volume 2, Section 4.8.1</p>*/
+ ignored; see Intel manual, Dec ' 17, Volume 2, Section 4.8.1</p>*/
 struct struct_rme_size = {
 	mem_ptr? : bool
 }

@@ -64,27 +64,12 @@ else sail_zero_extend(reg, 4)
  <p>In 32-bit mode, this function is called with 0 as REX.</p>*/
 val rr08 : (bits(4), bits(8)) -> bits(8) effect {escape, rreg}
 function rr08 (reg, rex) =
-if (not_bool((rex) == (0x00))) | ((unsigned(reg)) < (4))
-then let qword : sbits(64) = (rgfi(unsigned(reg))) in
+let reg : nat = (unsigned(reg)) in
+if (not_bool((rex) == (0x00))) | ((reg) < (4))
+then let qword : sbits(64) = (rgfi(reg)) in
 truncate(qword, 8)
-else let qword : sbits(64) = (rgfi(unsigned(bits_of_int((unsigned(reg)) - (4), 4)))) in
+else let qword : sbits(64) = (rgfi(unsigned(bits_of_int((reg) - (4), 4)))) in
 slice(qword, 8, 8)
-
-/*Read from word general-purpose registers*/
-val rr16 : (bits(4)) -> bits(16) effect {escape, rreg}
-function rr16 (reg) =
-truncate(rgfi(unsigned(reg)), 16)
-
-/*Read from doubleword general-purpose registers*/
-val rr32 : (bits(4)) -> bits(32) effect {escape, rreg}
-function rr32 (reg) =
-truncate(rgfi(unsigned(reg)), 32)
-
-/*Read from quadword general-purpose registers*/
-/*<p>This function is used only in 64-bit mode.</p>*/
-val rr64 : (bits(4)) -> bits(64) effect {escape, rreg}
-function rr64 (reg) =
-rgfi(unsigned(reg))
 
 /*Writing to byte general-purpose registers*/
 /*<p>Note Intel Vol. 1 Sec. 3.4.1.1 
@@ -116,12 +101,18 @@ rgfi(unsigned(reg))
  registers to undefined values.</p>*/
 val wr08 : (bits(4), bits(8), bits(8)) -> unit effect {escape, rreg, wreg}
 function wr08 (reg, rex, byte) =
-if (not_bool((rex) == (0x00))) | ((unsigned(reg)) < (4))
-then let qword : sbits(64) = (rgfi(unsigned(reg))) in
-write_rgfi(unsigned(reg), changeSlice(slice(qword, 0, 64), 0, 8, byte))
-else let index : bits(4) = (bits_of_int((unsigned(reg)) - (4), 4)) in
+let reg : nat = (unsigned(reg)) in
+if (not_bool((rex) == (0x00))) | ((reg) < (4))
+then let qword : sbits(64) = (rgfi(reg)) in
+write_rgfi(reg, changeSlice(slice(qword, 0, 64), 0, 8, byte))
+else let index : bits(4) = (bits_of_int((unsigned(bits_of_int(reg, 4))) - (4), 4)) in
 let qword : sbits(64) = (rgfi(unsigned(index))) in
 write_rgfi(unsigned(index), changeSlice(slice(qword, 0, 64), 8, 8, byte))
+
+/*Read from word general-purpose registers*/
+val rr16 : (bits(4)) -> bits(16) effect {escape, rreg}
+function rr16 (reg) =
+truncate(rgfi(unsigned(reg)), 16)
 
 /*Write to word general-purpose registers*/
 /*<p>Note Intel Vol. 1 Sec. 3.4.1.1 
@@ -156,6 +147,11 @@ function wr16 (reg, sailval) =
 let qword : sbits(64) = (rgfi(unsigned(reg))) in
 write_rgfi(unsigned(reg), changeSlice(slice(qword, 0, 64), 0, 16, sailval))
 
+/*Read from doubleword general-purpose registers*/
+val rr32 : (bits(4)) -> bits(32) effect {escape, rreg}
+function rr32 (reg) =
+truncate(rgfi(unsigned(reg)), 32)
+
 /*Write to doubleword general-purpose registers*/
 /*<p>Note Intel Vol. 1 Sec. 3.4.1.1 
  p. 3-17, which says the following about 64-bit mode:</p> 
@@ -187,6 +183,12 @@ write_rgfi(unsigned(reg), changeSlice(slice(qword, 0, 64), 0, 16, sailval))
 val wr32 : (bits(4), bits(32)) -> unit effect {escape, wreg}
 function wr32 (reg, sailval) =
 write_rgfi(unsigned(reg), sail_zero_extend(sailval, 64))
+
+/*Read from quadword general-purpose registers*/
+/*<p>This function is used only in 64-bit mode.</p>*/
+val rr64 : (bits(4)) -> bits(64) effect {escape, rreg}
+function rr64 (reg) =
+rgfi(unsigned(reg))
 
 /*Write to quadword general-purpose registers*/
 /*<p>This function is used only in 64-bit mode.</p>*/

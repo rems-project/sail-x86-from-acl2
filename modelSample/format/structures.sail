@@ -852,6 +852,18 @@ function change_evex_byte3 (input_bits, input_aaa, input_v_prime, input_b, input
     output_z
 }
 
+val evex_get_aaa : bits(32) -> bits(3)
+
+function evex_get_aaa evex_prefixes = {
+    evex_byte3_get_aaa(evex_prefixes_get_byte3(evex_prefixes))
+}
+
+val evex_get_z : bits(32) -> bits(1)
+
+function evex_get_z evex_prefixes = {
+    evex_byte3_get_z(evex_prefixes_get_byte3(evex_prefixes))
+}
+
 val evex_get_vvvv : bits(32) -> bits(4)
 
 function evex_get_vvvv evex_prefixes = {

@@ -110,6 +110,7 @@ def specialTokens():
 		'defthmd': 					tr_ignore,
 		'add-macro-alias': 			tr_ignore,
 		'defthm-signed-byte-p': 	tr_ignore,
+		'defthm-unsigned-byte-p': 	tr_ignore,
 		'defrulel': 				tr_ignore,
 		'in-theory':				tr_ignore,
 		'def-ruleset': 				tr_ignore,

@@ -1,6 +1,5 @@
 $include <prelude.sail>
 $include <string.sail>
-$include "utilities.sail"
 /*Functions to collect legacy prefix bytes from an x86 instruction*/
 /*<p>The field @ ( ' num ' ) of @ ( ' prefixes ' ) not only includes the number of 
  legacy prefixes present in an instruction, but also the number of REX bytes, 
@@ -597,6 +596,16 @@ Some(input_z) => set_evex_byte3_get_z(input_z, output_vl_rc),
 _ => output_vl_rc
 }) } in
 output_z
+
+/*Get the @ ( ' aaa ' ) field ( embedded opmask ) of @ ( ' evex-prefixes ' )*/
+val evex_get_aaa : (bits(32)) -> bits(3)
+function evex_get_aaa (evex_prefixes) =
+evex_byte3_get_aaa(evex_prefixes_get_byte3(evex_prefixes))
+
+/*Get the @ ( ' z ' ) field ( embedded opmask ) of @ ( ' evex-prefixes ' )*/
+val evex_get_z : (bits(32)) -> bits(1)
+function evex_get_z (evex_prefixes) =
+evex_byte3_get_z(evex_prefixes_get_byte3(evex_prefixes))
 
 /*Get the @ ( ' VVVV ' ) field of @ ( ' evex-prefixes ' )*/
 val evex_get_vvvv : (bits(32)) -> bits(4)

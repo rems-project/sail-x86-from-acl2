@@ -1,6 +1,3 @@
-
-default Order dec
-$include <prelude.sail>
 $include "./handwritten.sail"
 $include "./top.sail"
 $include "./two_byte_opcodes_dispatch.sail"

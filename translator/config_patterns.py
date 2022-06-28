@@ -93,6 +93,7 @@ exclude_lisp = {
 
 	# Some include-book in structures.lisp and segmentation-structures.lisp
 	'structures': [
+		['include-book', ACL2String('utilities')],
 		['include-book', ACL2String('basic-structs')],
 		['std::make-define-config'],
 	],
@@ -171,10 +172,7 @@ only_translate = {
 	'environment' : [['include-book', ACL2String('top-level-memory')]],
 	'paging' : [['include-book', ACL2String('physical-memory')]],
 	'physical-memory': [['include-book', ACL2String('modes')]],
-	'state-field-thms' : [['include-book', ACL2String('abstract-state')]],
-	'abstract-state' : [['include-book', ACL2String('concrete-memory')]],
-	'concrete-memory' : [['include-book', ACL2String('concrete-state')]],
-	'concrete-state' : [['include-book', ACL2String('structures')]],
+	'state' : [['include-book', ACL2String('structures')]],
 
 
 	# These patterns are specifically to do with taking a slice from x86.lisp downwards, and should be removed
@@ -274,8 +272,6 @@ only_translate = {
 		['define', 'x86-operation-mode'],
 	],
 
-	'utilities' : [
-	],
 	# We call it this to avoid collision with the other segmentation file
 	'segmentationInst' : [
 		['include-book', ACL2String('../decoding-and-spec-utils')],
@@ -304,7 +300,7 @@ only_translate = {
 		['define', 'make-system-segment-attr-field'],
 	],
 	'application-level-memory' : [
-		['include-book', ACL2String('state-field-thms')],
+		['include-book', ACL2String('state')],
 
 		['define', 'canonical-address-p'],
 		['define', 'rvm08'],

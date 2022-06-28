@@ -335,3 +335,61 @@ function x86_mov_control_regs_op_en_mr (proc_mode, start_rip, temp_rip, prefixes
     let new_rflags : bits(32) = set_rflagsbits_get_of(sailval, rflags_var) in rflags = new_rflags;
     write_iptr(proc_mode, temp_rip)
 }
+
+val x86_movd_movq_to_xmm : (range(0, 4), sbits(48), sbits(48), bits(52), bits(8), bits(8), bits(8), bits(8)) -> unit
+
+function x86_movd_movq_to_xmm (proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode, modr_m, sib) = {
+    let ctx : string = "X86-MOVD/MOVQ-TO-XMM";
+    let r_m : bits(3) = modr_m_get_r_m(modr_m);
+    let mod_var : bits(2) = modr_m_get_mod(modr_m);
+    let reg : bits(3) = modr_m_get_reg(modr_m);
+    let p2 : bits(8) = prefixes_get_seg(prefixes);
+    let p4? : bool = 0x67 == prefixes_get_adr(prefixes);
+    let operand_size : {|4, 8|} = {
+        if logbitp(3, rex_byte) then 8 else 4
+    };
+    let seg_reg : {|0, 1, 2, 3, 4, 5|} = select_segment_register(proc_mode, p2, p4?, mod_var, r_m, sib);
+    let inst_ac? : bool = true;
+    let (flg0, reg_mem, increment_rip_by, addr) : (option(string), int, {|0, 1, 2, 4|}, sbits(64)) = x86_operand_from_modr_m_and_sib_bytes(proc_mode, 0b0, operand_size, inst_ac?, false, seg_reg, p4?, temp_rip, rex_byte, r_m, mod_var, sib, 0b000);
+    let increment_rip_by : bits(3) = bits_of_int(increment_rip_by, 3);
+    if is_some(flg0) then throw(Emsg("Model state error: :X86-OPERAND-FROM-MODR/M-AND-SIB-BYTES"));
+    let (flg, temp_rip) : (option(string), sbits(49)) = add_to_iptr(proc_mode, temp_rip, sail_zero_extend(increment_rip_by, 48));
+    if is_some(flg) then throw(Emsg("Model state error: :RIP-INCREMENT-ERROR"));
+    let badlength? : option(int) = check_instruction_length(start_rip, truncate(temp_rip, 48), 0b000);
+    if is_some(badlength?) then throw(Emsg("A fault occurred.  Original ACL2 AST:\n['!!FAULT-FRESH', ':GP', '0', ':INSTRUCTION-LENGTH', 'BADLENGTH?']"));
+    write_xmmi_size(bits_of_int(operand_size, 5), reg_index(reg, rex_byte, 0b10), reg_mem);
+    write_iptr(proc_mode, truncate(temp_rip, 48))
+}
+
+val x86_movd_movq_from_xmm : (range(0, 4), sbits(48), sbits(48), bits(52), bits(8), bits(8), bits(8), bits(8)) -> unit
+
+function x86_movd_movq_from_xmm (proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode, modr_m, sib) = {
+    let ctx : string = "X86-MOVD/MOVQ-FROM-XMM";
+    let r_m : bits(3) = modr_m_get_r_m(modr_m);
+    let mod_var : bits(2) = modr_m_get_mod(modr_m);
+    let reg : bits(3) = modr_m_get_reg(modr_m);
+    let p2 : bits(8) = prefixes_get_seg(prefixes);
+    let p4? : bool = 0x67 == prefixes_get_adr(prefixes);
+    let operand_size : {|4, 8|} = {
+        if logbitp(3, rex_byte) then 8 else 4
+    };
+    let register_var : bits(128) = xmmi_size(bits_of_int(operand_size, 5), reg_index(reg, rex_byte, 0b10));
+    let (flg0, addr, increment_rip_by) : (option(string), sbits(64), {|0, 1, 2, 4|}) = {
+        if mod_var == 0b11 then {
+            (None() : option(string), 0x0000000000000000, 0)
+        } else {
+            x86_effective_addr(proc_mode, p4?, temp_rip, rex_byte, r_m, mod_var, sib, 0b000)
+        }
+    };
+    let increment_rip_by : bits(3) = bits_of_int(increment_rip_by, 3);
+    if is_some(flg0) then throw(Emsg("Model state error: :X86-EFFECTIVE-ADDR-ERROR"));
+    let seg_reg : {|0, 1, 2, 3, 4, 5|} = select_segment_register(proc_mode, p2, p4?, mod_var, r_m, sib);
+    let (flg, temp_rip) : (option(string), sbits(49)) = add_to_iptr(proc_mode, temp_rip, sail_zero_extend(increment_rip_by, 48));
+    if is_some(flg) then throw(Emsg("Model state error: :RIP-INCREMENT-ERROR"));
+    let badlength? : option(int) = check_instruction_length(start_rip, truncate(temp_rip, 48), 0b000);
+    if is_some(badlength?) then throw(Emsg("A fault occurred.  Original ACL2 AST:\n['!!FAULT-FRESH', ':GP', '0', ':INSTRUCTION-LENGTH', 'BADLENGTH?']"));
+    let inst_ac? : bool = true;
+    let flg2 : option(string) = x86_operand_to_reg_mem(proc_mode, operand_size, inst_ac?, false, unsigned(register_var), seg_reg, addr, rex_byte, r_m, mod_var);
+    if is_some(flg2) then throw(Emsg("Model state error: :X86-OPERAND-TO-REG/MEM"));
+    write_iptr(proc_mode, truncate(temp_rip, 48))
+}

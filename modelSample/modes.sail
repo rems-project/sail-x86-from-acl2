@@ -3,7 +3,7 @@ $include <string.sail>
 $include "register_readers_and_writers.sail"
 /*Check whether we are in 64-bit mode.*/
 /*<p> 
- Given the above modeling assumption stated in @ ( see x86-modes ) , 
+ Given the modeling assumption stated in @ ( see x86-modes ) , 
  this predicate discriminates between 
  64-bit mode and the other two modes ( collectively, 32-bit mode ) . 
  Based on Intel manual, Mar ' 17, Vol. 3A, Sec. 2.2 ( near Fig. 2-3 ) , 
@@ -39,7 +39,8 @@ let cs_l : bits(1) = (code_segment_descriptor_attributesbits_get_l(cs_attr)) in
 
 /*Returns the current mode of operation of the x86 machine*/
 /*<p>We only support 64-bit, Compatibility, and 32-bit Protected Modes 
- for now.</p>*/
+ for now.</p> 
+ <p>See @ ( see x86-modes ) .</p>*/
 val x86_operation_mode : unit -> {|0, 1|} effect {escape}
 function x86_operation_mode () =
 if n64_bit_modep()

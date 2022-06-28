@@ -12,12 +12,27 @@ function reg_index (reg, rex_byte, index) = {
 val rr08 : (bits(4), bits(8)) -> bits(8)
 
 function rr08 (reg, rex) = {
-    if not_bool(rex == 0x00) | unsigned(reg) < 4 then {
-        let qword : sbits(64) = rgfi(unsigned(reg));
+    let reg : nat = unsigned(reg);
+    if not_bool(rex == 0x00) | reg < 4 then {
+        let qword : sbits(64) = rgfi(reg);
         truncate(qword, 8)
     } else {
-        let qword : sbits(64) = rgfi(unsigned(bits_of_int(unsigned(reg) - 4, 4)));
+        let qword : sbits(64) = rgfi(unsigned(bits_of_int(reg - 4, 4)));
         slice(qword, 8, 8)
+    }
+}
+
+val wr08 : (bits(4), bits(8), bits(8)) -> unit
+
+function wr08 (reg, rex, byte) = {
+    let reg : nat = unsigned(reg);
+    if not_bool(rex == 0x00) | reg < 4 then {
+        let qword : sbits(64) = rgfi(reg);
+        write_rgfi(reg, changeSlice(slice(qword, 0, 64), 0, 8, byte))
+    } else {
+        let index : bits(4) = bits_of_int(unsigned(bits_of_int(reg, 4)) - 4, 4);
+        let qword : sbits(64) = rgfi(unsigned(index));
+        write_rgfi(unsigned(index), changeSlice(slice(qword, 0, 64), 8, 8, byte))
     }
 }
 
@@ -27,31 +42,6 @@ function rr16 reg = {
     truncate(rgfi(unsigned(reg)), 16)
 }
 
-val rr32 : bits(4) -> bits(32)
-
-function rr32 reg = {
-    truncate(rgfi(unsigned(reg)), 32)
-}
-
-val rr64 : bits(4) -> bits(64)
-
-function rr64 reg = {
-    rgfi(unsigned(reg))
-}
-
-val wr08 : (bits(4), bits(8), bits(8)) -> unit
-
-function wr08 (reg, rex, byte) = {
-    if not_bool(rex == 0x00) | unsigned(reg) < 4 then {
-        let qword : sbits(64) = rgfi(unsigned(reg));
-        write_rgfi(unsigned(reg), changeSlice(slice(qword, 0, 64), 0, 8, byte))
-    } else {
-        let index : bits(4) = bits_of_int(unsigned(reg) - 4, 4);
-        let qword : sbits(64) = rgfi(unsigned(index));
-        write_rgfi(unsigned(index), changeSlice(slice(qword, 0, 64), 8, 8, byte))
-    }
-}
-
 val wr16 : (bits(4), bits(16)) -> unit
 
 function wr16 (reg, sailval) = {
@@ -59,10 +49,22 @@ function wr16 (reg, sailval) = {
     write_rgfi(unsigned(reg), changeSlice(slice(qword, 0, 64), 0, 16, sailval))
 }
 
+val rr32 : bits(4) -> bits(32)
+
+function rr32 reg = {
+    truncate(rgfi(unsigned(reg)), 32)
+}
+
 val wr32 : (bits(4), bits(32)) -> unit
 
 function wr32 (reg, sailval) = {
     write_rgfi(unsigned(reg), sail_zero_extend(sailval, 64))
+}
+
+val rr64 : bits(4) -> bits(64)
+
+function rr64 reg = {
+    rgfi(unsigned(reg))
 }
 
 val wr64 : (bits(4), bits(64)) -> unit

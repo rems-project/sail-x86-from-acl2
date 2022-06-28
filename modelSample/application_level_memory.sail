@@ -1,6 +1,6 @@
 $include <prelude.sail>
 $include <string.sail>
-$include "state_field_thms.sail"
+$include "state.sail"
 /*Recognizer of a canonical address*/
 /*<p>In 64-bit mode, a <i>linear</i> address is considered to be in 
  canonical form if address bits 63 through to the most-significant implemented 

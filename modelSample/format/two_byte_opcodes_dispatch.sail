@@ -2082,7 +2082,7 @@ function two_byte_opcode_execute (proc_mode, start_rip, temp_rip, prefixes, mand
                     _ => throw(Emsg("Model state error: Unimplemented exception in x86isa!"))
                   }) : unit
               } else {
-                  throw(Emsg("Model state error: Opcode Unimplemented in x86isa!"))
+                  x86_movd_movq_to_xmm(proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode, modr_m, sib)
               }
           } else {
               throw(Emsg("A fault occurred.  Original ACL2 AST:\n['X86-ILLEGAL-INSTRUCTION', STRING: #UD Encountered!, 'START-RIP', 'TEMP-RIP', 'X86']"))

@@ -57,7 +57,7 @@ let dst_int : sbits(16) = (dst) in
 let src_int : sbits(8) = (src) in
 let quotient_int : sbits(17) = (bits_of_int(tdiv_int(signed(dst_int), signed(src_int)), 17)) in
 let remainder_int : sbits(8) = (bits_of_int(tmod_int(signed(dst_int), signed(src_int)), 8)) in
-let overflow? : bool = (((signed(quotient_int)) < (-127)) | ((128) < (signed(quotient_int)))) in
+let overflow? : bool = (((signed(quotient_int)) < (-128)) | ((127) < (signed(quotient_int)))) in
 if overflow?
 then (true, 0x00, 0x00)
 else let quotient : bits(8) = (truncate(quotient_int, 8)) in
@@ -70,7 +70,7 @@ let dst_int : sbits(32) = (dst) in
 let src_int : sbits(16) = (src) in
 let quotient_int : sbits(33) = (bits_of_int(tdiv_int(signed(dst_int), signed(src_int)), 33)) in
 let remainder_int : sbits(16) = (bits_of_int(tmod_int(signed(dst_int), signed(src_int)), 16)) in
-let overflow? : bool = (((signed(quotient_int)) < (-32767)) | ((32768) < (signed(quotient_int)))) in
+let overflow? : bool = (((signed(quotient_int)) < (-32768)) | ((32767) < (signed(quotient_int)))) in
 if overflow?
 then (true, 0x0000, 0x0000)
 else let quotient : bits(16) = (truncate(quotient_int, 16)) in
@@ -83,7 +83,7 @@ let dst_int : sbits(64) = (dst) in
 let src_int : sbits(32) = (src) in
 let quotient_int : sbits(65) = (bits_of_int(tdiv_int(signed(dst_int), signed(src_int)), 65)) in
 let remainder_int : sbits(32) = (bits_of_int(tmod_int(signed(dst_int), signed(src_int)), 32)) in
-let overflow? : bool = (((signed(quotient_int)) < (-2147483647)) | ((2147483648) < (signed(quotient_int)))) in
+let overflow? : bool = (((signed(quotient_int)) < (-2147483648)) | ((2147483647) < (signed(quotient_int)))) in
 if overflow?
 then (true, 0x0000_0000, 0x0000_0000)
 else let quotient : bits(32) = (truncate(quotient_int, 32)) in
@@ -96,7 +96,7 @@ let dst_int : sbits(128) = (dst) in
 let src_int : sbits(64) = (src) in
 let quotient_int : sbits(129) = (bits_of_int(tdiv_int(signed(dst_int), signed(src_int)), 129)) in
 let remainder_int : sbits(64) = (bits_of_int(tmod_int(signed(dst_int), signed(src_int)), 64)) in
-let overflow? : bool = (((signed(quotient_int)) < (-9223372036854775807)) | ((9223372036854775808) < (signed(quotient_int)))) in
+let overflow? : bool = (((signed(quotient_int)) < (-9223372036854775808)) | ((9223372036854775807) < (signed(quotient_int)))) in
 if overflow?
 then (true, 0x0000_0000_0000_0000, 0x0000_0000_0000_0000)
 else let quotient : bits(64) = (truncate(quotient_int, 64)) in

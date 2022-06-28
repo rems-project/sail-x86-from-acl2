@@ -1,6 +1,6 @@
 $include "./segmentation.sail"
 
-val address_aligned_p : (sbits(48), {|1, 2, 4, 6, 8, 10, 16|}, bool) -> bool
+val address_aligned_p : (sbits(48), {|1, 2, 4, 6, 8, 10, 16, 32, 64|}, bool) -> bool
 
 function address_aligned_p (addr, operand_size, memory_ptr?) = {
     (match operand_size {
@@ -11,7 +11,7 @@ function address_aligned_p (addr, operand_size, memory_ptr?) = {
           if memory_ptr? & operand_size == 4 then {
               logand(addr, 0x000000000001) == 0x000000000000
           } else {
-              logand(addr, bits_of_int(check_range(0, 15, operand_size - 1), 48)) == 0x000000000000
+              logand(addr, bits_of_int(check_range(0, 65, operand_size - 1), 48)) == 0x000000000000
           }
       }
     }) : bool
