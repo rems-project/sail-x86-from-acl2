@@ -24,9 +24,9 @@ let (flg, temp_rip) : (option(string), sbits(49)) = (add_to_iptr(proc_mode, trun
 { if is_some(flg)
 then throw(Emsg("Model state error: :VIRTUAL-MEMORY-ERROR"))
 else ();
-let temp_rip : sbits(49) = (if (offset_size) == (2)
+let temp_rip : sbits(49) = { (if (offset_size) == (2)
 then logand(0b0_0000_0000_0000_0000_0000_0000_0000_0000_1111_1111_1111_1111, temp_rip)
-else temp_rip) in
+else temp_rip) } in
 write_iptr(proc_mode, truncate(temp_rip, 48))
 }
 }
@@ -59,9 +59,9 @@ let badlength? : option(int) = (check_instruction_length(start_rip, temp_rip, 0b
 then throw(Emsg("A fault occurred.  Original ACL2 AST:
 ['!!FAULT-FRESH', ':GP', '0', ':INSTRUCTION-LENGTH', 'BADLENGTH?']"))
 else ();
-let jmp_addr : int = (if (proc_mode) == (0)
+let jmp_addr : int = { (if (proc_mode) == (0)
 then signed(bits_of_int(jmp_addr, 64))
-else jmp_addr) in
+else jmp_addr) } in
 { if not_bool(if (proc_mode) == (0)
 then canonical_address_p(jmp_addr)
 else let cs_limit : bits(32) = (seg_hidden_limits[1]) in
@@ -142,20 +142,20 @@ let sel_rpl : bits(2) = (segment_selectorbits_get_rpl(selector)) in
 then throw(Emsg("A fault occurred.  Original ACL2 AST:
 ['!!FAULT-FRESH', ':GP', '0', ':GP-NULLSELECTOR', '0']"))
 else ();
-let (dt_base_addr, dt_limit) : (bits(64), bits(32)) = (if (sel_ti) == (0b0)
-then let (elem0, elem1) : (bits(64), bits(16)) = (let gdtr : bits(80) = (strs[0]) in
-let gdtr_base : bits(64) = (if (proc_mode) == (0)
+let (dt_base_addr, dt_limit) : (bits(64), bits(32)) = { (if (sel_ti) == (0b0)
+then let (elem0, elem1) : (bits(64), bits(16)) = { (let gdtr : bits(80) = (strs[0]) in
+let gdtr_base : bits(64) = { (if (proc_mode) == (0)
 then gdtr_idtrbits_get_base_addr(gdtr)
-else sail_zero_extend(truncate(gdtr_idtrbits_get_base_addr(gdtr), 32), 64)) in
+else sail_zero_extend(truncate(gdtr_idtrbits_get_base_addr(gdtr), 32), 64)) } in
 let gdtr_limit : bits(16) = (gdtr_idtrbits_get_limit(gdtr)) in
-(gdtr_base, gdtr_limit)) in
+(gdtr_base, gdtr_limit)) } in
 (elem0, sail_zero_extend(elem1, 32))
 else let ldtr_base : bits(64) = (ssr_hidden_bases[0]) in
-let ldtr_base : bits(64) = (if (proc_mode) == (0)
+let ldtr_base : bits(64) = { (if (proc_mode) == (0)
 then ldtr_base
-else sail_zero_extend(truncate(ldtr_base, 32), 64)) in
+else sail_zero_extend(truncate(ldtr_base, 32), 64)) } in
 let ldtr_limit : bits(32) = (ssr_hidden_limits[0]) in
-(ldtr_base, ldtr_limit)) in
+(ldtr_base, ldtr_limit)) } in
 let largest_address : int = ((ash(unsigned(sel_index), 3)) + (7)) in
 { if (unsigned(dt_limit)) < (largest_address)
 then throw(Emsg("A fault occurred.  Original ACL2 AST:
@@ -182,13 +182,13 @@ let d : bits(1) = (code_segment_descriptorbits_get_d(descriptor)) in
 then throw(Emsg("A fault occurred.  Original ACL2 AST:
 ['!!FAULT-FRESH', ':GP', 'SEL-INDEX', ':CS.D=1-IN-64-BIT-MODE', 'SEL-INDEX']"))
 else ();
-let cpl : bits(2) = (let x86 : unit = (()) in
-segment_selectorbits_get_rpl(seg_visibles[1])) in
+let cpl : bits(2) = { (let x86 : unit = (()) in
+segment_selectorbits_get_rpl(seg_visibles[1])) } in
 let dpl : bits(2) = (code_segment_descriptorbits_get_dpl(descriptor)) in
 let c : bits(1) = (code_segment_descriptorbits_get_c(descriptor)) in
-let allowed : bool = (if (c) == (0b1)
+let allowed : bool = { (if (c) == (0b1)
 then (unsigned(dpl)) <= (unsigned(cpl))
-else ((unsigned(sel_rpl)) <= (unsigned(cpl))) & ((cpl) == (dpl))) in
+else ((unsigned(sel_rpl)) <= (unsigned(cpl))) & ((cpl) == (dpl))) } in
 { if not_bool(allowed)
 then throw(Emsg("A fault occurred.  Original ACL2 AST:
 ['!!FAULT-FRESH', ':GP', 'SEL-INDEX', ':PRIVILEGE-CHECK-FAIL', ['ACONS', ':DPL', 'DPL', ['ACONS', ':CPL', 'CPL', ['ACONS', ':RPL', 'SEL-RPL', 'NIL']]]]"))
@@ -198,21 +198,21 @@ let p : bits(1) = (code_segment_descriptorbits_get_p(descriptor)) in
 then throw(Emsg("A fault occurred.  Original ACL2 AST:
 ['!!FAULT-FRESH', ':NP', 'SEL-INDEX', ':CODE-SEGMENT-NOT-PRESENT', 'SEL-INDEX']"))
 else ();
-let jmp_addr : sbits(64) = (match offset_size {
+let jmp_addr : sbits(64) = { (match offset_size {
 2 => sail_zero_extend(sail_mask(16, offset), 64),
 4 => sail_zero_extend(sail_mask(32, offset), 64),
 _ => sail_mask(64, offset)
-}) in
-let jmp_addr_ok : bool = (if (proc_mode) == (0)
+}) } in
+let jmp_addr_ok : bool = { (if (proc_mode) == (0)
 then canonical_address_p(signed(jmp_addr))
 else let limit15_0 : bits(16) = (code_segment_descriptorbits_get_limit15_0(descriptor)) in
 let limit19_16 : bits(4) = (code_segment_descriptorbits_get_limit19_16(descriptor)) in
 let limit : int = (changeSlice(ash(unsigned(limit19_16), 16), 0, 16, unsigned(limit15_0))) in
 let g : bits(1) = (code_segment_descriptorbits_get_g(descriptor)) in
-let max_offset : int : int = (if (g) == (0b1)
+let max_offset : int : int = { (if (g) == (0b1)
 then (ash(limit, 12)) - (1)
-else limit) in
-(signed(jmp_addr)) < (max_offset : int)) in
+else limit) } in
+(signed(jmp_addr)) < (max_offset : int)) } in
 { if not_bool(jmp_addr_ok)
 then throw(Emsg("A fault occurred.  Original ACL2 AST:
 ['!!FAULT-FRESH', ':GP', '0', ':NONCANONICAL-OR-OUTSIDE-SEGMENT-LIMIT', 'JMP-ADDR']"))
@@ -244,8 +244,8 @@ then throw(Emsg("Model state error: :RML-SIZE-ERROR"))
 else ();
 let (call_gate_desc?, reason2) : (bool, (string, (bits(128)))) = (ia32e_valid_call_gate_segment_descriptor_p(descriptor)) in
 if call_gate_desc?
-then let cpl : bits(2) = (let x86 : unit = (()) in
-segment_selectorbits_get_rpl(seg_visibles[1])) in
+then let cpl : bits(2) = { (let x86 : unit = (()) in
+segment_selectorbits_get_rpl(seg_visibles[1])) } in
 let dpl : bits(2) = (call_gate_descriptorbits_get_dpl(descriptor)) in
 { if not_bool(((unsigned(cpl)) <= (unsigned(dpl))) & ((unsigned(sel_rpl)) <= (unsigned(dpl))))
 then throw(Emsg("A fault occurred.  Original ACL2 AST:
@@ -259,21 +259,21 @@ let cs_sel_rpl : bits(2) = (segment_selectorbits_get_rpl(cs_selector)) in
 then throw(Emsg("A fault occurred.  Original ACL2 AST:
 ['!!FAULT-FRESH', ':GP', '0', ':CALL-GATE-CODE-SEGMENT-NULLSELECTOR', '0']"))
 else ();
-let (cs_dt_base_addr, cs_dt_limit) : (bits(64), bits(32)) = (if (sel_ti) == (0b0)
-then let (elem0, elem1) : (bits(64), bits(16)) = (let gdtr : bits(80) = (strs[0]) in
+let (cs_dt_base_addr, cs_dt_limit) : (bits(64), bits(32)) = { (if (sel_ti) == (0b0)
+then let (elem0, elem1) : (bits(64), bits(16)) = { (let gdtr : bits(80) = (strs[0]) in
 let gdtr_base : bits(64) = (gdtr_idtrbits_get_base_addr(gdtr)) in
-let gdtr_base : bits(64) = (if (proc_mode) == (0)
+let gdtr_base : bits(64) = { (if (proc_mode) == (0)
 then gdtr_base
-else sail_zero_extend(truncate(gdtr_base, 32), 64)) in
+else sail_zero_extend(truncate(gdtr_base, 32), 64)) } in
 let gdtr_limit : bits(16) = (gdtr_idtrbits_get_limit(gdtr)) in
-(gdtr_base, gdtr_limit)) in
+(gdtr_base, gdtr_limit)) } in
 (elem0, sail_zero_extend(elem1, 32))
 else let ldtr_base : bits(64) = (ssr_hidden_bases[0]) in
-let ldtr_base : bits(64) = (if (proc_mode) == (0)
+let ldtr_base : bits(64) = { (if (proc_mode) == (0)
 then ldtr_base
-else sail_zero_extend(truncate(ldtr_base, 32), 64)) in
+else sail_zero_extend(truncate(ldtr_base, 32), 64)) } in
 let ldtr_limit : bits(32) = (ssr_hidden_limits[0]) in
-(ldtr_base, ldtr_limit)) in
+(ldtr_base, ldtr_limit)) } in
 let largest_address : int = ((ash(unsigned(cs_sel_index), 3)) + (7)) in
 { if (unsigned(cs_dt_limit)) < (largest_address)
 then throw(Emsg("A fault occurred.  Original ACL2 AST:
@@ -304,11 +304,11 @@ let call_gate_offset31_16 : bits(16) = (call_gate_descriptorbits_get_offset31_16
 let call_gate_offset63_32 : bits(32) = (call_gate_descriptorbits_get_offset63_32(descriptor)) in
 let call_gate_offset31_0 : int = (changeSlice(ash(unsigned(call_gate_offset31_16), 16), 0, 16, unsigned(call_gate_offset15_0))) in
 let call_gate_offset : int = (changeSlice(ash(unsigned(call_gate_offset63_32), 32), 0, 32, call_gate_offset31_0)) in
-let jmp_addr : int = (match offset_size {
+let jmp_addr : int = { (match offset_size {
 2 => unsigned(bits_of_int(call_gate_offset, 16)),
 4 => unsigned(bits_of_int(call_gate_offset, 32)),
 _ => call_gate_offset
-}) in
+}) } in
 { if not_bool(canonical_address_p(jmp_addr))
 then throw(Emsg("Model state error: :TARGET-OFFSET-VIRTUAL-MEMORY-ERROR"))
 else ();
@@ -354,11 +354,11 @@ let counter : bits(64) = (rgfi_size(bits_of_int(counter_size, 4), 0x1, rex_byte)
 let counter : bits(64) = (sail_mask(64, trunc(counter_size, bits_of_int((unsigned(counter)) - (1), 64)))) in
 let zf : bits(1) = (truncate(let rflags_var : bits(32) = (rflags) in
 sail_zero_extend(rflagsbits_get_zf(rflags_var), 2), 1)) in
-let branch_cond : bool = (if (opcode) == (0xe2)
+let branch_cond : bool = { (if (opcode) == (0xe2)
 then not_bool((counter) == (0x0000_0000_0000_0000))
 else if (opcode) == (0xe1)
 then ((zf) == (0b1)) & (not_bool((counter) == (0x0000_0000_0000_0000)))
-else ((zf) == (0b0)) & (not_bool((counter) == (0x0000_0000_0000_0000)))) in
+else ((zf) == (0b0)) & (not_bool((counter) == (0x0000_0000_0000_0000)))) } in
 if branch_cond
 then { let (flg, rel8) : (option(string), sbits(64)) = (rime_size(proc_mode, 1, sail_sign_extend(temp_rip, 64), 1, ":X", false, struct {mem_ptr? = false})) in
 { if is_some(flg)

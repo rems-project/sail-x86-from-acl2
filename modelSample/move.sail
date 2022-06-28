@@ -12,9 +12,9 @@ let p4? : bool = ((0x67) == (prefixes_get_adr(prefixes))) in
 let byte_operand? : bool = ((opcode) == (0x88)) in
 let operand_size : {|1, 2, 4, 8|} = (select_operand_size(proc_mode, byte_operand?, rex_byte, false, prefixes, false, false, false)) in
 let register_var : bits(64) = (rgfi_size(bits_of_int(operand_size, 4), reg_index(reg, rex_byte, 0b10), rex_byte)) in
-let (flg0, addr, increment_rip_by) : (option(string), sbits(64), {|0, 1, 2, 4|}) = (if (mod_var) == (0b11)
+let (flg0, addr, increment_rip_by) : (option(string), sbits(64), {|0, 1, 2, 4|}) = { (if (mod_var) == (0b11)
 then (None() : option(string), 0x0000_0000_0000_0000, 0)
-else x86_effective_addr(proc_mode, p4?, temp_rip, rex_byte, r_m, mod_var, sib, 0b000)) in
+else x86_effective_addr(proc_mode, p4?, temp_rip, rex_byte, r_m, mod_var, sib, 0b000)) } in
 let increment_rip_by : bits(3) = (bits_of_int(increment_rip_by, 3)) in
 { if is_some(flg0)
 then throw(Emsg("Model state error: :X86-EFFECTIVE-ADDR-ERROR"))
@@ -178,12 +178,12 @@ let p2 : bits(8) = (prefixes_get_seg(prefixes)) in
 let p4? : bool = ((0x67) == (prefixes_get_adr(prefixes))) in
 let byte_operand? : bool = ((opcode) == (0xc6)) in
 let imm_size : {|1, 2, 4, 8|} = (select_operand_size(proc_mode, byte_operand?, rex_byte, true, prefixes, false, false, false)) in
-let reg_mem_size : {|1, 2, 4, 8|} = (if ((opcode) == (0xc7)) & (logbitp(3, rex_byte))
+let reg_mem_size : {|1, 2, 4, 8|} = { (if ((opcode) == (0xc7)) & (logbitp(3, rex_byte))
 then 8
-else imm_size) in
-let (flg0, addr, increment_rip_by) : (option(string), sbits(64), {|0, 1, 2, 4|}) = (if (mod_var) == (0b11)
+else imm_size) } in
+let (flg0, addr, increment_rip_by) : (option(string), sbits(64), {|0, 1, 2, 4|}) = { (if (mod_var) == (0b11)
 then (None() : option(string), 0x0000_0000_0000_0000, 0)
-else x86_effective_addr(proc_mode, p4?, temp_rip, rex_byte, r_m, mod_var, sib, bits_of_int(imm_size, 3))) in
+else x86_effective_addr(proc_mode, p4?, temp_rip, rex_byte, r_m, mod_var, sib, bits_of_int(imm_size, 3))) } in
 let increment_rip_by : bits(3) = (bits_of_int(increment_rip_by, 3)) in
 { if is_some(flg0)
 then throw(Emsg("Model state error: :X86-EFFECTIVE-ADDR-ERROR"))
@@ -208,9 +208,9 @@ let badlength? : option(int) = (check_instruction_length(start_rip, temp_rip, 0b
 then throw(Emsg("A fault occurred.  Original ACL2 AST:
 ['!!FAULT-FRESH', ':GP', '0', ':INSTRUCTION-LENGTH', 'BADLENGTH?']"))
 else ();
-let imm : int = (if (reg_mem_size) == (8)
+let imm : int = { (if (reg_mem_size) == (8)
 then unsigned(sail_sign_extend(bits_of_int(imm, 32), 64))
-else imm) in
+else imm) } in
 let inst_ac? : bool = (true) in
 let flg3 : option(string) = (x86_operand_to_reg_mem(proc_mode, reg_mem_size, inst_ac?, false, nat_of_int(imm), seg_reg, addr, rex_byte, r_m, mod_var)) in
 { if is_some(flg3)
@@ -280,12 +280,12 @@ let badlength? : option(int) = (check_instruction_length(start_rip, temp_rip, 0b
 then throw(Emsg("A fault occurred.  Original ACL2 AST:
 ['!!FAULT-FRESH', ':GP', '0', ':INSTRUCTION-LENGTH', 'BADLENGTH?']"))
 else ();
-let register_size : {|1, 2, 4, 8|} = (if logbitp(3, rex_byte)
+let register_size : {|1, 2, 4, 8|} = { (if logbitp(3, rex_byte)
 then 8
-else reg_mem_size) in
-let reg_mem : int = (if (register_size) == (8)
+else reg_mem_size) } in
+let reg_mem : int = { (if (register_size) == (8)
 then unsigned(sail_sign_extend(bits_of_int(reg_mem, 32), 64))
-else reg_mem) in
+else reg_mem) } in
 { write_rgfi_size(bits_of_int(register_size, 4), reg_index(reg, rex_byte, 0b10), reg_mem, rex_byte);
 write_iptr(proc_mode, temp_rip)
 }
@@ -302,9 +302,9 @@ let reg : bits(3) = (modr_m_get_reg(modr_m)) in
 let p2 : bits(8) = (prefixes_get_seg(prefixes)) in
 let p4? : bool = ((0x67) == (prefixes_get_adr(prefixes))) in
 let seg_reg : {|0, 1, 2, 3, 4, 5|} = (select_segment_register(proc_mode, p2, p4?, mod_var, r_m, sib)) in
-let reg_mem_size : {|1, 2|} = (if (opcode) == (0xbe)
+let reg_mem_size : {|1, 2|} = { (if (opcode) == (0xbe)
 then 1
-else 2) in
+else 2) } in
 let inst_ac? : bool = (true) in
 let (flg0, reg_mem, increment_rip_by, addr) : (option(string), int, {|0, 1, 2, 4|}, sbits(64)) = (x86_operand_from_modr_m_and_sib_bytes(proc_mode, 0b0, reg_mem_size, inst_ac?, false, seg_reg, p4?, temp_rip, rex_byte, r_m, mod_var, sib, 0b000)) in
 let increment_rip_by : bits(3) = (bits_of_int(increment_rip_by, 3)) in
@@ -322,13 +322,13 @@ then throw(Emsg("A fault occurred.  Original ACL2 AST:
 ['!!FAULT-FRESH', ':GP', '0', ':INSTRUCTION-LENGTH', 'BADLENGTH?']"))
 else ();
 let register_size : {|1, 2, 4, 8|} = (select_operand_size(proc_mode, false, rex_byte, false, prefixes, false, false, false)) in
-let reg_mem : int = (match reg_mem_size {
+let reg_mem : int = { (match reg_mem_size {
 1 => unsigned(slice(bits_of_int(reg_mem, 8), 0, ash(register_size, 3))),
-2 => (match register_size {
+2 => { (match register_size {
 2 => reg_mem,
 _ => unsigned(slice(bits_of_int(reg_mem, 16), 0, ash(register_size, 3)))
-}) : int
-}) in
+}) : int }
+}) } in
 { write_rgfi_size(bits_of_int(register_size, 4), reg_index(reg, rex_byte, 0b10), reg_mem, rex_byte);
 write_iptr(proc_mode, temp_rip)
 }
@@ -345,9 +345,9 @@ let reg : bits(3) = (modr_m_get_reg(modr_m)) in
 let p2 : bits(8) = (prefixes_get_seg(prefixes)) in
 let p4? : bool = ((0x67) == (prefixes_get_adr(prefixes))) in
 let seg_reg : {|0, 1, 2, 3, 4, 5|} = (select_segment_register(proc_mode, p2, p4?, mod_var, r_m, sib)) in
-let reg_mem_size : {|1, 2|} = (if (opcode) == (0xb6)
+let reg_mem_size : {|1, 2|} = { (if (opcode) == (0xb6)
 then 1
-else 2) in
+else 2) } in
 let inst_ac? : bool = (true) in
 let (flg0, reg_mem, increment_rip_by, addr) : (option(string), int, {|0, 1, 2, 4|}, sbits(64)) = (x86_operand_from_modr_m_and_sib_bytes(proc_mode, 0b0, reg_mem_size, inst_ac?, false, seg_reg, p4?, temp_rip, rex_byte, r_m, mod_var, sib, 0b000)) in
 let increment_rip_by : bits(3) = (bits_of_int(increment_rip_by, 3)) in
@@ -378,16 +378,16 @@ let ctx : string = ("X86-MOV-CONTROL-REGS-OP/EN-MR") in
 let r_m : bits(3) = (modr_m_get_r_m(modr_m)) in
 let mod_var : bits(2) = (modr_m_get_mod(modr_m)) in
 let reg : bits(3) = (modr_m_get_reg(modr_m)) in
-let ctr_index : bits(4) = (if (logbitp(2, rex_byte)) & ((reg) == (0b000))
+let ctr_index : bits(4) = { (if (logbitp(2, rex_byte)) & ((reg) == (0b000))
 then 0x8
-else sail_zero_extend(reg, 4)) in
-let operand_size : {|4, 8|} = (if (proc_mode) == (0)
+else sail_zero_extend(reg, 4)) } in
+let operand_size : {|4, 8|} = { (if (proc_mode) == (0)
 then 8
-else 4) in
+else 4) } in
 let ctr_val : bits(64) = (ctrs[unsigned(ctr_index)]) in
-let ctr_val : bits(64) = (if (operand_size) == (4)
+let ctr_val : bits(64) = { (if (operand_size) == (4)
 then sail_zero_extend(truncate(ctr_val, 32), 64)
-else ctr_val) in
+else ctr_val) } in
 { write_rgfi_size(bits_of_int(operand_size, 4), reg_index(r_m, rex_byte, 0b00), unsigned(ctr_val), rex_byte);
 let rflags_var : bits(32) = (rflags) in
 let sailval : bits(1) = (undef_flg()) in

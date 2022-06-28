@@ -143,10 +143,12 @@ function x86_setcc (proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode, 
     let reg : bits(3) = modr_m_get_reg(modr_m);
     let p2 : bits(8) = prefixes_get_seg(prefixes);
     let p4? : bool = 0x67 == prefixes_get_adr(prefixes);
-    let (flg0, addr, increment_rip_by) : (option(string), sbits(64), {|0, 1, 2, 4|}) = if mod_var == 0b11 then {
-        (None() : option(string), 0x0000000000000000, 0)
-    } else {
-        x86_effective_addr(proc_mode, p4?, temp_rip, rex_byte, r_m, mod_var, sib, 0b000)
+    let (flg0, addr, increment_rip_by) : (option(string), sbits(64), {|0, 1, 2, 4|}) = {
+        if mod_var == 0b11 then {
+            (None() : option(string), 0x0000000000000000, 0)
+        } else {
+            x86_effective_addr(proc_mode, p4?, temp_rip, rex_byte, r_m, mod_var, sib, 0b000)
+        }
     };
     let increment_rip_by : bits(3) = bits_of_int(increment_rip_by, 3);
     if is_some(flg0) then throw(Emsg("Model state error: :X86-EFFECTIVE-ADDR-ERROR"));
@@ -158,7 +160,9 @@ function x86_setcc (proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode, 
     let branch_cond : bool = jcc_cmovcc_setcc_spec(opcode);
     let seg_reg : {|0, 1, 2, 3, 4, 5|} = select_segment_register(proc_mode, p2, p4?, mod_var, r_m, sib);
     let inst_ac? : bool = true;
-    let sailval : {|0, 1|} = if branch_cond then 1 else 0;
+    let sailval : {|0, 1|} = {
+        if branch_cond then 1 else 0
+    };
     let flg2 : option(string) = x86_operand_to_reg_mem(proc_mode, 1, inst_ac?, false, sailval, seg_reg, addr, rex_byte, r_m, mod_var);
     if is_some(flg2) then throw(Emsg("Model state error: :X86-OPERAND-TO-REG/MEM"));
     write_iptr(proc_mode, temp_rip)

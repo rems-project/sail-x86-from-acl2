@@ -18,14 +18,16 @@ function x86_call_e8_op_en_m (proc_mode, start_rip, temp_rip, prefixes, rex_byte
     let addr_size : {|2, 4, 8|} = select_address_size(proc_mode, false);
     let (flg, new_rsp) : (option(string), sbits(64)) = add_to_sptr(proc_mode, rsp_var, bits_of_int(negate(addr_size), 64));
     if is_some(flg) then throw(Emsg("A fault occurred.  Original ACL2 AST:\n['!!FAULT-FRESH', ':SS', '0', ':CALL', 'FLG']"));
-    let flg : option(string) = if proc_mode == 0 then {
-        wime_size(0, addr_size, sail_sign_extend(truncate(new_rsp, 48), 64), 2, signed(next_rip), alignment_checking_enabled_p(), struct { mem_ptr? = false })
-    } else {
-        wme_size(proc_mode, addr_size, sail_sign_extend(truncate(new_rsp, 48), 64), 2, unsigned(if addr_size == 2 then {
-            sail_zero_extend(truncate(next_rip, 16), 32)
+    let flg : option(string) = {
+        if proc_mode == 0 then {
+            wime_size(0, addr_size, sail_sign_extend(truncate(new_rsp, 48), 64), 2, signed(next_rip), alignment_checking_enabled_p(), struct { mem_ptr? = false })
         } else {
-            truncate(next_rip, 32)
-        }), alignment_checking_enabled_p(), struct { mem_ptr? = false })
+            wme_size(proc_mode, addr_size, sail_sign_extend(truncate(new_rsp, 48), 64), 2, unsigned(if addr_size == 2 then {
+                sail_zero_extend(truncate(next_rip, 16), 32)
+            } else {
+                truncate(next_rip, 32)
+            }), alignment_checking_enabled_p(), struct { mem_ptr? = false })
+        }
     };
     if is_some(flg) then throw(Emsg("Model state error: :STACK-WRITING-ERROR"));
     write_iptr(proc_mode, call_rip);
@@ -52,10 +54,12 @@ function x86_call_ff_2_op_en_m (proc_mode, start_rip, temp_rip, prefixes, rex_by
     if is_some(flg) then throw(Emsg("Model state error: :RIP-INCREMENT-ERROR"));
     let badlength? : option(int) = check_instruction_length(start_rip, next_rip, 0b000);
     if is_some(badlength?) then throw(Emsg("A fault occurred.  Original ACL2 AST:\n['!!FAULT-FRESH', ':GP', '0', ':INSTRUCTION-LENGTH', 'BADLENGTH?']"));
-    let call_rip : int = if proc_mode == 0 then {
-        signed(bits_of_int(call_rip, 64))
-    } else {
-        call_rip
+    let call_rip : int = {
+        if proc_mode == 0 then {
+            signed(bits_of_int(call_rip, 64))
+        } else {
+            call_rip
+        }
     };
     if not_bool(if proc_mode == 0 then {
         canonical_address_p(call_rip)
@@ -67,10 +71,12 @@ function x86_call_ff_2_op_en_m (proc_mode, start_rip, temp_rip, prefixes, rex_by
     let (flg, new_rsp) : (option(string), sbits(64)) = add_to_sptr(proc_mode, rsp_var, bits_of_int(negate(addr_size), 64));
     if is_some(flg) then throw(Emsg("A fault occurred.  Original ACL2 AST:\n['!!FAULT-FRESH', ':SS', '0', ':CALL', 'FLG']"));
     let check_alignment? : bool = alignment_checking_enabled_p();
-    let flg : option(string) = if operand_size == 8 then {
-        wime_size(proc_mode, operand_size, rsp_var, 2, call_rip, check_alignment?, struct { mem_ptr? = false })
-    } else {
-        wme_size(proc_mode, operand_size, rsp_var, 2, nat_of_int(call_rip), check_alignment?, struct { mem_ptr? = false })
+    let flg : option(string) = {
+        if operand_size == 8 then {
+            wime_size(proc_mode, operand_size, rsp_var, 2, call_rip, check_alignment?, struct { mem_ptr? = false })
+        } else {
+            wme_size(proc_mode, operand_size, rsp_var, 2, nat_of_int(call_rip), check_alignment?, struct { mem_ptr? = false })
+        }
     };
     if is_some(flg) then throw(Emsg("Model state error: :STACK-WRITING-ERROR"));
     write_iptr(proc_mode, bits_of_int(call_rip, 48));
@@ -83,24 +89,26 @@ function x86_ret (proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode, mo
     let ctx : string = "X86-RET";
     let rsp_var : sbits(64) = read_sptr(proc_mode);
     let operand_size : {|2, 4, 8|} = check_range(2, 8, select_operand_size(proc_mode, false, rex_byte, false, 0x0000000000000, true, true, true));
-    let (flg, new_rsp) : (option(string), sbits(64)) = if opcode == 0xc3 then {
-        let (flg1, new_rsp) : (option(string), sbits(64)) = add_to_sptr(proc_mode, rsp_var, bits_of_int(operand_size, 64));
-        if is_some(flg1) then {
-            (flg1, 0x0000000000000000)
-        } else {
-            (None() : option(string), new_rsp)
-        }
-    } else {
-        let (flg1, imm16) : (option(string), int) = rme16(proc_mode, sail_sign_extend(temp_rip, 64), 1, ":X", false);
-        let imm16 : bits(16) = bits_of_int(imm16, 16);
-        if is_some(flg1) then {
-            (flg1, 0x0000000000000000)
-        } else {
-            let (flg1, new_rsp) : (option(string), sbits(64)) = add_to_sptr(proc_mode, rsp_var, bits_of_int(operand_size + unsigned(imm16), 64));
+    let (flg, new_rsp) : (option(string), sbits(64)) = {
+        if opcode == 0xc3 then {
+            let (flg1, new_rsp) : (option(string), sbits(64)) = add_to_sptr(proc_mode, rsp_var, bits_of_int(operand_size, 64));
             if is_some(flg1) then {
                 (flg1, 0x0000000000000000)
             } else {
                 (None() : option(string), new_rsp)
+            }
+        } else {
+            let (flg1, imm16) : (option(string), int) = rme16(proc_mode, sail_sign_extend(temp_rip, 64), 1, ":X", false);
+            let imm16 : bits(16) = bits_of_int(imm16, 16);
+            if is_some(flg1) then {
+                (flg1, 0x0000000000000000)
+            } else {
+                let (flg1, new_rsp) : (option(string), sbits(64)) = add_to_sptr(proc_mode, rsp_var, bits_of_int(operand_size + unsigned(imm16), 64));
+                if is_some(flg1) then {
+                    (flg1, 0x0000000000000000)
+                } else {
+                    (None() : option(string), new_rsp)
+                }
             }
         }
     };
@@ -109,11 +117,13 @@ function x86_ret (proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode, mo
     let badlength? : bool = opcode == 0xc2 & is_some(check_instruction_length(start_rip, temp_rip, 0b010));
     if badlength? then throw(Emsg("A fault occurred.  Original ACL2 AST:\n['!!FAULT-FRESH', ':GP', '0', ':INSTRUCTION-LENGTH', 'BADLENGTH?']"));
     let check_alignment? : bool = alignment_checking_enabled_p();
-    let (flg, tos) : (option(string), int) = if operand_size == 8 then {
-        let (elem0, elem1) : (option(string), sbits(64)) = rime_size(proc_mode, operand_size, rsp_var, 2, ":R", check_alignment?, struct { mem_ptr? = false });
-        (elem0, signed(elem1))
-    } else {
-        rme_size(proc_mode, operand_size, rsp_var, 2, ":R", check_alignment?, struct { mem_ptr? = false })
+    let (flg, tos) : (option(string), int) = {
+        if operand_size == 8 then {
+            let (elem0, elem1) : (option(string), sbits(64)) = rime_size(proc_mode, operand_size, rsp_var, 2, ":R", check_alignment?, struct { mem_ptr? = false });
+            (elem0, signed(elem1))
+        } else {
+            rme_size(proc_mode, operand_size, rsp_var, 2, ":R", check_alignment?, struct { mem_ptr? = false })
+        }
     };
     let tos : sbits(64) = bits_of_int(tos, 64);
     if is_some(flg) then throw(Emsg("This error is generated by the translator and represents a more detailed error that occurred in `push-and-pop.lisp`"));

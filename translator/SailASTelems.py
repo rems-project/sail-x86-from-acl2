@@ -288,6 +288,9 @@ class SailLet(SailASTelem):
 			pp_expr = f"({self.expr[0].pp(withAnnotation=False)})"
 		else:
 			pp_expr = f"({self.expr[0].pp()})"
+		if isMultilineExpr(self.expr[0]):
+			# Wrap (potential) multi-line expressions in a block
+			pp_expr = "{ " + pp_expr + " }"
 		pp_body = self.body[0].pp()
 		
 		return f"let {pp_var} = {pp_expr} in\n{pp_body}"
@@ -1035,7 +1038,11 @@ class SailMatch(SailASTelem):
 		headerLine = f"match {self.var.pp()} {{"
 		matchLines = []
 		for (pat, expr) in self.matches:
-			matchLines.append(f"{pat.pp()} => {expr.pp()}")
+			expr_pp = expr.pp()
+			if isMultilineExpr(expr):
+				# Wrap (potential) multi-line expressions in a block
+				expr_pp = "{ " + expr_pp + " }"
+			matchLines.append(f"{pat.pp()} => {expr_pp}")
 		matchLines = ",\n".join(matchLines)
 		together = f"{headerLine}\n{matchLines}\n}}"
 
@@ -1375,6 +1382,11 @@ def isNone(item):
 	return isinstance(item, SailApp) and isinstance(item.getFn(), SailHandwrittenFn)\
 			and item.getFn().getName() == 'None' and isinstance(item.getFn().getType().getRHS(), Sail_t_option)
 
+def isMultilineExpr(expr):
+	return isinstance(expr, SailLet) or \
+			isinstance(expr, SailIf) or \
+			(isinstance(expr, SailBlock) and len(expr.getExprs()) > 1) or \
+			(isinstance(expr, SailMatch) and not isinstance(expr.var, SailStringLit))
 
 def checkTypesMatch(items):
 	"""

@@ -80,3 +80,15 @@ _ => (0x0000_0000_0000_0000, 0x0000_0000, 0x0000_0000)
  </ul> 
  
  @ ( def gpr-arith/logic-spec )*/
+val gpr_arith_logic_spec : ({|1, 2, 4, 8|}, {|0, 1, 2, 3, 4, 5, 6, 7, 8|}, bits(64), bits(64), bits(32)) -> (bits(64), bits(32), bits(32)) effect {escape}
+function gpr_arith_logic_spec (operand_size, operation, dst, src, input_rflags) =
+(match operand_size {
+1 => { let (elem0, elem1, elem2) : (bits(8), bits(32), bits(32)) = (gpr_arith_logic_spec_1(operation, truncate(dst, 8), truncate(src, 8), input_rflags)) in
+(sail_zero_extend(elem0, 64), elem1, elem2) },
+2 => { let (elem0, elem1, elem2) : (bits(16), bits(32), bits(32)) = (gpr_arith_logic_spec_2(operation, truncate(dst, 16), truncate(src, 16), input_rflags)) in
+(sail_zero_extend(elem0, 64), elem1, elem2) },
+4 => { let (elem0, elem1, elem2) : (bits(32), bits(32), bits(32)) = (gpr_arith_logic_spec_4(operation, truncate(dst, 32), truncate(src, 32), input_rflags)) in
+(sail_zero_extend(elem0, 64), elem1, elem2) },
+_ => gpr_arith_logic_spec_8(operation, dst, src, input_rflags)
+}) : (bits(64), bits(32), bits(32))
+

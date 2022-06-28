@@ -718,12 +718,25 @@ def tr_defmacro(ACL2ast, env):
 	macroName = ACL2ast[1]
 	if not isinstance(macroName, str): sys.exit("Error: macro name not a symbol")
 
-	# Originally `apply_macro_gen` checked it received the expected number of
-	# arguments.  It does not any more, hence why we pass `None`.
-	env.addToAuto(macroName, apply_macro_gen(numOfArgs=None))
+	# Check whether we want to define this macro as a function, or expand
+	# its applications inline
+	if macroName.lower() in config_patterns.define_macros:
+		# Query ACL2 for the body of the macro by constructing an
+		# application of the macro with the original formal parameter
+		# variable names, and expanding that
+		fnFormalsFiltered, fnFormalsTyped, keyDefaults, env = _parseFormals(ACL2ast[2], 'normal', env)
+		body = expand_macro_app([macroName] + fnFormalsFiltered, env)
+		# Define a function with the expanded macro body
+		return tr_define(['define', macroName, ACL2ast[2], body], env)
+	else:
+		# Otherwise, register this macro, setting up inline expansion of its uses
 
-	# Return
-	return [None], env, len(ACL2ast)
+		# Originally `apply_macro_gen` checked it received the expected number of
+		# arguments.  It does not any more, hence why we pass `None`.
+		env.addToAuto(macroName, apply_macro_gen(numOfArgs=None))
+
+		# Return
+		return [None], env, len(ACL2ast)
 
 
 def tr_mbe(ACL2ast, env):
@@ -1294,8 +1307,14 @@ def _bstar_helper(bindersRemaining, results, env):
 					# Merge blocks
 					recursedSail = recursedSail[0].getExprs() + recursedSail[1:]
 				toReturn = SailBlock(exprSail + recursedSail)
+		elif isinstance(exprSail[0], SailBoundVar) and bv[0].getName() == exprSail[0].getName():
+			# Omit superfluous 'let x = x in ...' bindings
+			toReturn = recursedSail[0]
 		else:
 			toReturn = SailLet(bv[0], exprSail, recursedSail)
+
+		# if isinstance(toReturn, SailBlock) and len(toReturn.getExprs()) == 1:
+		# 	toReturn = toReturn.getExprs()[0]
 
 	# b must be a list here.
 	elif isinstance(b, list):
@@ -2783,6 +2802,34 @@ def apply_dependent_fn_gen(funcToApply_gen, numOfArgs, keywordStruct=None, coerc
 def apply_fn_gen(funcToApply, numOfArgs, keywordStruct=None):
 	return apply_dependent_fn_gen(lambda actuals, env: funcToApply, numOfArgs, keywordStruct)
 
+def expand_macro_app(ACL2ast, env, useTrans1=True):
+	# DO NOT check the number of arguments presented as it may be wrong (e.g. in the presence of `&key` keyword
+	# arguments.
+
+	# Check that we have the correct number of items if necessary
+	# if numOfArgs != None and len(ACL2ast) != numOfArgs + 1:
+	# 	print("Error: macro application has an incorrect number of arguments")
+	# 	print(f"Form:\n{ACL2ast}")
+	# 	print(f"Expected: {numOfArgs} args")
+	# 	sys.exit(1)
+
+	# Construct the term to send for evaluation
+	toSend = [':trans' if not useTrans1 else ':trans1', ACL2ast]
+	if config_files.print_acl2_interactions:
+		print(f'Sending this to be macro expanded: {toSend}')
+
+	# Send to the ACL2server for evaluation
+	newAST = env.evalACL2(toSend, debracket=True)
+	if config_files.print_acl2_interactions:
+		print(f'\nReceived this in return: {newAST}')
+
+	# Deconstruct the newAST to get the result
+	newAST = newAST[0]
+	if config_files.print_acl2_interactions:
+		print(f'\nAs an AST: {newAST}')
+
+	return newAST
+
 def apply_macro_gen(numOfArgs, useTrans1=True):
 	"""
 	Similar to `apply_fn_gen`, this function generates another function which
@@ -2798,31 +2845,7 @@ def apply_macro_gen(numOfArgs, useTrans1=True):
 		- fn : as above
 	"""
 	def apply_macro_inner(ACL2ast, env):
-
-		# DO NOT check the number of arguments presented as it may be wrong (e.g. in the presence of `&key` keyword
-		# arguments.
-
-		# Check that we have the correct number of items if necessary
-		# if numOfArgs != None and len(ACL2ast) != numOfArgs + 1:
-		# 	print("Error: macro application has an incorrect number of arguments")
-		# 	print(f"Form:\n{ACL2ast}")
-		# 	print(f"Expected: {numOfArgs} args")
-		# 	sys.exit(1)
-
-		# Construct the term to send for evaluation
-		toSend = [':trans' if not useTrans1 else ':trans1', ACL2ast]
-		if config_files.print_acl2_interactions:
-			print(f'Sending this to be macro expanded: {toSend}')
-
-		# Send to the ACL2server for evaluation
-		newAST = env.evalACL2(toSend, debracket=True)
-		if config_files.print_acl2_interactions:
-			print(f'\nReceived this in return: {newAST}')
-
-		# Deconstruct the newAST to get the result
-		newAST = newAST[0]
-		if config_files.print_acl2_interactions:
-			print(f'\nAs an AST: {newAST}')
+		newAST = expand_macro_app(ACL2ast, env, useTrans1)
 
 		# Translate this generated ast
 		(SailAST, env, _) = transform.transformACL2asttoSail(newAST, env)

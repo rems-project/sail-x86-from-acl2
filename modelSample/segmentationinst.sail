@@ -25,9 +25,9 @@ else ();
 let p2 : bits(8) = (prefixes_get_seg(prefixes)) in
 let p4? : bool = ((0x67) == (prefixes_get_adr(prefixes))) in
 let seg_reg : {|0, 1, 2, 3, 4, 5|} = (select_segment_register(proc_mode, p2, p4?, mod_var, r_m, sib)) in
-let base_size : {|4, 8|} = (if n64_bit_modep()
+let base_size : {|4, 8|} = { (if n64_bit_modep()
 then 8
-else 4) in
+else 4) } in
 let base_size_plus_2 : {|6, 10|} = ((2) + (base_size)) in
 let inst_ac? : bool = (false) in
 let (flg0, mem, increment_rip_by, addr) : (option(string), int, {|0, 1, 2, 4|}, sbits(64)) = (x86_operand_from_modr_m_and_sib_bytes(proc_mode, 0b0, base_size_plus_2, inst_ac?, true, seg_reg, p4?, temp_rip, rex_byte, r_m, mod_var, sib, 0b000)) in
@@ -46,7 +46,7 @@ then throw(Emsg("A fault occurred.  Original ACL2 AST:
 ['!!FAULT-FRESH', ':GP', '0', ':INSTRUCTION-LENGTH', 'BADLENGTH?']"))
 else ();
 let p3? : bool = ((0x66) == (prefixes_get_opr(prefixes))) in
-let operand_size : {|2, 4, 8|} = (if (base_size) == (8)
+let operand_size : {|2, 4, 8|} = { (if (base_size) == (8)
 then 8
 else let cs_attr : bits(16) = (seg_hidden_attrs[1]) in
 let cs_d : bits(1) = (code_segment_descriptor_attributesbits_get_d(cs_attr)) in
@@ -56,12 +56,12 @@ then 2
 else 4
 else if p3?
 then 4
-else 2) in
-let base_bits : {|24, 32, 64|} = (match operand_size {
+else 2) } in
+let base_bits : {|24, 32, 64|} = { (match operand_size {
 8 => 64,
 4 => 32,
 _ => 24
-}) in
+}) } in
 let gdtr_limit : bits(80) = (set_gdtr_idtrbits_get_limit(get_slice_int(16, mem, 0), 0x0000_0000_0000_0000_0000)) in
 let gdtr : bits(80) = (set_gdtr_idtrbits_get_base_addr(sail_mask(64, get_slice_int(base_bits, mem, 16)), gdtr_limit)) in
 { strs[0] = gdtr;
@@ -96,9 +96,9 @@ else ();
 let p2 : bits(8) = (prefixes_get_seg(prefixes)) in
 let p4? : bool = ((0x67) == (prefixes_get_adr(prefixes))) in
 let seg_reg : {|0, 1, 2, 3, 4, 5|} = (select_segment_register(proc_mode, p2, p4?, mod_var, r_m, sib)) in
-let base_size : {|4, 8|} = (if n64_bit_modep()
+let base_size : {|4, 8|} = { (if n64_bit_modep()
 then 8
-else 4) in
+else 4) } in
 let base_size_plus_2 : {|6, 10|} = ((2) + (base_size)) in
 let inst_ac? : bool = (false) in
 let (flg0, mem, increment_rip_by, addr) : (option(string), int, {|0, 1, 2, 4|}, sbits(64)) = (x86_operand_from_modr_m_and_sib_bytes(proc_mode, 0b0, base_size_plus_2, inst_ac?, true, seg_reg, p4?, temp_rip, rex_byte, r_m, mod_var, sib, 0b000)) in
@@ -117,7 +117,7 @@ then throw(Emsg("A fault occurred.  Original ACL2 AST:
 ['!!FAULT-FRESH', ':GP', '0', ':INSTRUCTION-LENGTH', 'BADLENGTH?']"))
 else ();
 let p3? : bool = ((0x66) == (prefixes_get_opr(prefixes))) in
-let operand_size : {|2, 4, 8|} = (if (base_size) == (8)
+let operand_size : {|2, 4, 8|} = { (if (base_size) == (8)
 then 8
 else let cs_attr : bits(16) = (seg_hidden_attrs[1]) in
 let cs_d : bits(1) = (code_segment_descriptor_attributesbits_get_d(cs_attr)) in
@@ -127,12 +127,12 @@ then 2
 else 4
 else if p3?
 then 4
-else 2) in
-let base_bits : {|24, 32, 64|} = (match operand_size {
+else 2) } in
+let base_bits : {|24, 32, 64|} = { (match operand_size {
 8 => 64,
 4 => 32,
 _ => 24
-}) in
+}) } in
 let idtr_limit : bits(80) = (set_gdtr_idtrbits_get_limit(get_slice_int(16, mem, 0), 0x0000_0000_0000_0000_0000)) in
 let idtr : bits(80) = (set_gdtr_idtrbits_get_base_addr(sail_mask(64, get_slice_int(base_bits, mem, 16)), idtr_limit)) in
 { strs[1] = idtr;
@@ -192,9 +192,9 @@ let sel_rpl : bits(2) = (segment_selectorbits_get_rpl(bits_of_int(selector, 16))
 then throw(Emsg("Model state error: :GP-SELECTOR-DOES-NOT-POINT-TO-GDT"))
 else ();
 let gdtr : bits(80) = (strs[0]) in
-let gdtr_base : bits(64) = (if (proc_mode) == (0)
+let gdtr_base : bits(64) = { (if (proc_mode) == (0)
 then gdtr_idtrbits_get_base_addr(gdtr)
-else sail_zero_extend(truncate(gdtr_idtrbits_get_base_addr(gdtr), 32), 64)) in
+else sail_zero_extend(truncate(gdtr_idtrbits_get_base_addr(gdtr), 32), 64)) } in
 let gdtr_limit : bits(16) = (gdtr_idtrbits_get_limit(gdtr)) in
 let largest_address : int = ((ash(unsigned(sel_index), 3)) + (if (proc_mode) == (0)
 then 15
@@ -208,9 +208,9 @@ else let descriptor_addr : int = ((unsigned(gdtr_base)) + (unsigned(bits_of_int(
 { if not_bool(canonical_address_p(descriptor_addr))
 then throw(Emsg("Model state error: :DESCRIPTOR-ADDR-VIRTUAL-MEMORY-ERROR"))
 else ();
-let descriptor_size : {|8, 16|} = (if (proc_mode) == (0)
+let descriptor_size : {|8, 16|} = { (if (proc_mode) == (0)
 then 16
-else 8) in
+else 8) } in
 let (flg, descriptor) : (option(string), int) = (rml_size(descriptor_size, bits_of_int(descriptor_addr, 48), ":X")) in
 let descriptor : bits(128) = (bits_of_int(descriptor, 128)) in
 { if is_some(flg)

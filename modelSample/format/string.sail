@@ -16,72 +16,90 @@ function x86_movs (proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode, m
     let select_byte_operand : bool = 0xa4 == opcode;
     let operand_size : {|1, 2, 4, 8|} = select_operand_size(proc_mode, select_byte_operand, rex_byte, false, prefixes, false, false, false);
     let counter_addr_size_2_4? : bool = counter_addr_size == 2 | counter_addr_size == 4;
-    let src_addr : sbits(65) = if counter_addr_size_2_4? then {
-        sail_zero_extend(rgfi_size(bits_of_int(counter_addr_size, 4), 0x6, rex_byte), 65)
-    } else {
-        sail_sign_extend(rgfi(6), 65)
+    let src_addr : sbits(65) = {
+        if counter_addr_size_2_4? then {
+            sail_zero_extend(rgfi_size(bits_of_int(counter_addr_size, 4), 0x6, rex_byte), 65)
+        } else {
+            sail_sign_extend(rgfi(6), 65)
+        }
     };
     if not_bool(counter_addr_size_2_4?) & not_bool(canonical_address_p(signed(src_addr))) then throw(Emsg("Model state error: :SRC-ADDR-NOT-CANONICAL"));
     let inst_ac? : bool = alignment_checking_enabled_p();
     let seg_reg : {|0, 1, 2, 3, 4, 5|} = select_segment_register(proc_mode, p2, p4?, mod_var, r_m, sib);
     let (flg0, src) : (option(string), int) = rme_size(proc_mode, operand_size, truncate(src_addr, 64), seg_reg, ":R", inst_ac?, struct { mem_ptr? = false });
     if is_some(flg0) then throw(Emsg("Model state error: :SRC-RME-SIZE-ERROR"));
-    let dst_addr : sbits(65) = if counter_addr_size_2_4? then {
-        sail_zero_extend(rgfi_size(bits_of_int(counter_addr_size, 4), 0x7, rex_byte), 65)
-    } else {
-        sail_sign_extend(rgfi(7), 65)
+    let dst_addr : sbits(65) = {
+        if counter_addr_size_2_4? then {
+            sail_zero_extend(rgfi_size(bits_of_int(counter_addr_size, 4), 0x7, rex_byte), 65)
+        } else {
+            sail_sign_extend(rgfi(7), 65)
+        }
     };
     if not_bool(counter_addr_size_2_4?) & not_bool(canonical_address_p(signed(dst_addr))) then throw(Emsg("Model state error: :DST-ADDR-NOT-CANONICAL"));
     let original_dst_addr : sbits(48) = truncate(dst_addr, 48);
-    let (src_addr, dst_addr) : (int, int) = match operand_size {
-      1 => if df == 0b0 then {
-          (1 + signed(truncate(src_addr, 48)), 1 + signed(truncate(dst_addr, 48)))
-      } else {
-          (-1 + signed(truncate(src_addr, 48)), -1 + signed(truncate(dst_addr, 48)))
-      },
-      2 => if df == 0b0 then {
-          (2 + signed(truncate(src_addr, 48)), 2 + signed(truncate(dst_addr, 48)))
-      } else {
-          (-2 + signed(truncate(src_addr, 48)), -2 + signed(truncate(dst_addr, 48)))
-      },
-      4 => if df == 0b0 then {
-          (4 + signed(truncate(src_addr, 48)), 4 + signed(truncate(dst_addr, 48)))
-      } else {
-          (-4 + signed(truncate(src_addr, 48)), -4 + signed(truncate(dst_addr, 48)))
-      },
-      _ => if df == 0b0 then {
-          (8 + signed(truncate(src_addr, 48)), 8 + signed(truncate(dst_addr, 48)))
-      } else {
-          (-8 + signed(truncate(src_addr, 48)), -8 + signed(truncate(dst_addr, 48)))
-      }
+    let (src_addr, dst_addr) : (int, int) = {
+        match operand_size {
+          1 => {
+              if df == 0b0 then {
+                  (1 + signed(truncate(src_addr, 48)), 1 + signed(truncate(dst_addr, 48)))
+              } else {
+                  (-1 + signed(truncate(src_addr, 48)), -1 + signed(truncate(dst_addr, 48)))
+              }
+          },
+          2 => {
+              if df == 0b0 then {
+                  (2 + signed(truncate(src_addr, 48)), 2 + signed(truncate(dst_addr, 48)))
+              } else {
+                  (-2 + signed(truncate(src_addr, 48)), -2 + signed(truncate(dst_addr, 48)))
+              }
+          },
+          4 => {
+              if df == 0b0 then {
+                  (4 + signed(truncate(src_addr, 48)), 4 + signed(truncate(dst_addr, 48)))
+              } else {
+                  (-4 + signed(truncate(src_addr, 48)), -4 + signed(truncate(dst_addr, 48)))
+              }
+          },
+          _ => {
+              if df == 0b0 then {
+                  (8 + signed(truncate(src_addr, 48)), 8 + signed(truncate(dst_addr, 48)))
+              } else {
+                  (-8 + signed(truncate(src_addr, 48)), -8 + signed(truncate(dst_addr, 48)))
+              }
+          }
+        }
     };
     let src_addr : sbits(49) = bits_of_int(src_addr, 49);
     let dst_addr : sbits(49) = bits_of_int(dst_addr, 49);
     let flg1 : option(string) = wme_size(proc_mode, operand_size, sail_sign_extend(original_dst_addr, 64), 0, nat_of_int(src), inst_ac?, struct { mem_ptr? = false });
     if is_some(flg1) then throw(Emsg("Model state error: :WME-SIZE-ERROR"));
     (match group_1_prefix {
-      243 => let counter : bits(64) = rgfi_size(bits_of_int(counter_addr_size, 4), 0x1, rex_byte) in
-      let counter : bits(64) = sail_mask(64, trunc(counter_addr_size, bits_of_int(unsigned(counter) - 1, 64))) in
-        if counter == 0x0000000000000000 | truncate(let rflags_var : bits(32) = rflags in
-          sail_zero_extend(rflagsbits_get_zf(rflags_var), 2), 1) == 0b0 then {
-            write_rgfi_size(bits_of_int(counter_addr_size, 4), 0x1, unsigned(counter), rex_byte)
-        } else {
-            {
-                write_rgfi_size(bits_of_int(counter_addr_size, 4), 0x1, unsigned(counter), rex_byte);
-                write_iptr(proc_mode, temp_rip)
-            }
-        },
-      242 => let counter : bits(64) = rgfi_size(bits_of_int(counter_addr_size, 4), 0x1, rex_byte) in
-      let counter : bits(64) = sail_mask(64, trunc(counter_addr_size, bits_of_int(unsigned(counter) - 1, 64))) in
-        if counter == 0x0000000000000000 | truncate(let rflags_var : bits(32) = rflags in
-          sail_zero_extend(rflagsbits_get_zf(rflags_var), 2), 1) == 0b1 then {
-            {
-                write_rgfi_size(bits_of_int(counter_addr_size, 4), 0x1, unsigned(counter), rex_byte);
-                write_iptr(proc_mode, temp_rip)
-            }
-        } else {
-            write_rgfi_size(bits_of_int(counter_addr_size, 4), 0x1, unsigned(counter), rex_byte)
-        },
+      243 => {
+          let counter : bits(64) = rgfi_size(bits_of_int(counter_addr_size, 4), 0x1, rex_byte);
+          let counter : bits(64) = sail_mask(64, trunc(counter_addr_size, bits_of_int(unsigned(counter) - 1, 64)));
+          if counter == 0x0000000000000000 | truncate(let rflags_var : bits(32) = rflags in
+            sail_zero_extend(rflagsbits_get_zf(rflags_var), 2), 1) == 0b0 then {
+              write_rgfi_size(bits_of_int(counter_addr_size, 4), 0x1, unsigned(counter), rex_byte)
+          } else {
+              {
+                  write_rgfi_size(bits_of_int(counter_addr_size, 4), 0x1, unsigned(counter), rex_byte);
+                  write_iptr(proc_mode, temp_rip)
+              }
+          }
+      },
+      242 => {
+          let counter : bits(64) = rgfi_size(bits_of_int(counter_addr_size, 4), 0x1, rex_byte);
+          let counter : bits(64) = sail_mask(64, trunc(counter_addr_size, bits_of_int(unsigned(counter) - 1, 64)));
+          if counter == 0x0000000000000000 | truncate(let rflags_var : bits(32) = rflags in
+            sail_zero_extend(rflagsbits_get_zf(rflags_var), 2), 1) == 0b1 then {
+              {
+                  write_rgfi_size(bits_of_int(counter_addr_size, 4), 0x1, unsigned(counter), rex_byte);
+                  write_iptr(proc_mode, temp_rip)
+              }
+          } else {
+              write_rgfi_size(bits_of_int(counter_addr_size, 4), 0x1, unsigned(counter), rex_byte)
+          }
+      },
       _ => write_iptr(proc_mode, temp_rip)
     }) : unit;
     (match counter_addr_size {
@@ -113,88 +131,92 @@ function x86_cmps (proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode, m
     let select_byte_operand : bool = 0xa6 == opcode;
     let operand_size : {|1, 2, 4, 8|} = select_operand_size(proc_mode, select_byte_operand, rex_byte, false, prefixes, false, false, false);
     let counter_addr_size_2_4? : bool = counter_addr_size == 2 | counter_addr_size == 4;
-    let src_addr : sbits(65) = if counter_addr_size_2_4? then {
-        sail_zero_extend(rgfi_size(bits_of_int(counter_addr_size, 4), 0x6, rex_byte), 65)
-    } else {
-        sail_sign_extend(rgfi(6), 65)
+    let src_addr : sbits(65) = {
+        if counter_addr_size_2_4? then {
+            sail_zero_extend(rgfi_size(bits_of_int(counter_addr_size, 4), 0x6, rex_byte), 65)
+        } else {
+            sail_sign_extend(rgfi(6), 65)
+        }
     };
     if not_bool(counter_addr_size_2_4?) & not_bool(canonical_address_p(signed(src_addr))) then throw(Emsg("Model state error: :SRC-ADDR-NOT-CANONICAL"));
     let inst_ac? : bool = alignment_checking_enabled_p();
     let seg_reg : {|0, 1, 2, 3, 4, 5|} = select_segment_register(proc_mode, p2, p4?, mod_var, r_m, sib);
     let (flg0, src) : (option(string), int) = rme_size(proc_mode, operand_size, truncate(src_addr, 64), seg_reg, ":R", inst_ac?, struct { mem_ptr? = false });
     if is_some(flg0) then throw(Emsg("Model state error: :SRC-RME-SIZE-ERROR"));
-    let dst_addr : sbits(65) = if counter_addr_size_2_4? then {
-        sail_zero_extend(rgfi_size(bits_of_int(counter_addr_size, 4), 0x7, rex_byte), 65)
-    } else {
-        sail_sign_extend(rgfi(7), 65)
+    let dst_addr : sbits(65) = {
+        if counter_addr_size_2_4? then {
+            sail_zero_extend(rgfi_size(bits_of_int(counter_addr_size, 4), 0x7, rex_byte), 65)
+        } else {
+            sail_sign_extend(rgfi(7), 65)
+        }
     };
     if not_bool(counter_addr_size_2_4?) & not_bool(canonical_address_p(signed(dst_addr))) then throw(Emsg("Model state error: :DST-ADDR-NOT-CANONICAL"));
     let (flg0, dst) : (option(string), int) = rme_size(proc_mode, operand_size, truncate(dst_addr, 64), 0, ":R", inst_ac?, struct { mem_ptr? = false });
     if is_some(flg0) then throw(Emsg("Model state error: :DST-RME-SIZE-ERROR"));
     let input_rflags : bits(32) = rflags;
-    let (result, output_rflags, undefined_flags) : (bits(64), bits(32), bits(32)) = match operand_size {
-      1 => let (elem0, elem1, elem2) : (bits(8), bits(32), bits(32)) =
-        gpr_arith_logic_spec_1(4, bits_of_int(dst, 8), bits_of_int(src, 8), input_rflags)
-      in
-        (sail_zero_extend(elem0, 64), elem1, elem2),
-      2 => let (elem0, elem1, elem2) : (bits(16), bits(32), bits(32)) =
-        gpr_arith_logic_spec_2(4, bits_of_int(dst, 16), bits_of_int(src, 16), input_rflags)
-      in
-        (sail_zero_extend(elem0, 64), elem1, elem2),
-      4 => let (elem0, elem1, elem2) : (bits(32), bits(32), bits(32)) =
-        gpr_arith_logic_spec_4(4, bits_of_int(dst, 32), bits_of_int(src, 32), input_rflags)
-      in
-        (sail_zero_extend(elem0, 64), elem1, elem2),
-      _ => gpr_arith_logic_spec_8(4, bits_of_int(dst, 64), bits_of_int(src, 64), input_rflags)
-    };
+    let (result, output_rflags, undefined_flags) : (bits(64), bits(32), bits(32)) = gpr_arith_logic_spec(operand_size, 4, bits_of_int(dst, 64), bits_of_int(src, 64), input_rflags);
     write_user_rflags(output_rflags, undefined_flags);
-    let (src_addr, dst_addr) : (int, int) = match operand_size {
-      1 => if df == 0b0 then {
-          (signed(truncate(src_addr, 48)) + 1, signed(truncate(dst_addr, 48)) + 1)
-      } else {
-          (signed(truncate(src_addr, 48)) - 1, signed(truncate(dst_addr, 48)) - 1)
-      },
-      2 => if df == 0b0 then {
-          (signed(truncate(src_addr, 48)) + 2, signed(truncate(dst_addr, 48)) + 2)
-      } else {
-          (signed(truncate(src_addr, 48)) - 2, signed(truncate(dst_addr, 48)) - 2)
-      },
-      4 => if df == 0b0 then {
-          (signed(truncate(src_addr, 48)) + 4, signed(truncate(dst_addr, 48)) + 4)
-      } else {
-          (signed(truncate(src_addr, 48)) - 4, signed(truncate(dst_addr, 48)) - 4)
-      },
-      _ => if df == 0b0 then {
-          (signed(truncate(src_addr, 48)) + 8, signed(truncate(dst_addr, 48)) + 8)
-      } else {
-          (signed(truncate(src_addr, 48)) - 8, signed(truncate(dst_addr, 48)) - 8)
-      }
+    let (src_addr, dst_addr) : (int, int) = {
+        match operand_size {
+          1 => {
+              if df == 0b0 then {
+                  (signed(truncate(src_addr, 48)) + 1, signed(truncate(dst_addr, 48)) + 1)
+              } else {
+                  (signed(truncate(src_addr, 48)) - 1, signed(truncate(dst_addr, 48)) - 1)
+              }
+          },
+          2 => {
+              if df == 0b0 then {
+                  (signed(truncate(src_addr, 48)) + 2, signed(truncate(dst_addr, 48)) + 2)
+              } else {
+                  (signed(truncate(src_addr, 48)) - 2, signed(truncate(dst_addr, 48)) - 2)
+              }
+          },
+          4 => {
+              if df == 0b0 then {
+                  (signed(truncate(src_addr, 48)) + 4, signed(truncate(dst_addr, 48)) + 4)
+              } else {
+                  (signed(truncate(src_addr, 48)) - 4, signed(truncate(dst_addr, 48)) - 4)
+              }
+          },
+          _ => {
+              if df == 0b0 then {
+                  (signed(truncate(src_addr, 48)) + 8, signed(truncate(dst_addr, 48)) + 8)
+              } else {
+                  (signed(truncate(src_addr, 48)) - 8, signed(truncate(dst_addr, 48)) - 8)
+              }
+          }
+        }
     };
     let src_addr : sbits(49) = bits_of_int(src_addr, 49);
     let dst_addr : sbits(49) = bits_of_int(dst_addr, 49);
     (match group_1_prefix {
-      243 => let counter : bits(64) = rgfi_size(bits_of_int(counter_addr_size, 4), 0x1, rex_byte) in
-      let counter : bits(64) = sail_mask(64, trunc(counter_addr_size, bits_of_int(unsigned(counter) - 1, 64))) in
-        if counter == 0x0000000000000000 | truncate(let rflags_var : bits(32) = rflags in
-          sail_zero_extend(rflagsbits_get_zf(rflags_var), 2), 1) == 0b0 then {
-            write_rgfi_size(bits_of_int(counter_addr_size, 4), 0x1, unsigned(counter), rex_byte)
-        } else {
-            {
-                write_rgfi_size(bits_of_int(counter_addr_size, 4), 0x1, unsigned(counter), rex_byte);
-                write_iptr(proc_mode, temp_rip)
-            }
-        },
-      242 => let counter : bits(64) = rgfi_size(bits_of_int(counter_addr_size, 4), 0x1, rex_byte) in
-      let counter : bits(64) = sail_mask(64, trunc(counter_addr_size, bits_of_int(unsigned(counter) - 1, 64))) in
-        if counter == 0x0000000000000000 | truncate(let rflags_var : bits(32) = rflags in
-          sail_zero_extend(rflagsbits_get_zf(rflags_var), 2), 1) == 0b1 then {
-            {
-                write_rgfi_size(bits_of_int(counter_addr_size, 4), 0x1, unsigned(counter), rex_byte);
-                write_iptr(proc_mode, temp_rip)
-            }
-        } else {
-            write_rgfi_size(bits_of_int(counter_addr_size, 4), 0x1, unsigned(counter), rex_byte)
-        },
+      243 => {
+          let counter : bits(64) = rgfi_size(bits_of_int(counter_addr_size, 4), 0x1, rex_byte);
+          let counter : bits(64) = sail_mask(64, trunc(counter_addr_size, bits_of_int(unsigned(counter) - 1, 64)));
+          if counter == 0x0000000000000000 | truncate(let rflags_var : bits(32) = rflags in
+            sail_zero_extend(rflagsbits_get_zf(rflags_var), 2), 1) == 0b0 then {
+              write_rgfi_size(bits_of_int(counter_addr_size, 4), 0x1, unsigned(counter), rex_byte)
+          } else {
+              {
+                  write_rgfi_size(bits_of_int(counter_addr_size, 4), 0x1, unsigned(counter), rex_byte);
+                  write_iptr(proc_mode, temp_rip)
+              }
+          }
+      },
+      242 => {
+          let counter : bits(64) = rgfi_size(bits_of_int(counter_addr_size, 4), 0x1, rex_byte);
+          let counter : bits(64) = sail_mask(64, trunc(counter_addr_size, bits_of_int(unsigned(counter) - 1, 64)));
+          if counter == 0x0000000000000000 | truncate(let rflags_var : bits(32) = rflags in
+            sail_zero_extend(rflagsbits_get_zf(rflags_var), 2), 1) == 0b1 then {
+              {
+                  write_rgfi_size(bits_of_int(counter_addr_size, 4), 0x1, unsigned(counter), rex_byte);
+                  write_iptr(proc_mode, temp_rip)
+              }
+          } else {
+              write_rgfi_size(bits_of_int(counter_addr_size, 4), 0x1, unsigned(counter), rex_byte)
+          }
+      },
       _ => write_iptr(proc_mode, temp_rip)
     }) : unit;
     (match counter_addr_size {
@@ -220,10 +242,12 @@ function x86_stos (proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode, m
     let df : bits(1) = truncate(let rflags_var : bits(32) = rflags in sail_zero_extend(rflagsbits_get_df(rflags_var), 2), 1);
     let counter_addr_size : {|2, 4, 8|} = select_address_size(proc_mode, p4?);
     let counter_addr_size_2_4? : bool = counter_addr_size == 2 | counter_addr_size == 4;
-    let dst_addr : sbits(65) = if counter_addr_size_2_4? then {
-        sail_zero_extend(rgfi_size(bits_of_int(counter_addr_size, 4), 0x7, rex_byte), 65)
-    } else {
-        sail_sign_extend(rgfi(7), 65)
+    let dst_addr : sbits(65) = {
+        if counter_addr_size_2_4? then {
+            sail_zero_extend(rgfi_size(bits_of_int(counter_addr_size, 4), 0x7, rex_byte), 65)
+        } else {
+            sail_sign_extend(rgfi(7), 65)
+        }
     };
     if not_bool(counter_addr_size_2_4?) & not_bool(canonical_address_p(signed(dst_addr))) then throw(Emsg("Model state error: :DST-ADDR-NOT-CANONICAL"));
     let select_byte_operand : bool = 0xaa == opcode;
@@ -233,50 +257,62 @@ function x86_stos (proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode, m
     let flg0 : option(string) = wme_size(proc_mode, operand_size, truncate(dst_addr, 64), 0, unsigned(rax_var), inst_ac?, struct { mem_ptr? = false });
     if is_some(flg0) then throw(Emsg("Model state error: :WME-SIZE-ERROR"));
     let dst_addr : sbits(49) = bits_of_int((match operand_size {
-      1 => if df == 0b0 then {
-          1 + signed(truncate(dst_addr, 48))
-      } else {
-          -1 + signed(truncate(dst_addr, 48))
+      1 => {
+          if df == 0b0 then {
+              1 + signed(truncate(dst_addr, 48))
+          } else {
+              -1 + signed(truncate(dst_addr, 48))
+          }
       },
-      2 => if df == 0b0 then {
-          2 + signed(truncate(dst_addr, 48))
-      } else {
-          -2 + signed(truncate(dst_addr, 48))
+      2 => {
+          if df == 0b0 then {
+              2 + signed(truncate(dst_addr, 48))
+          } else {
+              -2 + signed(truncate(dst_addr, 48))
+          }
       },
-      4 => if df == 0b0 then {
-          4 + signed(truncate(dst_addr, 48))
-      } else {
-          -4 + signed(truncate(dst_addr, 48))
+      4 => {
+          if df == 0b0 then {
+              4 + signed(truncate(dst_addr, 48))
+          } else {
+              -4 + signed(truncate(dst_addr, 48))
+          }
       },
-      _ => if df == 0b0 then {
-          8 + signed(truncate(dst_addr, 48))
-      } else {
-          -8 + signed(truncate(dst_addr, 48))
+      _ => {
+          if df == 0b0 then {
+              8 + signed(truncate(dst_addr, 48))
+          } else {
+              -8 + signed(truncate(dst_addr, 48))
+          }
       }
     }) : int, 49);
     (match group_1_prefix {
-      243 => let counter : bits(64) = rgfi_size(bits_of_int(counter_addr_size, 4), 0x1, rex_byte) in
-      let counter : bits(64) = sail_mask(64, trunc(counter_addr_size, bits_of_int(unsigned(counter) - 1, 64))) in
-        if counter == 0x0000000000000000 | truncate(let rflags_var : bits(32) = rflags in
-          sail_zero_extend(rflagsbits_get_zf(rflags_var), 2), 1) == 0b0 then {
-            write_rgfi_size(bits_of_int(counter_addr_size, 4), 0x1, unsigned(counter), rex_byte)
-        } else {
-            {
-                write_rgfi_size(bits_of_int(counter_addr_size, 4), 0x1, unsigned(counter), rex_byte);
-                write_iptr(proc_mode, temp_rip)
-            }
-        },
-      242 => let counter : bits(64) = rgfi_size(bits_of_int(counter_addr_size, 4), 0x1, rex_byte) in
-      let counter : bits(64) = sail_mask(64, trunc(counter_addr_size, bits_of_int(unsigned(counter) - 1, 64))) in
-        if counter == 0x0000000000000000 | truncate(let rflags_var : bits(32) = rflags in
-          sail_zero_extend(rflagsbits_get_zf(rflags_var), 2), 1) == 0b1 then {
-            {
-                write_rgfi_size(bits_of_int(counter_addr_size, 4), 0x1, unsigned(counter), rex_byte);
-                write_iptr(proc_mode, temp_rip)
-            }
-        } else {
-            write_rgfi_size(bits_of_int(counter_addr_size, 4), 0x1, unsigned(counter), rex_byte)
-        },
+      243 => {
+          let counter : bits(64) = rgfi_size(bits_of_int(counter_addr_size, 4), 0x1, rex_byte);
+          let counter : bits(64) = sail_mask(64, trunc(counter_addr_size, bits_of_int(unsigned(counter) - 1, 64)));
+          if counter == 0x0000000000000000 | truncate(let rflags_var : bits(32) = rflags in
+            sail_zero_extend(rflagsbits_get_zf(rflags_var), 2), 1) == 0b0 then {
+              write_rgfi_size(bits_of_int(counter_addr_size, 4), 0x1, unsigned(counter), rex_byte)
+          } else {
+              {
+                  write_rgfi_size(bits_of_int(counter_addr_size, 4), 0x1, unsigned(counter), rex_byte);
+                  write_iptr(proc_mode, temp_rip)
+              }
+          }
+      },
+      242 => {
+          let counter : bits(64) = rgfi_size(bits_of_int(counter_addr_size, 4), 0x1, rex_byte);
+          let counter : bits(64) = sail_mask(64, trunc(counter_addr_size, bits_of_int(unsigned(counter) - 1, 64)));
+          if counter == 0x0000000000000000 | truncate(let rflags_var : bits(32) = rflags in
+            sail_zero_extend(rflagsbits_get_zf(rflags_var), 2), 1) == 0b1 then {
+              {
+                  write_rgfi_size(bits_of_int(counter_addr_size, 4), 0x1, unsigned(counter), rex_byte);
+                  write_iptr(proc_mode, temp_rip)
+              }
+          } else {
+              write_rgfi_size(bits_of_int(counter_addr_size, 4), 0x1, unsigned(counter), rex_byte)
+          }
+      },
       _ => write_iptr(proc_mode, temp_rip)
     }) : unit;
     (match counter_addr_size {

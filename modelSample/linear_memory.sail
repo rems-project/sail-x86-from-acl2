@@ -200,20 +200,20 @@ function rml_size (nbytes, addr, r_x) =
 8 => rml64(addr, r_x),
 10 => rml80(addr, r_x),
 16 => rml128(addr, r_x),
-_ => if canonical_address_p((-1) + ((nbytes) + (signed(addr))))
+_ => { if canonical_address_p((-1) + ((nbytes) + (signed(addr))))
 then rb(nbytes, signed(addr), r_x)
-else (Some("rml-size"), 0)
+else (Some("rml-size"), 0) }
 }) : (option(string), int)
 
 val riml_size : ({|1, 2, 4, 8|}, sbits(48), string) -> (option(string), sbits(64)) effect {escape, rmem, rreg}
 function riml_size (nbytes, addr, r_x) =
 (match nbytes {
-1 => let (elem0, elem1) : (option(string), sbits(8)) = (riml08(addr, r_x)) in
-(elem0, sail_sign_extend(elem1, 64)),
-2 => let (elem0, elem1) : (option(string), sbits(16)) = (riml16(addr, r_x)) in
-(elem0, sail_sign_extend(elem1, 64)),
-4 => let (elem0, elem1) : (option(string), sbits(32)) = (riml32(addr, r_x)) in
-(elem0, sail_sign_extend(elem1, 64)),
+1 => { let (elem0, elem1) : (option(string), sbits(8)) = (riml08(addr, r_x)) in
+(elem0, sail_sign_extend(elem1, 64)) },
+2 => { let (elem0, elem1) : (option(string), sbits(16)) = (riml16(addr, r_x)) in
+(elem0, sail_sign_extend(elem1, 64)) },
+4 => { let (elem0, elem1) : (option(string), sbits(32)) = (riml32(addr, r_x)) in
+(elem0, sail_sign_extend(elem1, 64)) },
 8 => riml64(addr, r_x),
 _ => (Some("riml-size"), bits_of_int(nbytes, 64))
 }) : (option(string), sbits(64))
@@ -228,9 +228,9 @@ function wml_size (nbytes, addr, sailval) =
 8 => wml64(addr, bits_of_int(sailval, 64)),
 10 => wml80(addr, bits_of_int(sailval, 80)),
 16 => wml128(addr, bits_of_int(sailval, 128)),
-_ => if canonical_address_p((-1) + ((nbytes) + (signed(addr))))
+_ => { if canonical_address_p((-1) + ((nbytes) + (signed(addr))))
 then wb(nbytes, signed(addr), ":W", sailval)
-else Some("wml-size")
+else Some("wml-size") }
 }) : option(string)
 
 val wiml_size : ({|1, 2, 4, 8|}, sbits(48), int) -> option(string) effect {eamem, escape, rreg, wmv}

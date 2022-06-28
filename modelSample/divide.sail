@@ -44,22 +44,22 @@ else ();
 let rax_var : bits(64) = (rgfi_size(bits_of_int(if select_byte_operand
 then 2
 else reg_mem_size, 4), 0x0, rex_byte)) in
-let rdx_var : bits(64) = (if select_byte_operand
+let rdx_var : bits(64) = { (if select_byte_operand
 then 0x0000_0000_0000_0000
-else rgfi_size(bits_of_int(reg_mem_size, 4), 0x2, rex_byte)) in
-let dividend : int = (if select_byte_operand
+else rgfi_size(bits_of_int(reg_mem_size, 4), 0x2, rex_byte)) } in
+let dividend : int = { (if select_byte_operand
 then unsigned(rax_var)
-else changeSlice(unsigned(rax_var), ash(reg_mem_size, 3), ash(reg_mem_size, 4), unsigned(rdx_var))) in
+else changeSlice(unsigned(rax_var), ash(reg_mem_size, 3), ash(reg_mem_size, 4), unsigned(rdx_var))) } in
 let (overflow?, quotient, remainder) : (bool, bits(128), bits(64)) = (div_spec(reg_mem_size, bits_of_int(dividend, 128), bits_of_int(reg_mem, 64))) in
 { if overflow?
 then throw(Emsg("Model state error: :UNSIGNED-DIVIDE-ERROR-OVERFLOW"))
 else ();
 (match reg_mem_size {
-1 => let result : bits(128) = (changeSlice(quotient, 8, 8, truncate(remainder, 8))) in
-write_rgfi_size(0x2, 0x0, unsigned(result), rex_byte),
-_ => { write_rgfi_size(bits_of_int(reg_mem_size, 4), 0x0, unsigned(quotient), rex_byte);
+1 => { let result : bits(128) = (changeSlice(quotient, 8, 8, truncate(remainder, 8))) in
+write_rgfi_size(0x2, 0x0, unsigned(result), rex_byte) },
+_ => { { write_rgfi_size(bits_of_int(reg_mem_size, 4), 0x0, unsigned(quotient), rex_byte);
 write_rgfi_size(bits_of_int(reg_mem_size, 4), 0x2, unsigned(remainder), rex_byte)
-}
+} }
 }) : unit;
 let rflags_var : bits(32) = (rflags) in
 let sailval : bits(1) = (undef_flg()) in
@@ -133,22 +133,22 @@ else ();
 let rax_var : bits(64) = (rgfi_size(bits_of_int(if select_byte_operand
 then 2
 else reg_mem_size, 4), 0x0, rex_byte)) in
-let rdx_var : bits(64) = (if select_byte_operand
+let rdx_var : bits(64) = { (if select_byte_operand
 then 0x0000_0000_0000_0000
-else rgfi_size(bits_of_int(reg_mem_size, 4), 0x2, rex_byte)) in
-let dividend : int = (if select_byte_operand
+else rgfi_size(bits_of_int(reg_mem_size, 4), 0x2, rex_byte)) } in
+let dividend : int = { (if select_byte_operand
 then unsigned(rax_var)
-else changeSlice(unsigned(rax_var), ash(reg_mem_size, 3), ash(reg_mem_size, 4), unsigned(rdx_var))) in
+else changeSlice(unsigned(rax_var), ash(reg_mem_size, 3), ash(reg_mem_size, 4), unsigned(rdx_var))) } in
 let (overflow?, quotient, remainder) : (bool, bits(64), bits(64)) = (idiv_spec(reg_mem_size, bits_of_int(dividend, 128), bits_of_int(reg_mem, 64))) in
 { if overflow?
 then throw(Emsg("Model state error: :UNSIGNED-DIVIDE-ERROR-OVERFLOW"))
 else ();
 (match reg_mem_size {
-1 => let result : bits(64) = (changeSlice(quotient, 8, 8, truncate(remainder, 8))) in
-write_rgfi_size(0x2, 0x0, unsigned(result), rex_byte),
-_ => { write_rgfi_size(bits_of_int(reg_mem_size, 4), 0x0, unsigned(quotient), rex_byte);
+1 => { let result : bits(64) = (changeSlice(quotient, 8, 8, truncate(remainder, 8))) in
+write_rgfi_size(0x2, 0x0, unsigned(result), rex_byte) },
+_ => { { write_rgfi_size(bits_of_int(reg_mem_size, 4), 0x0, unsigned(quotient), rex_byte);
 write_rgfi_size(bits_of_int(reg_mem_size, 4), 0x2, unsigned(remainder), rex_byte)
-}
+} }
 }) : unit;
 let rflags_var : bits(32) = (rflags) in
 let sailval : bits(1) = (undef_flg()) in

@@ -325,12 +325,11 @@ val wz32 : (bits(5), bits(32), struct_wz32) -> unit effect {escape}
 function wz32 (reg, sailval, keywords) =
 let data : bits(512) = (zmms[unsigned(reg)]) in
 let regtype : bits(3) = (bits_of_int((keywords).regtype, 3)) in
-let data : int = (match regtype {
+let data : int = { (match regtype {
 2 => loghead(128, unsigned(data)),
 3 => loghead(256, unsigned(data)),
 _ => unsigned(data)
-}) in
-let sailval : bits(32) = (sailval) in
+}) } in
 zmms[unsigned(reg)] = bits_of_int(changeSlice(data, 0, 32, unsigned(sailval)), 512)
 
 /*Write @ ( ' val ' ) to low 64 bits of a ZMM register*/
@@ -346,12 +345,11 @@ val wz64 : (bits(5), bits(64), struct_wz64) -> unit effect {escape}
 function wz64 (reg, sailval, keywords) =
 let data : bits(512) = (zmms[unsigned(reg)]) in
 let regtype : bits(3) = (bits_of_int((keywords).regtype, 3)) in
-let data : int = (match regtype {
+let data : int = { (match regtype {
 2 => loghead(128, unsigned(data)),
 3 => loghead(256, unsigned(data)),
 _ => unsigned(data)
-}) in
-let sailval : bits(64) = (sailval) in
+}) } in
 zmms[unsigned(reg)] = bits_of_int(changeSlice(data, 0, 64, unsigned(sailval)), 512)
 
 /*Write @ ( ' val ' ) to low 128 bits of a ZMM register*/
@@ -367,12 +365,11 @@ val wz128 : (bits(5), bits(128), struct_wz128) -> unit effect {escape}
 function wz128 (reg, sailval, keywords) =
 let data : bits(512) = (zmms[unsigned(reg)]) in
 let regtype : bits(3) = (bits_of_int((keywords).regtype, 3)) in
-let data : int = (match regtype {
+let data : int = { (match regtype {
 2 => loghead(128, unsigned(data)),
 3 => loghead(256, unsigned(data)),
 _ => unsigned(data)
-}) in
-let sailval : bits(128) = (sailval) in
+}) } in
 zmms[unsigned(reg)] = bits_of_int(changeSlice(data, 0, 128, unsigned(sailval)), 512)
 
 /*Functions to read/write 32/64/128 bits into the XMM 
@@ -485,8 +482,6 @@ bits_of_int(sailval, 1)
  @ ( ' mask ' ) , to the value returned by @ ( see undef-read ) .</p>*/
 val write_user_rflags : (bits(32), bits(32)) -> unit effect {escape, undef}
 function write_user_rflags (user_flags_vector, undefined_mask) =
-let user_flags_vector : bits(32) = (user_flags_vector) in
-let undefined_mask : bits(32) = (undefined_mask) in
 let input_rflags : bits(32) = (rflags) in
 { if (rflagsbits_get_cf(undefined_mask)) == (0b1)
 then { let rflags_var : bits(32) = (rflags) in

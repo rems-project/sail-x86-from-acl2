@@ -120,12 +120,13 @@ val wz32 : (bits(5), bits(32), struct_wz32) -> unit
 function wz32 (reg, sailval, keywords) = {
     let data : bits(512) = zmms[unsigned(reg)];
     let regtype : bits(3) = bits_of_int(keywords.regtype, 3);
-    let data : int = match regtype {
-      2 => loghead(128, unsigned(data)),
-      3 => loghead(256, unsigned(data)),
-      _ => unsigned(data)
+    let data : int = {
+        match regtype {
+          2 => loghead(128, unsigned(data)),
+          3 => loghead(256, unsigned(data)),
+          _ => unsigned(data)
+        }
     };
-    let sailval : bits(32) = sailval;
     zmms[unsigned(reg)] = bits_of_int(changeSlice(data, 0, 32, unsigned(sailval)), 512)
 }
 
@@ -136,12 +137,13 @@ val wz64 : (bits(5), bits(64), struct_wz64) -> unit
 function wz64 (reg, sailval, keywords) = {
     let data : bits(512) = zmms[unsigned(reg)];
     let regtype : bits(3) = bits_of_int(keywords.regtype, 3);
-    let data : int = match regtype {
-      2 => loghead(128, unsigned(data)),
-      3 => loghead(256, unsigned(data)),
-      _ => unsigned(data)
+    let data : int = {
+        match regtype {
+          2 => loghead(128, unsigned(data)),
+          3 => loghead(256, unsigned(data)),
+          _ => unsigned(data)
+        }
     };
-    let sailval : bits(64) = sailval;
     zmms[unsigned(reg)] = bits_of_int(changeSlice(data, 0, 64, unsigned(sailval)), 512)
 }
 
@@ -152,12 +154,13 @@ val wz128 : (bits(5), bits(128), struct_wz128) -> unit
 function wz128 (reg, sailval, keywords) = {
     let data : bits(512) = zmms[unsigned(reg)];
     let regtype : bits(3) = bits_of_int(keywords.regtype, 3);
-    let data : int = match regtype {
-      2 => loghead(128, unsigned(data)),
-      3 => loghead(256, unsigned(data)),
-      _ => unsigned(data)
+    let data : int = {
+        match regtype {
+          2 => loghead(128, unsigned(data)),
+          3 => loghead(256, unsigned(data)),
+          _ => unsigned(data)
+        }
     };
-    let sailval : bits(128) = sailval;
     zmms[unsigned(reg)] = bits_of_int(changeSlice(data, 0, 128, unsigned(sailval)), 512)
 }
 
@@ -241,8 +244,6 @@ function undef_flg () = {
 val write_user_rflags : (bits(32), bits(32)) -> unit
 
 function write_user_rflags (user_flags_vector, undefined_mask) = {
-    let user_flags_vector : bits(32) = user_flags_vector;
-    let undefined_mask : bits(32) = undefined_mask;
     let input_rflags : bits(32) = rflags;
     if rflagsbits_get_cf(undefined_mask) == 0b1 then {
         let rflags_var : bits(32) = rflags;

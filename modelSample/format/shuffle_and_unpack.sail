@@ -116,25 +116,33 @@ function x86_unpck?ps_op_en_rm (high_low, proc_mode, start_rip, temp_rip, prefix
     if is_some(flg) then throw(Emsg("Model state error: :RIP-INCREMENT-ERROR"));
     let badlength? : option(int) = check_instruction_length(start_rip, temp_rip, 0b000);
     if is_some(badlength?) then throw(Emsg("A fault occurred.  Original ACL2 AST:\n['!!FAULT-FRESH', ':GP', '0', ':INSTRUCTION-LENGTH', 'BADLENGTH?']"));
-    let dword0 : bits(32) = if high_low == 1 then {
-        slice(xmm, 64, 32)
-    } else {
-        slice(xmm, 0, 32)
+    let dword0 : bits(32) = {
+        if high_low == 1 then {
+            slice(xmm, 64, 32)
+        } else {
+            slice(xmm, 0, 32)
+        }
     };
-    let dword1 : bits(32) = if high_low == 1 then {
-        slice(xmm_mem, 64, 32)
-    } else {
-        slice(xmm_mem, 0, 32)
+    let dword1 : bits(32) = {
+        if high_low == 1 then {
+            slice(xmm_mem, 64, 32)
+        } else {
+            slice(xmm_mem, 0, 32)
+        }
     };
-    let dword2 : bits(32) = if high_low == 1 then {
-        slice(xmm, 96, 32)
-    } else {
-        slice(xmm, 32, 32)
+    let dword2 : bits(32) = {
+        if high_low == 1 then {
+            slice(xmm, 96, 32)
+        } else {
+            slice(xmm, 32, 32)
+        }
     };
-    let dword3 : bits(32) = if high_low == 1 then {
-        slice(xmm_mem, 96, 32)
-    } else {
-        slice(xmm_mem, 32, 32)
+    let dword3 : bits(32) = {
+        if high_low == 1 then {
+            slice(xmm_mem, 96, 32)
+        } else {
+            slice(xmm_mem, 32, 32)
+        }
     };
     let result : bits(128) = merge_4_u32s(dword3, dword2, dword1, dword0);
     write_xmmi_size(0b10000, xmm_index, unsigned(result));
@@ -162,15 +170,19 @@ function x86_unpck?pd_op_en_rm (high_low, proc_mode, start_rip, temp_rip, prefix
     if is_some(flg) then throw(Emsg("Model state error: :RIP-INCREMENT-ERROR"));
     let badlength? : option(int) = check_instruction_length(start_rip, temp_rip, 0b000);
     if is_some(badlength?) then throw(Emsg("A fault occurred.  Original ACL2 AST:\n['!!FAULT-FRESH', ':GP', '0', ':INSTRUCTION-LENGTH', 'BADLENGTH?']"));
-    let qword0 : bits(64) = if high_low == 1 then {
-        slice(xmm, 64, 64)
-    } else {
-        slice(xmm, 0, 64)
+    let qword0 : bits(64) = {
+        if high_low == 1 then {
+            slice(xmm, 64, 64)
+        } else {
+            slice(xmm, 0, 64)
+        }
     };
-    let qword1 : bits(64) = if high_low == 1 then {
-        slice(xmm_mem, 64, 64)
-    } else {
-        slice(xmm_mem, 0, 64)
+    let qword1 : bits(64) = {
+        if high_low == 1 then {
+            slice(xmm_mem, 64, 64)
+        } else {
+            slice(xmm_mem, 0, 64)
+        }
     };
     let result : bits(128) = merge_2_u64s(qword1, qword0);
     write_xmmi_size(0b10000, xmm_index, unsigned(result));

@@ -10,7 +10,9 @@ function x86_lgdt (proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode, m
     let p2 : bits(8) = prefixes_get_seg(prefixes);
     let p4? : bool = 0x67 == prefixes_get_adr(prefixes);
     let seg_reg : {|0, 1, 2, 3, 4, 5|} = select_segment_register(proc_mode, p2, p4?, mod_var, r_m, sib);
-    let base_size : {|4, 8|} = if n64_bit_modep() then 8 else 4;
+    let base_size : {|4, 8|} = {
+        if n64_bit_modep() then 8 else 4
+    };
     let base_size_plus_2 : {|6, 10|} = 2 + base_size;
     let inst_ac? : bool = false;
     let (flg0, mem, increment_rip_by, addr) : (option(string), int, {|0, 1, 2, 4|}, sbits(64)) = x86_operand_from_modr_m_and_sib_bytes(proc_mode, 0b0, base_size_plus_2, inst_ac?, true, seg_reg, p4?, temp_rip, rex_byte, r_m, mod_var, sib, 0b000);
@@ -22,17 +24,21 @@ function x86_lgdt (proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode, m
     let badlength? : option(int) = check_instruction_length(start_rip, temp_rip, 0b000);
     if is_some(badlength?) then throw(Emsg("A fault occurred.  Original ACL2 AST:\n['!!FAULT-FRESH', ':GP', '0', ':INSTRUCTION-LENGTH', 'BADLENGTH?']"));
     let p3? : bool = 0x66 == prefixes_get_opr(prefixes);
-    let operand_size : {|2, 4, 8|} = if base_size == 8 then 8 else {
-        let cs_attr : bits(16) = seg_hidden_attrs[1];
-        let cs_d : bits(1) = code_segment_descriptor_attributesbits_get_d(cs_attr);
-        if cs_d == 0b1 then {
-            if p3? then 2 else 4
-        } else if p3? then 4 else 2
+    let operand_size : {|2, 4, 8|} = {
+        if base_size == 8 then 8 else {
+            let cs_attr : bits(16) = seg_hidden_attrs[1];
+            let cs_d : bits(1) = code_segment_descriptor_attributesbits_get_d(cs_attr);
+            if cs_d == 0b1 then {
+                if p3? then 2 else 4
+            } else if p3? then 4 else 2
+        }
     };
-    let base_bits : {|24, 32, 64|} = match operand_size {
-      8 => 64,
-      4 => 32,
-      _ => 24
+    let base_bits : {|24, 32, 64|} = {
+        match operand_size {
+          8 => 64,
+          4 => 32,
+          _ => 24
+        }
     };
     let gdtr_limit : bits(80) = set_gdtr_idtrbits_get_limit(get_slice_int(16, mem, 0), 0x00000000000000000000);
     let gdtr : bits(80) = set_gdtr_idtrbits_get_base_addr(sail_mask(64, get_slice_int(base_bits, mem, 16)), gdtr_limit);
@@ -51,7 +57,9 @@ function x86_lidt (proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode, m
     let p2 : bits(8) = prefixes_get_seg(prefixes);
     let p4? : bool = 0x67 == prefixes_get_adr(prefixes);
     let seg_reg : {|0, 1, 2, 3, 4, 5|} = select_segment_register(proc_mode, p2, p4?, mod_var, r_m, sib);
-    let base_size : {|4, 8|} = if n64_bit_modep() then 8 else 4;
+    let base_size : {|4, 8|} = {
+        if n64_bit_modep() then 8 else 4
+    };
     let base_size_plus_2 : {|6, 10|} = 2 + base_size;
     let inst_ac? : bool = false;
     let (flg0, mem, increment_rip_by, addr) : (option(string), int, {|0, 1, 2, 4|}, sbits(64)) = x86_operand_from_modr_m_and_sib_bytes(proc_mode, 0b0, base_size_plus_2, inst_ac?, true, seg_reg, p4?, temp_rip, rex_byte, r_m, mod_var, sib, 0b000);
@@ -63,17 +71,21 @@ function x86_lidt (proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode, m
     let badlength? : option(int) = check_instruction_length(start_rip, temp_rip, 0b000);
     if is_some(badlength?) then throw(Emsg("A fault occurred.  Original ACL2 AST:\n['!!FAULT-FRESH', ':GP', '0', ':INSTRUCTION-LENGTH', 'BADLENGTH?']"));
     let p3? : bool = 0x66 == prefixes_get_opr(prefixes);
-    let operand_size : {|2, 4, 8|} = if base_size == 8 then 8 else {
-        let cs_attr : bits(16) = seg_hidden_attrs[1];
-        let cs_d : bits(1) = code_segment_descriptor_attributesbits_get_d(cs_attr);
-        if cs_d == 0b1 then {
-            if p3? then 2 else 4
-        } else if p3? then 4 else 2
+    let operand_size : {|2, 4, 8|} = {
+        if base_size == 8 then 8 else {
+            let cs_attr : bits(16) = seg_hidden_attrs[1];
+            let cs_d : bits(1) = code_segment_descriptor_attributesbits_get_d(cs_attr);
+            if cs_d == 0b1 then {
+                if p3? then 2 else 4
+            } else if p3? then 4 else 2
+        }
     };
-    let base_bits : {|24, 32, 64|} = match operand_size {
-      8 => 64,
-      4 => 32,
-      _ => 24
+    let base_bits : {|24, 32, 64|} = {
+        match operand_size {
+          8 => 64,
+          4 => 32,
+          _ => 24
+        }
     };
     let idtr_limit : bits(80) = set_gdtr_idtrbits_get_limit(get_slice_int(16, mem, 0), 0x00000000000000000000);
     let idtr : bits(80) = set_gdtr_idtrbits_get_base_addr(sail_mask(64, get_slice_int(base_bits, mem, 16)), idtr_limit);
@@ -106,10 +118,12 @@ function x86_lldt (proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode, m
     let sel_rpl : bits(2) = segment_selectorbits_get_rpl(bits_of_int(selector, 16));
     if sel_ti == 0b1 then throw(Emsg("Model state error: :GP-SELECTOR-DOES-NOT-POINT-TO-GDT"));
     let gdtr : bits(80) = strs[0];
-    let gdtr_base : bits(64) = if proc_mode == 0 then {
-        gdtr_idtrbits_get_base_addr(gdtr)
-    } else {
-        sail_zero_extend(truncate(gdtr_idtrbits_get_base_addr(gdtr), 32), 64)
+    let gdtr_base : bits(64) = {
+        if proc_mode == 0 then {
+            gdtr_idtrbits_get_base_addr(gdtr)
+        } else {
+            sail_zero_extend(truncate(gdtr_idtrbits_get_base_addr(gdtr), 32), 64)
+        }
     };
     let gdtr_limit : bits(16) = gdtr_idtrbits_get_limit(gdtr);
     let largest_address : int = ash(unsigned(sel_index), 3) + (if proc_mode == 0 then 15 else 7);
@@ -119,7 +133,9 @@ function x86_lldt (proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode, m
     } else {
         let descriptor_addr : int = unsigned(gdtr_base) + unsigned(bits_of_int(ash(unsigned(sel_index), 3), 16));
         if not_bool(canonical_address_p(descriptor_addr)) then throw(Emsg("Model state error: :DESCRIPTOR-ADDR-VIRTUAL-MEMORY-ERROR"));
-        let descriptor_size : {|8, 16|} = if proc_mode == 0 then 16 else 8;
+        let descriptor_size : {|8, 16|} = {
+            if proc_mode == 0 then 16 else 8
+        };
         let (flg, descriptor) : (option(string), int) = rml_size(descriptor_size, bits_of_int(descriptor_addr, 48), ":X");
         let descriptor : bits(128) = bits_of_int(descriptor, 128);
         if is_some(flg) then throw(Emsg("Model state error: :RML-SIZE-ERROR"));

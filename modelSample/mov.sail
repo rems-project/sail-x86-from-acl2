@@ -11,9 +11,9 @@ let ctx : string = ("X86-MOVSS/MOVSD-OP/EN-RM") in
 let r_m : bits(3) = (modr_m_get_r_m(modr_m)) in
 let mod_var : bits(2) = (modr_m_get_mod(modr_m)) in
 let reg : bits(3) = (modr_m_get_reg(modr_m)) in
-let operand_size : {|4, 8|} = (if (sp_dp) == (1)
+let operand_size : {|4, 8|} = { (if (sp_dp) == (1)
 then 8
-else 4) in
+else 4) } in
 let xmm_index : bits(4) = (reg_index(reg, rex_byte, 0b10)) in
 let p2 : bits(8) = (prefixes_get_seg(prefixes)) in
 let p4? : bool = ((0x67) == (prefixes_get_adr(prefixes))) in
@@ -33,9 +33,9 @@ let badlength? : option(int) = (check_instruction_length(start_rip, temp_rip, 0b
 then throw(Emsg("A fault occurred.  Original ACL2 AST:
 ['!!FAULT-FRESH', ':GP', '0', ':INSTRUCTION-LENGTH', 'BADLENGTH?']"))
 else ();
-let operand_size : {|4, 8, 16|} = (if (mod_var) == (0b11)
+let operand_size : {|4, 8, 16|} = { (if (mod_var) == (0b11)
 then operand_size
-else 16) in
+else 16) } in
 { write_xmmi_size(bits_of_int(operand_size, 5), xmm_index, xmm_mem);
 write_iptr(proc_mode, temp_rip)
 }
@@ -53,17 +53,17 @@ let ctx : string = ("X86-MOVSS/MOVSD-OP/EN-MR") in
 let r_m : bits(3) = (modr_m_get_r_m(modr_m)) in
 let mod_var : bits(2) = (modr_m_get_mod(modr_m)) in
 let reg : bits(3) = (modr_m_get_reg(modr_m)) in
-let operand_size : {|4, 8|} = (if (sp_dp) == (1)
+let operand_size : {|4, 8|} = { (if (sp_dp) == (1)
 then 8
-else 4) in
+else 4) } in
 let xmm_index : bits(4) = (reg_index(reg, rex_byte, 0b10)) in
 let xmm : bits(128) = (xmmi_size(bits_of_int(operand_size, 5), xmm_index)) in
 let p2 : bits(8) = (prefixes_get_seg(prefixes)) in
 let p4? : bool = ((0x67) == (prefixes_get_adr(prefixes))) in
 let seg_reg : {|0, 1, 2, 3, 4, 5|} = (select_segment_register(proc_mode, p2, p4?, mod_var, r_m, sib)) in
-let (flg0, addr, increment_rip_by) : (option(string), sbits(64), {|0, 1, 2, 4|}) = (if (mod_var) == (0b11)
+let (flg0, addr, increment_rip_by) : (option(string), sbits(64), {|0, 1, 2, 4|}) = { (if (mod_var) == (0b11)
 then (None() : option(string), 0x0000_0000_0000_0000, 0)
-else x86_effective_addr(proc_mode, p4?, temp_rip, rex_byte, r_m, mod_var, sib, 0b000)) in
+else x86_effective_addr(proc_mode, p4?, temp_rip, rex_byte, r_m, mod_var, sib, 0b000)) } in
 let increment_rip_by : bits(3) = (bits_of_int(increment_rip_by, 3)) in
 { if is_some(flg0)
 then throw(Emsg("Model state error: :X86-EFFECTIVE-ADDR-ERROR"))
@@ -140,9 +140,9 @@ let xmm : bits(128) = (xmmi_size(0b1_0000, xmm_index)) in
 let p2 : bits(8) = (prefixes_get_seg(prefixes)) in
 let p4? : bool = ((0x67) == (prefixes_get_adr(prefixes))) in
 let seg_reg : {|0, 1, 2, 3, 4, 5|} = (select_segment_register(proc_mode, p2, p4?, mod_var, r_m, sib)) in
-let (flg0, addr, increment_rip_by) : (option(string), sbits(64), {|0, 1, 2, 4|}) = (if (mod_var) == (0b11)
+let (flg0, addr, increment_rip_by) : (option(string), sbits(64), {|0, 1, 2, 4|}) = { (if (mod_var) == (0b11)
 then (None() : option(string), 0x0000_0000_0000_0000, 0)
-else x86_effective_addr(proc_mode, p4?, temp_rip, rex_byte, r_m, mod_var, sib, 0b000)) in
+else x86_effective_addr(proc_mode, p4?, temp_rip, rex_byte, r_m, mod_var, sib, 0b000)) } in
 let increment_rip_by : bits(3) = (bits_of_int(increment_rip_by, 3)) in
 { if is_some(flg0)
 then throw(Emsg("Model state error: :X86-EFFECTIVE-ADDR-ERROR"))
@@ -227,9 +227,9 @@ let xmm : bits(128) = (xmmi_size(0b1_0000, xmm_index)) in
 let p2 : bits(8) = (prefixes_get_seg(prefixes)) in
 let p4? : bool = ((0x67) == (prefixes_get_adr(prefixes))) in
 let seg_reg : {|0, 1, 2, 3, 4, 5|} = (select_segment_register(proc_mode, p2, p4?, mod_var, r_m, sib)) in
-let (flg0, addr, increment_rip_by) : (option(string), sbits(64), {|0, 1, 2, 4|}) = (if (mod_var) == (0b11)
+let (flg0, addr, increment_rip_by) : (option(string), sbits(64), {|0, 1, 2, 4|}) = { (if (mod_var) == (0b11)
 then (None() : option(string), 0x0000_0000_0000_0000, 0)
-else x86_effective_addr(proc_mode, p4?, temp_rip, rex_byte, r_m, mod_var, sib, 0b000)) in
+else x86_effective_addr(proc_mode, p4?, temp_rip, rex_byte, r_m, mod_var, sib, 0b000)) } in
 let increment_rip_by : bits(3) = (bits_of_int(increment_rip_by, 3)) in
 { if is_some(flg0)
 then throw(Emsg("Model state error: :X86-EFFECTIVE-ADDR-ERROR"))

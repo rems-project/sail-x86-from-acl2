@@ -33,15 +33,13 @@ $include "segmentation.sail"
  </p>*/
 val address_aligned_p : (sbits(48), {|1, 2, 4, 6, 8, 10, 16|}, bool) -> bool
 function address_aligned_p (addr, operand_size, memory_ptr?) =
-let addr : sbits(48) = (addr) in
-let operand_size : {|1, 2, 4, 6, 8, 10, 16|} = (operand_size) in
 (match operand_size {
 1 => true,
 6 => (logand(addr, 0x0000_0000_0003)) == (0x0000_0000_0000),
 10 => (logand(addr, 0x0000_0000_0007)) == (0x0000_0000_0000),
-_ => if (memory_ptr?) & ((operand_size) == (4))
+_ => { if (memory_ptr?) & ((operand_size) == (4))
 then (logand(addr, 0x0000_0000_0001)) == (0x0000_0000_0000)
-else (logand(addr, bits_of_int(check_range(0, 15, (operand_size) - (1)), 48))) == (0x0000_0000_0000)
+else (logand(addr, bits_of_int(check_range(0, 15, (operand_size) - (1)), 48))) == (0x0000_0000_0000) }
 }) : bool
 
 /*Read an unsigned 8-bit value from memory via an effective address.*/

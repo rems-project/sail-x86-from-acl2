@@ -38,17 +38,23 @@ function set_hidden_segment_registerbits_get_attr (splicebits, inputbits) = {
 val change_hidden_segment_registerbits : (bits(112), option(bits(64)), option(bits(32)), option(bits(16))) -> bits(112)
 
 function change_hidden_segment_registerbits (input_bits, input_base_addr, input_limit, input_attr) = {
-    let output_base_addr : bits(112) = match input_base_addr {
-      Some(input_base_addr) => set_hidden_segment_registerbits_get_base_addr(input_base_addr, input_bits),
-      _ => input_bits
+    let output_base_addr : bits(112) = {
+        match input_base_addr {
+          Some(input_base_addr) => set_hidden_segment_registerbits_get_base_addr(input_base_addr, input_bits),
+          _ => input_bits
+        }
     };
-    let output_limit : bits(112) = match input_limit {
-      Some(input_limit) => set_hidden_segment_registerbits_get_limit(input_limit, output_base_addr),
-      _ => output_base_addr
+    let output_limit : bits(112) = {
+        match input_limit {
+          Some(input_limit) => set_hidden_segment_registerbits_get_limit(input_limit, output_base_addr),
+          _ => output_base_addr
+        }
     };
-    let output_attr : bits(112) = match input_attr {
-      Some(input_attr) => set_hidden_segment_registerbits_get_attr(input_attr, output_limit),
-      _ => output_limit
+    let output_attr : bits(112) = {
+        match input_attr {
+          Some(input_attr) => set_hidden_segment_registerbits_get_attr(input_attr, output_limit),
+          _ => output_limit
+        }
     };
     output_attr
 }
@@ -92,17 +98,23 @@ function set_segment_selectorbits_get_index (splicebits, inputbits) = {
 val change_segment_selectorbits : (bits(16), option(bits(2)), option(bits(1)), option(bits(13))) -> bits(16)
 
 function change_segment_selectorbits (input_bits, input_rpl, input_ti, input_index) = {
-    let output_rpl : bits(16) = match input_rpl {
-      Some(input_rpl) => set_segment_selectorbits_get_rpl(input_rpl, input_bits),
-      _ => input_bits
+    let output_rpl : bits(16) = {
+        match input_rpl {
+          Some(input_rpl) => set_segment_selectorbits_get_rpl(input_rpl, input_bits),
+          _ => input_bits
+        }
     };
-    let output_ti : bits(16) = match input_ti {
-      Some(input_ti) => set_segment_selectorbits_get_ti(input_ti, output_rpl),
-      _ => output_rpl
+    let output_ti : bits(16) = {
+        match input_ti {
+          Some(input_ti) => set_segment_selectorbits_get_ti(input_ti, output_rpl),
+          _ => output_rpl
+        }
     };
-    let output_index : bits(16) = match input_index {
-      Some(input_index) => set_segment_selectorbits_get_index(input_index, output_ti),
-      _ => output_ti
+    let output_index : bits(16) = {
+        match input_index {
+          Some(input_index) => set_segment_selectorbits_get_index(input_index, output_ti),
+          _ => output_ti
+        }
     };
     output_index
 }
@@ -266,57 +278,83 @@ function set_interrupt_trap_gate_descriptorbits_get_res3 (splicebits, inputbits)
 val change_interrupt_trap_gate_descriptorbits : (bits(128), option(bits(16)), option(bits(16)), option(bits(3)), option(bits(5)), option(bits(4)), option(bits(1)), option(bits(2)), option(bits(1)), option(bits(16)), option(bits(32)), option(bits(8)), option(bits(5)), option(bits(19))) -> bits(128)
 
 function change_interrupt_trap_gate_descriptorbits (input_bits, input_offset15_0, input_selector, input_ist, input_res1, input_type, input_s, input_dpl, input_p, input_offset31_16, input_offset63_32, input_res2, input_all_zeros?, input_res3) = {
-    let output_offset15_0 : bits(128) = match input_offset15_0 {
-      Some(input_offset15_0) => set_interrupt_trap_gate_descriptorbits_get_offset15_0(input_offset15_0, input_bits),
-      _ => input_bits
+    let output_offset15_0 : bits(128) = {
+        match input_offset15_0 {
+          Some(input_offset15_0) => set_interrupt_trap_gate_descriptorbits_get_offset15_0(input_offset15_0, input_bits),
+          _ => input_bits
+        }
     };
-    let output_selector : bits(128) = match input_selector {
-      Some(input_selector) => set_interrupt_trap_gate_descriptorbits_get_selector(input_selector, output_offset15_0),
-      _ => output_offset15_0
+    let output_selector : bits(128) = {
+        match input_selector {
+          Some(input_selector) => set_interrupt_trap_gate_descriptorbits_get_selector(input_selector, output_offset15_0),
+          _ => output_offset15_0
+        }
     };
-    let output_ist : bits(128) = match input_ist {
-      Some(input_ist) => set_interrupt_trap_gate_descriptorbits_get_ist(input_ist, output_selector),
-      _ => output_selector
+    let output_ist : bits(128) = {
+        match input_ist {
+          Some(input_ist) => set_interrupt_trap_gate_descriptorbits_get_ist(input_ist, output_selector),
+          _ => output_selector
+        }
     };
-    let output_res1 : bits(128) = match input_res1 {
-      Some(input_res1) => set_interrupt_trap_gate_descriptorbits_get_res1(input_res1, output_ist),
-      _ => output_ist
+    let output_res1 : bits(128) = {
+        match input_res1 {
+          Some(input_res1) => set_interrupt_trap_gate_descriptorbits_get_res1(input_res1, output_ist),
+          _ => output_ist
+        }
     };
-    let output_type : bits(128) = match input_type {
-      Some(input_type) => set_interrupt_trap_gate_descriptorbits_get_type(input_type, output_res1),
-      _ => output_res1
+    let output_type : bits(128) = {
+        match input_type {
+          Some(input_type) => set_interrupt_trap_gate_descriptorbits_get_type(input_type, output_res1),
+          _ => output_res1
+        }
     };
-    let output_s : bits(128) = match input_s {
-      Some(input_s) => set_interrupt_trap_gate_descriptorbits_get_s(input_s, output_type),
-      _ => output_type
+    let output_s : bits(128) = {
+        match input_s {
+          Some(input_s) => set_interrupt_trap_gate_descriptorbits_get_s(input_s, output_type),
+          _ => output_type
+        }
     };
-    let output_dpl : bits(128) = match input_dpl {
-      Some(input_dpl) => set_interrupt_trap_gate_descriptorbits_get_dpl(input_dpl, output_s),
-      _ => output_s
+    let output_dpl : bits(128) = {
+        match input_dpl {
+          Some(input_dpl) => set_interrupt_trap_gate_descriptorbits_get_dpl(input_dpl, output_s),
+          _ => output_s
+        }
     };
-    let output_p : bits(128) = match input_p {
-      Some(input_p) => set_interrupt_trap_gate_descriptorbits_get_p(input_p, output_dpl),
-      _ => output_dpl
+    let output_p : bits(128) = {
+        match input_p {
+          Some(input_p) => set_interrupt_trap_gate_descriptorbits_get_p(input_p, output_dpl),
+          _ => output_dpl
+        }
     };
-    let output_offset31_16 : bits(128) = match input_offset31_16 {
-      Some(input_offset31_16) => set_interrupt_trap_gate_descriptorbits_get_offset31_16(input_offset31_16, output_p),
-      _ => output_p
+    let output_offset31_16 : bits(128) = {
+        match input_offset31_16 {
+          Some(input_offset31_16) => set_interrupt_trap_gate_descriptorbits_get_offset31_16(input_offset31_16, output_p),
+          _ => output_p
+        }
     };
-    let output_offset63_32 : bits(128) = match input_offset63_32 {
-      Some(input_offset63_32) => set_interrupt_trap_gate_descriptorbits_get_offset63_32(input_offset63_32, output_offset31_16),
-      _ => output_offset31_16
+    let output_offset63_32 : bits(128) = {
+        match input_offset63_32 {
+          Some(input_offset63_32) => set_interrupt_trap_gate_descriptorbits_get_offset63_32(input_offset63_32, output_offset31_16),
+          _ => output_offset31_16
+        }
     };
-    let output_res2 : bits(128) = match input_res2 {
-      Some(input_res2) => set_interrupt_trap_gate_descriptorbits_get_res2(input_res2, output_offset63_32),
-      _ => output_offset63_32
+    let output_res2 : bits(128) = {
+        match input_res2 {
+          Some(input_res2) => set_interrupt_trap_gate_descriptorbits_get_res2(input_res2, output_offset63_32),
+          _ => output_offset63_32
+        }
     };
-    let output_all_zeros? : bits(128) = match input_all_zeros? {
-      Some(input_all_zeros?) => set_interrupt_trap_gate_descriptorbits_get_all_zeros?(input_all_zeros?, output_res2),
-      _ => output_res2
+    let output_all_zeros? : bits(128) = {
+        match input_all_zeros? {
+          Some(input_all_zeros?) => set_interrupt_trap_gate_descriptorbits_get_all_zeros?(input_all_zeros?, output_res2),
+          _ => output_res2
+        }
     };
-    let output_res3 : bits(128) = match input_res3 {
-      Some(input_res3) => set_interrupt_trap_gate_descriptorbits_get_res3(input_res3, output_all_zeros?),
-      _ => output_all_zeros?
+    let output_res3 : bits(128) = {
+        match input_res3 {
+          Some(input_res3) => set_interrupt_trap_gate_descriptorbits_get_res3(input_res3, output_all_zeros?),
+          _ => output_all_zeros?
+        }
     };
     output_res3
 }
@@ -396,29 +434,41 @@ function set_interrupt_trap_gate_descriptor_attributesbits_get_unknownbits (spli
 val change_interrupt_trap_gate_descriptor_attributesbits : (bits(16), option(bits(3)), option(bits(4)), option(bits(1)), option(bits(2)), option(bits(1)), option(bits(5))) -> bits(16)
 
 function change_interrupt_trap_gate_descriptor_attributesbits (input_bits, input_ist, input_type, input_s, input_dpl, input_p, input_unknownbits) = {
-    let output_ist : bits(16) = match input_ist {
-      Some(input_ist) => set_interrupt_trap_gate_descriptor_attributesbits_get_ist(input_ist, input_bits),
-      _ => input_bits
+    let output_ist : bits(16) = {
+        match input_ist {
+          Some(input_ist) => set_interrupt_trap_gate_descriptor_attributesbits_get_ist(input_ist, input_bits),
+          _ => input_bits
+        }
     };
-    let output_type : bits(16) = match input_type {
-      Some(input_type) => set_interrupt_trap_gate_descriptor_attributesbits_get_type(input_type, output_ist),
-      _ => output_ist
+    let output_type : bits(16) = {
+        match input_type {
+          Some(input_type) => set_interrupt_trap_gate_descriptor_attributesbits_get_type(input_type, output_ist),
+          _ => output_ist
+        }
     };
-    let output_s : bits(16) = match input_s {
-      Some(input_s) => set_interrupt_trap_gate_descriptor_attributesbits_get_s(input_s, output_type),
-      _ => output_type
+    let output_s : bits(16) = {
+        match input_s {
+          Some(input_s) => set_interrupt_trap_gate_descriptor_attributesbits_get_s(input_s, output_type),
+          _ => output_type
+        }
     };
-    let output_dpl : bits(16) = match input_dpl {
-      Some(input_dpl) => set_interrupt_trap_gate_descriptor_attributesbits_get_dpl(input_dpl, output_s),
-      _ => output_s
+    let output_dpl : bits(16) = {
+        match input_dpl {
+          Some(input_dpl) => set_interrupt_trap_gate_descriptor_attributesbits_get_dpl(input_dpl, output_s),
+          _ => output_s
+        }
     };
-    let output_p : bits(16) = match input_p {
-      Some(input_p) => set_interrupt_trap_gate_descriptor_attributesbits_get_p(input_p, output_dpl),
-      _ => output_dpl
+    let output_p : bits(16) = {
+        match input_p {
+          Some(input_p) => set_interrupt_trap_gate_descriptor_attributesbits_get_p(input_p, output_dpl),
+          _ => output_dpl
+        }
     };
-    let output_unknownbits : bits(16) = match input_unknownbits {
-      Some(input_unknownbits) => set_interrupt_trap_gate_descriptor_attributesbits_get_unknownbits(input_unknownbits, output_p),
-      _ => output_p
+    let output_unknownbits : bits(16) = {
+        match input_unknownbits {
+          Some(input_unknownbits) => set_interrupt_trap_gate_descriptor_attributesbits_get_unknownbits(input_unknownbits, output_p),
+          _ => output_p
+        }
     };
     output_unknownbits
 }
@@ -450,13 +500,17 @@ function set_gdtr_idtrbits_get_limit (splicebits, inputbits) = {
 val change_gdtr_idtrbits : (bits(80), option(bits(64)), option(bits(16))) -> bits(80)
 
 function change_gdtr_idtrbits (input_bits, input_base_addr, input_limit) = {
-    let output_base_addr : bits(80) = match input_base_addr {
-      Some(input_base_addr) => set_gdtr_idtrbits_get_base_addr(input_base_addr, input_bits),
-      _ => input_bits
+    let output_base_addr : bits(80) = {
+        match input_base_addr {
+          Some(input_base_addr) => set_gdtr_idtrbits_get_base_addr(input_base_addr, input_bits),
+          _ => input_bits
+        }
     };
-    let output_limit : bits(80) = match input_limit {
-      Some(input_limit) => set_gdtr_idtrbits_get_limit(input_limit, output_base_addr),
-      _ => output_base_addr
+    let output_limit : bits(80) = {
+        match input_limit {
+          Some(input_limit) => set_gdtr_idtrbits_get_limit(input_limit, output_base_addr),
+          _ => output_base_addr
+        }
     };
     output_limit
 }
@@ -656,69 +710,101 @@ function set_code_segment_descriptorbits_get_base31_24 (splicebits, inputbits) =
 val change_code_segment_descriptorbits : (bits(64), option(bits(16)), option(bits(16)), option(bits(8)), option(bits(1)), option(bits(1)), option(bits(1)), option(bits(1)), option(bits(1)), option(bits(2)), option(bits(1)), option(bits(4)), option(bits(1)), option(bits(1)), option(bits(1)), option(bits(1)), option(bits(8))) -> bits(64)
 
 function change_code_segment_descriptorbits (input_bits, input_limit15_0, input_base15_0, input_base23_16, input_a, input_r, input_c, input_msb_of_type, input_s, input_dpl, input_p, input_limit19_16, input_avl, input_l, input_d, input_g, input_base31_24) = {
-    let output_limit15_0 : bits(64) = match input_limit15_0 {
-      Some(input_limit15_0) => set_code_segment_descriptorbits_get_limit15_0(input_limit15_0, input_bits),
-      _ => input_bits
+    let output_limit15_0 : bits(64) = {
+        match input_limit15_0 {
+          Some(input_limit15_0) => set_code_segment_descriptorbits_get_limit15_0(input_limit15_0, input_bits),
+          _ => input_bits
+        }
     };
-    let output_base15_0 : bits(64) = match input_base15_0 {
-      Some(input_base15_0) => set_code_segment_descriptorbits_get_base15_0(input_base15_0, output_limit15_0),
-      _ => output_limit15_0
+    let output_base15_0 : bits(64) = {
+        match input_base15_0 {
+          Some(input_base15_0) => set_code_segment_descriptorbits_get_base15_0(input_base15_0, output_limit15_0),
+          _ => output_limit15_0
+        }
     };
-    let output_base23_16 : bits(64) = match input_base23_16 {
-      Some(input_base23_16) => set_code_segment_descriptorbits_get_base23_16(input_base23_16, output_base15_0),
-      _ => output_base15_0
+    let output_base23_16 : bits(64) = {
+        match input_base23_16 {
+          Some(input_base23_16) => set_code_segment_descriptorbits_get_base23_16(input_base23_16, output_base15_0),
+          _ => output_base15_0
+        }
     };
-    let output_a : bits(64) = match input_a {
-      Some(input_a) => set_code_segment_descriptorbits_get_a(input_a, output_base23_16),
-      _ => output_base23_16
+    let output_a : bits(64) = {
+        match input_a {
+          Some(input_a) => set_code_segment_descriptorbits_get_a(input_a, output_base23_16),
+          _ => output_base23_16
+        }
     };
-    let output_r : bits(64) = match input_r {
-      Some(input_r) => set_code_segment_descriptorbits_get_r(input_r, output_a),
-      _ => output_a
+    let output_r : bits(64) = {
+        match input_r {
+          Some(input_r) => set_code_segment_descriptorbits_get_r(input_r, output_a),
+          _ => output_a
+        }
     };
-    let output_c : bits(64) = match input_c {
-      Some(input_c) => set_code_segment_descriptorbits_get_c(input_c, output_r),
-      _ => output_r
+    let output_c : bits(64) = {
+        match input_c {
+          Some(input_c) => set_code_segment_descriptorbits_get_c(input_c, output_r),
+          _ => output_r
+        }
     };
-    let output_msb_of_type : bits(64) = match input_msb_of_type {
-      Some(input_msb_of_type) => set_code_segment_descriptorbits_get_msb_of_type(input_msb_of_type, output_c),
-      _ => output_c
+    let output_msb_of_type : bits(64) = {
+        match input_msb_of_type {
+          Some(input_msb_of_type) => set_code_segment_descriptorbits_get_msb_of_type(input_msb_of_type, output_c),
+          _ => output_c
+        }
     };
-    let output_s : bits(64) = match input_s {
-      Some(input_s) => set_code_segment_descriptorbits_get_s(input_s, output_msb_of_type),
-      _ => output_msb_of_type
+    let output_s : bits(64) = {
+        match input_s {
+          Some(input_s) => set_code_segment_descriptorbits_get_s(input_s, output_msb_of_type),
+          _ => output_msb_of_type
+        }
     };
-    let output_dpl : bits(64) = match input_dpl {
-      Some(input_dpl) => set_code_segment_descriptorbits_get_dpl(input_dpl, output_s),
-      _ => output_s
+    let output_dpl : bits(64) = {
+        match input_dpl {
+          Some(input_dpl) => set_code_segment_descriptorbits_get_dpl(input_dpl, output_s),
+          _ => output_s
+        }
     };
-    let output_p : bits(64) = match input_p {
-      Some(input_p) => set_code_segment_descriptorbits_get_p(input_p, output_dpl),
-      _ => output_dpl
+    let output_p : bits(64) = {
+        match input_p {
+          Some(input_p) => set_code_segment_descriptorbits_get_p(input_p, output_dpl),
+          _ => output_dpl
+        }
     };
-    let output_limit19_16 : bits(64) = match input_limit19_16 {
-      Some(input_limit19_16) => set_code_segment_descriptorbits_get_limit19_16(input_limit19_16, output_p),
-      _ => output_p
+    let output_limit19_16 : bits(64) = {
+        match input_limit19_16 {
+          Some(input_limit19_16) => set_code_segment_descriptorbits_get_limit19_16(input_limit19_16, output_p),
+          _ => output_p
+        }
     };
-    let output_avl : bits(64) = match input_avl {
-      Some(input_avl) => set_code_segment_descriptorbits_get_avl(input_avl, output_limit19_16),
-      _ => output_limit19_16
+    let output_avl : bits(64) = {
+        match input_avl {
+          Some(input_avl) => set_code_segment_descriptorbits_get_avl(input_avl, output_limit19_16),
+          _ => output_limit19_16
+        }
     };
-    let output_l : bits(64) = match input_l {
-      Some(input_l) => set_code_segment_descriptorbits_get_l(input_l, output_avl),
-      _ => output_avl
+    let output_l : bits(64) = {
+        match input_l {
+          Some(input_l) => set_code_segment_descriptorbits_get_l(input_l, output_avl),
+          _ => output_avl
+        }
     };
-    let output_d : bits(64) = match input_d {
-      Some(input_d) => set_code_segment_descriptorbits_get_d(input_d, output_l),
-      _ => output_l
+    let output_d : bits(64) = {
+        match input_d {
+          Some(input_d) => set_code_segment_descriptorbits_get_d(input_d, output_l),
+          _ => output_l
+        }
     };
-    let output_g : bits(64) = match input_g {
-      Some(input_g) => set_code_segment_descriptorbits_get_g(input_g, output_d),
-      _ => output_d
+    let output_g : bits(64) = {
+        match input_g {
+          Some(input_g) => set_code_segment_descriptorbits_get_g(input_g, output_d),
+          _ => output_d
+        }
     };
-    let output_base31_24 : bits(64) = match input_base31_24 {
-      Some(input_base31_24) => set_code_segment_descriptorbits_get_base31_24(input_base31_24, output_g),
-      _ => output_g
+    let output_base31_24 : bits(64) = {
+        match input_base31_24 {
+          Some(input_base31_24) => set_code_segment_descriptorbits_get_base31_24(input_base31_24, output_g),
+          _ => output_g
+        }
     };
     output_base31_24
 }
@@ -870,53 +956,77 @@ function set_code_segment_descriptor_attributesbits_get_unknownbits (splicebits,
 val change_code_segment_descriptor_attributesbits : (bits(16), option(bits(1)), option(bits(1)), option(bits(1)), option(bits(1)), option(bits(1)), option(bits(2)), option(bits(1)), option(bits(1)), option(bits(1)), option(bits(1)), option(bits(1)), option(bits(4))) -> bits(16)
 
 function change_code_segment_descriptor_attributesbits (input_bits, input_a, input_r, input_c, input_msb_of_type, input_s, input_dpl, input_p, input_avl, input_l, input_d, input_g, input_unknownbits) = {
-    let output_a : bits(16) = match input_a {
-      Some(input_a) => set_code_segment_descriptor_attributesbits_get_a(input_a, input_bits),
-      _ => input_bits
+    let output_a : bits(16) = {
+        match input_a {
+          Some(input_a) => set_code_segment_descriptor_attributesbits_get_a(input_a, input_bits),
+          _ => input_bits
+        }
     };
-    let output_r : bits(16) = match input_r {
-      Some(input_r) => set_code_segment_descriptor_attributesbits_get_r(input_r, output_a),
-      _ => output_a
+    let output_r : bits(16) = {
+        match input_r {
+          Some(input_r) => set_code_segment_descriptor_attributesbits_get_r(input_r, output_a),
+          _ => output_a
+        }
     };
-    let output_c : bits(16) = match input_c {
-      Some(input_c) => set_code_segment_descriptor_attributesbits_get_c(input_c, output_r),
-      _ => output_r
+    let output_c : bits(16) = {
+        match input_c {
+          Some(input_c) => set_code_segment_descriptor_attributesbits_get_c(input_c, output_r),
+          _ => output_r
+        }
     };
-    let output_msb_of_type : bits(16) = match input_msb_of_type {
-      Some(input_msb_of_type) => set_code_segment_descriptor_attributesbits_get_msb_of_type(input_msb_of_type, output_c),
-      _ => output_c
+    let output_msb_of_type : bits(16) = {
+        match input_msb_of_type {
+          Some(input_msb_of_type) => set_code_segment_descriptor_attributesbits_get_msb_of_type(input_msb_of_type, output_c),
+          _ => output_c
+        }
     };
-    let output_s : bits(16) = match input_s {
-      Some(input_s) => set_code_segment_descriptor_attributesbits_get_s(input_s, output_msb_of_type),
-      _ => output_msb_of_type
+    let output_s : bits(16) = {
+        match input_s {
+          Some(input_s) => set_code_segment_descriptor_attributesbits_get_s(input_s, output_msb_of_type),
+          _ => output_msb_of_type
+        }
     };
-    let output_dpl : bits(16) = match input_dpl {
-      Some(input_dpl) => set_code_segment_descriptor_attributesbits_get_dpl(input_dpl, output_s),
-      _ => output_s
+    let output_dpl : bits(16) = {
+        match input_dpl {
+          Some(input_dpl) => set_code_segment_descriptor_attributesbits_get_dpl(input_dpl, output_s),
+          _ => output_s
+        }
     };
-    let output_p : bits(16) = match input_p {
-      Some(input_p) => set_code_segment_descriptor_attributesbits_get_p(input_p, output_dpl),
-      _ => output_dpl
+    let output_p : bits(16) = {
+        match input_p {
+          Some(input_p) => set_code_segment_descriptor_attributesbits_get_p(input_p, output_dpl),
+          _ => output_dpl
+        }
     };
-    let output_avl : bits(16) = match input_avl {
-      Some(input_avl) => set_code_segment_descriptor_attributesbits_get_avl(input_avl, output_p),
-      _ => output_p
+    let output_avl : bits(16) = {
+        match input_avl {
+          Some(input_avl) => set_code_segment_descriptor_attributesbits_get_avl(input_avl, output_p),
+          _ => output_p
+        }
     };
-    let output_l : bits(16) = match input_l {
-      Some(input_l) => set_code_segment_descriptor_attributesbits_get_l(input_l, output_avl),
-      _ => output_avl
+    let output_l : bits(16) = {
+        match input_l {
+          Some(input_l) => set_code_segment_descriptor_attributesbits_get_l(input_l, output_avl),
+          _ => output_avl
+        }
     };
-    let output_d : bits(16) = match input_d {
-      Some(input_d) => set_code_segment_descriptor_attributesbits_get_d(input_d, output_l),
-      _ => output_l
+    let output_d : bits(16) = {
+        match input_d {
+          Some(input_d) => set_code_segment_descriptor_attributesbits_get_d(input_d, output_l),
+          _ => output_l
+        }
     };
-    let output_g : bits(16) = match input_g {
-      Some(input_g) => set_code_segment_descriptor_attributesbits_get_g(input_g, output_d),
-      _ => output_d
+    let output_g : bits(16) = {
+        match input_g {
+          Some(input_g) => set_code_segment_descriptor_attributesbits_get_g(input_g, output_d),
+          _ => output_d
+        }
     };
-    let output_unknownbits : bits(16) = match input_unknownbits {
-      Some(input_unknownbits) => set_code_segment_descriptor_attributesbits_get_unknownbits(input_unknownbits, output_g),
-      _ => output_g
+    let output_unknownbits : bits(16) = {
+        match input_unknownbits {
+          Some(input_unknownbits) => set_code_segment_descriptor_attributesbits_get_unknownbits(input_unknownbits, output_g),
+          _ => output_g
+        }
     };
     output_unknownbits
 }
@@ -1116,69 +1226,101 @@ function set_data_segment_descriptorbits_get_base31_24 (splicebits, inputbits) =
 val change_data_segment_descriptorbits : (bits(64), option(bits(16)), option(bits(16)), option(bits(8)), option(bits(1)), option(bits(1)), option(bits(1)), option(bits(1)), option(bits(1)), option(bits(2)), option(bits(1)), option(bits(4)), option(bits(1)), option(bits(1)), option(bits(1)), option(bits(1)), option(bits(8))) -> bits(64)
 
 function change_data_segment_descriptorbits (input_bits, input_limit15_0, input_base15_0, input_base23_16, input_a, input_w, input_e, input_msb_of_type, input_s, input_dpl, input_p, input_limit19_16, input_avl, input_l, input_d_b, input_g, input_base31_24) = {
-    let output_limit15_0 : bits(64) = match input_limit15_0 {
-      Some(input_limit15_0) => set_data_segment_descriptorbits_get_limit15_0(input_limit15_0, input_bits),
-      _ => input_bits
+    let output_limit15_0 : bits(64) = {
+        match input_limit15_0 {
+          Some(input_limit15_0) => set_data_segment_descriptorbits_get_limit15_0(input_limit15_0, input_bits),
+          _ => input_bits
+        }
     };
-    let output_base15_0 : bits(64) = match input_base15_0 {
-      Some(input_base15_0) => set_data_segment_descriptorbits_get_base15_0(input_base15_0, output_limit15_0),
-      _ => output_limit15_0
+    let output_base15_0 : bits(64) = {
+        match input_base15_0 {
+          Some(input_base15_0) => set_data_segment_descriptorbits_get_base15_0(input_base15_0, output_limit15_0),
+          _ => output_limit15_0
+        }
     };
-    let output_base23_16 : bits(64) = match input_base23_16 {
-      Some(input_base23_16) => set_data_segment_descriptorbits_get_base23_16(input_base23_16, output_base15_0),
-      _ => output_base15_0
+    let output_base23_16 : bits(64) = {
+        match input_base23_16 {
+          Some(input_base23_16) => set_data_segment_descriptorbits_get_base23_16(input_base23_16, output_base15_0),
+          _ => output_base15_0
+        }
     };
-    let output_a : bits(64) = match input_a {
-      Some(input_a) => set_data_segment_descriptorbits_get_a(input_a, output_base23_16),
-      _ => output_base23_16
+    let output_a : bits(64) = {
+        match input_a {
+          Some(input_a) => set_data_segment_descriptorbits_get_a(input_a, output_base23_16),
+          _ => output_base23_16
+        }
     };
-    let output_w : bits(64) = match input_w {
-      Some(input_w) => set_data_segment_descriptorbits_get_w(input_w, output_a),
-      _ => output_a
+    let output_w : bits(64) = {
+        match input_w {
+          Some(input_w) => set_data_segment_descriptorbits_get_w(input_w, output_a),
+          _ => output_a
+        }
     };
-    let output_e : bits(64) = match input_e {
-      Some(input_e) => set_data_segment_descriptorbits_get_e(input_e, output_w),
-      _ => output_w
+    let output_e : bits(64) = {
+        match input_e {
+          Some(input_e) => set_data_segment_descriptorbits_get_e(input_e, output_w),
+          _ => output_w
+        }
     };
-    let output_msb_of_type : bits(64) = match input_msb_of_type {
-      Some(input_msb_of_type) => set_data_segment_descriptorbits_get_msb_of_type(input_msb_of_type, output_e),
-      _ => output_e
+    let output_msb_of_type : bits(64) = {
+        match input_msb_of_type {
+          Some(input_msb_of_type) => set_data_segment_descriptorbits_get_msb_of_type(input_msb_of_type, output_e),
+          _ => output_e
+        }
     };
-    let output_s : bits(64) = match input_s {
-      Some(input_s) => set_data_segment_descriptorbits_get_s(input_s, output_msb_of_type),
-      _ => output_msb_of_type
+    let output_s : bits(64) = {
+        match input_s {
+          Some(input_s) => set_data_segment_descriptorbits_get_s(input_s, output_msb_of_type),
+          _ => output_msb_of_type
+        }
     };
-    let output_dpl : bits(64) = match input_dpl {
-      Some(input_dpl) => set_data_segment_descriptorbits_get_dpl(input_dpl, output_s),
-      _ => output_s
+    let output_dpl : bits(64) = {
+        match input_dpl {
+          Some(input_dpl) => set_data_segment_descriptorbits_get_dpl(input_dpl, output_s),
+          _ => output_s
+        }
     };
-    let output_p : bits(64) = match input_p {
-      Some(input_p) => set_data_segment_descriptorbits_get_p(input_p, output_dpl),
-      _ => output_dpl
+    let output_p : bits(64) = {
+        match input_p {
+          Some(input_p) => set_data_segment_descriptorbits_get_p(input_p, output_dpl),
+          _ => output_dpl
+        }
     };
-    let output_limit19_16 : bits(64) = match input_limit19_16 {
-      Some(input_limit19_16) => set_data_segment_descriptorbits_get_limit19_16(input_limit19_16, output_p),
-      _ => output_p
+    let output_limit19_16 : bits(64) = {
+        match input_limit19_16 {
+          Some(input_limit19_16) => set_data_segment_descriptorbits_get_limit19_16(input_limit19_16, output_p),
+          _ => output_p
+        }
     };
-    let output_avl : bits(64) = match input_avl {
-      Some(input_avl) => set_data_segment_descriptorbits_get_avl(input_avl, output_limit19_16),
-      _ => output_limit19_16
+    let output_avl : bits(64) = {
+        match input_avl {
+          Some(input_avl) => set_data_segment_descriptorbits_get_avl(input_avl, output_limit19_16),
+          _ => output_limit19_16
+        }
     };
-    let output_l : bits(64) = match input_l {
-      Some(input_l) => set_data_segment_descriptorbits_get_l(input_l, output_avl),
-      _ => output_avl
+    let output_l : bits(64) = {
+        match input_l {
+          Some(input_l) => set_data_segment_descriptorbits_get_l(input_l, output_avl),
+          _ => output_avl
+        }
     };
-    let output_d_b : bits(64) = match input_d_b {
-      Some(input_d_b) => set_data_segment_descriptorbits_get_d_b(input_d_b, output_l),
-      _ => output_l
+    let output_d_b : bits(64) = {
+        match input_d_b {
+          Some(input_d_b) => set_data_segment_descriptorbits_get_d_b(input_d_b, output_l),
+          _ => output_l
+        }
     };
-    let output_g : bits(64) = match input_g {
-      Some(input_g) => set_data_segment_descriptorbits_get_g(input_g, output_d_b),
-      _ => output_d_b
+    let output_g : bits(64) = {
+        match input_g {
+          Some(input_g) => set_data_segment_descriptorbits_get_g(input_g, output_d_b),
+          _ => output_d_b
+        }
     };
-    let output_base31_24 : bits(64) = match input_base31_24 {
-      Some(input_base31_24) => set_data_segment_descriptorbits_get_base31_24(input_base31_24, output_g),
-      _ => output_g
+    let output_base31_24 : bits(64) = {
+        match input_base31_24 {
+          Some(input_base31_24) => set_data_segment_descriptorbits_get_base31_24(input_base31_24, output_g),
+          _ => output_g
+        }
     };
     output_base31_24
 }
@@ -1330,53 +1472,77 @@ function set_data_segment_descriptor_attributesbits_get_unknownbits (splicebits,
 val change_data_segment_descriptor_attributesbits : (bits(16), option(bits(1)), option(bits(1)), option(bits(1)), option(bits(1)), option(bits(1)), option(bits(2)), option(bits(1)), option(bits(1)), option(bits(1)), option(bits(1)), option(bits(1)), option(bits(4))) -> bits(16)
 
 function change_data_segment_descriptor_attributesbits (input_bits, input_a, input_w, input_e, input_msb_of_type, input_s, input_dpl, input_p, input_avl, input_l, input_d_b, input_g, input_unknownbits) = {
-    let output_a : bits(16) = match input_a {
-      Some(input_a) => set_data_segment_descriptor_attributesbits_get_a(input_a, input_bits),
-      _ => input_bits
+    let output_a : bits(16) = {
+        match input_a {
+          Some(input_a) => set_data_segment_descriptor_attributesbits_get_a(input_a, input_bits),
+          _ => input_bits
+        }
     };
-    let output_w : bits(16) = match input_w {
-      Some(input_w) => set_data_segment_descriptor_attributesbits_get_w(input_w, output_a),
-      _ => output_a
+    let output_w : bits(16) = {
+        match input_w {
+          Some(input_w) => set_data_segment_descriptor_attributesbits_get_w(input_w, output_a),
+          _ => output_a
+        }
     };
-    let output_e : bits(16) = match input_e {
-      Some(input_e) => set_data_segment_descriptor_attributesbits_get_e(input_e, output_w),
-      _ => output_w
+    let output_e : bits(16) = {
+        match input_e {
+          Some(input_e) => set_data_segment_descriptor_attributesbits_get_e(input_e, output_w),
+          _ => output_w
+        }
     };
-    let output_msb_of_type : bits(16) = match input_msb_of_type {
-      Some(input_msb_of_type) => set_data_segment_descriptor_attributesbits_get_msb_of_type(input_msb_of_type, output_e),
-      _ => output_e
+    let output_msb_of_type : bits(16) = {
+        match input_msb_of_type {
+          Some(input_msb_of_type) => set_data_segment_descriptor_attributesbits_get_msb_of_type(input_msb_of_type, output_e),
+          _ => output_e
+        }
     };
-    let output_s : bits(16) = match input_s {
-      Some(input_s) => set_data_segment_descriptor_attributesbits_get_s(input_s, output_msb_of_type),
-      _ => output_msb_of_type
+    let output_s : bits(16) = {
+        match input_s {
+          Some(input_s) => set_data_segment_descriptor_attributesbits_get_s(input_s, output_msb_of_type),
+          _ => output_msb_of_type
+        }
     };
-    let output_dpl : bits(16) = match input_dpl {
-      Some(input_dpl) => set_data_segment_descriptor_attributesbits_get_dpl(input_dpl, output_s),
-      _ => output_s
+    let output_dpl : bits(16) = {
+        match input_dpl {
+          Some(input_dpl) => set_data_segment_descriptor_attributesbits_get_dpl(input_dpl, output_s),
+          _ => output_s
+        }
     };
-    let output_p : bits(16) = match input_p {
-      Some(input_p) => set_data_segment_descriptor_attributesbits_get_p(input_p, output_dpl),
-      _ => output_dpl
+    let output_p : bits(16) = {
+        match input_p {
+          Some(input_p) => set_data_segment_descriptor_attributesbits_get_p(input_p, output_dpl),
+          _ => output_dpl
+        }
     };
-    let output_avl : bits(16) = match input_avl {
-      Some(input_avl) => set_data_segment_descriptor_attributesbits_get_avl(input_avl, output_p),
-      _ => output_p
+    let output_avl : bits(16) = {
+        match input_avl {
+          Some(input_avl) => set_data_segment_descriptor_attributesbits_get_avl(input_avl, output_p),
+          _ => output_p
+        }
     };
-    let output_l : bits(16) = match input_l {
-      Some(input_l) => set_data_segment_descriptor_attributesbits_get_l(input_l, output_avl),
-      _ => output_avl
+    let output_l : bits(16) = {
+        match input_l {
+          Some(input_l) => set_data_segment_descriptor_attributesbits_get_l(input_l, output_avl),
+          _ => output_avl
+        }
     };
-    let output_d_b : bits(16) = match input_d_b {
-      Some(input_d_b) => set_data_segment_descriptor_attributesbits_get_d_b(input_d_b, output_l),
-      _ => output_l
+    let output_d_b : bits(16) = {
+        match input_d_b {
+          Some(input_d_b) => set_data_segment_descriptor_attributesbits_get_d_b(input_d_b, output_l),
+          _ => output_l
+        }
     };
-    let output_g : bits(16) = match input_g {
-      Some(input_g) => set_data_segment_descriptor_attributesbits_get_g(input_g, output_d_b),
-      _ => output_d_b
+    let output_g : bits(16) = {
+        match input_g {
+          Some(input_g) => set_data_segment_descriptor_attributesbits_get_g(input_g, output_d_b),
+          _ => output_d_b
+        }
     };
-    let output_unknownbits : bits(16) = match input_unknownbits {
-      Some(input_unknownbits) => set_data_segment_descriptor_attributesbits_get_unknownbits(input_unknownbits, output_g),
-      _ => output_g
+    let output_unknownbits : bits(16) = {
+        match input_unknownbits {
+          Some(input_unknownbits) => set_data_segment_descriptor_attributesbits_get_unknownbits(input_unknownbits, output_g),
+          _ => output_g
+        }
     };
     output_unknownbits
 }
@@ -1576,69 +1742,101 @@ function set_system_segment_descriptorbits_get_res3 (splicebits, inputbits) = {
 val change_system_segment_descriptorbits : (bits(128), option(bits(16)), option(bits(16)), option(bits(8)), option(bits(4)), option(bits(1)), option(bits(2)), option(bits(1)), option(bits(4)), option(bits(1)), option(bits(2)), option(bits(1)), option(bits(8)), option(bits(32)), option(bits(8)), option(bits(5)), option(bits(19))) -> bits(128)
 
 function change_system_segment_descriptorbits (input_bits, input_limit15_0, input_base15_0, input_base23_16, input_type, input_s, input_dpl, input_p, input_limit19_16, input_avl, input_res1, input_g, input_base31_24, input_base63_32, input_res2, input_all_zeroes?, input_res3) = {
-    let output_limit15_0 : bits(128) = match input_limit15_0 {
-      Some(input_limit15_0) => set_system_segment_descriptorbits_get_limit15_0(input_limit15_0, input_bits),
-      _ => input_bits
+    let output_limit15_0 : bits(128) = {
+        match input_limit15_0 {
+          Some(input_limit15_0) => set_system_segment_descriptorbits_get_limit15_0(input_limit15_0, input_bits),
+          _ => input_bits
+        }
     };
-    let output_base15_0 : bits(128) = match input_base15_0 {
-      Some(input_base15_0) => set_system_segment_descriptorbits_get_base15_0(input_base15_0, output_limit15_0),
-      _ => output_limit15_0
+    let output_base15_0 : bits(128) = {
+        match input_base15_0 {
+          Some(input_base15_0) => set_system_segment_descriptorbits_get_base15_0(input_base15_0, output_limit15_0),
+          _ => output_limit15_0
+        }
     };
-    let output_base23_16 : bits(128) = match input_base23_16 {
-      Some(input_base23_16) => set_system_segment_descriptorbits_get_base23_16(input_base23_16, output_base15_0),
-      _ => output_base15_0
+    let output_base23_16 : bits(128) = {
+        match input_base23_16 {
+          Some(input_base23_16) => set_system_segment_descriptorbits_get_base23_16(input_base23_16, output_base15_0),
+          _ => output_base15_0
+        }
     };
-    let output_type : bits(128) = match input_type {
-      Some(input_type) => set_system_segment_descriptorbits_get_type(input_type, output_base23_16),
-      _ => output_base23_16
+    let output_type : bits(128) = {
+        match input_type {
+          Some(input_type) => set_system_segment_descriptorbits_get_type(input_type, output_base23_16),
+          _ => output_base23_16
+        }
     };
-    let output_s : bits(128) = match input_s {
-      Some(input_s) => set_system_segment_descriptorbits_get_s(input_s, output_type),
-      _ => output_type
+    let output_s : bits(128) = {
+        match input_s {
+          Some(input_s) => set_system_segment_descriptorbits_get_s(input_s, output_type),
+          _ => output_type
+        }
     };
-    let output_dpl : bits(128) = match input_dpl {
-      Some(input_dpl) => set_system_segment_descriptorbits_get_dpl(input_dpl, output_s),
-      _ => output_s
+    let output_dpl : bits(128) = {
+        match input_dpl {
+          Some(input_dpl) => set_system_segment_descriptorbits_get_dpl(input_dpl, output_s),
+          _ => output_s
+        }
     };
-    let output_p : bits(128) = match input_p {
-      Some(input_p) => set_system_segment_descriptorbits_get_p(input_p, output_dpl),
-      _ => output_dpl
+    let output_p : bits(128) = {
+        match input_p {
+          Some(input_p) => set_system_segment_descriptorbits_get_p(input_p, output_dpl),
+          _ => output_dpl
+        }
     };
-    let output_limit19_16 : bits(128) = match input_limit19_16 {
-      Some(input_limit19_16) => set_system_segment_descriptorbits_get_limit19_16(input_limit19_16, output_p),
-      _ => output_p
+    let output_limit19_16 : bits(128) = {
+        match input_limit19_16 {
+          Some(input_limit19_16) => set_system_segment_descriptorbits_get_limit19_16(input_limit19_16, output_p),
+          _ => output_p
+        }
     };
-    let output_avl : bits(128) = match input_avl {
-      Some(input_avl) => set_system_segment_descriptorbits_get_avl(input_avl, output_limit19_16),
-      _ => output_limit19_16
+    let output_avl : bits(128) = {
+        match input_avl {
+          Some(input_avl) => set_system_segment_descriptorbits_get_avl(input_avl, output_limit19_16),
+          _ => output_limit19_16
+        }
     };
-    let output_res1 : bits(128) = match input_res1 {
-      Some(input_res1) => set_system_segment_descriptorbits_get_res1(input_res1, output_avl),
-      _ => output_avl
+    let output_res1 : bits(128) = {
+        match input_res1 {
+          Some(input_res1) => set_system_segment_descriptorbits_get_res1(input_res1, output_avl),
+          _ => output_avl
+        }
     };
-    let output_g : bits(128) = match input_g {
-      Some(input_g) => set_system_segment_descriptorbits_get_g(input_g, output_res1),
-      _ => output_res1
+    let output_g : bits(128) = {
+        match input_g {
+          Some(input_g) => set_system_segment_descriptorbits_get_g(input_g, output_res1),
+          _ => output_res1
+        }
     };
-    let output_base31_24 : bits(128) = match input_base31_24 {
-      Some(input_base31_24) => set_system_segment_descriptorbits_get_base31_24(input_base31_24, output_g),
-      _ => output_g
+    let output_base31_24 : bits(128) = {
+        match input_base31_24 {
+          Some(input_base31_24) => set_system_segment_descriptorbits_get_base31_24(input_base31_24, output_g),
+          _ => output_g
+        }
     };
-    let output_base63_32 : bits(128) = match input_base63_32 {
-      Some(input_base63_32) => set_system_segment_descriptorbits_get_base63_32(input_base63_32, output_base31_24),
-      _ => output_base31_24
+    let output_base63_32 : bits(128) = {
+        match input_base63_32 {
+          Some(input_base63_32) => set_system_segment_descriptorbits_get_base63_32(input_base63_32, output_base31_24),
+          _ => output_base31_24
+        }
     };
-    let output_res2 : bits(128) = match input_res2 {
-      Some(input_res2) => set_system_segment_descriptorbits_get_res2(input_res2, output_base63_32),
-      _ => output_base63_32
+    let output_res2 : bits(128) = {
+        match input_res2 {
+          Some(input_res2) => set_system_segment_descriptorbits_get_res2(input_res2, output_base63_32),
+          _ => output_base63_32
+        }
     };
-    let output_all_zeroes? : bits(128) = match input_all_zeroes? {
-      Some(input_all_zeroes?) => set_system_segment_descriptorbits_get_all_zeroes?(input_all_zeroes?, output_res2),
-      _ => output_res2
+    let output_all_zeroes? : bits(128) = {
+        match input_all_zeroes? {
+          Some(input_all_zeroes?) => set_system_segment_descriptorbits_get_all_zeroes?(input_all_zeroes?, output_res2),
+          _ => output_res2
+        }
     };
-    let output_res3 : bits(128) = match input_res3 {
-      Some(input_res3) => set_system_segment_descriptorbits_get_res3(input_res3, output_all_zeroes?),
-      _ => output_all_zeroes?
+    let output_res3 : bits(128) = {
+        match input_res3 {
+          Some(input_res3) => set_system_segment_descriptorbits_get_res3(input_res3, output_all_zeroes?),
+          _ => output_all_zeroes?
+        }
     };
     output_res3
 }
@@ -1730,33 +1928,47 @@ function set_system_segment_descriptor_attributesbits_get_unknownbits (splicebit
 val change_system_segment_descriptor_attributesbits : (bits(16), option(bits(4)), option(bits(1)), option(bits(2)), option(bits(1)), option(bits(1)), option(bits(1)), option(bits(6))) -> bits(16)
 
 function change_system_segment_descriptor_attributesbits (input_bits, input_type, input_s, input_dpl, input_p, input_avl, input_g, input_unknownbits) = {
-    let output_type : bits(16) = match input_type {
-      Some(input_type) => set_system_segment_descriptor_attributesbits_get_type(input_type, input_bits),
-      _ => input_bits
+    let output_type : bits(16) = {
+        match input_type {
+          Some(input_type) => set_system_segment_descriptor_attributesbits_get_type(input_type, input_bits),
+          _ => input_bits
+        }
     };
-    let output_s : bits(16) = match input_s {
-      Some(input_s) => set_system_segment_descriptor_attributesbits_get_s(input_s, output_type),
-      _ => output_type
+    let output_s : bits(16) = {
+        match input_s {
+          Some(input_s) => set_system_segment_descriptor_attributesbits_get_s(input_s, output_type),
+          _ => output_type
+        }
     };
-    let output_dpl : bits(16) = match input_dpl {
-      Some(input_dpl) => set_system_segment_descriptor_attributesbits_get_dpl(input_dpl, output_s),
-      _ => output_s
+    let output_dpl : bits(16) = {
+        match input_dpl {
+          Some(input_dpl) => set_system_segment_descriptor_attributesbits_get_dpl(input_dpl, output_s),
+          _ => output_s
+        }
     };
-    let output_p : bits(16) = match input_p {
-      Some(input_p) => set_system_segment_descriptor_attributesbits_get_p(input_p, output_dpl),
-      _ => output_dpl
+    let output_p : bits(16) = {
+        match input_p {
+          Some(input_p) => set_system_segment_descriptor_attributesbits_get_p(input_p, output_dpl),
+          _ => output_dpl
+        }
     };
-    let output_avl : bits(16) = match input_avl {
-      Some(input_avl) => set_system_segment_descriptor_attributesbits_get_avl(input_avl, output_p),
-      _ => output_p
+    let output_avl : bits(16) = {
+        match input_avl {
+          Some(input_avl) => set_system_segment_descriptor_attributesbits_get_avl(input_avl, output_p),
+          _ => output_p
+        }
     };
-    let output_g : bits(16) = match input_g {
-      Some(input_g) => set_system_segment_descriptor_attributesbits_get_g(input_g, output_avl),
-      _ => output_avl
+    let output_g : bits(16) = {
+        match input_g {
+          Some(input_g) => set_system_segment_descriptor_attributesbits_get_g(input_g, output_avl),
+          _ => output_avl
+        }
     };
-    let output_unknownbits : bits(16) = match input_unknownbits {
-      Some(input_unknownbits) => set_system_segment_descriptor_attributesbits_get_unknownbits(input_unknownbits, output_g),
-      _ => output_g
+    let output_unknownbits : bits(16) = {
+        match input_unknownbits {
+          Some(input_unknownbits) => set_system_segment_descriptor_attributesbits_get_unknownbits(input_unknownbits, output_g),
+          _ => output_g
+        }
     };
     output_unknownbits
 }
@@ -1908,53 +2120,77 @@ function set_call_gate_descriptorbits_get_res3 (splicebits, inputbits) = {
 val change_call_gate_descriptorbits : (bits(128), option(bits(16)), option(bits(16)), option(bits(8)), option(bits(4)), option(bits(1)), option(bits(2)), option(bits(1)), option(bits(16)), option(bits(32)), option(bits(8)), option(bits(5)), option(bits(19))) -> bits(128)
 
 function change_call_gate_descriptorbits (input_bits, input_offset15_0, input_selector, input_res1, input_type, input_s, input_dpl, input_p, input_offset31_16, input_offset63_32, input_res2, input_all_zeroes?, input_res3) = {
-    let output_offset15_0 : bits(128) = match input_offset15_0 {
-      Some(input_offset15_0) => set_call_gate_descriptorbits_get_offset15_0(input_offset15_0, input_bits),
-      _ => input_bits
+    let output_offset15_0 : bits(128) = {
+        match input_offset15_0 {
+          Some(input_offset15_0) => set_call_gate_descriptorbits_get_offset15_0(input_offset15_0, input_bits),
+          _ => input_bits
+        }
     };
-    let output_selector : bits(128) = match input_selector {
-      Some(input_selector) => set_call_gate_descriptorbits_get_selector(input_selector, output_offset15_0),
-      _ => output_offset15_0
+    let output_selector : bits(128) = {
+        match input_selector {
+          Some(input_selector) => set_call_gate_descriptorbits_get_selector(input_selector, output_offset15_0),
+          _ => output_offset15_0
+        }
     };
-    let output_res1 : bits(128) = match input_res1 {
-      Some(input_res1) => set_call_gate_descriptorbits_get_res1(input_res1, output_selector),
-      _ => output_selector
+    let output_res1 : bits(128) = {
+        match input_res1 {
+          Some(input_res1) => set_call_gate_descriptorbits_get_res1(input_res1, output_selector),
+          _ => output_selector
+        }
     };
-    let output_type : bits(128) = match input_type {
-      Some(input_type) => set_call_gate_descriptorbits_get_type(input_type, output_res1),
-      _ => output_res1
+    let output_type : bits(128) = {
+        match input_type {
+          Some(input_type) => set_call_gate_descriptorbits_get_type(input_type, output_res1),
+          _ => output_res1
+        }
     };
-    let output_s : bits(128) = match input_s {
-      Some(input_s) => set_call_gate_descriptorbits_get_s(input_s, output_type),
-      _ => output_type
+    let output_s : bits(128) = {
+        match input_s {
+          Some(input_s) => set_call_gate_descriptorbits_get_s(input_s, output_type),
+          _ => output_type
+        }
     };
-    let output_dpl : bits(128) = match input_dpl {
-      Some(input_dpl) => set_call_gate_descriptorbits_get_dpl(input_dpl, output_s),
-      _ => output_s
+    let output_dpl : bits(128) = {
+        match input_dpl {
+          Some(input_dpl) => set_call_gate_descriptorbits_get_dpl(input_dpl, output_s),
+          _ => output_s
+        }
     };
-    let output_p : bits(128) = match input_p {
-      Some(input_p) => set_call_gate_descriptorbits_get_p(input_p, output_dpl),
-      _ => output_dpl
+    let output_p : bits(128) = {
+        match input_p {
+          Some(input_p) => set_call_gate_descriptorbits_get_p(input_p, output_dpl),
+          _ => output_dpl
+        }
     };
-    let output_offset31_16 : bits(128) = match input_offset31_16 {
-      Some(input_offset31_16) => set_call_gate_descriptorbits_get_offset31_16(input_offset31_16, output_p),
-      _ => output_p
+    let output_offset31_16 : bits(128) = {
+        match input_offset31_16 {
+          Some(input_offset31_16) => set_call_gate_descriptorbits_get_offset31_16(input_offset31_16, output_p),
+          _ => output_p
+        }
     };
-    let output_offset63_32 : bits(128) = match input_offset63_32 {
-      Some(input_offset63_32) => set_call_gate_descriptorbits_get_offset63_32(input_offset63_32, output_offset31_16),
-      _ => output_offset31_16
+    let output_offset63_32 : bits(128) = {
+        match input_offset63_32 {
+          Some(input_offset63_32) => set_call_gate_descriptorbits_get_offset63_32(input_offset63_32, output_offset31_16),
+          _ => output_offset31_16
+        }
     };
-    let output_res2 : bits(128) = match input_res2 {
-      Some(input_res2) => set_call_gate_descriptorbits_get_res2(input_res2, output_offset63_32),
-      _ => output_offset63_32
+    let output_res2 : bits(128) = {
+        match input_res2 {
+          Some(input_res2) => set_call_gate_descriptorbits_get_res2(input_res2, output_offset63_32),
+          _ => output_offset63_32
+        }
     };
-    let output_all_zeroes? : bits(128) = match input_all_zeroes? {
-      Some(input_all_zeroes?) => set_call_gate_descriptorbits_get_all_zeroes?(input_all_zeroes?, output_res2),
-      _ => output_res2
+    let output_all_zeroes? : bits(128) = {
+        match input_all_zeroes? {
+          Some(input_all_zeroes?) => set_call_gate_descriptorbits_get_all_zeroes?(input_all_zeroes?, output_res2),
+          _ => output_res2
+        }
     };
-    let output_res3 : bits(128) = match input_res3 {
-      Some(input_res3) => set_call_gate_descriptorbits_get_res3(input_res3, output_all_zeroes?),
-      _ => output_all_zeroes?
+    let output_res3 : bits(128) = {
+        match input_res3 {
+          Some(input_res3) => set_call_gate_descriptorbits_get_res3(input_res3, output_all_zeroes?),
+          _ => output_all_zeroes?
+        }
     };
     output_res3
 }
@@ -2022,25 +2258,35 @@ function set_call_gate_descriptor_attributesbits_get_unknownbits (splicebits, in
 val change_call_gate_descriptor_attributesbits : (bits(16), option(bits(4)), option(bits(1)), option(bits(2)), option(bits(1)), option(bits(8))) -> bits(16)
 
 function change_call_gate_descriptor_attributesbits (input_bits, input_type, input_s, input_dpl, input_p, input_unknownbits) = {
-    let output_type : bits(16) = match input_type {
-      Some(input_type) => set_call_gate_descriptor_attributesbits_get_type(input_type, input_bits),
-      _ => input_bits
+    let output_type : bits(16) = {
+        match input_type {
+          Some(input_type) => set_call_gate_descriptor_attributesbits_get_type(input_type, input_bits),
+          _ => input_bits
+        }
     };
-    let output_s : bits(16) = match input_s {
-      Some(input_s) => set_call_gate_descriptor_attributesbits_get_s(input_s, output_type),
-      _ => output_type
+    let output_s : bits(16) = {
+        match input_s {
+          Some(input_s) => set_call_gate_descriptor_attributesbits_get_s(input_s, output_type),
+          _ => output_type
+        }
     };
-    let output_dpl : bits(16) = match input_dpl {
-      Some(input_dpl) => set_call_gate_descriptor_attributesbits_get_dpl(input_dpl, output_s),
-      _ => output_s
+    let output_dpl : bits(16) = {
+        match input_dpl {
+          Some(input_dpl) => set_call_gate_descriptor_attributesbits_get_dpl(input_dpl, output_s),
+          _ => output_s
+        }
     };
-    let output_p : bits(16) = match input_p {
-      Some(input_p) => set_call_gate_descriptor_attributesbits_get_p(input_p, output_dpl),
-      _ => output_dpl
+    let output_p : bits(16) = {
+        match input_p {
+          Some(input_p) => set_call_gate_descriptor_attributesbits_get_p(input_p, output_dpl),
+          _ => output_dpl
+        }
     };
-    let output_unknownbits : bits(16) = match input_unknownbits {
-      Some(input_unknownbits) => set_call_gate_descriptor_attributesbits_get_unknownbits(input_unknownbits, output_p),
-      _ => output_p
+    let output_unknownbits : bits(16) = {
+        match input_unknownbits {
+          Some(input_unknownbits) => set_call_gate_descriptor_attributesbits_get_unknownbits(input_unknownbits, output_p),
+          _ => output_p
+        }
     };
     output_unknownbits
 }

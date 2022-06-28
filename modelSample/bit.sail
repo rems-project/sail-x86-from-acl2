@@ -12,10 +12,10 @@ let p4? : bool = ((0x67) == (prefixes_get_adr(prefixes))) in
 let seg_reg : {|0, 1, 2, 3, 4, 5|} = (select_segment_register(proc_mode, p2, p4?, mod_var, r_m, sib)) in
 let operand_size : {|1, 2, 4, 8|} = (select_operand_size(proc_mode, false, rex_byte, false, prefixes, false, false, false)) in
 let bitoffset : bits(64) = (rgfi_size(bits_of_int(operand_size, 4), reg_index(reg, rex_byte, 0b10), rex_byte)) in
-let (flg0, addr, increment_rip_by) : (option(string), sbits(64), {|0, 1, 2, 4|}) = (if (mod_var) == (0b11)
+let (flg0, addr, increment_rip_by) : (option(string), sbits(64), {|0, 1, 2, 4|}) = { (if (mod_var) == (0b11)
 then (None() : option(string), 0x0000_0000_0000_0000, 0)
 else let p4? : bool = ((0x67) == (prefixes_get_adr(prefixes))) in
-x86_effective_addr(proc_mode, p4?, temp_rip, rex_byte, r_m, mod_var, sib, 0b000)) in
+x86_effective_addr(proc_mode, p4?, temp_rip, rex_byte, r_m, mod_var, sib, 0b000)) } in
 let increment_rip_by : bits(3) = (bits_of_int(increment_rip_by, 3)) in
 { if is_some(flg0)
 then throw(Emsg("Model state error: :X86-EFFECTIVE-ADDR-ERROR"))
@@ -30,22 +30,22 @@ let badlength? : option(int) = (check_instruction_length(start_rip, temp_rip, 0b
 then throw(Emsg("A fault occurred.  Original ACL2 AST:
 ['!!FAULT-FRESH', ':GP', '0', ':INSTRUCTION-LENGTH', 'BADLENGTH?']"))
 else ();
-let (flg2, bitoffset, bitbase) : (option(string), int, int) = (if (mod_var) == (0b11)
+let (flg2, bitoffset, bitbase) : (option(string), int, int) = { (if (mod_var) == (0b11)
 then (None() : option(string), mod(unsigned(bitoffset), ash(operand_size, 3)), unsigned(rgfi_size(bits_of_int(operand_size, 4), reg_index(r_m, rex_byte, 0b00), rex_byte)))
-else let bitoffset_int : sbits(64) = (match operand_size {
+else let bitoffset_int : sbits(64) = { (match operand_size {
 1 => sail_sign_extend(truncate(bitoffset, 8), 64),
 2 => sail_sign_extend(truncate(bitoffset, 16), 64),
 4 => sail_sign_extend(truncate(bitoffset, 32), 64),
 _ => bitoffset
-}) in
+}) } in
 let bitoffset_int_abs : int = (abs(signed(bitoffset_int))) in
 let bitnumber : int = (mod(bitoffset_int_abs, 8)) in
 let byte_addr : int = ((signed(addr)) + (floor2(signed(bitoffset_int), 8))) in
 let inst_ac? : bool = (alignment_checking_enabled_p()) in
-let (flg, byte) : (option(string), int) = (if signed_byte_p(64, byte_addr)
+let (flg, byte) : (option(string), int) = { (if signed_byte_p(64, byte_addr)
 then rme_size(proc_mode, 1, bits_of_int(byte_addr, 64), seg_reg, ":R", inst_ac?, struct {mem_ptr? = false})
-else (Some("EFFECTIVE-ADDRESS-ERROR"), 0)) in
-(flg, bitnumber, byte)) in
+else (Some("EFFECTIVE-ADDRESS-ERROR"), 0)) } in
+(flg, bitnumber, byte)) } in
 { if is_some(flg2)
 then throw(Emsg("Model state error: :RME-SIZE-ERROR"))
 else ();

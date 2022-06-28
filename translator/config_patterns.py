@@ -51,7 +51,8 @@ forced_return_types = {
 
 forced_argument_types = {
         'wb-1': {'value': Sail_t_int()},
-        'canonical-address-p': {'lin-addr': Sail_t_int()}
+        'canonical-address-p': {'lin-addr': Sail_t_int()},
+        'gpr-arith/logic-spec': {'operand-size': Sail_t_member([1, 2, 4, 8]), 'dst': Sail_t_bits(64), 'src': Sail_t_bits(64)}
 }
 
 forced_variable_types = {
@@ -59,6 +60,14 @@ forced_variable_types = {
         'inst-ac?': Sail_t_bool(),
         'undefined-flags': Sail_t_bits(32)
 }
+
+'''
+By default we expand macro applications inline at their call sites, but we
+support translating selected macros as regular functions
+'''
+define_macros = [
+        'gpr-arith/logic-spec'
+]
 
 '''
 Exclude these files from the translation

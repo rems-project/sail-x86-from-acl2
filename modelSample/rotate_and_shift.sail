@@ -80,7 +80,7 @@ let temp_rip : sbits(48) = (truncate(temp_rip, 48)) in
 { if is_some(flg)
 then throw(Emsg("Model state error: :RIP-INCREMENT-ERROR"))
 else ();
-let (flg1, shift_rotate_by) : (option(string), int) = (match opcode {
+let (flg1, shift_rotate_by) : (option(string), int) = { (match opcode {
 208 => (None() : option(string), 1),
 209 => (None() : option(string), 1),
 210 => (None() : option(string), unsigned(rr08(0x1, rex_byte))),
@@ -88,17 +88,17 @@ let (flg1, shift_rotate_by) : (option(string), int) = (match opcode {
 192 => rme_size(proc_mode, 1, sail_sign_extend(temp_rip, 64), 1, ":X", false, struct {mem_ptr? = false}),
 193 => rme_size(proc_mode, 1, sail_sign_extend(temp_rip, 64), 1, ":X", false, struct {mem_ptr? = false}),
 _ => (None() : option(string), 0)
-}) in
+}) } in
 { if is_some(flg1)
 then throw(Emsg("Model state error: :RME-SIZE-ERROR"))
 else ();
-let countmask : {|31, 63|} = (if logbitp(3, rex_byte)
+let countmask : {|31, 63|} = { (if logbitp(3, rex_byte)
 then 63
-else 31) in
+else 31) } in
 let shift_rotate_by : int = (logand(countmask, shift_rotate_by)) in
-let (flg, temp_rip) : (option(string), sbits(49)) = (if ((opcode) == (0xc0)) | ((opcode) == (0xc1))
+let (flg, temp_rip) : (option(string), sbits(49)) = { (if ((opcode) == (0xc0)) | ((opcode) == (0xc1))
 then add_to_iptr(proc_mode, temp_rip, 0x0000_0000_0001)
-else (None() : option(string), sail_sign_extend(temp_rip, 49))) in
+else (None() : option(string), sail_sign_extend(temp_rip, 49))) } in
 { if is_some(flg)
 then throw(Emsg("Model state error: :RIP-INCREMENT-ERROR"))
 else ();
@@ -108,7 +108,7 @@ then throw(Emsg("A fault occurred.  Original ACL2 AST:
 ['!!FAULT-FRESH', ':GP', '0', ':INSTRUCTION-LENGTH', 'BADLENGTH?']"))
 else ();
 let input_rflags : bits(32) = (rflags) in
-let (result, output_rflags, undefined_flags) : (bits(64), bits(32), bits(32)) = (match reg {
+let (result, output_rflags, undefined_flags) : (bits(64), bits(32), bits(32)) = { (match reg {
 0 => rol_spec(reg_mem_size, bits_of_int(reg_mem, 64), bits_of_int(shift_rotate_by, 6), input_rflags),
 1 => ror_spec(reg_mem_size, bits_of_int(reg_mem, 64), bits_of_int(shift_rotate_by, 6), input_rflags),
 2 => rcl_spec(reg_mem_size, bits_of_int(reg_mem, 64), bits_of_int(shift_rotate_by, 6), input_rflags),
@@ -117,7 +117,7 @@ let (result, output_rflags, undefined_flags) : (bits(64), bits(32), bits(32)) = 
 5 => shr_spec(reg_mem_size, bits_of_int(reg_mem, 64), bits_of_int(shift_rotate_by, 6), input_rflags),
 7 => sar_spec(reg_mem_size, bits_of_int(reg_mem, 64), bits_of_int(shift_rotate_by, 6), input_rflags),
 _ => (0x0000_0000_0000_0000, 0x0000_0000, 0x0000_0000)
-}) in
+}) } in
 { write_user_rflags(output_rflags, undefined_flags);
 let flg2 : option(string) = (x86_operand_to_reg_mem(proc_mode, reg_mem_size, inst_ac?, false, unsigned(sail_mask(64, trunc(reg_mem_size, result))), seg_reg, addr, rex_byte, r_m, mod_var)) in
 { if is_some(flg2)
@@ -181,23 +181,23 @@ let temp_rip : sbits(48) = (truncate(temp_rip, 48)) in
 then throw(Emsg("Model state error: :RIP-INCREMENT-ERROR"))
 else ();
 let src_value : bits(64) = (rgfi_size(bits_of_int(operand_size, 4), reg_index(reg, rex_byte, 0b10), rex_byte)) in
-let (flg, count) : (option(string), int) = (match opcode {
+let (flg, count) : (option(string), int) = { (match opcode {
 164 => rme_size(proc_mode, 1, sail_sign_extend(temp_rip, 64), 1, ":X", false, struct {mem_ptr? = false}),
 172 => rme_size(proc_mode, 1, sail_sign_extend(temp_rip, 64), 1, ":X", false, struct {mem_ptr? = false}),
 165 => (None() : option(string), unsigned(rr08(0x1, rex_byte))),
 173 => (None() : option(string), unsigned(rr08(0x1, rex_byte))),
 _ => (None() : option(string), 0)
-}) in
+}) } in
 { if is_some(flg)
 then throw(Emsg("Model state error: :RME-SIZE-ERROR"))
 else ();
-let (flg, temp_rip) : (option(string), sbits(49)) = (match opcode {
+let (flg, temp_rip) : (option(string), sbits(49)) = { (match opcode {
 164 => add_to_iptr(proc_mode, temp_rip, 0x0000_0000_0001),
 172 => add_to_iptr(proc_mode, temp_rip, 0x0000_0000_0001),
 165 => (None() : option(string), sail_sign_extend(temp_rip, 49)),
 173 => (None() : option(string), sail_sign_extend(temp_rip, 49)),
 _ => (None() : option(string), 0b0_0000_0000_0000_0000_0000_0000_0000_0000_0000_0000_0000_0000)
-}) in
+}) } in
 let temp_rip : sbits(48) = (truncate(temp_rip, 48)) in
 { if is_some(flg)
 then throw(Emsg("Model state error: :RIP-INCREMENT-ERROR"))
@@ -207,21 +207,21 @@ let badlength? : option(int) = (check_instruction_length(start_rip, temp_rip, 0b
 then throw(Emsg("A fault occurred.  Original ACL2 AST:
 ['!!FAULT-FRESH', ':GP', '0', ':INSTRUCTION-LENGTH', 'BADLENGTH?']"))
 else ();
-let count_mask : {|31, 63|} = (if logbitp(3, rex_byte)
+let count_mask : {|31, 63|} = { (if logbitp(3, rex_byte)
 then 63
-else 31) in
+else 31) } in
 let count : int = (logand(count_mask, count)) in
 let input_rflags : bits(32) = (rflags) in
-let (result, result_undefined?, output_rflags, undefined_flags) : (bits(64), bool, bits(32), bits(32)) = (match opcode {
+let (result, result_undefined?, output_rflags, undefined_flags) : (bits(64), bool, bits(32), bits(32)) = { (match opcode {
 164 => shld_spec(operand_size, bits_of_int(dst_value, 64), src_value, bits_of_int(count, 6), input_rflags),
 165 => shld_spec(operand_size, bits_of_int(dst_value, 64), src_value, bits_of_int(count, 6), input_rflags),
 172 => shrd_spec(operand_size, bits_of_int(dst_value, 64), src_value, bits_of_int(count, 6), input_rflags),
 173 => shrd_spec(operand_size, bits_of_int(dst_value, 64), src_value, bits_of_int(count, 6), input_rflags),
 _ => (0x0000_0000_0000_0000, false, 0x0000_0000, 0x0000_0000)
-}) in
-let result : int = (if result_undefined?
+}) } in
+let result : int = { (if result_undefined?
 then undef_read()
-else unsigned(result)) in
+else unsigned(result)) } in
 { write_user_rflags(output_rflags, undefined_flags);
 let flg : option(string) = (x86_operand_to_reg_mem(proc_mode, operand_size, inst_ac?, false, unsigned(sail_mask(64, trunc(operand_size, bits_of_int(result, 64)))), seg_reg, dst_addr, rex_byte, r_m, mod_var)) in
 { if is_some(flg)

@@ -26,8 +26,10 @@ function x86_mul (proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode, mo
     (match reg_mem_size {
       1 => write_rgfi_size(0x2, 0x0, unsigned(product), rex_byte),
       _ => {
-          write_rgfi_size(bits_of_int(reg_mem_size, 4), 0x0, unsigned(product_low), rex_byte);
-          write_rgfi_size(bits_of_int(reg_mem_size, 4), 0x2, unsigned(product_high), rex_byte)
+          {
+              write_rgfi_size(bits_of_int(reg_mem_size, 4), 0x0, unsigned(product_low), rex_byte);
+              write_rgfi_size(bits_of_int(reg_mem_size, 4), 0x2, unsigned(product_high), rex_byte)
+          }
       }
     }) : unit;
     if product_high == 0x0000000000000000 then {
@@ -100,8 +102,10 @@ function x86_imul_op_en_m (proc_mode, start_rip, temp_rip, prefixes, rex_byte, o
     (match reg_mem_size {
       1 => write_rgfi_size(0x2, 0x0, unsigned(product), rex_byte),
       _ => {
-          write_rgfi_size(bits_of_int(reg_mem_size, 4), 0x0, unsigned(product_low), rex_byte);
-          write_rgfi_size(bits_of_int(reg_mem_size, 4), 0x2, unsigned(product_high), rex_byte)
+          {
+              write_rgfi_size(bits_of_int(reg_mem_size, 4), 0x0, unsigned(product_low), rex_byte);
+              write_rgfi_size(bits_of_int(reg_mem_size, 4), 0x2, unsigned(product_high), rex_byte)
+          }
       }
     }) : unit;
     {
@@ -181,7 +185,9 @@ function x86_imul_op_en_rmi (proc_mode, start_rip, temp_rip, prefixes, rex_byte,
     let p2 : bits(8) = prefixes_get_seg(prefixes);
     let p4? : bool = 0x67 == prefixes_get_adr(prefixes);
     let reg_mem_size : {|1, 2, 4, 8|} = select_operand_size(proc_mode, false, rex_byte, false, prefixes, false, false, false);
-    let imm_size : {|1, 2, 4|} = if opcode == 0x6b then 1 else if reg_mem_size == 2 then 2 else 4;
+    let imm_size : {|1, 2, 4|} = {
+        if opcode == 0x6b then 1 else if reg_mem_size == 2 then 2 else 4
+    };
     let seg_reg : {|0, 1, 2, 3, 4, 5|} = select_segment_register(proc_mode, p2, p4?, mod_var, r_m, sib);
     let inst_ac? : bool = true;
     let (flg0, reg_mem, increment_rip_by, addr) : (option(string), int, {|0, 1, 2, 4|}, sbits(64)) = x86_operand_from_modr_m_and_sib_bytes(proc_mode, 0b0, reg_mem_size, inst_ac?, false, seg_reg, p4?, temp_rip, rex_byte, r_m, mod_var, sib, bits_of_int(imm_size, 3));

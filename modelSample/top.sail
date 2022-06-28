@@ -26,26 +26,26 @@ val x86_cmc_clc_stc_cld_std : (range(0, 4), sbits(48), sbits(48), bits(52), bits
 function x86_cmc_clc_stc_cld_std (proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode, modr_m, sib) =
 let ctx : string = ("X86-CMC/CLC/STC/CLD/STD") in
 { (match opcode {
-245 => let cf : bits(1) = (truncate(let rflags_var : bits(32) = (rflags) in
+245 => { let cf : bits(1) = (truncate(let rflags_var : bits(32) = (rflags) in
 sail_zero_extend(rflagsbits_get_cf(rflags_var), 2), 1)) in
-let not_cf : {|0, 1|} = (if (cf) == (0b1)
+let not_cf : {|0, 1|} = { (if (cf) == (0b1)
 then 0
-else 1) in
+else 1) } in
 let rflags_var : bits(32) = (rflags) in
 let new_rflags : bits(32) = (set_rflagsbits_get_cf(bits_of_int(not_cf, 1), rflags_var)) in
-rflags = new_rflags,
-248 => let rflags_var : bits(32) = (rflags) in
+rflags = new_rflags },
+248 => { let rflags_var : bits(32) = (rflags) in
 let new_rflags : bits(32) = (set_rflagsbits_get_cf(0b0, rflags_var)) in
-rflags = new_rflags,
-249 => let rflags_var : bits(32) = (rflags) in
+rflags = new_rflags },
+249 => { let rflags_var : bits(32) = (rflags) in
 let new_rflags : bits(32) = (set_rflagsbits_get_cf(0b1, rflags_var)) in
-rflags = new_rflags,
-252 => let rflags_var : bits(32) = (rflags) in
+rflags = new_rflags },
+252 => { let rflags_var : bits(32) = (rflags) in
 let new_rflags : bits(32) = (set_rflagsbits_get_df(0b0, rflags_var)) in
-rflags = new_rflags,
-_ => let rflags_var : bits(32) = (rflags) in
+rflags = new_rflags },
+_ => { let rflags_var : bits(32) = (rflags) in
 let new_rflags : bits(32) = (set_rflagsbits_get_df(0b1, rflags_var)) in
-rflags = new_rflags
+rflags = new_rflags }
 }) : unit;
 write_iptr(proc_mode, temp_rip)
 }

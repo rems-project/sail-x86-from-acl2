@@ -6,7 +6,9 @@ function x86_movss_movsd_op_en_rm (sp_dp, proc_mode, start_rip, temp_rip, prefix
     let r_m : bits(3) = modr_m_get_r_m(modr_m);
     let mod_var : bits(2) = modr_m_get_mod(modr_m);
     let reg : bits(3) = modr_m_get_reg(modr_m);
-    let operand_size : {|4, 8|} = if sp_dp == 1 then 8 else 4;
+    let operand_size : {|4, 8|} = {
+        if sp_dp == 1 then 8 else 4
+    };
     let xmm_index : bits(4) = reg_index(reg, rex_byte, 0b10);
     let p2 : bits(8) = prefixes_get_seg(prefixes);
     let p4? : bool = 0x67 == prefixes_get_adr(prefixes);
@@ -19,9 +21,11 @@ function x86_movss_movsd_op_en_rm (sp_dp, proc_mode, start_rip, temp_rip, prefix
     if is_some(flg) then throw(Emsg("Model state error: :RIP-INCREMENT-ERROR"));
     let badlength? : option(int) = check_instruction_length(start_rip, temp_rip, 0b000);
     if is_some(badlength?) then throw(Emsg("A fault occurred.  Original ACL2 AST:\n['!!FAULT-FRESH', ':GP', '0', ':INSTRUCTION-LENGTH', 'BADLENGTH?']"));
-    let operand_size : {|4, 8, 16|} = if mod_var == 0b11 then {
-        operand_size
-    } else 16;
+    let operand_size : {|4, 8, 16|} = {
+        if mod_var == 0b11 then {
+            operand_size
+        } else 16
+    };
     write_xmmi_size(bits_of_int(operand_size, 5), xmm_index, xmm_mem);
     write_iptr(proc_mode, temp_rip)
 }
@@ -33,16 +37,20 @@ function x86_movss_movsd_op_en_mr (sp_dp, proc_mode, start_rip, temp_rip, prefix
     let r_m : bits(3) = modr_m_get_r_m(modr_m);
     let mod_var : bits(2) = modr_m_get_mod(modr_m);
     let reg : bits(3) = modr_m_get_reg(modr_m);
-    let operand_size : {|4, 8|} = if sp_dp == 1 then 8 else 4;
+    let operand_size : {|4, 8|} = {
+        if sp_dp == 1 then 8 else 4
+    };
     let xmm_index : bits(4) = reg_index(reg, rex_byte, 0b10);
     let xmm : bits(128) = xmmi_size(bits_of_int(operand_size, 5), xmm_index);
     let p2 : bits(8) = prefixes_get_seg(prefixes);
     let p4? : bool = 0x67 == prefixes_get_adr(prefixes);
     let seg_reg : {|0, 1, 2, 3, 4, 5|} = select_segment_register(proc_mode, p2, p4?, mod_var, r_m, sib);
-    let (flg0, addr, increment_rip_by) : (option(string), sbits(64), {|0, 1, 2, 4|}) = if mod_var == 0b11 then {
-        (None() : option(string), 0x0000000000000000, 0)
-    } else {
-        x86_effective_addr(proc_mode, p4?, temp_rip, rex_byte, r_m, mod_var, sib, 0b000)
+    let (flg0, addr, increment_rip_by) : (option(string), sbits(64), {|0, 1, 2, 4|}) = {
+        if mod_var == 0b11 then {
+            (None() : option(string), 0x0000000000000000, 0)
+        } else {
+            x86_effective_addr(proc_mode, p4?, temp_rip, rex_byte, r_m, mod_var, sib, 0b000)
+        }
     };
     let increment_rip_by : bits(3) = bits_of_int(increment_rip_by, 3);
     if is_some(flg0) then throw(Emsg("Model state error: :X86-EFFECTIVE-ADDR-ERROR"));
@@ -93,10 +101,12 @@ function x86_movaps_movapd_op_en_mr (proc_mode, start_rip, temp_rip, prefixes, r
     let p2 : bits(8) = prefixes_get_seg(prefixes);
     let p4? : bool = 0x67 == prefixes_get_adr(prefixes);
     let seg_reg : {|0, 1, 2, 3, 4, 5|} = select_segment_register(proc_mode, p2, p4?, mod_var, r_m, sib);
-    let (flg0, addr, increment_rip_by) : (option(string), sbits(64), {|0, 1, 2, 4|}) = if mod_var == 0b11 then {
-        (None() : option(string), 0x0000000000000000, 0)
-    } else {
-        x86_effective_addr(proc_mode, p4?, temp_rip, rex_byte, r_m, mod_var, sib, 0b000)
+    let (flg0, addr, increment_rip_by) : (option(string), sbits(64), {|0, 1, 2, 4|}) = {
+        if mod_var == 0b11 then {
+            (None() : option(string), 0x0000000000000000, 0)
+        } else {
+            x86_effective_addr(proc_mode, p4?, temp_rip, rex_byte, r_m, mod_var, sib, 0b000)
+        }
     };
     let increment_rip_by : bits(3) = bits_of_int(increment_rip_by, 3);
     if is_some(flg0) then throw(Emsg("Model state error: :X86-EFFECTIVE-ADDR-ERROR"));
@@ -147,10 +157,12 @@ function x86_movups_movupd_movdqu_op_en_mr (proc_mode, start_rip, temp_rip, pref
     let p2 : bits(8) = prefixes_get_seg(prefixes);
     let p4? : bool = 0x67 == prefixes_get_adr(prefixes);
     let seg_reg : {|0, 1, 2, 3, 4, 5|} = select_segment_register(proc_mode, p2, p4?, mod_var, r_m, sib);
-    let (flg0, addr, increment_rip_by) : (option(string), sbits(64), {|0, 1, 2, 4|}) = if mod_var == 0b11 then {
-        (None() : option(string), 0x0000000000000000, 0)
-    } else {
-        x86_effective_addr(proc_mode, p4?, temp_rip, rex_byte, r_m, mod_var, sib, 0b000)
+    let (flg0, addr, increment_rip_by) : (option(string), sbits(64), {|0, 1, 2, 4|}) = {
+        if mod_var == 0b11 then {
+            (None() : option(string), 0x0000000000000000, 0)
+        } else {
+            x86_effective_addr(proc_mode, p4?, temp_rip, rex_byte, r_m, mod_var, sib, 0b000)
+        }
     };
     let increment_rip_by : bits(3) = bits_of_int(increment_rip_by, 3);
     if is_some(flg0) then throw(Emsg("Model state error: :X86-EFFECTIVE-ADDR-ERROR"));

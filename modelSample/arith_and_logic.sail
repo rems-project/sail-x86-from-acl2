@@ -51,18 +51,10 @@ then throw(Emsg("A fault occurred.  Original ACL2 AST:
 ['!!FAULT-FRESH', ':GP', '0', ':INSTRUCTION-LENGTH', 'BADLENGTH?']"))
 else ();
 let input_rflags : bits(32) = (rflags) in
-let (result, output_rflags, undefined_flags) : (bits(64), bits(32), bits(32)) = (match operand_size {
-1 => let (elem0, elem1, elem2) : (bits(8), bits(32), bits(32)) = (gpr_arith_logic_spec_1(operation, bits_of_int(e, 8), truncate(g, 8), input_rflags)) in
-(sail_zero_extend(elem0, 64), elem1, elem2),
-2 => let (elem0, elem1, elem2) : (bits(16), bits(32), bits(32)) = (gpr_arith_logic_spec_2(operation, bits_of_int(e, 16), truncate(g, 16), input_rflags)) in
-(sail_zero_extend(elem0, 64), elem1, elem2),
-4 => let (elem0, elem1, elem2) : (bits(32), bits(32), bits(32)) = (gpr_arith_logic_spec_4(operation, bits_of_int(e, 32), truncate(g, 32), input_rflags)) in
-(sail_zero_extend(elem0, 64), elem1, elem2),
-_ => gpr_arith_logic_spec_8(operation, bits_of_int(e, 64), g, input_rflags)
-}) in
-let flg1 : option(string) = (if ((operation) == (8)) | ((operation) == (7))
+let (result, output_rflags, undefined_flags) : (bits(64), bits(32), bits(32)) = (gpr_arith_logic_spec(operand_size, operation, bits_of_int(e, 64), g, input_rflags)) in
+let flg1 : option(string) = { (if ((operation) == (8)) | ((operation) == (7))
 then None() : option(string)
-else x86_operand_to_reg_mem(proc_mode, operand_size, inst_ac?, false, unsigned(result), seg_reg, e_addr, rex_byte, r_m, mod_var)) in
+else x86_operand_to_reg_mem(proc_mode, operand_size, inst_ac?, false, unsigned(result), seg_reg, e_addr, rex_byte, r_m, mod_var)) } in
 { if is_some(flg1)
 then throw(Emsg("Model state error: :X86-OPERAND-TO-REG/MEM"))
 else ();
@@ -121,15 +113,7 @@ then throw(Emsg("A fault occurred.  Original ACL2 AST:
 ['!!FAULT-FRESH', ':GP', '0', ':INSTRUCTION-LENGTH', 'BADLENGTH?']"))
 else ();
 let input_rflags : bits(32) = (rflags) in
-let (result, output_rflags, undefined_flags) : (bits(64), bits(32), bits(32)) = (match operand_size {
-1 => let (elem0, elem1, elem2) : (bits(8), bits(32), bits(32)) = (gpr_arith_logic_spec_1(operation, truncate(g, 8), bits_of_int(e, 8), input_rflags)) in
-(sail_zero_extend(elem0, 64), elem1, elem2),
-2 => let (elem0, elem1, elem2) : (bits(16), bits(32), bits(32)) = (gpr_arith_logic_spec_2(operation, truncate(g, 16), bits_of_int(e, 16), input_rflags)) in
-(sail_zero_extend(elem0, 64), elem1, elem2),
-4 => let (elem0, elem1, elem2) : (bits(32), bits(32), bits(32)) = (gpr_arith_logic_spec_4(operation, truncate(g, 32), bits_of_int(e, 32), input_rflags)) in
-(sail_zero_extend(elem0, 64), elem1, elem2),
-_ => gpr_arith_logic_spec_8(operation, g, bits_of_int(e, 64), input_rflags)
-}) in
+let (result, output_rflags, undefined_flags) : (bits(64), bits(32), bits(32)) = (gpr_arith_logic_spec(operand_size, operation, g, bits_of_int(e, 64), input_rflags)) in
 { if (operation) == (8)
 then ()
 else { write_rgfi_size(bits_of_int(operand_size, 4), reg_index(reg, rex_byte, 0b10), unsigned(result), rex_byte)
@@ -202,18 +186,10 @@ then throw(Emsg("A fault occurred.  Original ACL2 AST:
 ['!!FAULT-FRESH', ':GP', '0', ':INSTRUCTION-LENGTH', 'BADLENGTH?']"))
 else ();
 let input_rflags : bits(32) = (rflags) in
-let (result, output_rflags, undefined_flags) : (bits(64), bits(32), bits(32)) = (match e_size {
-1 => let (elem0, elem1, elem2) : (bits(8), bits(32), bits(32)) = (gpr_arith_logic_spec_1(operation, bits_of_int(e, 8), bits_of_int(imm, 8), input_rflags)) in
-(sail_zero_extend(elem0, 64), elem1, elem2),
-2 => let (elem0, elem1, elem2) : (bits(16), bits(32), bits(32)) = (gpr_arith_logic_spec_2(operation, bits_of_int(e, 16), bits_of_int(imm, 16), input_rflags)) in
-(sail_zero_extend(elem0, 64), elem1, elem2),
-4 => let (elem0, elem1, elem2) : (bits(32), bits(32), bits(32)) = (gpr_arith_logic_spec_4(operation, bits_of_int(e, 32), bits_of_int(imm, 32), input_rflags)) in
-(sail_zero_extend(elem0, 64), elem1, elem2),
-_ => gpr_arith_logic_spec_8(operation, bits_of_int(e, 64), bits_of_int(imm, 64), input_rflags)
-}) in
-let flg1 : option(string) = (if ((operation) == (8)) | ((operation) == (7))
+let (result, output_rflags, undefined_flags) : (bits(64), bits(32), bits(32)) = (gpr_arith_logic_spec(e_size, operation, bits_of_int(e, 64), bits_of_int(imm, 64), input_rflags)) in
+let flg1 : option(string) = { (if ((operation) == (8)) | ((operation) == (7))
 then None() : option(string)
-else x86_operand_to_reg_mem(proc_mode, e_size, inst_ac?, false, unsigned(result), seg_reg, e_addr, rex_byte, r_m, mod_var)) in
+else x86_operand_to_reg_mem(proc_mode, e_size, inst_ac?, false, unsigned(result), seg_reg, e_addr, rex_byte, r_m, mod_var)) } in
 { if is_some(flg1)
 then throw(Emsg("Model state error: :X86-OPERAND-TO-REG/MEM"))
 else ();
@@ -250,17 +226,17 @@ function x86_add_adc_sub_sbb_or_and_xor_cmp_test_rax_i (operation, proc_mode, st
 let ctx : string = ("X86-ADD/ADC/SUB/SBB/OR/AND/XOR/CMP-TEST-RAX-I") in
 let byte_operand? : bool = ((0x00) == (logand(0x01, opcode))) in
 let operand_size : {|1, 2, 4, 8|} = (select_operand_size(proc_mode, byte_operand?, rex_byte, true, prefixes, false, false, false)) in
-let rax_size : {|1, 2, 4, 8|} = (if logbitp(3, rex_byte)
+let rax_size : {|1, 2, 4, 8|} = { (if logbitp(3, rex_byte)
 then 8
-else operand_size) in
+else operand_size) } in
 let rax_var : bits(64) = (rgfi_size(bits_of_int(rax_size, 4), 0x0, rex_byte)) in
 let (flg, imm) : (option(string), int) = (rme_size(proc_mode, operand_size, sail_sign_extend(temp_rip, 64), 1, ":X", false, struct {mem_ptr? = false})) in
 { if is_some(flg)
 then throw(Emsg("Model state error: :RME-SIZE-ERROR"))
 else ();
-let imm : bits(64) = (if (not_bool(byte_operand?)) & ((rax_size) == (8))
+let imm : bits(64) = { (if (not_bool(byte_operand?)) & ((rax_size) == (8))
 then sail_sign_extend(bits_of_int(imm, 32), 64)
-else sail_zero_extend(bits_of_int(imm, 32), 64)) in
+else sail_zero_extend(bits_of_int(imm, 32), 64)) } in
 let (flg, temp_rip) : (option(string), sbits(49)) = (add_to_iptr(proc_mode, temp_rip, bits_of_int(operand_size, 48))) in
 { if is_some(flg)
 then throw(Emsg("Model state error: :RIP-INCREMENT-ERROR"))
@@ -271,15 +247,7 @@ then throw(Emsg("A fault occurred.  Original ACL2 AST:
 ['!!FAULT-FRESH', ':GP', '0', ':INSTRUCTION-LENGTH', 'BADLENGTH?']"))
 else ();
 let input_rflags : bits(32) = (rflags) in
-let (result, output_rflags, undefined_flags) : (bits(64), bits(32), bits(32)) = (match rax_size {
-1 => let (elem0, elem1, elem2) : (bits(8), bits(32), bits(32)) = (gpr_arith_logic_spec_1(operation, truncate(rax_var, 8), truncate(imm, 8), input_rflags)) in
-(sail_zero_extend(elem0, 64), elem1, elem2),
-2 => let (elem0, elem1, elem2) : (bits(16), bits(32), bits(32)) = (gpr_arith_logic_spec_2(operation, truncate(rax_var, 16), truncate(imm, 16), input_rflags)) in
-(sail_zero_extend(elem0, 64), elem1, elem2),
-4 => let (elem0, elem1, elem2) : (bits(32), bits(32), bits(32)) = (gpr_arith_logic_spec_4(operation, truncate(rax_var, 32), truncate(imm, 32), input_rflags)) in
-(sail_zero_extend(elem0, 64), elem1, elem2),
-_ => gpr_arith_logic_spec_8(operation, rax_var, imm, input_rflags)
-}) in
+let (result, output_rflags, undefined_flags) : (bits(64), bits(32), bits(32)) = (gpr_arith_logic_spec(rax_size, operation, rax_var, imm, input_rflags)) in
 { if ((operation) == (8)) | ((operation) == (7))
 then ()
 else { write_rgfi_size(bits_of_int(rax_size, 4), 0x0, unsigned(result), rex_byte)
@@ -320,23 +288,9 @@ then throw(Emsg("A fault occurred.  Original ACL2 AST:
 else ();
 let input_rflags : bits(32) = (rflags) in
 let old_cf : bits(1) = (rflagsbits_get_cf(input_rflags)) in
-let (result, output_rflags, undefined_flags) : (bits(64), bits(32), bits(32)) = (match r_mem_size {
-1 => let (elem0, elem1, elem2) : (bits(8), bits(32), bits(32)) = (gpr_arith_logic_spec_1(if (reg) == (0b000)
+let (result, output_rflags, undefined_flags) : (bits(64), bits(32), bits(32)) = (gpr_arith_logic_spec(r_mem_size, if (reg) == (0b000)
 then 0
-else 4, bits_of_int(r_mem, 8), 0x01, input_rflags)) in
-(sail_zero_extend(elem0, 64), elem1, elem2),
-2 => let (elem0, elem1, elem2) : (bits(16), bits(32), bits(32)) = (gpr_arith_logic_spec_2(if (reg) == (0b000)
-then 0
-else 4, bits_of_int(r_mem, 16), 0x0001, input_rflags)) in
-(sail_zero_extend(elem0, 64), elem1, elem2),
-4 => let (elem0, elem1, elem2) : (bits(32), bits(32), bits(32)) = (gpr_arith_logic_spec_4(if (reg) == (0b000)
-then 0
-else 4, bits_of_int(r_mem, 32), 0x0000_0001, input_rflags)) in
-(sail_zero_extend(elem0, 64), elem1, elem2),
-_ => gpr_arith_logic_spec_8(if (reg) == (0b000)
-then 0
-else 4, bits_of_int(r_mem, 64), 0x0000_0000_0000_0001, input_rflags)
-}) in
+else 4, bits_of_int(r_mem, 64), 0x0000_0000_0000_0001, input_rflags)) in
 let output_rflags : bits(32) = (set_rflagsbits_get_cf(old_cf, output_rflags)) in
 { write_user_rflags(output_rflags, undefined_flags);
 let flg1 : option(string) = (x86_operand_to_reg_mem(proc_mode, r_mem_size, inst_ac?, false, unsigned(result), seg_reg, addr, rex_byte, r_m, mod_var)) in
@@ -363,23 +317,9 @@ let reg : bits(3) = (truncate(logand(0x07, opcode), 3)) in
 let operand : bits(64) = (rgfi_size(bits_of_int(operand_size, 4), sail_zero_extend(reg, 4), 0x00)) in
 let input_rflags : bits(32) = (rflags) in
 let old_cf : bits(1) = (rflagsbits_get_cf(input_rflags)) in
-let (result, output_rflags, undefined_flags) : (bits(64), bits(32), bits(32)) = (match operand_size {
-1 => let (elem0, elem1, elem2) : (bits(8), bits(32), bits(32)) = (gpr_arith_logic_spec_1(if logbitp(3, opcode)
+let (result, output_rflags, undefined_flags) : (bits(64), bits(32), bits(32)) = (gpr_arith_logic_spec(operand_size, if logbitp(3, opcode)
 then 4
-else 0, truncate(operand, 8), 0x01, input_rflags)) in
-(sail_zero_extend(elem0, 64), elem1, elem2),
-2 => let (elem0, elem1, elem2) : (bits(16), bits(32), bits(32)) = (gpr_arith_logic_spec_2(if logbitp(3, opcode)
-then 4
-else 0, truncate(operand, 16), 0x0001, input_rflags)) in
-(sail_zero_extend(elem0, 64), elem1, elem2),
-4 => let (elem0, elem1, elem2) : (bits(32), bits(32), bits(32)) = (gpr_arith_logic_spec_4(if logbitp(3, opcode)
-then 4
-else 0, truncate(operand, 32), 0x0000_0001, input_rflags)) in
-(sail_zero_extend(elem0, 64), elem1, elem2),
-_ => gpr_arith_logic_spec_8(if logbitp(3, opcode)
-then 4
-else 0, operand, 0x0000_0000_0000_0001, input_rflags)
-}) in
+else 0, operand, 0x0000_0000_0000_0001, input_rflags)) in
 let output_rflags : bits(32) = (set_rflagsbits_get_cf(old_cf, output_rflags)) in
 { write_user_rflags(output_rflags, undefined_flags);
 write_rgfi_size(bits_of_int(operand_size, 4), sail_zero_extend(reg, 4), unsigned(result), 0x00);
@@ -415,18 +355,10 @@ then throw(Emsg("A fault occurred.  Original ACL2 AST:
 ['!!FAULT-FRESH', ':GP', '0', ':INSTRUCTION-LENGTH', 'BADLENGTH?']"))
 else ();
 let input_rflags : bits(32) = (rflags) in
-let (result, output_rflags, undefined_flags) : (bits(64), bits(32), bits(32)) = (match reg {
-3 => (match r_mem_size {
-1 => let (elem0, elem1, elem2) : (bits(8), bits(32), bits(32)) = (gpr_arith_logic_spec_1(4, 0x00, bits_of_int(r_mem, 8), input_rflags)) in
-(sail_zero_extend(elem0, 64), elem1, elem2),
-2 => let (elem0, elem1, elem2) : (bits(16), bits(32), bits(32)) = (gpr_arith_logic_spec_2(4, 0x0000, bits_of_int(r_mem, 16), input_rflags)) in
-(sail_zero_extend(elem0, 64), elem1, elem2),
-4 => let (elem0, elem1, elem2) : (bits(32), bits(32), bits(32)) = (gpr_arith_logic_spec_4(4, 0x0000_0000, bits_of_int(r_mem, 32), input_rflags)) in
-(sail_zero_extend(elem0, 64), elem1, elem2),
-_ => gpr_arith_logic_spec_8(4, 0x0000_0000_0000_0000, bits_of_int(r_mem, 64), input_rflags)
-}) : (bits(64), bits(32), bits(32)),
+let (result, output_rflags, undefined_flags) : (bits(64), bits(32), bits(32)) = { (match reg {
+3 => gpr_arith_logic_spec(r_mem_size, 4, 0x0000_0000_0000_0000, bits_of_int(r_mem, 64), input_rflags),
 _ => (sail_mask(64, trunc(r_mem_size, bits_of_int(lognot(r_mem), 64))), 0x0000_0000, 0x0000_0000)
-}) in
+}) } in
 { if (reg) == (0b011)
 then { let cf : bits(1) = (bits_of_int(if (0) == (r_mem)
 then 0
