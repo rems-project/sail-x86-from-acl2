@@ -9,7 +9,10 @@ function two_byte_opcode_execute (proc_mode, start_rip, temp_rip, prefixes, mand
               let fault_var : option(string) = {
                   if 0xf0 == prefixes_get_lck(prefixes) then {
                       Some(":UD")
-                  } else if not_bool(unsigned(let x86 : unit = () in segment_selectorbits_get_rpl(seg_visibles[1])) == 0) & cr4bits_get_umip(bits_of_int(loghead(22, unsigned(ctrs[4])), 22)) == 0b0 then {
+                  } else if not_bool(unsigned({
+                      ();
+                      segment_selectorbits_get_rpl(seg_visibles[1])
+                  }) == 0) & cr4bits_get_umip(bits_of_int(loghead(22, unsigned(ctrs[4])), 22)) == 0b0 then {
                       Some(":GP")
                   } else {
                       None() : option(string)
@@ -28,7 +31,10 @@ function two_byte_opcode_execute (proc_mode, start_rip, temp_rip, prefixes, mand
               let fault_var : option(string) = {
                   if 0xf0 == prefixes_get_lck(prefixes) then {
                       Some(":UD")
-                  } else if not_bool(unsigned(let x86 : unit = () in segment_selectorbits_get_rpl(seg_visibles[1])) == 0) & cr4bits_get_umip(bits_of_int(loghead(22, unsigned(ctrs[4])), 22)) == 0b0 then {
+                  } else if not_bool(unsigned({
+                      ();
+                      segment_selectorbits_get_rpl(seg_visibles[1])
+                  }) == 0) & cr4bits_get_umip(bits_of_int(loghead(22, unsigned(ctrs[4])), 22)) == 0b0 then {
                       Some(":GP")
                   } else {
                       None() : option(string)
@@ -47,7 +53,10 @@ function two_byte_opcode_execute (proc_mode, start_rip, temp_rip, prefixes, mand
               let fault_var : option(string) = {
                   if 0xf0 == prefixes_get_lck(prefixes) then {
                       Some(":UD")
-                  } else if not_bool(unsigned(let x86 : unit = () in segment_selectorbits_get_rpl(seg_visibles[1])) == 0) & cr4bits_get_umip(bits_of_int(loghead(22, unsigned(ctrs[4])), 22)) == 0b0 then {
+                  } else if not_bool(unsigned({
+                      ();
+                      segment_selectorbits_get_rpl(seg_visibles[1])
+                  }) == 0) & cr4bits_get_umip(bits_of_int(loghead(22, unsigned(ctrs[4])), 22)) == 0b0 then {
                       Some(":GP")
                   } else {
                       None() : option(string)
@@ -66,7 +75,10 @@ function two_byte_opcode_execute (proc_mode, start_rip, temp_rip, prefixes, mand
               let fault_var : option(string) = {
                   if 0xf0 == prefixes_get_lck(prefixes) then {
                       Some(":UD")
-                  } else if not_bool(unsigned(let x86 : unit = () in segment_selectorbits_get_rpl(seg_visibles[1])) == 0) & cr4bits_get_umip(bits_of_int(loghead(22, unsigned(ctrs[4])), 22)) == 0b0 then {
+                  } else if not_bool(unsigned({
+                      ();
+                      segment_selectorbits_get_rpl(seg_visibles[1])
+                  }) == 0) & cr4bits_get_umip(bits_of_int(loghead(22, unsigned(ctrs[4])), 22)) == 0b0 then {
                       Some(":GP")
                   } else {
                       None() : option(string)
@@ -85,7 +97,10 @@ function two_byte_opcode_execute (proc_mode, start_rip, temp_rip, prefixes, mand
               let fault_var : option(string) = {
                   if 0xf0 == prefixes_get_lck(prefixes) then {
                       Some(":UD")
-                  } else if not_bool(unsigned(let x86 : unit = () in segment_selectorbits_get_rpl(seg_visibles[1])) == 0) then {
+                  } else if not_bool(unsigned({
+                      ();
+                      segment_selectorbits_get_rpl(seg_visibles[1])
+                  }) == 0) then {
                       Some(":GP")
                   } else {
                       None() : option(string)
@@ -104,7 +119,10 @@ function two_byte_opcode_execute (proc_mode, start_rip, temp_rip, prefixes, mand
               let fault_var : option(string) = {
                   if 0xf0 == prefixes_get_lck(prefixes) then {
                       Some(":UD")
-                  } else if not_bool(unsigned(let x86 : unit = () in segment_selectorbits_get_rpl(seg_visibles[1])) == 0) then {
+                  } else if not_bool(unsigned({
+                      ();
+                      segment_selectorbits_get_rpl(seg_visibles[1])
+                  }) == 0) then {
                       Some(":GP")
                   } else {
                       None() : option(string)
@@ -160,7 +178,10 @@ function two_byte_opcode_execute (proc_mode, start_rip, temp_rip, prefixes, mand
               let fault_var : option(string) = {
                   if 0xf0 == prefixes_get_lck(prefixes) then {
                       Some(":UD")
-                  } else if not_bool(unsigned(let x86 : unit = () in segment_selectorbits_get_rpl(seg_visibles[1])) == 0) & cr4bits_get_umip(bits_of_int(loghead(22, unsigned(ctrs[4])), 22)) == 0b0 then {
+                  } else if not_bool(unsigned({
+                      ();
+                      segment_selectorbits_get_rpl(seg_visibles[1])
+                  }) == 0) & cr4bits_get_umip(bits_of_int(loghead(22, unsigned(ctrs[4])), 22)) == 0b0 then {
                       Some(":GP")
                   } else {
                       None() : option(string)
@@ -179,7 +200,10 @@ function two_byte_opcode_execute (proc_mode, start_rip, temp_rip, prefixes, mand
               throw(Emsg("Model state error: Opcode Unimplemented in x86isa!"))
           } else if modr_m_get_reg(modr_m) == 0b000 & modr_m_get_mod(modr_m) == 0b11 & modr_m_get_r_m(modr_m) == 0b010 then {
               let fault_var : option(string) = {
-                  if not_bool(unsigned(let x86 : unit = () in segment_selectorbits_get_rpl(seg_visibles[1])) == 0) then {
+                  if not_bool(unsigned({
+                      ();
+                      segment_selectorbits_get_rpl(seg_visibles[1])
+                  }) == 0) then {
                       Some(":GP")
                   } else {
                       None() : option(string)
@@ -197,7 +221,10 @@ function two_byte_opcode_execute (proc_mode, start_rip, temp_rip, prefixes, mand
               throw(Emsg("Model state error: Opcode Unimplemented in x86isa!"))
           } else if modr_m_get_reg(modr_m) == 0b000 & modr_m_get_mod(modr_m) == 0b11 & modr_m_get_r_m(modr_m) == 0b100 then {
               let fault_var : option(string) = {
-                  if not_bool(unsigned(let x86 : unit = () in segment_selectorbits_get_rpl(seg_visibles[1])) == 0) then {
+                  if not_bool(unsigned({
+                      ();
+                      segment_selectorbits_get_rpl(seg_visibles[1])
+                  }) == 0) then {
                       Some(":GP")
                   } else {
                       None() : option(string)
@@ -215,7 +242,10 @@ function two_byte_opcode_execute (proc_mode, start_rip, temp_rip, prefixes, mand
               let fault_var : option(string) = {
                   if 0xf0 == prefixes_get_lck(prefixes) then {
                       Some(":UD")
-                  } else if not_bool(unsigned(let x86 : unit = () in segment_selectorbits_get_rpl(seg_visibles[1])) == 0) & cr4bits_get_umip(bits_of_int(loghead(22, unsigned(ctrs[4])), 22)) == 0b0 then {
+                  } else if not_bool(unsigned({
+                      ();
+                      segment_selectorbits_get_rpl(seg_visibles[1])
+                  }) == 0) & cr4bits_get_umip(bits_of_int(loghead(22, unsigned(ctrs[4])), 22)) == 0b0 then {
                       Some(":GP")
                   } else {
                       None() : option(string)
@@ -232,8 +262,10 @@ function two_byte_opcode_execute (proc_mode, start_rip, temp_rip, prefixes, mand
               }
           } else if modr_m_get_reg(modr_m) == 0b001 & modr_m_get_mod(modr_m) == 0b11 & modr_m_get_r_m(modr_m) == 0b000 then {
               let fault_var : option(string) = {
-                  if feature_flags_fn([|":MONITOR"|]) == 0 | not_bool(unsigned(let x86 : unit = () in
-                    segment_selectorbits_get_rpl(seg_visibles[1])) == 0) then {
+                  if feature_flags_fn([|":MONITOR"|]) == 0 | not_bool(unsigned({
+                      ();
+                      segment_selectorbits_get_rpl(seg_visibles[1])
+                  }) == 0) then {
                       Some(":UD")
                   } else {
                       None() : option(string)
@@ -249,8 +281,10 @@ function two_byte_opcode_execute (proc_mode, start_rip, temp_rip, prefixes, mand
               }
           } else if modr_m_get_reg(modr_m) == 0b001 & modr_m_get_mod(modr_m) == 0b11 & modr_m_get_r_m(modr_m) == 0b001 then {
               let fault_var : option(string) = {
-                  if feature_flags_fn([|":MONITOR"|]) == 0 | not_bool(unsigned(let x86 : unit = () in
-                    segment_selectorbits_get_rpl(seg_visibles[1])) == 0) then {
+                  if feature_flags_fn([|":MONITOR"|]) == 0 | not_bool(unsigned({
+                      ();
+                      segment_selectorbits_get_rpl(seg_visibles[1])
+                  }) == 0) then {
                       Some(":UD")
                   } else {
                       None() : option(string)
@@ -266,10 +300,10 @@ function two_byte_opcode_execute (proc_mode, start_rip, temp_rip, prefixes, mand
               }
           } else if modr_m_get_reg(modr_m) == 0b001 & modr_m_get_mod(modr_m) == 0b11 & modr_m_get_r_m(modr_m) == 0b010 then {
               let fault_var : option(string) = {
-                  if feature_flags_fn([|":SMAP"|]) == 0 | 0xf0 == prefixes_get_lck(prefixes) | not_bool(unsigned(let x86 : unit =
-                    ()
-                  in
-                    segment_selectorbits_get_rpl(seg_visibles[1])) == 0) then {
+                  if feature_flags_fn([|":SMAP"|]) == 0 | 0xf0 == prefixes_get_lck(prefixes) | not_bool(unsigned({
+                      ();
+                      segment_selectorbits_get_rpl(seg_visibles[1])
+                  }) == 0) then {
                       Some(":UD")
                   } else {
                       None() : option(string)
@@ -285,10 +319,10 @@ function two_byte_opcode_execute (proc_mode, start_rip, temp_rip, prefixes, mand
               }
           } else if modr_m_get_reg(modr_m) == 0b001 & modr_m_get_mod(modr_m) == 0b11 & modr_m_get_r_m(modr_m) == 0b011 then {
               let fault_var : option(string) = {
-                  if feature_flags_fn([|":SMAP"|]) == 0 | 0xf0 == prefixes_get_lck(prefixes) | not_bool(unsigned(let x86 : unit =
-                    ()
-                  in
-                    segment_selectorbits_get_rpl(seg_visibles[1])) == 0) then {
+                  if feature_flags_fn([|":SMAP"|]) == 0 | 0xf0 == prefixes_get_lck(prefixes) | not_bool(unsigned({
+                      ();
+                      segment_selectorbits_get_rpl(seg_visibles[1])
+                  }) == 0) then {
                       Some(":UD")
                   } else {
                       None() : option(string)
@@ -308,7 +342,10 @@ function two_byte_opcode_execute (proc_mode, start_rip, temp_rip, prefixes, mand
               let fault_var : option(string) = {
                   if 0xf0 == prefixes_get_lck(prefixes) then {
                       Some(":UD")
-                  } else if not_bool(unsigned(let x86 : unit = () in segment_selectorbits_get_rpl(seg_visibles[1])) == 0) then {
+                  } else if not_bool(unsigned({
+                      ();
+                      segment_selectorbits_get_rpl(seg_visibles[1])
+                  }) == 0) then {
                       Some(":GP")
                   } else {
                       None() : option(string)
@@ -327,7 +364,10 @@ function two_byte_opcode_execute (proc_mode, start_rip, temp_rip, prefixes, mand
               let fault_var : option(string) = {
                   if 0xf0 == prefixes_get_lck(prefixes) then {
                       Some(":UD")
-                  } else if not_bool(unsigned(let x86 : unit = () in segment_selectorbits_get_rpl(seg_visibles[1])) == 0) then {
+                  } else if not_bool(unsigned({
+                      ();
+                      segment_selectorbits_get_rpl(seg_visibles[1])
+                  }) == 0) then {
                       Some(":GP")
                   } else {
                       None() : option(string)
@@ -428,7 +468,10 @@ function two_byte_opcode_execute (proc_mode, start_rip, temp_rip, prefixes, mand
               let fault_var : option(string) = {
                   if 0xf0 == prefixes_get_lck(prefixes) then {
                       Some(":UD")
-                  } else if not_bool(unsigned(let x86 : unit = () in segment_selectorbits_get_rpl(seg_visibles[1])) == 0) & cr4bits_get_umip(bits_of_int(loghead(22, unsigned(ctrs[4])), 22)) == 0b0 then {
+                  } else if not_bool(unsigned({
+                      ();
+                      segment_selectorbits_get_rpl(seg_visibles[1])
+                  }) == 0) & cr4bits_get_umip(bits_of_int(loghead(22, unsigned(ctrs[4])), 22)) == 0b0 then {
                       Some(":GP")
                   } else {
                       None() : option(string)
@@ -447,7 +490,10 @@ function two_byte_opcode_execute (proc_mode, start_rip, temp_rip, prefixes, mand
               let fault_var : option(string) = {
                   if 0xf0 == prefixes_get_lck(prefixes) then {
                       Some(":UD")
-                  } else if not_bool(unsigned(let x86 : unit = () in segment_selectorbits_get_rpl(seg_visibles[1])) == 0) & cr4bits_get_umip(bits_of_int(loghead(22, unsigned(ctrs[4])), 22)) == 0b0 then {
+                  } else if not_bool(unsigned({
+                      ();
+                      segment_selectorbits_get_rpl(seg_visibles[1])
+                  }) == 0) & cr4bits_get_umip(bits_of_int(loghead(22, unsigned(ctrs[4])), 22)) == 0b0 then {
                       Some(":GP")
                   } else {
                       None() : option(string)
@@ -466,7 +512,10 @@ function two_byte_opcode_execute (proc_mode, start_rip, temp_rip, prefixes, mand
               let fault_var : option(string) = {
                   if 0xf0 == prefixes_get_lck(prefixes) then {
                       Some(":UD")
-                  } else if not_bool(unsigned(let x86 : unit = () in segment_selectorbits_get_rpl(seg_visibles[1])) == 0) then {
+                  } else if not_bool(unsigned({
+                      ();
+                      segment_selectorbits_get_rpl(seg_visibles[1])
+                  }) == 0) then {
                       Some(":GP")
                   } else {
                       None() : option(string)
@@ -485,7 +534,10 @@ function two_byte_opcode_execute (proc_mode, start_rip, temp_rip, prefixes, mand
               let fault_var : option(string) = {
                   if 0xf0 == prefixes_get_lck(prefixes) | modr_m_get_mod(modr_m) == 0b11 then {
                       Some(":UD")
-                  } else if not_bool(unsigned(let x86 : unit = () in segment_selectorbits_get_rpl(seg_visibles[1])) == 0) then {
+                  } else if not_bool(unsigned({
+                      ();
+                      segment_selectorbits_get_rpl(seg_visibles[1])
+                  }) == 0) then {
                       Some(":GP")
                   } else {
                       None() : option(string)
@@ -504,7 +556,10 @@ function two_byte_opcode_execute (proc_mode, start_rip, temp_rip, prefixes, mand
               let fault_var : option(string) = {
                   if 0xf0 == prefixes_get_lck(prefixes) then {
                       Some(":UD")
-                  } else if not_bool(unsigned(let x86 : unit = () in segment_selectorbits_get_rpl(seg_visibles[1])) == 0) then {
+                  } else if not_bool(unsigned({
+                      ();
+                      segment_selectorbits_get_rpl(seg_visibles[1])
+                  }) == 0) then {
                       Some(":GP")
                   } else {
                       None() : option(string)
@@ -577,7 +632,10 @@ function two_byte_opcode_execute (proc_mode, start_rip, temp_rip, prefixes, mand
           let fault_var : option(string) = {
               if 0xf0 == prefixes_get_lck(prefixes) then {
                   Some(":UD")
-              } else if not_bool(unsigned(let x86 : unit = () in segment_selectorbits_get_rpl(seg_visibles[1])) == 0) then {
+              } else if not_bool(unsigned({
+                  ();
+                  segment_selectorbits_get_rpl(seg_visibles[1])
+              }) == 0) then {
                   Some(":GP")
               } else {
                   None() : option(string)
@@ -1594,7 +1652,10 @@ function two_byte_opcode_execute (proc_mode, start_rip, temp_rip, prefixes, mand
                     reg == 0b001 | reg == 0b101 | reg == 0b110 | reg == 0b111
                 }) then {
                   Some(":UD")
-              } else if not_bool(unsigned(let x86 : unit = () in segment_selectorbits_get_rpl(seg_visibles[1])) == 0) then {
+              } else if not_bool(unsigned({
+                  ();
+                  segment_selectorbits_get_rpl(seg_visibles[1])
+              }) == 0) then {
                   Some(":GP")
               } else {
                   None() : option(string)
@@ -1614,7 +1675,10 @@ function two_byte_opcode_execute (proc_mode, start_rip, temp_rip, prefixes, mand
           let fault_var : option(string) = {
               if 0xf0 == prefixes_get_lck(prefixes) | cr4bits_get_de(bits_of_int(loghead(22, unsigned(ctrs[4])), 22)) == 0b1 & (modr_m_get_reg(modr_m) == 0b100 | modr_m_get_reg(modr_m) == 0b101) then {
                   Some(":UD")
-              } else if not_bool(unsigned(let x86 : unit = () in segment_selectorbits_get_rpl(seg_visibles[1])) == 0) then {
+              } else if not_bool(unsigned({
+                  ();
+                  segment_selectorbits_get_rpl(seg_visibles[1])
+              }) == 0) then {
                   Some(":GP")
               } else {
                   None() : option(string)
@@ -1639,7 +1703,10 @@ function two_byte_opcode_execute (proc_mode, start_rip, temp_rip, prefixes, mand
                     reg == 0b001 | reg == 0b101 | reg == 0b110 | reg == 0b111
                 }) then {
                   Some(":UD")
-              } else if not_bool(unsigned(let x86 : unit = () in segment_selectorbits_get_rpl(seg_visibles[1])) == 0) then {
+              } else if not_bool(unsigned({
+                  ();
+                  segment_selectorbits_get_rpl(seg_visibles[1])
+              }) == 0) then {
                   Some(":GP")
               } else {
                   None() : option(string)
@@ -1659,7 +1726,10 @@ function two_byte_opcode_execute (proc_mode, start_rip, temp_rip, prefixes, mand
           let fault_var : option(string) = {
               if 0xf0 == prefixes_get_lck(prefixes) | cr4bits_get_de(bits_of_int(loghead(22, unsigned(ctrs[4])), 22)) == 0b1 & (modr_m_get_reg(modr_m) == 0b100 | modr_m_get_reg(modr_m) == 0b101) then {
                   Some(":UD")
-              } else if not_bool(unsigned(let x86 : unit = () in segment_selectorbits_get_rpl(seg_visibles[1])) == 0) then {
+              } else if not_bool(unsigned({
+                  ();
+                  segment_selectorbits_get_rpl(seg_visibles[1])
+              }) == 0) then {
                   Some(":GP")
               } else {
                   None() : option(string)
@@ -3363,21 +3433,19 @@ val two_byte_opcode_decode_and_execute : (range(0, 4), sbits(48), sbits(48), bit
 
 function two_byte_opcode_decode_and_execute (proc_mode, start_rip, temp_rip, prefixes, rex_byte, escape_byte) = {
     let ctx : string = "two-byte-opcode-decode-and-execute";
-    let (flg0, opcode) : (option(string), int) = rme08(proc_mode, sail_sign_extend(temp_rip, 64), 1, ":X");
-    let opcode : bits(8) = bits_of_int(opcode, 8);
+    let (flg0, opcode) : (option(string), bits(8)) = rme08(proc_mode, sail_sign_extend(temp_rip, 64), 1, ":X");
     if is_some(flg0) then throw(Emsg("Model state error: :OPCODE-BYTE-ACCESS-ERROR"));
     let (flg, temp_rip) : (option(string), sbits(49)) = add_to_iptr(proc_mode, temp_rip, 0x000000000001);
     if is_some(flg) then throw(Emsg("Model state error: :INCREMENT-ERROR"));
     let mandatory_prefix : bits(8) = compute_mandatory_prefix_for_two_byte_opcode(proc_mode, opcode, prefixes);
     let modr_m? : bool = two_byte_opcode_modr_m_p(proc_mode, mandatory_prefix, opcode);
-    let (flg1, modr_m) : (option(string), int) = {
+    let (flg1, modr_m) : (option(string), bits(8)) = {
         if modr_m? then {
             rme08(proc_mode, sail_sign_extend(temp_rip, 64), 1, ":X")
         } else {
-            (None() : option(string), 0)
+            (None() : option(string), 0x00)
         }
     };
-    let modr_m : bits(8) = bits_of_int(modr_m, 8);
     if is_some(flg1) then throw(Emsg("Model state error: :MODR/M-BYTE-READ-ERROR"));
     let (flg, temp_rip) : (option(string), sbits(49)) = {
         if modr_m? then {
@@ -3389,14 +3457,13 @@ function two_byte_opcode_decode_and_execute (proc_mode, start_rip, temp_rip, pre
     if is_some(flg) then throw(Emsg("Model state error: :INCREMENT-ERROR"));
     let sib? : bool = modr_m? & (let p4? : bool = 0x67 == prefixes_get_adr(prefixes) in
     let n16_bit_addressp : bool = 2 == select_address_size(proc_mode, p4?) in x86_decode_sib_p(modr_m, n16_bit_addressp));
-    let (flg2, sib) : (option(string), int) = {
+    let (flg2, sib) : (option(string), bits(8)) = {
         if sib? then {
             rme08(proc_mode, sail_sign_extend(temp_rip, 64), 1, ":X")
         } else {
-            (None() : option(string), 0)
+            (None() : option(string), 0x00)
         }
     };
-    let sib : bits(8) = bits_of_int(sib, 8);
     if is_some(flg2) then throw(Emsg("Model state error: :SIB-BYTE-READ-ERROR"));
     let (flg, temp_rip) : (option(string), sbits(49)) = {
         if sib? then {

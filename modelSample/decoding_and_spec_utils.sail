@@ -411,7 +411,7 @@ else 2 }
  See Intel Vol. 2 Table 2-1.</p> 
  <p>The displacement is read as a signed values: 
  see AMD manual, Dec ' 17, Volume 3, Section 1.5.</p>*/
-val x86_effective_addr_from_sib : (range(0, 4), sbits(48), bits(8), bits(2), bits(8)) -> (option(string), int, sbits(64), {|0, 1, 4|}) effect {escape, rmem, rreg}
+val x86_effective_addr_from_sib : (range(0, 4), sbits(48), bits(8), bits(2), bits(8)) -> (option(string), int, sbits(64), {|0, 1, 4|}) effect {escape, rreg}
 function x86_effective_addr_from_sib (proc_mode, temp_rip, rex_byte, mod_var, sib) =
 let b : bits(3) = (sib_get_base(sib)) in
 let check_alignment? : bool = (false) in
@@ -477,7 +477,7 @@ let effective_addr : int = ((signed(base)) + (scaled_index)) in
  <p> 
  This function is called only when the address size is 16 bits. 
  </p>*/
-val x86_effective_addr_16_disp : (range(0, 4), sbits(48), bits(2)) -> (option(string), sbits(64), {|0, 1, 2|}) effect {escape, rmem, rreg}
+val x86_effective_addr_16_disp : (range(0, 4), sbits(48), bits(2)) -> (option(string), sbits(64), {|0, 1, 2|}) effect {escape}
 function x86_effective_addr_16_disp (proc_mode, temp_rip, mod_var) =
 (match mod_var {
 0 => (None() : option(string), 0x0000_0000_0000_0000, 0),
@@ -505,7 +505,7 @@ _ => (Some("mod-value-wrong"), 0x0000_0000_0000_0000, 0)
  when there is an address size override prefix: 
  see @ ( tsee x86-effective-addr-32/64 ) . 
  </p>*/
-val x86_effective_addr_16 : (range(0, 4), sbits(48), bits(3), bits(2)) -> (option(string), bits(16), {|0, 1, 2|}) effect {escape, rmem, rreg}
+val x86_effective_addr_16 : (range(0, 4), sbits(48), bits(3), bits(2)) -> (option(string), bits(16), {|0, 1, 2|}) effect {escape, rreg}
 function x86_effective_addr_16 (proc_mode, temp_rip, r_m, mod_var) =
 (match r_m {
 0 => { let bx : bits(16) = (rr16(0x3)) in
@@ -607,7 +607,7 @@ _ => (Some(":R/M-OUT-OF-RANGE"), 0x0000, 0)
  which are also effective addresses in 64-bit mode. 
  In 32-bit mode, 
  we use @ ( ' rr32 ' ) to read bases as unsigned effective addresses.</p>*/
-val x86_effective_addr_32_64 : (range(0, 4), bool, sbits(48), bits(8), bits(3), bits(2), bits(8), bits(3)) -> (option(string), sbits(64), {|0, 1, 4|}) effect {escape, rmem, rreg}
+val x86_effective_addr_32_64 : (range(0, 4), bool, sbits(48), bits(8), bits(3), bits(2), bits(8), bits(3)) -> (option(string), sbits(64), {|0, 1, 4|}) effect {escape, rreg}
 function x86_effective_addr_32_64 (proc_mode, p4, temp_rip, rex_byte, r_m, mod_var, sib, num_imm_bytes) =
 let (flg, addr, displacement, increment_rip_by) : (option(string), int, sbits(64), {|0, 1, 4|}) = { (match mod_var {
 0 => { (match r_m {
@@ -662,7 +662,7 @@ else sail_zero_extend(bits_of_int(dst_base, 32), 64)) } in
  @ ( tsee x86-effective-addr-16 ) or @ ( tsee x86-effective-addr-32/64 ) 
  based on the address size. 
  </p>*/
-val x86_effective_addr : (range(0, 4), bool, sbits(48), bits(8), bits(3), bits(2), bits(8), bits(3)) -> (option(string), sbits(64), {|0, 1, 2, 4|}) effect {escape, rmem, rreg}
+val x86_effective_addr : (range(0, 4), bool, sbits(48), bits(8), bits(3), bits(2), bits(8), bits(3)) -> (option(string), sbits(64), {|0, 1, 2, 4|}) effect {escape, rreg}
 function x86_effective_addr (proc_mode, p4, temp_rip, rex_byte, r_m, mod_var, sib, num_imm_bytes) =
 if (2) == (select_address_size(proc_mode, if p4
 then true
@@ -715,8 +715,9 @@ let cr0 : bits(32) = (truncate(ctrs[0], 32)) in
 let am : bits(1) = (cr0bits_get_am(cr0)) in
 let ac : bits(2) = { (let rflags_var : bits(32) = (rflags) in
 sail_zero_extend(rflagsbits_get_ac(rflags_var), 2)) } in
-let cpl : bits(2) = { (let x86 : unit = (()) in
-segment_selectorbits_get_rpl(seg_visibles[1])) } in
+let cpl : bits(2) = { ({ ();
+segment_selectorbits_get_rpl(seg_visibles[1])
+}) } in
 ((am) == (0b1)) & (((ac) == (0b01)) & ((cpl) == (0b11)))
 
 /*Read an operand from memory or a register.*/
@@ -732,22 +733,21 @@ segment_selectorbits_get_rpl(seg_visibles[1])) } in
  which pass the effective address calculated by this function 
  to @ ( tsee x86-operand-to-reg/mem ) ( which writes the result to memory ) . 
  </p>*/
-val x86_operand_from_modr_m_and_sib_bytes : (range(0, 4), bits(1), {|1, 2, 4, 6, 8, 10, 16|}, bool, bool, range(0, 5), bool, sbits(48), bits(8), bits(3), bits(2), bits(8), bits(3)) -> (option(string), int, {|0, 1, 2, 4|}, sbits(64)) effect {escape, rmem, rreg}
+val x86_operand_from_modr_m_and_sib_bytes : (range(0, 4), bits(1), {|1, 2, 4, 6, 8, 10, 16|}, bool, bool, range(0, 5), bool, sbits(48), bits(8), bits(3), bits(2), bits(8), bits(3)) -> (option(string), bits(128), {|0, 1, 2, 4|}, sbits(64)) effect {eamem, escape, rmem, rreg, wmv}
 function x86_operand_from_modr_m_and_sib_bytes (proc_mode, reg_type, operand_size, inst_ac?, memory_ptr?, seg_reg, p4?, temp_rip, rex_byte, r_m, mod_var, sib, num_imm_bytes) =
 let (flg0, addr, increment_rip_by) : (option(string), sbits(64), {|0, 1, 2, 4|}) = { (if (mod_var) == (0b11)
 then (None() : option(string), 0x0000_0000_0000_0000, 0)
 else x86_effective_addr(proc_mode, p4?, temp_rip, rex_byte, r_m, mod_var, sib, num_imm_bytes)) } in
 if is_some(flg0)
-then (Some("x86-effective-addr-error"), 0, 0, 0x0000_0000_0000_0000)
-else let (flg2, operand) : (option(string), int) = { (if (mod_var) == (0b11)
-then let (elem0, elem1) : (option(string), bits(128)) = { (if (reg_type) == (0b0)
+then (Some("x86-effective-addr-error"), 0x0000_0000_0000_0000_0000_0000_0000_0000, 0, 0x0000_0000_0000_0000)
+else let (flg2, operand) : (option(string), bits(128)) = { (if (mod_var) == (0b11)
+then if (reg_type) == (0b0)
 then (None() : option(string), sail_zero_extend(rgfi_size(bits_of_int(operand_size, 4), reg_index(r_m, rex_byte, 0b00), rex_byte), 128))
-else (None() : option(string), xmmi_size(bits_of_int(operand_size, 5), reg_index(r_m, rex_byte, 0b00)))) } in
-(elem0, unsigned(elem1))
+else (None() : option(string), xmmi_size(bits_of_int(operand_size, 5), reg_index(r_m, rex_byte, 0b00)))
 else let check_alignment? : bool = ((inst_ac?) & (alignment_checking_enabled_p())) in
 rme_size(proc_mode, operand_size, addr, seg_reg, ":R", check_alignment?, struct {mem_ptr? = memory_ptr?})) } in
 if is_some(flg2)
-then (Some("Rm-Size-Error"), 0, 0, 0x0000_0000_0000_0000)
+then (Some("Rm-Size-Error"), 0x0000_0000_0000_0000_0000_0000_0000_0000, 0, 0x0000_0000_0000_0000)
 else (None() : option(string), operand, increment_rip_by, addr)
 
 /*Write an operand to memory or a general-purpose register.*/
@@ -758,11 +758,12 @@ else (None() : option(string), operand, increment_rip_by, addr)
  the effective address calculated and returned by 
  @ ( tsee x86-operand-from-modr/m-and-sib-bytes ) . 
  </p>*/
-val x86_operand_to_reg_mem : (range(0, 4), {|1, 2, 4, 6, 8, 10, 16|}, bool, bool, nat, range(0, 5), sbits(64), bits(8), bits(3), bits(2)) -> option(string) effect {eamem, escape, rreg, wmv, wreg}
+val x86_operand_to_reg_mem : (range(0, 4), {|1, 2, 4, 6, 8, 10, 16|}, bool, bool, nat, range(0, 5), sbits(64), bits(8), bits(3), bits(2)) -> option(string) effect {eamem, escape, rmem, rreg, wmv, wreg}
 function x86_operand_to_reg_mem (proc_mode, operand_size, inst_ac?, memory_ptr?, operand, seg_reg, addr, rex_byte, r_m, mod_var) =
 if (mod_var) == (0b11)
-then let x86 : unit = (write_rgfi_size(bits_of_int(operand_size, 4), reg_index(r_m, rex_byte, 0b00), operand, rex_byte)) in
+then { write_rgfi_size(bits_of_int(operand_size, 4), reg_index(r_m, rex_byte, 0b00), operand, rex_byte);
 None() : option(string)
+}
 else let check_alignment? : bool = ((inst_ac?) & (alignment_checking_enabled_p())) in
 let flg : option(string) = (wme_size(proc_mode, operand_size, addr, seg_reg, operand, check_alignment?, struct {mem_ptr? = memory_ptr?})) in
 flg
@@ -775,11 +776,12 @@ flg
  the effective address calculated and returned by 
  @ ( tsee x86-operand-from-modr/m-and-sib-bytes ) . 
  </p>*/
-val x86_operand_to_xmm_mem : (range(0, 4), {|4, 8, 16|}, bool, nat, range(0, 5), sbits(64), bits(8), bits(3), bits(2)) -> option(string) effect {eamem, escape, rreg, wmv}
+val x86_operand_to_xmm_mem : (range(0, 4), {|4, 8, 16|}, bool, nat, range(0, 5), sbits(64), bits(8), bits(3), bits(2)) -> option(string) effect {eamem, escape, rmem, rreg, wmv}
 function x86_operand_to_xmm_mem (proc_mode, operand_size, inst_ac?, operand, seg_reg, addr, rex_byte, r_m, mod_var) =
 if (mod_var) == (0b11)
-then let x86 : unit = (write_xmmi_size(bits_of_int(operand_size, 5), reg_index(r_m, rex_byte, 0b00), operand)) in
+then { write_xmmi_size(bits_of_int(operand_size, 5), reg_index(r_m, rex_byte, 0b00), operand);
 None() : option(string)
+}
 else let check_alignment? : bool = ((inst_ac?) & (alignment_checking_enabled_p())) in
 let flg : option(string) = (wme_size(proc_mode, operand_size, addr, seg_reg, operand, check_alignment?, struct {mem_ptr? = false})) in
 flg

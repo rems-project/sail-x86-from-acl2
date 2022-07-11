@@ -11,8 +11,9 @@ function two_byte_opcode_execute (proc_mode, start_rip, temp_rip, prefixes, mand
 0 => { if ((modr_m_get_reg(modr_m)) == (0b000)) & (not_bool((modr_m_get_mod(modr_m)) == (0b11)))
 then let fault_var : option(string) = { (if (0xf0) == (prefixes_get_lck(prefixes))
 then Some(":UD")
-else if (not_bool((unsigned(let x86 : unit = (()) in
-segment_selectorbits_get_rpl(seg_visibles[1]))) == (0))) & ((cr4bits_get_umip(bits_of_int(loghead(22, unsigned(ctrs[4])), 22))) == (0b0))
+else if (not_bool((unsigned({ ();
+segment_selectorbits_get_rpl(seg_visibles[1])
+})) == (0))) & ((cr4bits_get_umip(bits_of_int(loghead(22, unsigned(ctrs[4])), 22))) == (0b0))
 then Some(":GP")
 else None() : option(string)) } in
 if is_some(fault_var)
@@ -29,8 +30,9 @@ else { throw(Emsg("Model state error: Opcode Unimplemented in x86isa!"))
 else if ((modr_m_get_reg(modr_m)) == (0b000)) & ((modr_m_get_mod(modr_m)) == (0b11))
 then let fault_var : option(string) = { (if (0xf0) == (prefixes_get_lck(prefixes))
 then Some(":UD")
-else if (not_bool((unsigned(let x86 : unit = (()) in
-segment_selectorbits_get_rpl(seg_visibles[1]))) == (0))) & ((cr4bits_get_umip(bits_of_int(loghead(22, unsigned(ctrs[4])), 22))) == (0b0))
+else if (not_bool((unsigned({ ();
+segment_selectorbits_get_rpl(seg_visibles[1])
+})) == (0))) & ((cr4bits_get_umip(bits_of_int(loghead(22, unsigned(ctrs[4])), 22))) == (0b0))
 then Some(":GP")
 else None() : option(string)) } in
 if is_some(fault_var)
@@ -47,8 +49,9 @@ else { throw(Emsg("Model state error: Opcode Unimplemented in x86isa!"))
 else if ((modr_m_get_reg(modr_m)) == (0b001)) & (not_bool((modr_m_get_mod(modr_m)) == (0b11)))
 then let fault_var : option(string) = { (if (0xf0) == (prefixes_get_lck(prefixes))
 then Some(":UD")
-else if (not_bool((unsigned(let x86 : unit = (()) in
-segment_selectorbits_get_rpl(seg_visibles[1]))) == (0))) & ((cr4bits_get_umip(bits_of_int(loghead(22, unsigned(ctrs[4])), 22))) == (0b0))
+else if (not_bool((unsigned({ ();
+segment_selectorbits_get_rpl(seg_visibles[1])
+})) == (0))) & ((cr4bits_get_umip(bits_of_int(loghead(22, unsigned(ctrs[4])), 22))) == (0b0))
 then Some(":GP")
 else None() : option(string)) } in
 if is_some(fault_var)
@@ -65,8 +68,9 @@ else { throw(Emsg("Model state error: Opcode Unimplemented in x86isa!"))
 else if ((modr_m_get_reg(modr_m)) == (0b001)) & ((modr_m_get_mod(modr_m)) == (0b11))
 then let fault_var : option(string) = { (if (0xf0) == (prefixes_get_lck(prefixes))
 then Some(":UD")
-else if (not_bool((unsigned(let x86 : unit = (()) in
-segment_selectorbits_get_rpl(seg_visibles[1]))) == (0))) & ((cr4bits_get_umip(bits_of_int(loghead(22, unsigned(ctrs[4])), 22))) == (0b0))
+else if (not_bool((unsigned({ ();
+segment_selectorbits_get_rpl(seg_visibles[1])
+})) == (0))) & ((cr4bits_get_umip(bits_of_int(loghead(22, unsigned(ctrs[4])), 22))) == (0b0))
 then Some(":GP")
 else None() : option(string)) } in
 if is_some(fault_var)
@@ -83,8 +87,9 @@ else { throw(Emsg("Model state error: Opcode Unimplemented in x86isa!"))
 else if (modr_m_get_reg(modr_m)) == (0b010)
 then let fault_var : option(string) = { (if (0xf0) == (prefixes_get_lck(prefixes))
 then Some(":UD")
-else if not_bool((unsigned(let x86 : unit = (()) in
-segment_selectorbits_get_rpl(seg_visibles[1]))) == (0))
+else if not_bool((unsigned({ ();
+segment_selectorbits_get_rpl(seg_visibles[1])
+})) == (0))
 then Some(":GP")
 else None() : option(string)) } in
 if is_some(fault_var)
@@ -101,8 +106,9 @@ else { x86_lldt(proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode, modr
 else if (modr_m_get_reg(modr_m)) == (0b011)
 then let fault_var : option(string) = { (if (0xf0) == (prefixes_get_lck(prefixes))
 then Some(":UD")
-else if not_bool((unsigned(let x86 : unit = (()) in
-segment_selectorbits_get_rpl(seg_visibles[1]))) == (0))
+else if not_bool((unsigned({ ();
+segment_selectorbits_get_rpl(seg_visibles[1])
+})) == (0))
 then Some(":GP")
 else None() : option(string)) } in
 if is_some(fault_var)
@@ -147,8 +153,9 @@ else throw(Emsg("A fault occurred.  Original ACL2 AST:
 1 => { if ((modr_m_get_reg(modr_m)) == (0b000)) & (not_bool((modr_m_get_mod(modr_m)) == (0b11)))
 then let fault_var : option(string) = { (if (0xf0) == (prefixes_get_lck(prefixes))
 then Some(":UD")
-else if (not_bool((unsigned(let x86 : unit = (()) in
-segment_selectorbits_get_rpl(seg_visibles[1]))) == (0))) & ((cr4bits_get_umip(bits_of_int(loghead(22, unsigned(ctrs[4])), 22))) == (0b0))
+else if (not_bool((unsigned({ ();
+segment_selectorbits_get_rpl(seg_visibles[1])
+})) == (0))) & ((cr4bits_get_umip(bits_of_int(loghead(22, unsigned(ctrs[4])), 22))) == (0b0))
 then Some(":GP")
 else None() : option(string)) } in
 if is_some(fault_var)
@@ -165,8 +172,9 @@ else { throw(Emsg("Model state error: Opcode Unimplemented in x86isa!"))
 else if ((modr_m_get_reg(modr_m)) == (0b000)) & (((modr_m_get_mod(modr_m)) == (0b11)) & ((modr_m_get_r_m(modr_m)) == (0b001)))
 then throw(Emsg("Model state error: Opcode Unimplemented in x86isa!"))
 else if ((modr_m_get_reg(modr_m)) == (0b000)) & (((modr_m_get_mod(modr_m)) == (0b11)) & ((modr_m_get_r_m(modr_m)) == (0b010)))
-then let fault_var : option(string) = { (if not_bool((unsigned(let x86 : unit = (()) in
-segment_selectorbits_get_rpl(seg_visibles[1]))) == (0))
+then let fault_var : option(string) = { (if not_bool((unsigned({ ();
+segment_selectorbits_get_rpl(seg_visibles[1])
+})) == (0))
 then Some(":GP")
 else None() : option(string)) } in
 if is_some(fault_var)
@@ -181,8 +189,9 @@ else { throw(Emsg("Model state error: Opcode Unimplemented in x86isa!"))
 else if ((modr_m_get_reg(modr_m)) == (0b000)) & (((modr_m_get_mod(modr_m)) == (0b11)) & ((modr_m_get_r_m(modr_m)) == (0b011)))
 then throw(Emsg("Model state error: Opcode Unimplemented in x86isa!"))
 else if ((modr_m_get_reg(modr_m)) == (0b000)) & (((modr_m_get_mod(modr_m)) == (0b11)) & ((modr_m_get_r_m(modr_m)) == (0b100)))
-then let fault_var : option(string) = { (if not_bool((unsigned(let x86 : unit = (()) in
-segment_selectorbits_get_rpl(seg_visibles[1]))) == (0))
+then let fault_var : option(string) = { (if not_bool((unsigned({ ();
+segment_selectorbits_get_rpl(seg_visibles[1])
+})) == (0))
 then Some(":GP")
 else None() : option(string)) } in
 if is_some(fault_var)
@@ -197,8 +206,9 @@ else { throw(Emsg("Model state error: Opcode Unimplemented in x86isa!"))
 else if ((modr_m_get_reg(modr_m)) == (0b001)) & (not_bool((modr_m_get_mod(modr_m)) == (0b11)))
 then let fault_var : option(string) = { (if (0xf0) == (prefixes_get_lck(prefixes))
 then Some(":UD")
-else if (not_bool((unsigned(let x86 : unit = (()) in
-segment_selectorbits_get_rpl(seg_visibles[1]))) == (0))) & ((cr4bits_get_umip(bits_of_int(loghead(22, unsigned(ctrs[4])), 22))) == (0b0))
+else if (not_bool((unsigned({ ();
+segment_selectorbits_get_rpl(seg_visibles[1])
+})) == (0))) & ((cr4bits_get_umip(bits_of_int(loghead(22, unsigned(ctrs[4])), 22))) == (0b0))
 then Some(":GP")
 else None() : option(string)) } in
 if is_some(fault_var)
@@ -213,8 +223,9 @@ _ => throw(Emsg("Model state error: Unimplemented exception in x86isa!"))
 else { throw(Emsg("Model state error: Opcode Unimplemented in x86isa!"))
 }
 else if ((modr_m_get_reg(modr_m)) == (0b001)) & (((modr_m_get_mod(modr_m)) == (0b11)) & ((modr_m_get_r_m(modr_m)) == (0b000)))
-then let fault_var : option(string) = { (if ((feature_flags_fn([|":MONITOR"|])) == (0)) | (not_bool((unsigned(let x86 : unit = (()) in
-segment_selectorbits_get_rpl(seg_visibles[1]))) == (0)))
+then let fault_var : option(string) = { (if ((feature_flags_fn([|":MONITOR"|])) == (0)) | (not_bool((unsigned({ ();
+segment_selectorbits_get_rpl(seg_visibles[1])
+})) == (0)))
 then Some(":UD")
 else None() : option(string)) } in
 if is_some(fault_var)
@@ -227,8 +238,9 @@ _ => throw(Emsg("Model state error: Unimplemented exception in x86isa!"))
 else { throw(Emsg("Model state error: Opcode Unimplemented in x86isa!"))
 }
 else if ((modr_m_get_reg(modr_m)) == (0b001)) & (((modr_m_get_mod(modr_m)) == (0b11)) & ((modr_m_get_r_m(modr_m)) == (0b001)))
-then let fault_var : option(string) = { (if ((feature_flags_fn([|":MONITOR"|])) == (0)) | (not_bool((unsigned(let x86 : unit = (()) in
-segment_selectorbits_get_rpl(seg_visibles[1]))) == (0)))
+then let fault_var : option(string) = { (if ((feature_flags_fn([|":MONITOR"|])) == (0)) | (not_bool((unsigned({ ();
+segment_selectorbits_get_rpl(seg_visibles[1])
+})) == (0)))
 then Some(":UD")
 else None() : option(string)) } in
 if is_some(fault_var)
@@ -241,8 +253,9 @@ _ => throw(Emsg("Model state error: Unimplemented exception in x86isa!"))
 else { throw(Emsg("Model state error: Opcode Unimplemented in x86isa!"))
 }
 else if ((modr_m_get_reg(modr_m)) == (0b001)) & (((modr_m_get_mod(modr_m)) == (0b11)) & ((modr_m_get_r_m(modr_m)) == (0b010)))
-then let fault_var : option(string) = { (if ((feature_flags_fn([|":SMAP"|])) == (0)) | (((0xf0) == (prefixes_get_lck(prefixes))) | (not_bool((unsigned(let x86 : unit = (()) in
-segment_selectorbits_get_rpl(seg_visibles[1]))) == (0))))
+then let fault_var : option(string) = { (if ((feature_flags_fn([|":SMAP"|])) == (0)) | (((0xf0) == (prefixes_get_lck(prefixes))) | (not_bool((unsigned({ ();
+segment_selectorbits_get_rpl(seg_visibles[1])
+})) == (0))))
 then Some(":UD")
 else None() : option(string)) } in
 if is_some(fault_var)
@@ -255,8 +268,9 @@ _ => throw(Emsg("Model state error: Unimplemented exception in x86isa!"))
 else { throw(Emsg("Model state error: Opcode Unimplemented in x86isa!"))
 }
 else if ((modr_m_get_reg(modr_m)) == (0b001)) & (((modr_m_get_mod(modr_m)) == (0b11)) & ((modr_m_get_r_m(modr_m)) == (0b011)))
-then let fault_var : option(string) = { (if ((feature_flags_fn([|":SMAP"|])) == (0)) | (((0xf0) == (prefixes_get_lck(prefixes))) | (not_bool((unsigned(let x86 : unit = (()) in
-segment_selectorbits_get_rpl(seg_visibles[1]))) == (0))))
+then let fault_var : option(string) = { (if ((feature_flags_fn([|":SMAP"|])) == (0)) | (((0xf0) == (prefixes_get_lck(prefixes))) | (not_bool((unsigned({ ();
+segment_selectorbits_get_rpl(seg_visibles[1])
+})) == (0))))
 then Some(":UD")
 else None() : option(string)) } in
 if is_some(fault_var)
@@ -273,8 +287,9 @@ then throw(Emsg("Model state error: Opcode Unimplemented in x86isa!"))
 else if ((modr_m_get_reg(modr_m)) == (0b010)) & (not_bool((modr_m_get_mod(modr_m)) == (0b11)))
 then let fault_var : option(string) = { (if (0xf0) == (prefixes_get_lck(prefixes))
 then Some(":UD")
-else if not_bool((unsigned(let x86 : unit = (()) in
-segment_selectorbits_get_rpl(seg_visibles[1]))) == (0))
+else if not_bool((unsigned({ ();
+segment_selectorbits_get_rpl(seg_visibles[1])
+})) == (0))
 then Some(":GP")
 else None() : option(string)) } in
 if is_some(fault_var)
@@ -291,8 +306,9 @@ else { x86_lgdt(proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode, modr
 else if ((modr_m_get_reg(modr_m)) == (0b011)) & (not_bool((modr_m_get_mod(modr_m)) == (0b11)))
 then let fault_var : option(string) = { (if (0xf0) == (prefixes_get_lck(prefixes))
 then Some(":UD")
-else if not_bool((unsigned(let x86 : unit = (()) in
-segment_selectorbits_get_rpl(seg_visibles[1]))) == (0))
+else if not_bool((unsigned({ ();
+segment_selectorbits_get_rpl(seg_visibles[1])
+})) == (0))
 then Some(":GP")
 else None() : option(string)) } in
 if is_some(fault_var)
@@ -376,8 +392,9 @@ else { throw(Emsg("Model state error: Opcode Unimplemented in x86isa!"))
 else if ((modr_m_get_reg(modr_m)) == (0b100)) & (not_bool((modr_m_get_mod(modr_m)) == (0b11)))
 then let fault_var : option(string) = { (if (0xf0) == (prefixes_get_lck(prefixes))
 then Some(":UD")
-else if (not_bool((unsigned(let x86 : unit = (()) in
-segment_selectorbits_get_rpl(seg_visibles[1]))) == (0))) & ((cr4bits_get_umip(bits_of_int(loghead(22, unsigned(ctrs[4])), 22))) == (0b0))
+else if (not_bool((unsigned({ ();
+segment_selectorbits_get_rpl(seg_visibles[1])
+})) == (0))) & ((cr4bits_get_umip(bits_of_int(loghead(22, unsigned(ctrs[4])), 22))) == (0b0))
 then Some(":GP")
 else None() : option(string)) } in
 if is_some(fault_var)
@@ -394,8 +411,9 @@ else { throw(Emsg("Model state error: Opcode Unimplemented in x86isa!"))
 else if ((modr_m_get_reg(modr_m)) == (0b100)) & ((modr_m_get_mod(modr_m)) == (0b11))
 then let fault_var : option(string) = { (if (0xf0) == (prefixes_get_lck(prefixes))
 then Some(":UD")
-else if (not_bool((unsigned(let x86 : unit = (()) in
-segment_selectorbits_get_rpl(seg_visibles[1]))) == (0))) & ((cr4bits_get_umip(bits_of_int(loghead(22, unsigned(ctrs[4])), 22))) == (0b0))
+else if (not_bool((unsigned({ ();
+segment_selectorbits_get_rpl(seg_visibles[1])
+})) == (0))) & ((cr4bits_get_umip(bits_of_int(loghead(22, unsigned(ctrs[4])), 22))) == (0b0))
 then Some(":GP")
 else None() : option(string)) } in
 if is_some(fault_var)
@@ -412,8 +430,9 @@ else { throw(Emsg("Model state error: Opcode Unimplemented in x86isa!"))
 else if (modr_m_get_reg(modr_m)) == (0b110)
 then let fault_var : option(string) = { (if (0xf0) == (prefixes_get_lck(prefixes))
 then Some(":UD")
-else if not_bool((unsigned(let x86 : unit = (()) in
-segment_selectorbits_get_rpl(seg_visibles[1]))) == (0))
+else if not_bool((unsigned({ ();
+segment_selectorbits_get_rpl(seg_visibles[1])
+})) == (0))
 then Some(":GP")
 else None() : option(string)) } in
 if is_some(fault_var)
@@ -430,8 +449,9 @@ else { throw(Emsg("Model state error: Opcode Unimplemented in x86isa!"))
 else if ((modr_m_get_reg(modr_m)) == (0b111)) & (not_bool((modr_m_get_mod(modr_m)) == (0b11)))
 then let fault_var : option(string) = { (if ((0xf0) == (prefixes_get_lck(prefixes))) | ((modr_m_get_mod(modr_m)) == (0b11))
 then Some(":UD")
-else if not_bool((unsigned(let x86 : unit = (()) in
-segment_selectorbits_get_rpl(seg_visibles[1]))) == (0))
+else if not_bool((unsigned({ ();
+segment_selectorbits_get_rpl(seg_visibles[1])
+})) == (0))
 then Some(":GP")
 else None() : option(string)) } in
 if is_some(fault_var)
@@ -448,8 +468,9 @@ else { throw(Emsg("Model state error: Opcode Unimplemented in x86isa!"))
 else if ((proc_mode) == (0)) & (((modr_m_get_reg(modr_m)) == (0b111)) & (((modr_m_get_mod(modr_m)) == (0b11)) & ((modr_m_get_r_m(modr_m)) == (0b000))))
 then let fault_var : option(string) = { (if (0xf0) == (prefixes_get_lck(prefixes))
 then Some(":UD")
-else if not_bool((unsigned(let x86 : unit = (()) in
-segment_selectorbits_get_rpl(seg_visibles[1]))) == (0))
+else if not_bool((unsigned({ ();
+segment_selectorbits_get_rpl(seg_visibles[1])
+})) == (0))
 then Some(":GP")
 else None() : option(string)) } in
 if is_some(fault_var)
@@ -504,8 +525,9 @@ else { throw(Emsg("Model state error: Opcode Unimplemented in x86isa!"))
 } },
 6 => { let fault_var : option(string) = { (if (0xf0) == (prefixes_get_lck(prefixes))
 then Some(":UD")
-else if not_bool((unsigned(let x86 : unit = (()) in
-segment_selectorbits_get_rpl(seg_visibles[1]))) == (0))
+else if not_bool((unsigned({ ();
+segment_selectorbits_get_rpl(seg_visibles[1])
+})) == (0))
 then Some(":GP")
 else None() : option(string)) } in
 if is_some(fault_var)
@@ -1368,8 +1390,9 @@ if ((proc_mode) == (0)) & (logbitp(2, rex_byte))
 then not_bool((reg) == (0b000))
 else ((reg) == (0b001)) | (((reg) == (0b101)) | (((reg) == (0b110)) | ((reg) == (0b111)))))
 then Some(":UD")
-else if not_bool((unsigned(let x86 : unit = (()) in
-segment_selectorbits_get_rpl(seg_visibles[1]))) == (0))
+else if not_bool((unsigned({ ();
+segment_selectorbits_get_rpl(seg_visibles[1])
+})) == (0))
 then Some(":GP")
 else None() : option(string)) } in
 if is_some(fault_var)
@@ -1385,8 +1408,9 @@ else { x86_mov_control_regs_op_en_mr(proc_mode, start_rip, temp_rip, prefixes, r
 } },
 33 => { let fault_var : option(string) = { (if ((0xf0) == (prefixes_get_lck(prefixes))) | (((cr4bits_get_de(bits_of_int(loghead(22, unsigned(ctrs[4])), 22))) == (0b1)) & (((modr_m_get_reg(modr_m)) == (0b100)) | ((modr_m_get_reg(modr_m)) == (0b101))))
 then Some(":UD")
-else if not_bool((unsigned(let x86 : unit = (()) in
-segment_selectorbits_get_rpl(seg_visibles[1]))) == (0))
+else if not_bool((unsigned({ ();
+segment_selectorbits_get_rpl(seg_visibles[1])
+})) == (0))
 then Some(":GP")
 else None() : option(string)) } in
 if is_some(fault_var)
@@ -1405,8 +1429,9 @@ if ((proc_mode) == (0)) & (logbitp(2, rex_byte))
 then not_bool((reg) == (0b000))
 else ((reg) == (0b001)) | (((reg) == (0b101)) | (((reg) == (0b110)) | ((reg) == (0b111)))))
 then Some(":UD")
-else if not_bool((unsigned(let x86 : unit = (()) in
-segment_selectorbits_get_rpl(seg_visibles[1]))) == (0))
+else if not_bool((unsigned({ ();
+segment_selectorbits_get_rpl(seg_visibles[1])
+})) == (0))
 then Some(":GP")
 else None() : option(string)) } in
 if is_some(fault_var)
@@ -1422,8 +1447,9 @@ else { throw(Emsg("Model state error: Opcode Unimplemented in x86isa!"))
 } },
 35 => { let fault_var : option(string) = { (if ((0xf0) == (prefixes_get_lck(prefixes))) | (((cr4bits_get_de(bits_of_int(loghead(22, unsigned(ctrs[4])), 22))) == (0b1)) & (((modr_m_get_reg(modr_m)) == (0b100)) | ((modr_m_get_reg(modr_m)) == (0b101))))
 then Some(":UD")
-else if not_bool((unsigned(let x86 : unit = (()) in
-segment_selectorbits_get_rpl(seg_visibles[1]))) == (0))
+else if not_bool((unsigned({ ();
+segment_selectorbits_get_rpl(seg_visibles[1])
+})) == (0))
 then Some(":GP")
 else None() : option(string)) } in
 if is_some(fault_var)
@@ -2748,8 +2774,7 @@ _ => throw(Emsg("Translation error: invalid two-byte opcode"))
 val two_byte_opcode_decode_and_execute : (range(0, 4), sbits(48), sbits(48), bits(52), bits(8), bits(8)) -> unit effect {eamem, escape, rmem, rreg, undef, wmv, wreg}
 function two_byte_opcode_decode_and_execute (proc_mode, start_rip, temp_rip, prefixes, rex_byte, escape_byte) =
 let ctx : string = ("two-byte-opcode-decode-and-execute") in
-let (flg0, opcode) : (option(string), int) = (rme08(proc_mode, sail_sign_extend(temp_rip, 64), 1, ":X")) in
-let opcode : bits(8) = (bits_of_int(opcode, 8)) in
+let (flg0, opcode) : (option(string), bits(8)) = (rme08(proc_mode, sail_sign_extend(temp_rip, 64), 1, ":X")) in
 { if is_some(flg0)
 then throw(Emsg("Model state error: :OPCODE-BYTE-ACCESS-ERROR"))
 else ();
@@ -2759,10 +2784,9 @@ then throw(Emsg("Model state error: :INCREMENT-ERROR"))
 else ();
 let mandatory_prefix : bits(8) = (compute_mandatory_prefix_for_two_byte_opcode(proc_mode, opcode, prefixes)) in
 let modr_m? : bool = (two_byte_opcode_modr_m_p(proc_mode, mandatory_prefix, opcode)) in
-let (flg1, modr_m) : (option(string), int) = { (if modr_m?
+let (flg1, modr_m) : (option(string), bits(8)) = { (if modr_m?
 then rme08(proc_mode, sail_sign_extend(temp_rip, 64), 1, ":X")
-else (None() : option(string), 0)) } in
-let modr_m : bits(8) = (bits_of_int(modr_m, 8)) in
+else (None() : option(string), 0x00)) } in
 { if is_some(flg1)
 then throw(Emsg("Model state error: :MODR/M-BYTE-READ-ERROR"))
 else ();
@@ -2775,10 +2799,9 @@ else ();
 let sib? : bool = ((modr_m?) & (let p4? : bool = ((0x67) == (prefixes_get_adr(prefixes))) in
 let n16_bit_addressp : bool = ((2) == (select_address_size(proc_mode, p4?))) in
 x86_decode_sib_p(modr_m, n16_bit_addressp))) in
-let (flg2, sib) : (option(string), int) = { (if sib?
+let (flg2, sib) : (option(string), bits(8)) = { (if sib?
 then rme08(proc_mode, sail_sign_extend(temp_rip, 64), 1, ":X")
-else (None() : option(string), 0)) } in
-let sib : bits(8) = (bits_of_int(sib, 8)) in
+else (None() : option(string), 0x00)) } in
 { if is_some(flg2)
 then throw(Emsg("Model state error: :SIB-BYTE-READ-ERROR"))
 else ();

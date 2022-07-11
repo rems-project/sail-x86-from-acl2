@@ -32,14 +32,13 @@ function x86_shufps_op_en_rmi (proc_mode, start_rip, temp_rip, prefixes, rex_byt
     let p4? : bool = 0x67 == prefixes_get_adr(prefixes);
     let seg_reg : {|0, 1, 2, 3, 4, 5|} = select_segment_register(proc_mode, p2, p4?, mod_var, r_m, sib);
     let inst_ac? : bool = true;
-    let (flg0, xmm_mem, increment_rip_by, addr) : (option(string), int, {|0, 1, 2, 4|}, sbits(64)) = x86_operand_from_modr_m_and_sib_bytes(proc_mode, 0b1, 16, inst_ac?, false, seg_reg, p4?, temp_rip, rex_byte, r_m, mod_var, sib, 0b001);
-    let xmm_mem : bits(128) = bits_of_int(xmm_mem, 128);
+    let (flg0, xmm_mem, increment_rip_by, addr) : (option(string), bits(128), {|0, 1, 2, 4|}, sbits(64)) = x86_operand_from_modr_m_and_sib_bytes(proc_mode, 0b1, 16, inst_ac?, false, seg_reg, p4?, temp_rip, rex_byte, r_m, mod_var, sib, 0b001);
     if is_some(flg0) then throw(Emsg("Model state error: :X86-OPERAND-FROM-MODR/M-AND-SIB-BYTES"));
     let (flg, temp_rip) : (option(string), sbits(49)) = add_to_iptr(proc_mode, temp_rip, bits_of_int(increment_rip_by, 48));
     let temp_rip : sbits(48) = truncate(temp_rip, 48);
     if is_some(flg) then throw(Emsg("Model state error: :RIP-INCREMENT-ERROR"));
-    let (flg1, imm) : (option(string), int) = rme_size(proc_mode, 1, sail_sign_extend(temp_rip, 64), 1, ":X", false, struct { mem_ptr? = false });
-    let imm : bits(8) = bits_of_int(imm, 8);
+    let (flg1, imm) : (option(string), bits(128)) = rme_size(proc_mode, 1, sail_sign_extend(temp_rip, 64), 1, ":X", false, struct { mem_ptr? = false });
+    let imm : bits(8) = truncate(imm, 8);
     if is_some(flg1) then throw(Emsg("Model state error: :IMM-RME-SIZE-ERROR"));
     let (flg, temp_rip) : (option(string), sbits(49)) = add_to_iptr(proc_mode, temp_rip, 0x000000000001);
     let temp_rip : sbits(48) = truncate(temp_rip, 48);
@@ -54,7 +53,7 @@ function x86_shufps_op_en_rmi (proc_mode, start_rip, temp_rip, prefixes, rex_byt
     let dword1 : bits(32) = extract_32_bits(xmm, imm1);
     let dword2 : bits(32) = extract_32_bits(xmm_mem, imm2);
     let dword3 : bits(32) = extract_32_bits(xmm_mem, imm3);
-    let result : bits(128) = merge_4_u32s(dword3, dword2, dword1, dword0);
+    let result : bits(128) = dword3 @ (dword2 @ (dword1 @ dword0));
     write_xmmi_size(0b10000, xmm_index, unsigned(result));
     write_iptr(proc_mode, temp_rip)
 }
@@ -72,14 +71,13 @@ function x86_shufpd_op_en_rmi (proc_mode, start_rip, temp_rip, prefixes, rex_byt
     let p4? : bool = 0x67 == prefixes_get_adr(prefixes);
     let seg_reg : {|0, 1, 2, 3, 4, 5|} = select_segment_register(proc_mode, p2, p4?, mod_var, r_m, sib);
     let inst_ac? : bool = true;
-    let (flg0, xmm_mem, increment_rip_by, addr) : (option(string), int, {|0, 1, 2, 4|}, sbits(64)) = x86_operand_from_modr_m_and_sib_bytes(proc_mode, 0b1, 16, inst_ac?, false, seg_reg, p4?, temp_rip, rex_byte, r_m, mod_var, sib, 0b001);
-    let xmm_mem : bits(128) = bits_of_int(xmm_mem, 128);
+    let (flg0, xmm_mem, increment_rip_by, addr) : (option(string), bits(128), {|0, 1, 2, 4|}, sbits(64)) = x86_operand_from_modr_m_and_sib_bytes(proc_mode, 0b1, 16, inst_ac?, false, seg_reg, p4?, temp_rip, rex_byte, r_m, mod_var, sib, 0b001);
     if is_some(flg0) then throw(Emsg("Model state error: :X86-OPERAND-FROM-MODR/M-AND-SIB-BYTES"));
     let (flg, temp_rip) : (option(string), sbits(49)) = add_to_iptr(proc_mode, temp_rip, bits_of_int(increment_rip_by, 48));
     let temp_rip : sbits(48) = truncate(temp_rip, 48);
     if is_some(flg) then throw(Emsg("Model state error: :RIP-INCREMENT-ERROR"));
-    let (flg1, imm) : (option(string), int) = rme_size(proc_mode, 1, sail_sign_extend(temp_rip, 64), 1, ":X", false, struct { mem_ptr? = false });
-    let imm : bits(8) = bits_of_int(imm, 8);
+    let (flg1, imm) : (option(string), bits(128)) = rme_size(proc_mode, 1, sail_sign_extend(temp_rip, 64), 1, ":X", false, struct { mem_ptr? = false });
+    let imm : bits(8) = truncate(imm, 8);
     if is_some(flg1) then throw(Emsg("Model state error: :IMM-RME-SIZE-ERROR"));
     let (flg, temp_rip) : (option(string), sbits(49)) = add_to_iptr(proc_mode, temp_rip, 0x000000000001);
     let temp_rip : sbits(48) = truncate(temp_rip, 48);
@@ -90,7 +88,7 @@ function x86_shufpd_op_en_rmi (proc_mode, start_rip, temp_rip, prefixes, rex_byt
     let imm1 : bits(1) = logbit(1, imm);
     let qword0 : bits(64) = extract_64_bits(xmm, unsigned(imm0));
     let qword1 : bits(64) = extract_64_bits(xmm_mem, unsigned(imm1));
-    let result : bits(128) = merge_2_u64s(qword1, qword0);
+    let result : bits(128) = qword1 @ qword0;
     write_xmmi_size(0b10000, xmm_index, unsigned(result));
     write_iptr(proc_mode, temp_rip)
 }
@@ -108,8 +106,7 @@ function x86_unpck?ps_op_en_rm (high_low, proc_mode, start_rip, temp_rip, prefix
     let p4? : bool = 0x67 == prefixes_get_adr(prefixes);
     let seg_reg : {|0, 1, 2, 3, 4, 5|} = select_segment_register(proc_mode, p2, p4?, mod_var, r_m, sib);
     let inst_ac? : bool = true;
-    let (flg0, xmm_mem, increment_rip_by, addr) : (option(string), int, {|0, 1, 2, 4|}, sbits(64)) = x86_operand_from_modr_m_and_sib_bytes(proc_mode, 0b1, 16, inst_ac?, false, seg_reg, p4?, temp_rip, rex_byte, r_m, mod_var, sib, 0b000);
-    let xmm_mem : bits(128) = bits_of_int(xmm_mem, 128);
+    let (flg0, xmm_mem, increment_rip_by, addr) : (option(string), bits(128), {|0, 1, 2, 4|}, sbits(64)) = x86_operand_from_modr_m_and_sib_bytes(proc_mode, 0b1, 16, inst_ac?, false, seg_reg, p4?, temp_rip, rex_byte, r_m, mod_var, sib, 0b000);
     if is_some(flg0) then throw(Emsg("Model state error: :X86-OPERAND-FROM-MODR/M-AND-SIB-BYTES"));
     let (flg, temp_rip) : (option(string), sbits(49)) = add_to_iptr(proc_mode, temp_rip, bits_of_int(increment_rip_by, 48));
     let temp_rip : sbits(48) = truncate(temp_rip, 48);
@@ -144,7 +141,7 @@ function x86_unpck?ps_op_en_rm (high_low, proc_mode, start_rip, temp_rip, prefix
             slice(xmm_mem, 32, 32)
         }
     };
-    let result : bits(128) = merge_4_u32s(dword3, dword2, dword1, dword0);
+    let result : bits(128) = dword3 @ (dword2 @ (dword1 @ dword0));
     write_xmmi_size(0b10000, xmm_index, unsigned(result));
     write_iptr(proc_mode, temp_rip)
 }
@@ -162,8 +159,7 @@ function x86_unpck?pd_op_en_rm (high_low, proc_mode, start_rip, temp_rip, prefix
     let p4? : bool = 0x67 == prefixes_get_adr(prefixes);
     let seg_reg : {|0, 1, 2, 3, 4, 5|} = select_segment_register(proc_mode, p2, p4?, mod_var, r_m, sib);
     let inst_ac? : bool = true;
-    let (flg0, xmm_mem, increment_rip_by, addr) : (option(string), int, {|0, 1, 2, 4|}, sbits(64)) = x86_operand_from_modr_m_and_sib_bytes(proc_mode, 0b1, 16, inst_ac?, false, seg_reg, p4?, temp_rip, rex_byte, r_m, mod_var, sib, 0b000);
-    let xmm_mem : bits(128) = bits_of_int(xmm_mem, 128);
+    let (flg0, xmm_mem, increment_rip_by, addr) : (option(string), bits(128), {|0, 1, 2, 4|}, sbits(64)) = x86_operand_from_modr_m_and_sib_bytes(proc_mode, 0b1, 16, inst_ac?, false, seg_reg, p4?, temp_rip, rex_byte, r_m, mod_var, sib, 0b000);
     if is_some(flg0) then throw(Emsg("Model state error: :X86-OPERAND-FROM-MODR/M-AND-SIB-BYTES"));
     let (flg, temp_rip) : (option(string), sbits(49)) = add_to_iptr(proc_mode, temp_rip, bits_of_int(increment_rip_by, 48));
     let temp_rip : sbits(48) = truncate(temp_rip, 48);
@@ -184,7 +180,7 @@ function x86_unpck?pd_op_en_rm (high_low, proc_mode, start_rip, temp_rip, prefix
             slice(xmm_mem, 0, 64)
         }
     };
-    let result : bits(128) = merge_2_u64s(qword1, qword0);
+    let result : bits(128) = qword1 @ qword0;
     write_xmmi_size(0b10000, xmm_index, unsigned(result));
     write_iptr(proc_mode, temp_rip)
 }

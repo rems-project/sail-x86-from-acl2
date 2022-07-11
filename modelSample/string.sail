@@ -30,7 +30,7 @@ then throw(Emsg("Model state error: :SRC-ADDR-NOT-CANONICAL"))
 else ();
 let inst_ac? : bool = (alignment_checking_enabled_p()) in
 let seg_reg : {|0, 1, 2, 3, 4, 5|} = (select_segment_register(proc_mode, p2, p4?, mod_var, r_m, sib)) in
-let (flg0, src) : (option(string), int) = (rme_size(proc_mode, operand_size, truncate(src_addr, 64), seg_reg, ":R", inst_ac?, struct {mem_ptr? = false})) in
+let (flg0, src) : (option(string), bits(128)) = (rme_size(proc_mode, operand_size, truncate(src_addr, 64), seg_reg, ":R", inst_ac?, struct {mem_ptr? = false})) in
 { if is_some(flg0)
 then throw(Emsg("Model state error: :SRC-RME-SIZE-ERROR"))
 else ();
@@ -57,7 +57,7 @@ else ((-8) + (signed(truncate(src_addr, 48))), (-8) + (signed(truncate(dst_addr,
 }) } in
 let src_addr : sbits(49) = (bits_of_int(src_addr, 49)) in
 let dst_addr : sbits(49) = (bits_of_int(dst_addr, 49)) in
-let flg1 : option(string) = (wme_size(proc_mode, operand_size, sail_sign_extend(original_dst_addr, 64), 0, nat_of_int(src), inst_ac?, struct {mem_ptr? = false})) in
+let flg1 : option(string) = (wme_size(proc_mode, operand_size, sail_sign_extend(original_dst_addr, 64), 0, unsigned(src), inst_ac?, struct {mem_ptr? = false})) in
 { if is_some(flg1)
 then throw(Emsg("Model state error: :WME-SIZE-ERROR"))
 else ();
@@ -100,7 +100,7 @@ _ => write_rgfi(7, sail_sign_extend(dst_addr, 64))
 }
 }
 
-val x86_cmps : (range(0, 4), sbits(48), sbits(48), bits(52), bits(8), bits(8), bits(8), bits(8)) -> unit effect {escape, rmem, rreg, undef, wreg}
+val x86_cmps : (range(0, 4), sbits(48), sbits(48), bits(52), bits(8), bits(8), bits(8), bits(8)) -> unit effect {eamem, escape, rmem, rreg, undef, wmv, wreg}
 function x86_cmps (proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode, modr_m, sib) =
 let ctx : string = ("X86-CMPS") in
 let r_m : bits(3) = (modr_m_get_r_m(modr_m)) in
@@ -128,7 +128,7 @@ then throw(Emsg("Model state error: :SRC-ADDR-NOT-CANONICAL"))
 else ();
 let inst_ac? : bool = (alignment_checking_enabled_p()) in
 let seg_reg : {|0, 1, 2, 3, 4, 5|} = (select_segment_register(proc_mode, p2, p4?, mod_var, r_m, sib)) in
-let (flg0, src) : (option(string), int) = (rme_size(proc_mode, operand_size, truncate(src_addr, 64), seg_reg, ":R", inst_ac?, struct {mem_ptr? = false})) in
+let (flg0, src) : (option(string), bits(128)) = (rme_size(proc_mode, operand_size, truncate(src_addr, 64), seg_reg, ":R", inst_ac?, struct {mem_ptr? = false})) in
 { if is_some(flg0)
 then throw(Emsg("Model state error: :SRC-RME-SIZE-ERROR"))
 else ();
@@ -138,12 +138,12 @@ else sail_sign_extend(rgfi(7), 65)) } in
 { if (not_bool(counter_addr_size_2_4?)) & (not_bool(canonical_address_p(signed(dst_addr))))
 then throw(Emsg("Model state error: :DST-ADDR-NOT-CANONICAL"))
 else ();
-let (flg0, dst) : (option(string), int) = (rme_size(proc_mode, operand_size, truncate(dst_addr, 64), 0, ":R", inst_ac?, struct {mem_ptr? = false})) in
+let (flg0, dst) : (option(string), bits(128)) = (rme_size(proc_mode, operand_size, truncate(dst_addr, 64), 0, ":R", inst_ac?, struct {mem_ptr? = false})) in
 { if is_some(flg0)
 then throw(Emsg("Model state error: :DST-RME-SIZE-ERROR"))
 else ();
 let input_rflags : bits(32) = (rflags) in
-let (result, output_rflags, undefined_flags) : (bits(64), bits(32), bits(32)) = (gpr_arith_logic_spec(operand_size, 4, bits_of_int(dst, 64), bits_of_int(src, 64), input_rflags)) in
+let (result, output_rflags, undefined_flags) : (bits(64), bits(32), bits(32)) = (gpr_arith_logic_spec(operand_size, 4, truncate(dst, 64), truncate(src, 64), input_rflags)) in
 { write_user_rflags(output_rflags, undefined_flags);
 let (src_addr, dst_addr) : (int, int) = { (match operand_size {
 1 => { if (df) == (0b0)
@@ -202,7 +202,7 @@ _ => write_rgfi(7, sail_sign_extend(dst_addr, 64))
 }
 }
 
-val x86_stos : (range(0, 4), sbits(48), sbits(48), bits(52), bits(8), bits(8), bits(8), bits(8)) -> unit effect {eamem, escape, rreg, wmv, wreg}
+val x86_stos : (range(0, 4), sbits(48), sbits(48), bits(52), bits(8), bits(8), bits(8), bits(8)) -> unit effect {eamem, escape, rmem, rreg, wmv, wreg}
 function x86_stos (proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode, modr_m, sib) =
 let ctx : string = ("X86-STOS") in
 let group_1_prefix : bits(8) = (prefixes_get_seg(prefixes)) in

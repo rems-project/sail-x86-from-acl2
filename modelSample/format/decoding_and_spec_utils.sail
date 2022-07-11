@@ -477,13 +477,15 @@ function alignment_checking_enabled_p () = {
         sail_zero_extend(rflagsbits_get_ac(rflags_var), 2)
     };
     let cpl : bits(2) = {
-        let x86 : unit = ();
-        segment_selectorbits_get_rpl(seg_visibles[1])
+        {
+            ();
+            segment_selectorbits_get_rpl(seg_visibles[1])
+        }
     };
     am == 0b1 & ac == 0b01 & cpl == 0b11
 }
 
-val x86_operand_from_modr_m_and_sib_bytes : (range(0, 4), bits(1), {|1, 2, 4, 6, 8, 10, 16|}, bool, bool, range(0, 5), bool, sbits(48), bits(8), bits(3), bits(2), bits(8), bits(3)) -> (option(string), int, {|0, 1, 2, 4|}, sbits(64))
+val x86_operand_from_modr_m_and_sib_bytes : (range(0, 4), bits(1), {|1, 2, 4, 6, 8, 10, 16|}, bool, bool, range(0, 5), bool, sbits(48), bits(8), bits(3), bits(2), bits(8), bits(3)) -> (option(string), bits(128), {|0, 1, 2, 4|}, sbits(64))
 
 function x86_operand_from_modr_m_and_sib_bytes (proc_mode, reg_type, operand_size, inst_ac?, memory_ptr?, seg_reg, p4?, temp_rip, rex_byte, r_m, mod_var, sib, num_imm_bytes) = {
     let (flg0, addr, increment_rip_by) : (option(string), sbits(64), {|0, 1, 2, 4|}) = {
@@ -494,25 +496,22 @@ function x86_operand_from_modr_m_and_sib_bytes (proc_mode, reg_type, operand_siz
         }
     };
     if is_some(flg0) then {
-        (Some("x86-effective-addr-error"), 0, 0, 0x0000000000000000)
+        (Some("x86-effective-addr-error"), 0x00000000000000000000000000000000, 0, 0x0000000000000000)
     } else {
-        let (flg2, operand) : (option(string), int) = {
+        let (flg2, operand) : (option(string), bits(128)) = {
             if mod_var == 0b11 then {
-                let (elem0, elem1) : (option(string), bits(128)) = {
-                    if reg_type == 0b0 then {
-                        (None() : option(string), sail_zero_extend(rgfi_size(bits_of_int(operand_size, 4), reg_index(r_m, rex_byte, 0b00), rex_byte), 128))
-                    } else {
-                        (None() : option(string), xmmi_size(bits_of_int(operand_size, 5), reg_index(r_m, rex_byte, 0b00)))
-                    }
-                };
-                (elem0, unsigned(elem1))
+                if reg_type == 0b0 then {
+                    (None() : option(string), sail_zero_extend(rgfi_size(bits_of_int(operand_size, 4), reg_index(r_m, rex_byte, 0b00), rex_byte), 128))
+                } else {
+                    (None() : option(string), xmmi_size(bits_of_int(operand_size, 5), reg_index(r_m, rex_byte, 0b00)))
+                }
             } else {
                 let check_alignment? : bool = inst_ac? & alignment_checking_enabled_p();
                 rme_size(proc_mode, operand_size, addr, seg_reg, ":R", check_alignment?, struct { mem_ptr? = memory_ptr? })
             }
         };
         if is_some(flg2) then {
-            (Some("Rm-Size-Error"), 0, 0, 0x0000000000000000)
+            (Some("Rm-Size-Error"), 0x00000000000000000000000000000000, 0, 0x0000000000000000)
         } else {
             (None() : option(string), operand, increment_rip_by, addr)
         }
@@ -523,7 +522,7 @@ val x86_operand_to_reg_mem : (range(0, 4), {|1, 2, 4, 6, 8, 10, 16|}, bool, bool
 
 function x86_operand_to_reg_mem (proc_mode, operand_size, inst_ac?, memory_ptr?, operand, seg_reg, addr, rex_byte, r_m, mod_var) = {
     if mod_var == 0b11 then {
-        let x86 : unit = write_rgfi_size(bits_of_int(operand_size, 4), reg_index(r_m, rex_byte, 0b00), operand, rex_byte);
+        write_rgfi_size(bits_of_int(operand_size, 4), reg_index(r_m, rex_byte, 0b00), operand, rex_byte);
         None() : option(string)
     } else {
         let check_alignment? : bool = inst_ac? & alignment_checking_enabled_p();
@@ -536,7 +535,7 @@ val x86_operand_to_xmm_mem : (range(0, 4), {|4, 8, 16|}, bool, nat, range(0, 5),
 
 function x86_operand_to_xmm_mem (proc_mode, operand_size, inst_ac?, operand, seg_reg, addr, rex_byte, r_m, mod_var) = {
     if mod_var == 0b11 then {
-        let x86 : unit = write_xmmi_size(bits_of_int(operand_size, 5), reg_index(r_m, rex_byte, 0b00), operand);
+        write_xmmi_size(bits_of_int(operand_size, 5), reg_index(r_m, rex_byte, 0b00), operand);
         None() : option(string)
     } else {
         let check_alignment? : bool = inst_ac? & alignment_checking_enabled_p();

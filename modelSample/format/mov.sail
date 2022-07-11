@@ -14,7 +14,7 @@ function x86_movss_movsd_op_en_rm (sp_dp, proc_mode, start_rip, temp_rip, prefix
     let p4? : bool = 0x67 == prefixes_get_adr(prefixes);
     let seg_reg : {|0, 1, 2, 3, 4, 5|} = select_segment_register(proc_mode, p2, p4?, mod_var, r_m, sib);
     let inst_ac? : bool = true;
-    let (flg0, xmm_mem, increment_rip_by, addr) : (option(string), int, {|0, 1, 2, 4|}, sbits(64)) = x86_operand_from_modr_m_and_sib_bytes(proc_mode, 0b1, operand_size, inst_ac?, false, seg_reg, p4?, temp_rip, rex_byte, r_m, mod_var, sib, 0b000);
+    let (flg0, xmm_mem, increment_rip_by, addr) : (option(string), bits(128), {|0, 1, 2, 4|}, sbits(64)) = x86_operand_from_modr_m_and_sib_bytes(proc_mode, 0b1, operand_size, inst_ac?, false, seg_reg, p4?, temp_rip, rex_byte, r_m, mod_var, sib, 0b000);
     if is_some(flg0) then throw(Emsg("Model state error: :X86-OPERAND-FROM-MODR/M-AND-SIB-BYTES"));
     let (flg, temp_rip) : (option(string), sbits(49)) = add_to_iptr(proc_mode, temp_rip, bits_of_int(increment_rip_by, 48));
     let temp_rip : sbits(48) = truncate(temp_rip, 48);
@@ -26,7 +26,7 @@ function x86_movss_movsd_op_en_rm (sp_dp, proc_mode, start_rip, temp_rip, prefix
             operand_size
         } else 16
     };
-    write_xmmi_size(bits_of_int(operand_size, 5), xmm_index, xmm_mem);
+    write_xmmi_size(bits_of_int(operand_size, 5), xmm_index, unsigned(xmm_mem));
     write_iptr(proc_mode, temp_rip)
 }
 
@@ -77,8 +77,7 @@ function x86_movaps_movapd_op_en_rm (proc_mode, start_rip, temp_rip, prefixes, r
     let p4? : bool = 0x67 == prefixes_get_adr(prefixes);
     let seg_reg : {|0, 1, 2, 3, 4, 5|} = select_segment_register(proc_mode, p2, p4?, mod_var, r_m, sib);
     let inst_ac? : bool = true;
-    let (flg0, xmm_mem, increment_rip_by, addr) : (option(string), int, {|0, 1, 2, 4|}, sbits(64)) = x86_operand_from_modr_m_and_sib_bytes(proc_mode, 0b1, 16, inst_ac?, false, seg_reg, p4?, temp_rip, rex_byte, r_m, mod_var, sib, 0b000);
-    let xmm_mem : bits(128) = bits_of_int(xmm_mem, 128);
+    let (flg0, xmm_mem, increment_rip_by, addr) : (option(string), bits(128), {|0, 1, 2, 4|}, sbits(64)) = x86_operand_from_modr_m_and_sib_bytes(proc_mode, 0b1, 16, inst_ac?, false, seg_reg, p4?, temp_rip, rex_byte, r_m, mod_var, sib, 0b000);
     if is_some(flg0) then throw(Emsg("Model state error: :X86-OPERAND-FROM-MODR/M-AND-SIB-BYTES"));
     let (flg, temp_rip) : (option(string), sbits(49)) = add_to_iptr(proc_mode, temp_rip, bits_of_int(increment_rip_by, 48));
     let temp_rip : sbits(48) = truncate(temp_rip, 48);
@@ -133,8 +132,7 @@ function x86_movups_movupd_movdqu_op_en_rm (proc_mode, start_rip, temp_rip, pref
     let p4? : bool = 0x67 == prefixes_get_adr(prefixes);
     let seg_reg : {|0, 1, 2, 3, 4, 5|} = select_segment_register(proc_mode, p2, p4?, mod_var, r_m, sib);
     let inst_ac? : bool = true;
-    let (flg0, xmm_mem, increment_rip_by, addr) : (option(string), int, {|0, 1, 2, 4|}, sbits(64)) = x86_operand_from_modr_m_and_sib_bytes(proc_mode, 0b1, 16, inst_ac?, false, seg_reg, p4?, temp_rip, rex_byte, r_m, mod_var, sib, 0b000);
-    let xmm_mem : bits(128) = bits_of_int(xmm_mem, 128);
+    let (flg0, xmm_mem, increment_rip_by, addr) : (option(string), bits(128), {|0, 1, 2, 4|}, sbits(64)) = x86_operand_from_modr_m_and_sib_bytes(proc_mode, 0b1, 16, inst_ac?, false, seg_reg, p4?, temp_rip, rex_byte, r_m, mod_var, sib, 0b000);
     if is_some(flg0) then throw(Emsg("Model state error: :X86-OPERAND-FROM-MODR/M-AND-SIB-BYTES"));
     let (flg, temp_rip) : (option(string), sbits(49)) = add_to_iptr(proc_mode, temp_rip, bits_of_int(increment_rip_by, 48));
     let temp_rip : sbits(48) = truncate(temp_rip, 48);
@@ -189,8 +187,8 @@ function x86_movlps_movlpd_op_en_rm (proc_mode, start_rip, temp_rip, prefixes, r
     let p4? : bool = 0x67 == prefixes_get_adr(prefixes);
     let seg_reg : {|0, 1, 2, 3, 4, 5|} = select_segment_register(proc_mode, p2, p4?, mod_var, r_m, sib);
     let inst_ac? : bool = true;
-    let (flg0, mem, increment_rip_by, addr) : (option(string), int, {|0, 1, 2, 4|}, sbits(64)) = x86_operand_from_modr_m_and_sib_bytes(proc_mode, 0b1, 8, inst_ac?, false, seg_reg, p4?, temp_rip, rex_byte, r_m, mod_var, sib, 0b000);
-    let mem : bits(64) = bits_of_int(mem, 64);
+    let (flg0, mem, increment_rip_by, addr) : (option(string), bits(128), {|0, 1, 2, 4|}, sbits(64)) = x86_operand_from_modr_m_and_sib_bytes(proc_mode, 0b1, 8, inst_ac?, false, seg_reg, p4?, temp_rip, rex_byte, r_m, mod_var, sib, 0b000);
+    let mem : bits(64) = truncate(mem, 64);
     if is_some(flg0) then throw(Emsg("Model state error: :X86-OPERAND-FROM-MODR/M-AND-SIB-BYTES"));
     let (flg, temp_rip) : (option(string), sbits(49)) = add_to_iptr(proc_mode, temp_rip, bits_of_int(increment_rip_by, 48));
     let temp_rip : sbits(48) = truncate(temp_rip, 48);
@@ -239,8 +237,8 @@ function x86_movhps_movhpd_op_en_rm (proc_mode, start_rip, temp_rip, prefixes, r
     let p4? : bool = 0x67 == prefixes_get_adr(prefixes);
     let seg_reg : {|0, 1, 2, 3, 4, 5|} = select_segment_register(proc_mode, p2, p4?, mod_var, r_m, sib);
     let inst_ac? : bool = true;
-    let (flg0, mem, increment_rip_by, v_addr) : (option(string), int, {|0, 1, 2, 4|}, sbits(64)) = x86_operand_from_modr_m_and_sib_bytes(proc_mode, 0b1, 8, inst_ac?, false, seg_reg, p4?, temp_rip, rex_byte, r_m, mod_var, sib, 0b000);
-    let mem : bits(64) = bits_of_int(mem, 64);
+    let (flg0, mem, increment_rip_by, v_addr) : (option(string), bits(128), {|0, 1, 2, 4|}, sbits(64)) = x86_operand_from_modr_m_and_sib_bytes(proc_mode, 0b1, 8, inst_ac?, false, seg_reg, p4?, temp_rip, rex_byte, r_m, mod_var, sib, 0b000);
+    let mem : bits(64) = truncate(mem, 64);
     if is_some(flg0) then throw(Emsg("Model state error: :X86-OPERAND-FROM-MODR/M-AND-SIB-BYTES"));
     let (flg, temp_rip) : (option(string), sbits(49)) = add_to_iptr(proc_mode, temp_rip, bits_of_int(increment_rip_by, 48));
     let temp_rip : sbits(48) = truncate(temp_rip, 48);
@@ -248,7 +246,7 @@ function x86_movhps_movhpd_op_en_rm (proc_mode, start_rip, temp_rip, prefixes, r
     let badlength? : option(int) = check_instruction_length(start_rip, temp_rip, 0b000);
     if is_some(badlength?) then throw(Emsg("A fault occurred.  Original ACL2 AST:\n['!!FAULT-FRESH', ':GP', '0', ':INSTRUCTION-LENGTH', 'BADLENGTH?']"));
     let low_qword : bits(64) = truncate(xmmi_size(0b01000, xmm_index), 64);
-    let result : bits(128) = merge_2_u64s(mem, low_qword);
+    let result : bits(128) = mem @ low_qword;
     write_xmmi_size(0b10000, xmm_index, unsigned(result));
     write_iptr(proc_mode, temp_rip)
 }

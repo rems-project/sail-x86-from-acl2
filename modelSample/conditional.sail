@@ -48,7 +48,7 @@ sail_zero_extend(rflagsbits_get_of(rflags_var), 2), 1))),
 _ => false
 }) : bool
 
-val x86_one_byte_jcc : (range(0, 4), sbits(48), sbits(48), bits(52), bits(8), bits(8), bits(8), bits(8)) -> unit effect {escape, rmem, rreg}
+val x86_one_byte_jcc : (range(0, 4), sbits(48), sbits(48), bits(52), bits(8), bits(8), bits(8), bits(8)) -> unit effect {escape}
 function x86_one_byte_jcc (proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode, modr_m, sib) =
 let ctx : string = ("X86-ONE-BYTE-JCC") in
 let badlength? : option(int) = (check_instruction_length(start_rip, temp_rip, 0b001)) in
@@ -79,7 +79,7 @@ write_iptr(proc_mode, truncate(next_rip, 48))
 }
 }
 
-val x86_two_byte_jcc : (range(0, 4), sbits(48), sbits(48), bits(52), bits(8), bits(8), bits(8), bits(8)) -> unit effect {escape, rmem, rreg}
+val x86_two_byte_jcc : (range(0, 4), sbits(48), sbits(48), bits(52), bits(8), bits(8), bits(8), bits(8)) -> unit effect {escape}
 function x86_two_byte_jcc (proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode, modr_m, sib) =
 let ctx : string = ("X86-TWO-BYTE-JCC") in
 let offset_size : {|1, 2, 4|} = (check_range(0, 4, select_operand_size(proc_mode, false, rex_byte, false, prefixes, false, true, true))) in
@@ -111,7 +111,7 @@ write_iptr(proc_mode, truncate(next_rip, 48))
 }
 }
 
-val x86_jrcxz : (range(0, 4), sbits(48), sbits(48), bits(52), bits(8), bits(8), bits(8), bits(8)) -> unit effect {escape, rmem, rreg}
+val x86_jrcxz : (range(0, 4), sbits(48), sbits(48), bits(52), bits(8), bits(8), bits(8), bits(8)) -> unit effect {escape, rreg}
 function x86_jrcxz (proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode, modr_m, sib) =
 let ctx : string = ("X86-JRCXZ") in
 let badlength? : option(int) = (check_instruction_length(start_rip, temp_rip, 0b001)) in
@@ -144,7 +144,7 @@ write_iptr(proc_mode, truncate(next_rip, 48))
 }
 }
 
-val x86_cmovcc : (range(0, 4), sbits(48), sbits(48), bits(52), bits(8), bits(8), bits(8), bits(8)) -> unit effect {escape, rmem, rreg, wreg}
+val x86_cmovcc : (range(0, 4), sbits(48), sbits(48), bits(52), bits(8), bits(8), bits(8), bits(8)) -> unit effect {eamem, escape, rmem, rreg, wmv, wreg}
 function x86_cmovcc (proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode, modr_m, sib) =
 let ctx : string = ("X86-CMOVCC") in
 let r_m : bits(3) = (modr_m_get_r_m(modr_m)) in
@@ -155,7 +155,7 @@ let operand_size : {|1, 2, 4, 8|} = (select_operand_size(proc_mode, false, rex_b
 let p4? : bool = ((0x67) == (prefixes_get_adr(prefixes))) in
 let seg_reg : {|0, 1, 2, 3, 4, 5|} = (select_segment_register(proc_mode, p2, p4?, mod_var, r_m, sib)) in
 let inst_ac? : bool = (true) in
-let (flg0, reg_mem, increment_rip_by, addr) : (option(string), int, {|0, 1, 2, 4|}, sbits(64)) = (x86_operand_from_modr_m_and_sib_bytes(proc_mode, 0b0, operand_size, inst_ac?, false, seg_reg, p4?, temp_rip, rex_byte, r_m, mod_var, sib, 0b000)) in
+let (flg0, reg_mem, increment_rip_by, addr) : (option(string), bits(128), {|0, 1, 2, 4|}, sbits(64)) = (x86_operand_from_modr_m_and_sib_bytes(proc_mode, 0b0, operand_size, inst_ac?, false, seg_reg, p4?, temp_rip, rex_byte, r_m, mod_var, sib, 0b000)) in
 let increment_rip_by : bits(3) = (bits_of_int(increment_rip_by, 3)) in
 { if is_some(flg0)
 then throw(Emsg("Model state error: :X86-OPERAND-FROM-MODR/M-AND-SIB-BYTES"))
@@ -172,7 +172,7 @@ then throw(Emsg("A fault occurred.  Original ACL2 AST:
 else ();
 let branch_cond : bool = (jcc_cmovcc_setcc_spec(opcode)) in
 { if branch_cond
-then { write_rgfi_size(bits_of_int(operand_size, 4), reg_index(reg, rex_byte, 0b10), reg_mem, rex_byte)
+then { write_rgfi_size(bits_of_int(operand_size, 4), reg_index(reg, rex_byte, 0b10), unsigned(reg_mem), rex_byte)
 }
 else ();
 write_iptr(proc_mode, temp_rip)

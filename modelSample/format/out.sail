@@ -9,8 +9,7 @@ function get_prefixes (proc_mode, start_rip, prefixes, rex_byte, cnt) = {
         (Some("This error was 't' in ACL2 but a Some(string) in Sail"), unsigned(prefixes), unsigned(rex_byte))
     } else {
         let ctx : string = "get-prefixes";
-        let (flg, byte) : (option(string), int) = rme08(proc_mode, sail_sign_extend(start_rip, 64), 1, ":X");
-        let byte : bits(8) = bits_of_int(byte, 8);
+        let (flg, byte) : (option(string), bits(8)) = rme08(proc_mode, sail_sign_extend(start_rip, 64), 1, ":X");
         if is_some(flg) then {
             (Some(ctx), unsigned(byte), unsigned(rex_byte))
         } else {
@@ -5613,7 +5612,10 @@ function one_byte_opcode_execute (proc_mode, start_rip, temp_rip, prefixes, rex_
           let fault_var : option(string) = {
               if 0xf0 == prefixes_get_lck(prefixes) then {
                   Some(":UD")
-              } else if not_bool(unsigned(let x86 : unit = () in segment_selectorbits_get_rpl(seg_visibles[1])) == 0) then {
+              } else if not_bool(unsigned({
+                  ();
+                  segment_selectorbits_get_rpl(seg_visibles[1])
+              }) == 0) then {
                   Some(":GP")
               } else {
                   None() : option(string)
@@ -6142,52 +6144,51 @@ function x86_fetch_decode_execute () = {
         let (flg, temp_rip) : (option(string), sbits(49)) = add_to_iptr(proc_mode, start_rip, bits_of_int(1 + unsigned(prefix_length), 48));
         if is_some(flg) then throw(Emsg("Model state error: :INCREMENT-ERROR"));
         let vex_byte0? : bool = opcode_vex_evex_byte == 0xc5 | opcode_vex_evex_byte == 0xc4;
-        let (flg, les_lds_distinguishing_byte : int) : (option(string), int) = {
+        let (flg, les_lds_distinguishing_byte : bits(8)) : (option(string), bits(8)) = {
             if vex_byte0? then {
                 rme08(proc_mode, sail_sign_extend(temp_rip, 64), 1, ":X")
             } else {
-                (None() : option(string), 0)
+                (None() : option(string), 0x00)
             }
         };
         if is_some(flg) then throw(Emsg("Model state error: :LES/LDS-DISTINGUISHING-BYTE-READ-ERROR"));
-        if vex_byte0? & (n64_bit_modep_var | not_bool(n64_bit_modep_var) & get_slice_int(2, les_lds_distinguishing_byte : int, 6) == 0b11) then {
+        if vex_byte0? & (n64_bit_modep_var | not_bool(n64_bit_modep_var) & slice(les_lds_distinguishing_byte : bits(8), 6, 2) == 0b11) then {
             let (flg, temp_rip) : (option(string), sbits(49)) = add_to_iptr(proc_mode, truncate(temp_rip, 48), 0x000000000001);
             if is_some(flg) then throw(Emsg("Model state error: :VEX-BYTE1-INCREMENT-ERROR"));
             let vex_prefixes : bits(24) = set_vex_prefixes_get_byte0(opcode_vex_evex_byte, 0x000000);
-            let vex_prefixes : bits(24) = set_vex_prefixes_get_byte1(bits_of_int(les_lds_distinguishing_byte : int, 8), vex_prefixes);
+            let vex_prefixes : bits(24) = set_vex_prefixes_get_byte1(les_lds_distinguishing_byte : bits(8), vex_prefixes);
             unimplemented_vex_decode_and_execute(proc_mode, signed(start_rip), signed(temp_rip), unsigned(prefixes), unsigned(rex_byte), unsigned(vex_prefixes))
         } else {
             let opcode_evex_byte : bits(8) = opcode_vex_evex_byte;
             let evex_byte0? : bool = opcode_evex_byte == 0x62;
-            let (flg, bound_distinguishing_byte) : (option(string), int) = {
+            let (flg, bound_distinguishing_byte) : (option(string), bits(8)) = {
                 if evex_byte0? then {
                     rme08(proc_mode, sail_sign_extend(temp_rip, 64), 1, ":X")
                 } else {
-                    (None() : option(string), 0)
+                    (None() : option(string), 0x00)
                 }
             };
             if is_some(flg) then throw(Emsg("Model state error: :BOUND-DISTINGUISHING-BYTE-READ-ERROR"));
-            if evex_byte0? & (n64_bit_modep_var | not_bool(n64_bit_modep_var) & get_slice_int(2, bound_distinguishing_byte, 6) == 0b11) then {
+            if evex_byte0? & (n64_bit_modep_var | not_bool(n64_bit_modep_var) & slice(bound_distinguishing_byte, 6, 2) == 0b11) then {
                 let (flg, temp_rip) : (option(string), sbits(49)) = add_to_iptr(proc_mode, truncate(temp_rip, 48), 0x000000000001);
                 if is_some(flg) then throw(Emsg("Model state error: :EVEX-BYTE1-INCREMENT-ERROR"));
                 let evex_prefixes : bits(32) = set_evex_prefixes_get_byte0(opcode_evex_byte, 0x00000000);
-                let evex_prefixes : bits(32) = set_evex_prefixes_get_byte1(bits_of_int(bound_distinguishing_byte, 8), evex_prefixes);
+                let evex_prefixes : bits(32) = set_evex_prefixes_get_byte1(bound_distinguishing_byte, evex_prefixes);
                 unimplemented_evex_decode_and_execute(proc_mode, signed(start_rip), signed(temp_rip), unsigned(prefixes), unsigned(rex_byte), unsigned(evex_prefixes))
             } else {
                 let opcode_byte : bits(8) = opcode_evex_byte;
                 let modr_m? : bool = one_byte_opcode_modr_m_p(proc_mode, opcode_byte);
-                let (flg, modr_m) : (option(string), int) = {
+                let (flg, modr_m) : (option(string), bits(8)) = {
                     if modr_m? then {
                         if vex_byte0? | evex_byte0? then {
-                            (None() : option(string), les_lds_distinguishing_byte : int)
+                            (None() : option(string), les_lds_distinguishing_byte : bits(8))
                         } else {
                             rme08(proc_mode, sail_sign_extend(temp_rip, 64), 1, ":X")
                         }
                     } else {
-                        (None() : option(string), 0)
+                        (None() : option(string), 0x00)
                     }
                 };
-                let modr_m : bits(8) = bits_of_int(modr_m, 8);
                 if is_some(flg) then throw(Emsg("Model state error: :MODR/M-BYTE-READ-ERROR"));
                 let (flg, temp_rip) : (option(string), sbits(49)) = {
                     if modr_m? then {
@@ -6200,14 +6201,13 @@ function x86_fetch_decode_execute () = {
                 let sib? : bool = modr_m? & (let p4? : bool = 0x67 == prefixes_get_adr(prefixes) in
                 let n16_bit_addressp : bool = 2 == select_address_size(proc_mode, p4?) in
                   x86_decode_sib_p(modr_m, n16_bit_addressp));
-                let (flg, sib) : (option(string), int) = {
+                let (flg, sib) : (option(string), bits(8)) = {
                     if sib? then {
                         rme08(proc_mode, sail_sign_extend(temp_rip, 64), 1, ":X")
                     } else {
-                        (None() : option(string), 0)
+                        (None() : option(string), 0x00)
                     }
                 };
-                let sib : bits(8) = bits_of_int(sib, 8);
                 if is_some(flg) then throw(Emsg("Model state error: :SIB-BYTE-READ-ERROR"));
                 let (flg, temp_rip) : (option(string), sbits(49)) = {
                     if sib? then {

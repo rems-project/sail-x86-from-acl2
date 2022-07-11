@@ -88,13 +88,12 @@ $include "two_byte_opcodes_dispatch.sail"
  @ ( ' :num-prefixes ' ) field includes a count of the REX prefixes encountered. 
  This is because adding an 8-bit field to the prefixes structure to store a 
  REX byte will make it a bignum, thereby impacting execution efficiency.</p>*/
-val get_prefixes : (range(0, 4), sbits(48), bits(52), bits(8), range(0, 15)) -> (option(string), int, int) effect {escape, rmem, rreg}
+val get_prefixes : (range(0, 4), sbits(48), bits(52), bits(8), range(0, 15)) -> (option(string), int, int) effect {escape}
 function get_prefixes (proc_mode, start_rip, prefixes, rex_byte, cnt) =
 if (cnt) == (0)
 then (Some("This error was 't' in ACL2 but a Some(string) in Sail"), unsigned(prefixes), unsigned(rex_byte))
 else let ctx : string = ("get-prefixes") in
-let (flg, byte) : (option(string), int) = (rme08(proc_mode, sail_sign_extend(start_rip, 64), 1, ":X")) in
-let byte : bits(8) = (bits_of_int(byte, 8)) in
+let (flg, byte) : (option(string), bits(8)) = (rme08(proc_mode, sail_sign_extend(start_rip, 64), 1, ":X")) in
 if is_some(flg)
 then (Some(ctx), unsigned(byte), unsigned(rex_byte))
 else let prefix_byte_group_code : {|0, 1, 2, 3, 4|} = (get_one_byte_prefix_array_code(byte)) in
@@ -4241,8 +4240,9 @@ else { throw(Emsg("Model state error: Opcode Unimplemented in x86isa!"))
 ['X86-ILLEGAL-INSTRUCTION', STRING: #UD Encountered!, 'START-RIP', 'TEMP-RIP', 'X86']")),
 244 => { let fault_var : option(string) = { (if (0xf0) == (prefixes_get_lck(prefixes))
 then Some(":UD")
-else if not_bool((unsigned(let x86 : unit = (()) in
-segment_selectorbits_get_rpl(seg_visibles[1]))) == (0))
+else if not_bool((unsigned({ ();
+segment_selectorbits_get_rpl(seg_visibles[1])
+})) == (0))
 then Some(":GP")
 else None() : option(string)) } in
 if is_some(fault_var)
@@ -4666,46 +4666,45 @@ let (flg, temp_rip) : (option(string), sbits(49)) = (add_to_iptr(proc_mode, star
 then throw(Emsg("Model state error: :INCREMENT-ERROR"))
 else ();
 let vex_byte0? : bool = (((opcode_vex_evex_byte) == (0xc5)) | ((opcode_vex_evex_byte) == (0xc4))) in
-let (flg, les_lds_distinguishing_byte : int) : (option(string), int) = { (if vex_byte0?
+let (flg, les_lds_distinguishing_byte : bits(8)) : (option(string), bits(8)) = { (if vex_byte0?
 then rme08(proc_mode, sail_sign_extend(temp_rip, 64), 1, ":X")
-else (None() : option(string), 0)) } in
+else (None() : option(string), 0x00)) } in
 { if is_some(flg)
 then throw(Emsg("Model state error: :LES/LDS-DISTINGUISHING-BYTE-READ-ERROR"))
 else ();
-if (vex_byte0?) & ((n64_bit_modep_var) | ((not_bool(n64_bit_modep_var)) & ((get_slice_int(2, les_lds_distinguishing_byte : int, 6)) == (0b11))))
+if (vex_byte0?) & ((n64_bit_modep_var) | ((not_bool(n64_bit_modep_var)) & ((slice(les_lds_distinguishing_byte : bits(8), 6, 2)) == (0b11))))
 then let (flg, temp_rip) : (option(string), sbits(49)) = (add_to_iptr(proc_mode, truncate(temp_rip, 48), 0x0000_0000_0001)) in
 { if is_some(flg)
 then throw(Emsg("Model state error: :VEX-BYTE1-INCREMENT-ERROR"))
 else ();
 let vex_prefixes : bits(24) = (set_vex_prefixes_get_byte0(opcode_vex_evex_byte, 0x00_0000)) in
-let vex_prefixes : bits(24) = (set_vex_prefixes_get_byte1(bits_of_int(les_lds_distinguishing_byte : int, 8), vex_prefixes)) in
+let vex_prefixes : bits(24) = (set_vex_prefixes_get_byte1(les_lds_distinguishing_byte : bits(8), vex_prefixes)) in
 unimplemented_vex_decode_and_execute(proc_mode, signed(start_rip), signed(temp_rip), unsigned(prefixes), unsigned(rex_byte), unsigned(vex_prefixes))
 }
 else let opcode_evex_byte : bits(8) = (opcode_vex_evex_byte) in
 let evex_byte0? : bool = ((opcode_evex_byte) == (0x62)) in
-let (flg, bound_distinguishing_byte) : (option(string), int) = { (if evex_byte0?
+let (flg, bound_distinguishing_byte) : (option(string), bits(8)) = { (if evex_byte0?
 then rme08(proc_mode, sail_sign_extend(temp_rip, 64), 1, ":X")
-else (None() : option(string), 0)) } in
+else (None() : option(string), 0x00)) } in
 { if is_some(flg)
 then throw(Emsg("Model state error: :BOUND-DISTINGUISHING-BYTE-READ-ERROR"))
 else ();
-if (evex_byte0?) & ((n64_bit_modep_var) | ((not_bool(n64_bit_modep_var)) & ((get_slice_int(2, bound_distinguishing_byte, 6)) == (0b11))))
+if (evex_byte0?) & ((n64_bit_modep_var) | ((not_bool(n64_bit_modep_var)) & ((slice(bound_distinguishing_byte, 6, 2)) == (0b11))))
 then let (flg, temp_rip) : (option(string), sbits(49)) = (add_to_iptr(proc_mode, truncate(temp_rip, 48), 0x0000_0000_0001)) in
 { if is_some(flg)
 then throw(Emsg("Model state error: :EVEX-BYTE1-INCREMENT-ERROR"))
 else ();
 let evex_prefixes : bits(32) = (set_evex_prefixes_get_byte0(opcode_evex_byte, 0x0000_0000)) in
-let evex_prefixes : bits(32) = (set_evex_prefixes_get_byte1(bits_of_int(bound_distinguishing_byte, 8), evex_prefixes)) in
+let evex_prefixes : bits(32) = (set_evex_prefixes_get_byte1(bound_distinguishing_byte, evex_prefixes)) in
 unimplemented_evex_decode_and_execute(proc_mode, signed(start_rip), signed(temp_rip), unsigned(prefixes), unsigned(rex_byte), unsigned(evex_prefixes))
 }
 else let opcode_byte : bits(8) = (opcode_evex_byte) in
 let modr_m? : bool = (one_byte_opcode_modr_m_p(proc_mode, opcode_byte)) in
-let (flg, modr_m) : (option(string), int) = { (if modr_m?
+let (flg, modr_m) : (option(string), bits(8)) = { (if modr_m?
 then if (vex_byte0?) | (evex_byte0?)
-then (None() : option(string), les_lds_distinguishing_byte : int)
+then (None() : option(string), les_lds_distinguishing_byte : bits(8))
 else rme08(proc_mode, sail_sign_extend(temp_rip, 64), 1, ":X")
-else (None() : option(string), 0)) } in
-let modr_m : bits(8) = (bits_of_int(modr_m, 8)) in
+else (None() : option(string), 0x00)) } in
 { if is_some(flg)
 then throw(Emsg("Model state error: :MODR/M-BYTE-READ-ERROR"))
 else ();
@@ -4718,10 +4717,9 @@ else ();
 let sib? : bool = ((modr_m?) & (let p4? : bool = ((0x67) == (prefixes_get_adr(prefixes))) in
 let n16_bit_addressp : bool = ((2) == (select_address_size(proc_mode, p4?))) in
 x86_decode_sib_p(modr_m, n16_bit_addressp))) in
-let (flg, sib) : (option(string), int) = { (if sib?
+let (flg, sib) : (option(string), bits(8)) = { (if sib?
 then rme08(proc_mode, sail_sign_extend(temp_rip, 64), 1, ":X")
-else (None() : option(string), 0)) } in
-let sib : bits(8) = (bits_of_int(sib, 8)) in
+else (None() : option(string), 0x00)) } in
 { if is_some(flg)
 then throw(Emsg("Model state error: :SIB-BYTE-READ-ERROR"))
 else ();

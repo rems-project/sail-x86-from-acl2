@@ -20,7 +20,7 @@ val wvm08 : (sbits(48), bits(8)) -> option(string)
 
 function wvm08 (addr, sailval) = {
     if canonical_address_p(signed(addr)) then {
-        let x86 : unit = bang_memi(sail_zero_extend(addr, 64), sailval);
+        bang_memi(sail_zero_extend(addr, 64), sailval);
         None() : option(string)
     } else {
         Some("wvm08")

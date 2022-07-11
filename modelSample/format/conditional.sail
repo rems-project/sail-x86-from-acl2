@@ -119,7 +119,7 @@ function x86_cmovcc (proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode,
     let p4? : bool = 0x67 == prefixes_get_adr(prefixes);
     let seg_reg : {|0, 1, 2, 3, 4, 5|} = select_segment_register(proc_mode, p2, p4?, mod_var, r_m, sib);
     let inst_ac? : bool = true;
-    let (flg0, reg_mem, increment_rip_by, addr) : (option(string), int, {|0, 1, 2, 4|}, sbits(64)) = x86_operand_from_modr_m_and_sib_bytes(proc_mode, 0b0, operand_size, inst_ac?, false, seg_reg, p4?, temp_rip, rex_byte, r_m, mod_var, sib, 0b000);
+    let (flg0, reg_mem, increment_rip_by, addr) : (option(string), bits(128), {|0, 1, 2, 4|}, sbits(64)) = x86_operand_from_modr_m_and_sib_bytes(proc_mode, 0b0, operand_size, inst_ac?, false, seg_reg, p4?, temp_rip, rex_byte, r_m, mod_var, sib, 0b000);
     let increment_rip_by : bits(3) = bits_of_int(increment_rip_by, 3);
     if is_some(flg0) then throw(Emsg("Model state error: :X86-OPERAND-FROM-MODR/M-AND-SIB-BYTES"));
     let (flg, temp_rip) : (option(string), sbits(49)) = add_to_iptr(proc_mode, temp_rip, sail_zero_extend(increment_rip_by, 48));
@@ -129,7 +129,7 @@ function x86_cmovcc (proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode,
     if is_some(badlength?) then throw(Emsg("A fault occurred.  Original ACL2 AST:\n['!!FAULT-FRESH', ':GP', '0', ':INSTRUCTION-LENGTH', 'BADLENGTH?']"));
     let branch_cond : bool = jcc_cmovcc_setcc_spec(opcode);
     if branch_cond then {
-        write_rgfi_size(bits_of_int(operand_size, 4), reg_index(reg, rex_byte, 0b10), reg_mem, rex_byte)
+        write_rgfi_size(bits_of_int(operand_size, 4), reg_index(reg, rex_byte, 0b10), unsigned(reg_mem), rex_byte)
     };
     write_iptr(proc_mode, temp_rip)
 }

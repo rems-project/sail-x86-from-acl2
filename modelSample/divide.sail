@@ -10,7 +10,7 @@ $include "divide_spec.sail"
  DIV r/m16: ( DX:AX div r/m16 ) , DX := Remainder, AX := Quotient<br/> 
  DIV r/m32: ( EDX:EAX div r/m8 ) , EDX := Remainder, EAX := Quotient<br/> 
  DIV r/m64: ( RDX:RAX div r/m8 ) , RDX := Remainder, RAX := Quotient<br/></p>*/
-val x86_div : (range(0, 4), sbits(48), sbits(48), bits(52), bits(8), bits(8), bits(8), bits(8)) -> unit effect {escape, rmem, rreg, undef, wreg}
+val x86_div : (range(0, 4), sbits(48), sbits(48), bits(52), bits(8), bits(8), bits(8), bits(8)) -> unit effect {eamem, escape, rmem, rreg, undef, wmv, wreg}
 function x86_div (proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode, modr_m, sib) =
 let ctx : string = ("X86-DIV") in
 let r_m : bits(3) = (modr_m_get_r_m(modr_m)) in
@@ -22,12 +22,12 @@ let select_byte_operand : bool = ((opcode) == (0xf6)) in
 let reg_mem_size : {|1, 2, 4, 8|} = (select_operand_size(proc_mode, select_byte_operand, rex_byte, false, prefixes, false, false, false)) in
 let seg_reg : {|0, 1, 2, 3, 4, 5|} = (select_segment_register(proc_mode, p2, p4?, mod_var, r_m, sib)) in
 let inst_ac? : bool = (true) in
-let (flg0, reg_mem, increment_rip_by, addr) : (option(string), int, {|0, 1, 2, 4|}, sbits(64)) = (x86_operand_from_modr_m_and_sib_bytes(proc_mode, 0b0, reg_mem_size, inst_ac?, false, seg_reg, p4?, temp_rip, rex_byte, r_m, mod_var, sib, 0b000)) in
+let (flg0, reg_mem, increment_rip_by, addr) : (option(string), bits(128), {|0, 1, 2, 4|}, sbits(64)) = (x86_operand_from_modr_m_and_sib_bytes(proc_mode, 0b0, reg_mem_size, inst_ac?, false, seg_reg, p4?, temp_rip, rex_byte, r_m, mod_var, sib, 0b000)) in
 let increment_rip_by : bits(3) = (bits_of_int(increment_rip_by, 3)) in
 { if is_some(flg0)
 then throw(Emsg("Model state error: :X86-OPERAND-FROM-MODR/M-AND-SIB-BYTES"))
 else ();
-if (reg_mem) == (0)
+if (reg_mem) == (0x0000_0000_0000_0000_0000_0000_0000_0000)
 then throw(Emsg("A fault occurred.  Original ACL2 AST:
 ['!!FAULT-FRESH', ':DE', 'NIL', ':DE-EXCEPTION-SOURCE-OPERAND-ZERO', 'REG/MEM']"))
 else ();
@@ -50,7 +50,7 @@ else rgfi_size(bits_of_int(reg_mem_size, 4), 0x2, rex_byte)) } in
 let dividend : int = { (if select_byte_operand
 then unsigned(rax_var)
 else changeSlice(unsigned(rax_var), ash(reg_mem_size, 3), ash(reg_mem_size, 4), unsigned(rdx_var))) } in
-let (overflow?, quotient, remainder) : (bool, bits(128), bits(64)) = (div_spec(reg_mem_size, bits_of_int(dividend, 128), bits_of_int(reg_mem, 64))) in
+let (overflow?, quotient, remainder) : (bool, bits(128), bits(64)) = (div_spec(reg_mem_size, bits_of_int(dividend, 128), truncate(reg_mem, 64))) in
 { if overflow?
 then throw(Emsg("Model state error: :UNSIGNED-DIVIDE-ERROR-OVERFLOW"))
 else ();
@@ -100,7 +100,7 @@ write_iptr(proc_mode, temp_rip)
  IDIV r/m16: ( DX:AX div r/m16 ) , DX := Remainder, AX := Quotient <br/> 
  IDIV r/m32: ( EDX:EAX div r/m8 ) , EDX := Remainder, EAX := Quotient <br/> 
  IDIV r/m64: ( RDX:RAX div r/m8 ) , RDX := Remainder, RAX := Quotient</p>*/
-val x86_idiv : (range(0, 4), sbits(48), sbits(48), bits(52), bits(8), bits(8), bits(8), bits(8)) -> unit effect {escape, rmem, rreg, undef, wreg}
+val x86_idiv : (range(0, 4), sbits(48), sbits(48), bits(52), bits(8), bits(8), bits(8), bits(8)) -> unit effect {eamem, escape, rmem, rreg, undef, wmv, wreg}
 function x86_idiv (proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode, modr_m, sib) =
 let ctx : string = ("X86-IDIV") in
 let r_m : bits(3) = (modr_m_get_r_m(modr_m)) in
@@ -112,12 +112,12 @@ let select_byte_operand : bool = ((opcode) == (0xf6)) in
 let reg_mem_size : {|1, 2, 4, 8|} = (select_operand_size(proc_mode, select_byte_operand, rex_byte, false, prefixes, false, false, false)) in
 let seg_reg : {|0, 1, 2, 3, 4, 5|} = (select_segment_register(proc_mode, p2, p4?, mod_var, r_m, sib)) in
 let inst_ac? : bool = (true) in
-let (flg0, reg_mem, increment_rip_by, addr) : (option(string), int, {|0, 1, 2, 4|}, sbits(64)) = (x86_operand_from_modr_m_and_sib_bytes(proc_mode, 0b0, reg_mem_size, inst_ac?, false, seg_reg, p4?, temp_rip, rex_byte, r_m, mod_var, sib, 0b000)) in
+let (flg0, reg_mem, increment_rip_by, addr) : (option(string), bits(128), {|0, 1, 2, 4|}, sbits(64)) = (x86_operand_from_modr_m_and_sib_bytes(proc_mode, 0b0, reg_mem_size, inst_ac?, false, seg_reg, p4?, temp_rip, rex_byte, r_m, mod_var, sib, 0b000)) in
 let increment_rip_by : bits(3) = (bits_of_int(increment_rip_by, 3)) in
 { if is_some(flg0)
 then throw(Emsg("Model state error: :X86-OPERAND-FROM-MODR/M-AND-SIB-BYTES"))
 else ();
-if (reg_mem) == (0)
+if (reg_mem) == (0x0000_0000_0000_0000_0000_0000_0000_0000)
 then throw(Emsg("A fault occurred.  Original ACL2 AST:
 ['!!FAULT-FRESH', ':DE', 'NIL', ':DE-EXCEPTION-SOURCE-OPERAND-ZERO', 'REG/MEM']"))
 else ();
@@ -139,7 +139,7 @@ else rgfi_size(bits_of_int(reg_mem_size, 4), 0x2, rex_byte)) } in
 let dividend : int = { (if select_byte_operand
 then unsigned(rax_var)
 else changeSlice(unsigned(rax_var), ash(reg_mem_size, 3), ash(reg_mem_size, 4), unsigned(rdx_var))) } in
-let (overflow?, quotient, remainder) : (bool, bits(64), bits(64)) = (idiv_spec(reg_mem_size, bits_of_int(dividend, 128), bits_of_int(reg_mem, 64))) in
+let (overflow?, quotient, remainder) : (bool, bits(64), bits(64)) = (idiv_spec(reg_mem_size, bits_of_int(dividend, 128), truncate(reg_mem, 64))) in
 { if overflow?
 then throw(Emsg("Model state error: :UNSIGNED-DIVIDE-ERROR-OVERFLOW"))
 else ();

@@ -36,7 +36,7 @@ function x86_near_jmp_op_en_m (proc_mode, start_rip, temp_rip, prefixes, rex_byt
     let operand_size : {|2, 4, 8|} = check_range(2, 8, select_operand_size(proc_mode, false, rex_byte, false, prefixes, true, true, true));
     let seg_reg : {|0, 1, 2, 3, 4, 5|} = select_segment_register(proc_mode, p2, p4?, mod_var, r_m, sib);
     let inst_ac? : bool = true;
-    let (flg, jmp_addr, increment_rip_by, addr) : (option(string), int, {|0, 1, 2, 4|}, sbits(64)) = x86_operand_from_modr_m_and_sib_bytes(proc_mode, 0b0, operand_size, inst_ac?, false, seg_reg, p4?, temp_rip, rex_byte, r_m, mod_var, sib, 0b000);
+    let (flg, jmp_addr, increment_rip_by, addr) : (option(string), bits(128), {|0, 1, 2, 4|}, sbits(64)) = x86_operand_from_modr_m_and_sib_bytes(proc_mode, 0b0, operand_size, inst_ac?, false, seg_reg, p4?, temp_rip, rex_byte, r_m, mod_var, sib, 0b000);
     let increment_rip_by : bits(3) = bits_of_int(increment_rip_by, 3);
     if is_some(flg) then throw(Emsg("Model state error: :X86-OPERAND-FROM-MODR/M-AND-SIB-BYTES-ERROR"));
     let (flg, temp_rip) : (option(string), sbits(49)) = add_to_iptr(proc_mode, temp_rip, sail_zero_extend(increment_rip_by, 48));
@@ -44,20 +44,20 @@ function x86_near_jmp_op_en_m (proc_mode, start_rip, temp_rip, prefixes, rex_byt
     if is_some(flg) then throw(Emsg("Model state error: :RIP-INCREMENT-ERROR"));
     let badlength? : option(int) = check_instruction_length(start_rip, temp_rip, 0b000);
     if is_some(badlength?) then throw(Emsg("A fault occurred.  Original ACL2 AST:\n['!!FAULT-FRESH', ':GP', '0', ':INSTRUCTION-LENGTH', 'BADLENGTH?']"));
-    let jmp_addr : int = {
+    let jmp_addr : sbits(130) = {
         if proc_mode == 0 then {
-            signed(bits_of_int(jmp_addr, 64))
+            sail_sign_extend(truncate(jmp_addr, 64), 130)
         } else {
-            jmp_addr
+            sail_zero_extend(jmp_addr, 130)
         }
     };
     if not_bool(if proc_mode == 0 then {
-        canonical_address_p(jmp_addr)
+        canonical_address_p(signed(jmp_addr))
     } else {
         let cs_limit : bits(32) = seg_hidden_limits[1];
-        0 <= jmp_addr & jmp_addr <= unsigned(cs_limit)
+        0 <= signed(jmp_addr) & signed(jmp_addr) <= unsigned(cs_limit)
     }) then throw(Emsg("A fault occurred.  Original ACL2 AST:\n['!!FAULT-FRESH', ':GP', '0', ':BAD-RETURN-ADDRESS', 'JMP-ADDR']"));
-    write_iptr(proc_mode, bits_of_int(jmp_addr, 48))
+    write_iptr(proc_mode, truncate(jmp_addr, 48))
 }
 
 val x86_far_jmp_op_en_d : (range(0, 4), sbits(48), sbits(48), bits(52), bits(8), bits(8), bits(8), bits(8)) -> unit
@@ -73,13 +73,13 @@ function x86_far_jmp_op_en_d (proc_mode, start_rip, temp_rip, prefixes, rex_byte
     let offset_size : {|2, 4, 8|} = check_range(2, 8, select_operand_size(proc_mode, false, rex_byte, false, prefixes, false, false, false));
     let seg_reg : {|0, 1, 2, 3, 4, 5|} = select_segment_register(proc_mode, p2, p4?, mod_var, r_m, sib);
     let inst_ac? : bool = true;
-    let (flg, mem, increment_rip_by, addr) : (option(string), int, {|0, 1, 2, 4|}, sbits(64)) = x86_operand_from_modr_m_and_sib_bytes(proc_mode, 0b0, 2 + offset_size, inst_ac?, true, seg_reg, p4?, temp_rip, rex_byte, r_m, mod_var, sib, 0b000);
+    let (flg, mem, increment_rip_by, addr) : (option(string), bits(128), {|0, 1, 2, 4|}, sbits(64)) = x86_operand_from_modr_m_and_sib_bytes(proc_mode, 0b0, 2 + offset_size, inst_ac?, true, seg_reg, p4?, temp_rip, rex_byte, r_m, mod_var, sib, 0b000);
     let increment_rip_by : bits(3) = bits_of_int(increment_rip_by, 3);
     if is_some(flg) then throw(Emsg("Model state error: :X86-OPERAND-FROM-MODR/M-AND-SIB-BYTES-ERROR"));
     let badlength? : option(int) = check_instruction_length(start_rip, temp_rip, increment_rip_by);
     if is_some(badlength?) then throw(Emsg("A fault occurred.  Original ACL2 AST:\n['!!FAULT-FRESH', ':GP', '0', ':INSTRUCTION-LENGTH', 'BADLENGTH?']"));
-    let selector : bits(16) = bits_of_int(mem, 16);
-    let offset = get_slice_int(ash(offset_size, 3), mem, 16);
+    let selector : bits(16) = truncate(mem, 16);
+    let offset : bits(64) = sail_mask(64, slice(mem, 16, ash(offset_size, 3)));
     let sel_index : bits(13) = segment_selectorbits_get_index(selector);
     let sel_ti : bits(1) = segment_selectorbits_get_ti(selector);
     let sel_rpl : bits(2) = segment_selectorbits_get_rpl(selector);
@@ -116,8 +116,8 @@ function x86_far_jmp_op_en_d (proc_mode, start_rip, temp_rip, prefixes, rex_byte
     if unsigned(dt_limit) < largest_address then throw(Emsg("A fault occurred.  Original ACL2 AST:\n['!!FAULT-FRESH', ':GP', 'SEL-INDEX', ':GP-SELECTOR-LIMIT-CHECK-FAILED', ['LIST', 'SELECTOR', 'DT-BASE-ADDR', 'DT-LIMIT']]"));
     let descriptor_addr : int = unsigned(dt_base_addr) + unsigned(bits_of_int(ash(unsigned(sel_index), 3), 16));
     if not_bool(canonical_address_p(descriptor_addr)) then throw(Emsg("Model state error: :DESCRIPTOR-ADDR-VIRTUAL-MEMORY-ERROR"));
-    let (flg, descriptor) : (option(string), int) = rml_size(8, bits_of_int(descriptor_addr, 48), ":X");
-    let descriptor : bits(64) = bits_of_int(descriptor, 64);
+    let (flg, descriptor) : (option(string), bits(128)) = rml_size(8, bits_of_int(descriptor_addr, 48), ":X");
+    let descriptor : bits(64) = truncate(descriptor, 64);
     if is_some(flg) then throw(Emsg("Model state error: :RML-SIZE-ERROR"));
     let s : bits(1) = code_segment_descriptorbits_get_s(descriptor);
     if s == 0b1 then {
@@ -126,8 +126,10 @@ function x86_far_jmp_op_en_d (proc_mode, start_rip, temp_rip, prefixes, rex_byte
         let d : bits(1) = code_segment_descriptorbits_get_d(descriptor);
         if proc_mode == 0 & d == 0b1 then throw(Emsg("A fault occurred.  Original ACL2 AST:\n['!!FAULT-FRESH', ':GP', 'SEL-INDEX', ':CS.D=1-IN-64-BIT-MODE', 'SEL-INDEX']"));
         let cpl : bits(2) = {
-            let x86 : unit = ();
-            segment_selectorbits_get_rpl(seg_visibles[1])
+            {
+                ();
+                segment_selectorbits_get_rpl(seg_visibles[1])
+            }
         };
         let dpl : bits(2) = code_segment_descriptorbits_get_dpl(descriptor);
         let c : bits(1) = code_segment_descriptorbits_get_c(descriptor);
@@ -143,9 +145,9 @@ function x86_far_jmp_op_en_d (proc_mode, start_rip, temp_rip, prefixes, rex_byte
         if not_bool(p == 0b1) then throw(Emsg("A fault occurred.  Original ACL2 AST:\n['!!FAULT-FRESH', ':NP', 'SEL-INDEX', ':CODE-SEGMENT-NOT-PRESENT', 'SEL-INDEX']"));
         let jmp_addr : sbits(64) = {
             match offset_size {
-              2 => sail_zero_extend(sail_mask(16, offset), 64),
-              4 => sail_zero_extend(sail_mask(32, offset), 64),
-              _ => sail_mask(64, offset)
+              2 => sail_zero_extend(truncate(offset, 16), 64),
+              4 => sail_zero_extend(truncate(offset, 32), 64),
+              _ => offset
             }
         };
         let jmp_addr_ok : bool = {
@@ -177,14 +179,15 @@ function x86_far_jmp_op_en_d (proc_mode, start_rip, temp_rip, prefixes, rex_byte
         if not_bool(proc_mode == 0) then throw(Emsg("Model state error: :FAR-JMP-SYSTEM-UNIMPLEMENTED-IN-32-BIT-MODE"));
         let largest_address : int = ash(unsigned(sel_index), 3) + 15;
         if unsigned(dt_limit) < largest_address then throw(Emsg("A fault occurred.  Original ACL2 AST:\n['!!FAULT-FRESH', ':GP', 'SEL-INDEX', ':GP-SELECTOR-LIMIT-CHECK-FAILED', ['LIST', 'SELECTOR', 'DT-BASE-ADDR', 'DT-LIMIT']]"));
-        let (flg, descriptor) : (option(string), int) = rml_size(16, bits_of_int(descriptor_addr, 48), ":X");
-        let descriptor : bits(128) = bits_of_int(descriptor, 128);
+        let (flg, descriptor) : (option(string), bits(128)) = rml_size(16, bits_of_int(descriptor_addr, 48), ":X");
         if is_some(flg) then throw(Emsg("Model state error: :RML-SIZE-ERROR"));
         let (call_gate_desc?, reason2) : (bool, (string, bits(128))) = ia32e_valid_call_gate_segment_descriptor_p(descriptor);
         if call_gate_desc? then {
             let cpl : bits(2) = {
-                let x86 : unit = ();
-                segment_selectorbits_get_rpl(seg_visibles[1])
+                {
+                    ();
+                    segment_selectorbits_get_rpl(seg_visibles[1])
+                }
             };
             let dpl : bits(2) = call_gate_descriptorbits_get_dpl(descriptor);
             if not_bool(unsigned(cpl) <= unsigned(dpl) & unsigned(sel_rpl) <= unsigned(dpl)) then throw(Emsg("A fault occurred.  Original ACL2 AST:\n['!!FAULT-FRESH', ':GP', 'SEL-INDEX', ':PRIVILEGE-CHECK-FAIL', ['ACONS', ':DPL', 'DPL', ['ACONS', ':CPL', 'CPL', ['ACONS', ':RPL', 'SEL-RPL', 'NIL']]]]"));
@@ -226,8 +229,8 @@ function x86_far_jmp_op_en_d (proc_mode, start_rip, temp_rip, prefixes, rex_byte
             if unsigned(cs_dt_limit) < largest_address then throw(Emsg("A fault occurred.  Original ACL2 AST:\n['!!FAULT-FRESH', ':GP', 'CS-SEL-INDEX', ':GP-SELECTOR-LIMIT-CHECK-FAILED', ['LIST', 'CS-SELECTOR', 'CS-DT-BASE-ADDR', 'CS-DT-LIMIT']]"));
             let cs_descriptor_addr : int = unsigned(cs_dt_base_addr) + unsigned(bits_of_int(ash(unsigned(cs_sel_index), 3), 16));
             if not_bool(canonical_address_p(cs_descriptor_addr)) then throw(Emsg("Model state error: :CS-DESCRIPTOR-ADDR-VIRTUAL-MEMORY-ERROR"));
-            let (flg, cs_descriptor) : (option(string), int) = rml_size(8, bits_of_int(cs_descriptor_addr, 48), ":X");
-            let cs_descriptor : bits(64) = bits_of_int(cs_descriptor, 64);
+            let (flg, cs_descriptor) : (option(string), bits(128)) = rml_size(8, bits_of_int(cs_descriptor_addr, 48), ":X");
+            let cs_descriptor : bits(64) = truncate(cs_descriptor, 64);
             if is_some(flg) then throw(Emsg("Model state error: :RML-SIZE-ERROR"));
             let (valid?, reason) : (bool, (string, bits(64))) = ia32e_valid_code_segment_descriptor_p(cs_descriptor);
             if not_bool(valid?) then throw(Emsg("A fault occurred.  Original ACL2 AST:\n['!!FAULT-FRESH', ':GP', 'CS-SEL-INDEX', ':CALL-GATE-CODE-SEGMENT-DESCRIPTOR-INVALID', ['CONS', 'REASON', 'CS-DESCRIPTOR']]"));
