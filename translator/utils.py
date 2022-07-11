@@ -25,7 +25,7 @@ def convertLiteral(s):
 	except TypeError:
 		return None
 
-def sanitiseSymbol(symbol, lower=True, includeFnNames=False, avoidShadowed=True):
+def sanitiseSymbol(symbol, lower=True, includeFnNames=False, avoidShadowed=True, infix=False):
 	"""
 	Lisp names are unusually permissive and can contain many characters that
 	Sail names cannot.  Similarly, Lisp names are case-insensitive.  This
@@ -66,7 +66,7 @@ def sanitiseSymbol(symbol, lower=True, includeFnNames=False, avoidShadowed=True)
 				'seg-visibles', 'seg-hidden-attrs', 'seg-hidden-bases', 'seg-hidden-limits', 'zmms', 'ctrs',
 				'rax', 'rbx', 'rcx', 'rdx', 'rsi', 'rdi', 'rsp', 'rbp',
 				'r8', 'r9', 'r10', 'r11', 'r12', 'r13', 'r14', 'r15']
-	functionNames = ['n64-bit-modep', 'mod']
+	functionNames = ['n64-bit-modep', 'mod', 'page-present', 'page-size']
 	if includeFnNames:
 		shadowedNames = regNames + functionNames
 	else:
@@ -87,6 +87,9 @@ def sanitiseSymbol(symbol, lower=True, includeFnNames=False, avoidShadowed=True)
 		symbol = symbol.lower()\
 						.replace("*ip", "iptr")\
 						.replace("*sp", "sptr")
+
+	if not symbol[0].isalpha() and symbol[0] not in ['_', '#'] and not infix:
+		symbol = '_' + symbol
 
 	return symbol
 

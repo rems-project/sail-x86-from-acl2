@@ -36,9 +36,9 @@ The current type inference algorithm occasionally fails on recursive
 functions.  Here we manually specify the return types of such functions.
 '''
 forced_return_types = {
-	'rb-1' : Sail_t_tuple([Sail_t_option(Sail_t_string()), Sail_t_int()]),
+	#'rb-1' : Sail_t_tuple([Sail_t_option(Sail_t_string()), Sail_t_int()]),
 
-	'wb-1': Sail_t_option(Sail_t_string()),
+	#'wb-1': Sail_t_option(Sail_t_string()),
 
 	'get-prefixes' : Sail_t_tuple([	Sail_t_option(Sail_t_string()), # Error list
 									Sail_t_int(),					# Number of prefixes
@@ -52,7 +52,8 @@ forced_return_types = {
 forced_argument_types = {
         'wb-1': {'value': Sail_t_int()},
         'canonical-address-p': {'lin-addr': Sail_t_int()},
-        'gpr-arith/logic-spec': {'operand-size': Sail_t_member([1, 2, 4, 8]), 'dst': Sail_t_bits(64), 'src': Sail_t_bits(64)}
+        'gpr-arith/logic-spec': {'operand-size': Sail_t_member([1, 2, 4, 8]), 'dst': Sail_t_bits(64), 'src': Sail_t_bits(64)},
+        'page-fault-exception': {'addr': Sail_t_bits(48, signed=True), 'err-no': Sail_t_int()}
 }
 
 forced_variable_types = {
@@ -151,6 +152,40 @@ exclude_lisp = {
 		['include-raw', ACL2String('register-readers-and-writers-raw.lsp')],
 	],
 
+	'linear-memory': [
+		['include-book', ACL2String('centaur/bitops/merge')],
+                ['make-event'], # used here to generate a number of theorems, which we don't need
+                ['defun'], # ditto
+                ['define', 'canonical-address-listp'], # only used in proofs
+                ['define', 'create-canonical-address-list'], # ditto
+                ['defsection', 'program-location'],
+                # We handwrite some basic memory access functions rather than
+                # translating the ACL2 implementations, which use lists
+                # extensively
+                ['define', 'las-to-pas'],
+                ['define', 'read-from-physical-memory'],
+                ['define', 'write-to-physical-memory'],
+                ['define', 'rb-1'],
+                ['define', 'rb'],
+                ['define', 'wb-1'],
+                ['define', 'wb'],
+	],
+        'paging-structures': [
+                ['include-book', ACL2String('basic-structs')]
+        ],
+        'paging': [
+                ['include-book', ACL2String('clause-processors/find-matching')],
+                ['define', 'good-lin-addr-p']
+        ],
+        'physical-memory': [
+                ['include-book', ACL2String('../proofs/utilities/disjoint')],
+                ['set-waterfall-parallelism'],
+                ['globally-disable'],
+                # The following are only used in proofs
+                ['define', 'physical-address-listp'],
+                ['define', 'create-physical-address-list'],
+                ['define', 'addr-range'],
+        ],
 	'top-level-memory': [
 		['define', 'gen-read-function'],
 		['define', 'gen-write-function'],
@@ -170,8 +205,8 @@ only_translate = {
 	'other-non-det' : [['include-book', ACL2String('syscalls')],],
 	'syscalls' : [['include-book', ACL2String('environment')],],
 	'environment' : [['include-book', ACL2String('top-level-memory')]],
-	'paging' : [['include-book', ACL2String('physical-memory')]],
-	'physical-memory': [['include-book', ACL2String('modes')]],
+	#'paging' : [['include-book', ACL2String('physical-memory')]],
+	#'physical-memory': [['include-book', ACL2String('modes')]],
 	'state' : [['include-book', ACL2String('structures')]],
 
 
@@ -305,44 +340,5 @@ only_translate = {
 		['define', 'canonical-address-p'],
 		['define', 'rvm08'],
 		['define', 'wvm08'],
-	],
-	'linear-memory' : [
-		['include-book', ACL2String('paging')],
-
-		['defsection', 'Parametric-Memory-Reads-and-Writes'],
-		['define', 'riml-size'],
-		['define', 'riml08'],
-		['define', 'riml16'],
-		['define', 'riml32'],
-		['define', 'riml64'],
-		['define', 'rml08'],
-		['define', 'rml16'],
-		['define', 'rml32'],
-		['define', 'rml64'],
-		['define', 'rml-size'],
-		['define', 'rml48'],
-		['define', 'rml80'],
-		['define', 'rml128'],
-
-		['define', 'wml-size'],
-		['define', 'wml08'],
-		['define', 'wml16'],
-		['define', 'wml32'],
-		['define', 'wml48'],
-		['define', 'wml64'],
-		['define', 'wml80'],
-		['define', 'wml128'],
-
-		['define', 'wiml-size'],
-		['define', 'wiml08'],
-		['define', 'wiml16'],
-		['define', 'wiml32'],
-		['define', 'wiml64'],
-
-		['defsection', 'reasoning-about-memory-reads-and-writes'],
-		['define', 'rb'],
-		['define', 'rb-1'],
-		['define', 'wb'],
-		['define', 'wb-1'],
-	],
+	]
 }

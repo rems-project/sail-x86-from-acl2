@@ -178,14 +178,14 @@ class SailHandwrittenFn(SailASTelem):
 	of this type represent which functions are available to us, and their
 	type.
 	"""
-	def __init__(self, name, typ=None):
+	def __init__(self, name, typ=None, infix=False):
 		"""
 		Args:
 			- name : str
 			- typ : Sail_t_fn
 		"""
 		super().__init__()
-		self.name = utils.sanitiseSymbol(name, lower=False)
+		self.name = utils.sanitiseSymbol(name, lower=False, infix=infix)
 		self.typ  = typ
 
 	### Custom methods ###
@@ -310,7 +310,7 @@ class SailBlock(SailASTelem):
 		"""
 		super().__init__()
 
-		if any(not isinstance(e.getType(), Sail_t_unit) for e in exprs):
+		if any(not isUnitType(e.getType()) for e in exprs[:-1]):
 			sys.exit("Error: Non-unit expression in block")
 
 		self.exprs = exprs
@@ -321,7 +321,7 @@ class SailBlock(SailASTelem):
 
 	### Required methods ###
 	def getType(self):
-		return Sail_t_unit()
+		return self.exprs[-1].getType()
 
 	def getEffects(self, ctx):
 		return set.union(*[e.getEffects(ctx).copy() for e in self.exprs])
@@ -1585,37 +1585,38 @@ def coerceExpr(expr, typ):
 		fntyp = Sail_t_fn([Sail_t_int(), Sail_t_int(), etyp], retTyp)
 		args = [SailNumLit(low), SailNumLit(high), expr]
 		return SailApp(SailHandwrittenFn("check_range", fntyp), args)
-	elif isinstance(expr, SailNumLit) and isinstance(typ, Sail_t_bits) and typ.length is not None:
-		return SailBitsLit(typ.length, expr.getNum(), typ.signed)
-	elif isinstance(expr, SailBitsLit) and isinstance(typ, Sail_t_bits) and typ.length is not None:
-		return SailBitsLit(typ.length, expr.getValue(), typ.signed)
+	elif isinstance(expr, SailNumLit) and isinstance(typ, Sail_t_bits) and typ.getLength() is not None:
+		return SailBitsLit(typ.getLength(), expr.getNum(), typ.signed)
+	elif isinstance(expr, SailBitsLit) and isinstance(typ, Sail_t_bits) and typ.getLength() is not None:
+		return SailBitsLit(typ.getLength(), expr.getValue(), typ.signed)
 	elif isNumeric(etyp) and isinstance(typ, Sail_t_bits) and typ.length is not None:
 		fntyp = Sail_t_fn([Sail_t_int(), Sail_t_int()], typ)
-		args = [expr, SailNumLit(typ.length)]
+		lengthArg = typ.length if isinstance(typ.length, SailASTelem) else SailNumLit(typ.getLength())
+		args = [expr, lengthArg]
 		return SailApp(SailHandwrittenFn("bits_of_int", fntyp), args)
 	elif isinstance(etyp, Sail_t_bits) and isNumeric(typ):
-		if etyp.length is None:
+		if etyp.getLength() is None:
 			castTyp = Sail_t_nat()
 		else:
 			if etyp.signed:
-				castTyp = Sail_t_range(-(2 ** (etyp.length - 1)), (2 ** (etyp.length - 1)) - 1)
+				castTyp = Sail_t_range(-(2 ** (etyp.getLength() - 1)), (2 ** (etyp.getLength() - 1)) - 1)
 			else:
-				castTyp = Sail_t_range(0, (2 ** etyp.length) - 1)
+				castTyp = Sail_t_range(0, (2 ** etyp.getLength()) - 1)
 		fn = 'signed' if etyp.signed else 'unsigned'
 		innerTyp = typ if isSubType(castTyp, typ) else castTyp
 		innerExpr = SailApp(SailHandwrittenFn(fn, Sail_t_fn([etyp], innerTyp)), [expr])
 		return coerceExpr(innerExpr, typ)
 	elif isinstance(etyp, Sail_t_bits) and isinstance(typ, Sail_t_bits) and typ.length is not None:
-		if etyp.length is not None:
-			if typ.length < etyp.length:
+		if etyp.getLength() is not None and typ.getLength() is not None:
+			if typ.getLength() < etyp.getLength():
 				fn = 'truncate'
-			elif typ.length == etyp.length and isinstance(expr, SailBoundVar):
+			elif typ.getLength() == etyp.getLength() and isinstance(expr, SailBoundVar):
 				# If we have a variable with the right
 				# bitvector length, we don't need a cast, but
 				# return a fresh copy with the new type
 				# (including signedness)
 				return SailBoundVar(expr.getName(), typ=typ)
-			elif typ.length == etyp.length and isinstance(expr, SailApp):
+			elif typ.getLength() == etyp.getLength() and isinstance(expr, SailApp):
 				# Similarly for function calls returning a
 				# bitvector of the right length;  no cast
 				# needed, but remember signedness
@@ -1632,11 +1633,12 @@ def coerceExpr(expr, typ):
 				# so we sign-extend in that case.
 				fn = 'sail_sign_extend' if etyp.signed else 'sail_zero_extend'
 			fntyp = Sail_t_fn([etyp, Sail_t_int()], typ)
-			args = [expr, SailNumLit(typ.length)]
+			args = [expr, SailNumLit(typ.getLength())]
 		else:
 			fn = 'sail_mask_signed' if etyp.signed else 'sail_mask'
 			fntyp = Sail_t_fn([Sail_t_int(), etyp], typ)
-			args = [SailNumLit(typ.length), expr]
+			lengthArg = typ.length if isinstance(typ.length, SailASTelem) else SailNumLit(typ.getLength())
+			args = [lengthArg, expr]
 		if not(typ.signed) and etyp.signed and fn != 'truncate':
 			print(f"coerceExpr: Sign-extending {expr.pp()} to unsigned {typ.pp()}")
 		return SailApp(SailHandwrittenFn(fn, fntyp), args)

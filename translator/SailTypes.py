@@ -279,6 +279,9 @@ def isNonnegativeType(t):
 def isSignedType(t):
 	return not(isNonnegativeType(t))
 
+def isUnitType(t):
+	return isinstance(t, Sail_t_unit) or isinstance(t, Sail_t_error)
+
 def isString(st):
 	"""
 	Tests if SailType `st` is a string.
@@ -436,7 +439,7 @@ class Sail_t_bits(SailType):
 			- signed : bool - whether these bits are to be interpreted as a signed number or not
 		'''
 		super(Sail_t_bits, self).__init__()
-		if length is not None and length <= 0:
+		if type(length) == int and length <= 0:
 			raise(ValueError(f"tried to construct a bits type with size le 0.  Size was: {length}"))
 		self.length = length
 		self.signed = signed
@@ -445,6 +448,9 @@ class Sail_t_bits(SailType):
 		return type(self) == type(other) and self.length == other.length and self.signed == other.signed
 	def __hash__(self):
 		return id(self)
+
+	def getLength(self):
+		return self.length if isinstance(self.length, int) else None
 
 	def generalise(self):
 		return Sail_t_bits(self.length, signed=self.signed)
@@ -702,6 +708,9 @@ class Sail_t_tuple(SailType):
 	def pp(self):
 		return f"({', '.join([item.pp() for item in self.subTypes])})"
 
+	def isPrintable(self):
+		return all(t.isPrintable() for t in self.subTypes)
+
 class Sail_t_struct(SailType):
 	"""
 	Represents a Sail struct
@@ -826,7 +835,7 @@ def getRangeOfType(typ):
 
 def getBitvectorSize(typ):
 	if isinstance(typ, Sail_t_bits):
-		return typ.length
+		return typ.getLength()
 	elif isRangeType(typ):
 		# Determine number of bits required (and make sure that it is at least 1)
 		(low, high) = getRangeOfType(typ)

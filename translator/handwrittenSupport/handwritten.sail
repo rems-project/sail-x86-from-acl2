@@ -243,8 +243,8 @@ function logbitp_int (i, j) = {
     )
 }
 
-val logbitp_bits : forall 'n 'm, 'n >= 0 & 'm >= 0. (int('n), bits('m)) -> bool
-function logbitp_bits (n, j) = if (n < 'm) then (j[n] == bitone) else false
+val logbitp_bits : forall 'n 'pos, 'n >= 0. (int('pos), bits('n)) -> bool
+function logbitp_bits (pos, x) = if (0 <= pos & pos < 'n) then (x[pos] == bitone) else false
 
 overload logbitp = {logbitp_bits, logbitp_int}
 
@@ -261,8 +261,8 @@ function logbit_int (pos, j) = {
 	get_slice_int(1, j, pos)
 }
 
-val logbit_bits : forall 'n 'm, 0 <= 'm < 'n. (int('m), bits('n)) -> bits(1)
-function logbit_bits (pos, x) = [x[pos]]
+val logbit_bits : forall 'n 'pos, 'n >= 0. (int('pos), bits('n)) -> bits(1)
+function logbit_bits (pos, x) = if (0 <= pos & pos < 'n) then [x[pos]] else [bitzero]
 
 overload logbit = {logbit_bits, logbit_int}
 
@@ -681,6 +681,7 @@ register ssr_hidden_attrs : vector(2, dec, bits(16))
 /*
 Reading from and writing to memory
 */
+// TODO: Rename these
 val memi : forall 'addr_width, 'addr_width >= 0. (bits('addr_width)) -> bits(8) effect {rmem, rreg}
 function memi (addr) = {
 	result = __read_mem( Read_plain,					// Read type
@@ -724,8 +725,8 @@ function bang_memi (addr, valToWrite) = {
 // app-view is part of the x86 model state.  See thesis section 5.1
 // and conrete-memory.lisp
 
-val app_view : unit -> bool
-function app_view () = true
+register app_view : bool
+register marking_view : bool
 
 // Model state.
 register ms_reg : bool
@@ -738,6 +739,52 @@ register fault_reg : bool
 
 val fault : unit -> bool effect {rreg}
 function fault () = fault_reg
+
+/* Handwritten implementations of `rb` and `wb` in a more idiomatic style,
+ * using for-loops instead of working with lists of addresses and bytes, like
+ * the ACL2 implementations.
+ */
+
+/* Address translation function and another helper function used by `rb`/`wb` */
+val ia32e_la_to_pa : (sbits(48), string) -> (option(string), bits(52))
+val canonical_address_p : int -> bool
+
+val rb : forall 'addr_width 'n, 'addr_width > 0 & 'n > 0. (int('n), bits('addr_width), string) -> (option(string), bits(8 * 'n))
+
+function rb (n, addr, access_kind) = {
+  result : bits(8 * 'n) = sail_zeros(8 * n);
+  foreach (offset from 0 to (n - 1)) {
+    if not_bool(canonical_address_p(signed(addr) + offset)) then return (Some("rb: non-canonical address"), result);
+    let lin_addr : bits(48) = add_bits_int(sail_mask_signed(48, addr), offset);
+    let phys_addr : bits(52) =
+      if app_view then sail_mask_signed(52, lin_addr) else {
+        let (flg, phys_addr) = ia32e_la_to_pa(lin_addr, access_kind);
+        if is_some(flg) then return (flg, result);
+        phys_addr
+      }
+    in
+    result[((8 * offset) + 7) .. (8 * offset)] = memi(phys_addr)
+  };
+  return (None(), result)
+}
+
+val wb : forall 'addr_width 'n, 'addr_width > 0 & 'n > 0. (int('n), bits('addr_width), string, bits(8 * 'n)) -> option(string)
+
+function wb (n, addr, access_kind, value) = {
+  foreach (offset from 0 to (n - 1)) {
+    if not_bool(canonical_address_p(signed(addr) + offset)) then return Some("wb: non-canonical address");
+    let lin_addr : bits(48) = add_bits_int(sail_mask_signed(48, addr), offset);
+    let phys_addr : bits(52) =
+      if app_view then sail_mask_signed(52, lin_addr) else {
+        let (flg, phys_addr) = ia32e_la_to_pa(lin_addr, access_kind);
+        if is_some(flg) then return flg;
+        phys_addr
+      }
+    in
+    bang_memi(phys_addr, value[((8 * offset) + 7) .. (8 * offset)])
+  };
+  return None()
+}
 
 /*-----------------------------------------------------------------*/
 // Untranslated functions

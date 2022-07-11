@@ -398,6 +398,9 @@ def _parseNormalFormal(f, env):
 				types = parseGuard([guardWord, name]).get(name, None)
 			elif isinstance(guardWord, list):
 				types = parseGuard(guardWord).get(name, None)
+			elif isinstance(guardWord, ACL2String):
+				# Documentation string, not a guard
+				types = eqSet()
 			else:
 				sys.exit(f"Error: invalid guard - {guardWord}")
 
@@ -487,14 +490,15 @@ def _parseFormals(fnFormals, mode, env):
 		return [name] + tailNames, tailTypes, tailKeyDefaults, env
 
 	# Parse an optional formal
-	elif mode == 'optional':
-		sys.exit("Error: &optional arguments not yet implemented")
+	# elif mode == 'optional':
+	# 	sys.exit("Error: &optional arguments not yet implemented")
 
 	# Parse a keyword formal
-	elif mode == 'key':
+	# TODO: Can we handle optional formals just like key formals?
+	elif mode in ['key', 'optional']:
 		name, types, keyDefault, env = _parseKeywordFormal(head, env)
-		tailNames, tailTypes, tailKeyDefaults, env = _parseFormals(tail, 'key', env)
-		if name in tailNames: sys.exit(f"Error: name '{name}' already parsed, mode='key'")
+		tailNames, tailTypes, tailKeyDefaults, env = _parseFormals(tail, mode, env)
+		if name in tailNames: sys.exit(f"Error: name '{name}' already parsed, mode={mode}")
 		tailKeyDefaults[name] = keyDefault
 		return tailNames, tailTypes, tailKeyDefaults, env
 
@@ -784,6 +788,10 @@ def tr_ignore(ACL2ast, env):
 	"""
 	return [None], env, len(ACL2ast)
 
+def _assert_helper(sailTerm):
+	assert_fn = SailHandwrittenFn('assert', Sail_t_fn([Sail_t_bool()], Sail_t_unit()))
+	return SailApp(assert_fn, [sailTerm])
+
 def tr_if(ACL2ast, env):
 	"""
 	Translates an `(if <cond-form> <then-form> <else-form>)` form.
@@ -818,12 +826,17 @@ def tr_if(ACL2ast, env):
 	# - Avoid handling system-view for now.
 	# - If we have just `if _ t nil` then force t and nil to both be bools (don't just return the predicate as it
 	#	might not be a bool.
-	if (isinstance(ifTerm, list) and ifTerm[0].lower() == 'app-view') or\
-			(isinstance(ifTerm, list) and isinstance(ifTerm[0], SailBoolLit) and
-			ifTerm[0].getBool()):
+	# - Special-case `mbt` (must-be-true)
+	# if (isinstance(ifTerm, list) and ifTerm[0].lower() == 'app-view') or\
+	# 		(isinstance(ifTerm, list) and isinstance(ifTerm[0], SailBoolLit) and
+	# 		ifTerm[0].getBool()):
 
+	# 	(thenTermSail, env, _) = transform.transformACL2asttoSail(thenTerm, env)
+	# 	toReturn = thenTermSail
+	if isinstance(ifTerm, list) and len(ifTerm) == 2 and ifTerm[0].lower() == 'mbt':
+		(assertionSail, env, _) = transform.transformACL2asttoSail(ifTerm[1], env)
 		(thenTermSail, env, _) = transform.transformACL2asttoSail(thenTerm, env)
-		toReturn = thenTermSail
+		toReturn = [SailBlock([_assert_helper(assertionSail[0]), thenTermSail[0]])]
 	elif isinstance(thenTerm, str) and thenTerm.lower() == 't' and \
 			isinstance(elseTerm, str) and elseTerm.lower() == 'nil':
 
@@ -891,7 +904,7 @@ def tr_zp(ACL2ast, env):
 
 	# Return
 	return ([SailApp(
-				SailHandwrittenFn('==', Sail_t_fn([], Sail_t_bool())),
+				SailHandwrittenFn('==', Sail_t_fn([], Sail_t_bool()), infix=True),
 				[operandSail[0], SailNumLit(0)],
 				infix = True)],
 			env, len(ACL2ast))
@@ -956,7 +969,7 @@ def num_op_gen(op, resultType, operandType=None, numOfArgs=None, infix=True):
 		# Construct the base AST and remove those elements from the args/types lists
 		fnType = Sail_t_fn([mergedOperandType, mergedOperandType], resultType)
 		currentAST = [SailApp(
-						fn = SailHandwrittenFn(op, typ = fnType),
+						fn = SailHandwrittenFn(op, typ = fnType, infix=infix),
 						actuals = argsSail[-2] + argsSail[-1],
 						infix = infix)]
 
@@ -966,7 +979,7 @@ def num_op_gen(op, resultType, operandType=None, numOfArgs=None, infix=True):
 		# Construct the rest of the tree
 		while len(argsSail) > 0:
 			currentAST = [SailApp(
-							fn = SailHandwrittenFn(op, typ = fnType),
+							fn = SailHandwrittenFn(op, typ = fnType, infix=infix),
 							actuals = argsSail[-1] + currentAST,
 							infix = infix)]
 			argsSail = argsSail[:-1]
@@ -1084,8 +1097,8 @@ def _parts_helper(lowAST, hiAST, widAST, env):
 			size = None
 
 			fnTyp = Sail_t_fn([Sail_t_int(), Sail_t_int()], Sail_t_int())
-			subASTsail = SailApp(fn=SailHandwrittenFn('-', typ=fnTyp), actuals=[hiASTsail[0], lowASTsail[0]], infix=True)
-			sizeASTsail = SailApp(fn=SailHandwrittenFn('+', typ=fnTyp), actuals=[subASTsail, SailNumLit(1)], infix=True)
+			subASTsail = SailApp(fn=SailHandwrittenFn('-', typ=fnTyp, infix=True), actuals=[hiASTsail[0], lowASTsail[0]], infix=True)
+			sizeASTsail = SailApp(fn=SailHandwrittenFn('+', typ=fnTyp, infix=True), actuals=[subASTsail, SailNumLit(1)], infix=True)
 		else:
 			size = hiASTsail[0].getNum() - lowASTsail[0].getNum() + 1
 			sizeASTsail = SailNumLit(size)
@@ -1139,8 +1152,12 @@ def tr_part_select(ACL2ast, env):
 	else:
 		sailTerm = SailApp(fn = SailHandwrittenFn(
 								name = 'get_slice_int',
-								typ = Sail_t_fn([Sail_t_int(), targetType, Sail_t_int()], retType)),
+								typ = Sail_t_fn([Sail_t_int(), Sail_t_int(), Sail_t_int()], retType)),
 						actuals = [sizeASTsail, targetSail[0], lowASTsail[0]])
+
+	if size is None and isinstance(sizeASTsail.getType(), Sail_t_member):
+		maxSize = max(sizeASTsail.getType().members)
+		sailTerm = coerceExpr(sailTerm, Sail_t_bits(maxSize))
 
 	return [sailTerm], env, len(ACL2ast)
 
@@ -1173,9 +1190,9 @@ def tr_part_install(ACL2ast, env):
 		if cvalSail is None:
 			sys.exit(f"Error: failed to coerce {valSail[0].pp()} to bits({width}) in part_install expression")
 		valSail = [cvalSail]
-		if srcType.length is None: print("Warning: srcType.length is None!")
+		if srcType.getLength() is None: print("Warning: srcType.length is None!")
 		if low is None: print("Warning: low is None!")
-		if srcType.length is not None and low is not None and srcType.length < low + width:
+		if srcType.getLength() is not None and low is not None and srcType.getLength() < low + width:
 			cxSail = coerceExpr(xSail[0], Sail_t_bits(low + width))
 			if cxSail is None:
 				sys.exit(f"Error: failed to coerce {xSail[0].pp()} to bits({low + width}) in part_install expression")
@@ -1297,7 +1314,7 @@ def _bstar_helper(bindersRemaining, results, env):
 		restType = recursedSail[0].getType() if len(recursedSail) > 0 and isinstance(recursedSail[0], SailASTelem) else Sail_t_unknown()
 
 		# Create sail term
-		if b.lower() == 'x86' and isinstance(exprType, Sail_t_unit) and isinstance(restType, Sail_t_unit):
+		if b.lower() == 'x86' and isinstance(exprType, Sail_t_unit) or isinstance(exprType, Sail_t_error): # and isinstance(restType, Sail_t_unit):
 			# Remove superfluous x86 bindings
 			if len(recursedSail) == 1 and isinstance(recursedSail[0], SailUnitLit):
 				# ... and superfluous unit literals
@@ -1665,22 +1682,24 @@ def tr_def_inst(ACL2ast, env):
 
 def get_register_info(name):
 	register_types = {
-		# Name		        (Width,	signed,	number of elements)
-		'rip':		        (48,	True,	None),
-		'rflags':	        (32,	False,	None),
-		'rgfi':		        (64,	True,	16),
-		'msr':		        (64,	False,	7),
-		'seg-visible':	        (16,	False,	6),
-		'seg-hidden-attr':	(16,	False,	6),
-		'seg-hidden-base':	(64,	False,	6),
-		'seg-hidden-limit':	(32,	False,	6),
-		'ssr-visible':	        (16,	False,	2),
-		'ssr-hidden-attr':	(16,	False,	2),
-		'ssr-hidden-base':	(64,	False,	2),
-		'ssr-hidden-limit':	(32,	False,	2),
-		'zmm':			(512,	False,	32),
-		'ctr':			(64,	False,	17),
-		'str':			(80,	False,	2),
+		# Name		        (            Width, signed,		number of elements)
+		'rip':		        (Sail_t_bits(48,    signed=True),	None),
+		'rflags':	        (Sail_t_bits(32,    signed=False),	None),
+		'rgfi':		        (Sail_t_bits(64,    signed=True),	16),
+		'msr':		        (Sail_t_bits(64,    signed=False),	7),
+		'seg-visible':	        (Sail_t_bits(16,    signed=False),	6),
+		'seg-hidden-attr':	(Sail_t_bits(16,    signed=False),	6),
+		'seg-hidden-base':	(Sail_t_bits(64,    signed=False),	6),
+		'seg-hidden-limit':	(Sail_t_bits(32,    signed=False),	6),
+		'ssr-visible':	        (Sail_t_bits(16,    signed=False),	2),
+		'ssr-hidden-attr':	(Sail_t_bits(16,    signed=False),	2),
+		'ssr-hidden-base':	(Sail_t_bits(64,    signed=False),	2),
+		'ssr-hidden-limit':	(Sail_t_bits(32,    signed=False),	2),
+		'zmm':			(Sail_t_bits(512,   signed=False),	32),
+		'ctr':			(Sail_t_bits(64,    signed=False),	17),
+		'str':			(Sail_t_bits(80,    signed=False),	2),
+		'app-view':		(Sail_t_bool(),				None),
+		'marking-view':		(Sail_t_bool(),				None),
 	}
 
 	if name[0] == '!' or name[0] == ':':
@@ -1692,7 +1711,7 @@ def get_register_info(name):
 		name = name[:-1]
 
 	try:
-		(width, signed, nElems) = register_types[name.lower()]
+		(elemType, nElems) = register_types[name.lower()]
 	except:
 		sys.exit(f"Error: Register {name} unknown")
 
@@ -1701,11 +1720,10 @@ def get_register_info(name):
 
 	sanitisedName = utils.sanitiseSymbol(name, avoidShadowed=False)
 
-	return (sanitisedName, width, signed, nElems)
+	return (sanitisedName, elemType, nElems)
 
 def _register_access_helper(ACL2ast, env):
-	(name, width, signed, nElems) = get_register_info(ACL2ast[0])
-	elemType = Sail_t_bits(width, signed=signed)
+	(name, elemType, nElems) = get_register_info(ACL2ast[0])
 	regType = elemType if nElems is None else Sail_t_vector(nElems, elemType)
 	regSail = SailBoundVar(name, regType, sanitise=False)
 	if nElems is None:
@@ -2549,10 +2567,87 @@ def tr_plus(ACL2ast, env):
 		if retTyp is None:
 			return num_op_gen('+', Sail_t_int(), operandType=Sail_t_int())(ACL2ast, env)
 		else:
-			fn = SailHandwrittenFn(name='+', typ=Sail_t_fn([typ1, typ2], retTyp))
+			fn = SailHandwrittenFn(name='+', typ=Sail_t_fn([typ1, typ2], retTyp), infix=True)
 			return [SailApp(fn=fn, actuals=[arg1[0], arg2[0]], infix=True)], env, len(ACL2ast)
 	else:
 		return num_op_gen('+', Sail_t_int(), operandType=Sail_t_int())(ACL2ast, env)
+
+def tr_ash(ACL2ast, env):
+	# TODO: Bitvector version
+	def ash_fn(args, env):
+		operandType = args[0].getType() if isNumeric(args[0].getType()) else Sail_t_int()
+		exponentType = args[1].getType() if isNumeric(args[1].getType()) else Sail_t_int()
+		if isinstance(operandType, Sail_t_member) and isinstance(exponentType, Sail_t_member) and isNonnegativeType(exponentType):
+			operands = args[0].getType().members
+			exponents = args[1].getType().members
+			results = [o * (2 ** e) for o in operands for e in exponents]
+			retType = Sail_t_member(results)
+		else:
+			retType = Sail_t_int()
+		return SailHandwrittenFn('ash', Sail_t_fn([operandType, exponentType], retType))
+	return apply_dependent_fn_gen(ash_fn, 2, coerceActuals=True)(ACL2ast, env)
+
+def tr_rb(ACL2ast, env):
+	nBytesSail, env, _ = transform.transformACL2asttoSail(ACL2ast[1], env)
+	addrSail, env, _ = transform.transformACL2asttoSail(ACL2ast[2], env)
+	accessKindSail, env, _ = transform.transformACL2asttoSail(ACL2ast[3], env)
+
+	if isinstance(nBytesSail[0], SailNumLit):
+		innerType = Sail_t_bits(8 * nBytesSail[0].getNum())
+		outerType = innerType
+	elif isinstance(nBytesSail[0].getType(), Sail_t_member) and nBytesSail[0].getType().subType == Sail_t_member.INT:
+		# Hack: Normally rb is used with constant number of bytes, but
+		# in the fall-through case of rml-size, it's used with a
+		# variable length.  However, looking at the constraints on the
+		# variable, that fall-through case is actually unreachable, so
+		# it doesn't really matter...  The Sail typechecker doesn't
+		# pick this up automatically, however, so we add a cast to the
+		# maximum number of bytes.
+		innerType = Sail_t_bits(None)
+		outerType = Sail_t_bits(8 * max(nBytesSail[0].getType().members))
+	else:
+		sys.exit(f"Error: unsupported number of bytes {args[0].pp()} in rb")
+
+	innerRetType = Sail_t_tuple([Sail_t_option(Sail_t_string()), innerType])
+	# virtual addresses are signed 48-bit values in the ACL2 model
+	vaType = Sail_t_bits(48, signed=True)
+	fnType = Sail_t_fn([Sail_t_nat(), vaType, Sail_t_string()], innerRetType)
+	addrSail = [coerceExpr(addrSail[0], vaType)]
+	innerSail = SailApp(SailHandwrittenFn('rb', fnType), nBytesSail + addrSail + accessKindSail)
+
+	outerRetType = Sail_t_tuple([Sail_t_option(Sail_t_string()), outerType])
+	outerSail = coerceExpr(innerSail, outerRetType)
+
+	return [outerSail], env, len(ACL2ast)
+
+def tr_wb(ACL2ast, env):
+	nBytesSail, env, _ = transform.transformACL2asttoSail(ACL2ast[1], env)
+	addrSail, env, _ = transform.transformACL2asttoSail(ACL2ast[2], env)
+	accessKindSail, env, _ = transform.transformACL2asttoSail(ACL2ast[3], env)
+	valueSail, env, _ = transform.transformACL2asttoSail(ACL2ast[4], env)
+
+	if isinstance(nBytesSail[0], SailNumLit):
+		valueType = Sail_t_bits(8 * nBytesSail[0].getNum())
+	else:
+		# Construct dynamic length bitvector type
+		# (not generally well-supported at this point, but we make it
+		# work in this case)
+		multFnType = Sail_t_fn([Sail_t_int(), Sail_t_int()], Sail_t_int())
+		multFn = SailHandwrittenFn('*', multFnType, infix=True)
+		lengthExpr = SailApp(multFn, [SailNumLit(8)] + nBytesSail, infix=True)
+		valueType = Sail_t_bits(lengthExpr)
+
+	valueSail = coerceExpr(valueSail[0], valueType)
+	if valueSail is None:
+		sys.exit(f"tr_wb: Failed to coerce value in {ACL2ast}")
+
+	retType = Sail_t_option(Sail_t_string())
+	vaType = Sail_t_bits(48, signed=True)
+	fnType = Sail_t_fn([Sail_t_nat(), vaType, Sail_t_string(), valueType], retType)
+	addrSail = [coerceExpr(addrSail[0], vaType)]
+	sailExpr = SailApp(SailHandwrittenFn('wb', fnType), nBytesSail + addrSail + accessKindSail + [valueSail])
+
+	return [sailExpr], env, len(ACL2ast)
 
 def tr_pe(ACL2ast, env):
 	"""

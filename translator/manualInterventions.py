@@ -2,6 +2,7 @@ from lex_parse import ACL2quote
 from SailASTelems import *
 import specialTokens
 import transform
+import re
 
 """
 Sometimes the heuristics used by the automatic areas of the translator are not
@@ -68,7 +69,8 @@ def and_macro(ACL2ast, env):
 			ifTerm=[SailApp(
 				fn=SailHandwrittenFn(
 					name='<',
-					typ=Sail_t_fn([Sail_t_int(), Sail_t_int()], Sail_t_bool())
+					typ=Sail_t_fn([Sail_t_int(), Sail_t_int()], Sail_t_bool()),
+					infix=True
 				),
 				actuals=[SailNumLit(15), lengthBV],
 				infix=True
@@ -338,6 +340,38 @@ def chk_exc_fn_type(ACL2ast, env):
 			env.peekContext2 != 'cond':
 		return True, [someHelper(SailStringLit(ACL2ast))], env
 
+def bitvector_merges(ACL2ast, env):
+	pattern = re.compile(r"(bitops::)?merge-(\d{1,3})-u(\d{1,3})s")
+	if isinstance(ACL2ast, list) and len(ACL2ast) > 1:
+		match = pattern.match(ACL2ast[0].lower())
+		if match:
+			nElems = int(match.group(2))
+			nBits = int(match.group(3))
+			elemTyp = Sail_t_bits(nBits)
+			def aux(ACL2elems, env):
+				sailElem, env, _ = transform.transformACL2asttoSail(ACL2elems[0], env)
+				sailElem = coerceExpr(sailElem[0], elemTyp)
+				if sailElem is None:
+					sys.exit(f"bitvector_merge: cannot coerce {ACL2elems[0]} to {elemTyp.pp()}")
+				if len(ACL2elems) > 1:
+					# TODO: Left or right associate?
+					sailRest, env = aux(ACL2elems[1:], env)
+					retType = Sail_t_bits(sailElem.getType().length + sailRest.getType().length)
+					fnType = Sail_t_fn([sailElem.getType(), sailRest.getType()], retType)
+					fn = SailHandwrittenFn('@', fnType, infix=True)
+					return SailApp(fn, [sailElem, sailRest], infix=True), env
+				else:
+					return sailElem, env
+			# elems = []
+			# for e in ACL2ast[1:]:
+			# 	sailAST, env, _ = transform.transformACL2asttoSail(e, env)
+			# 	sailAST = coerceExpr(sailAST[0], elemTyp)
+			# 	elems.append(e)
+			# retTyp = Sail_t_bits(nElems * nBits)
+			sail, env = aux(ACL2ast[1:], env)
+			return True, [sail], env
+		else:
+			return None
 
 interventionsList = [
 	x86_token,
@@ -355,7 +389,8 @@ interventionsList = [
 	x86_hlt_return_type,
 	seg_descriptor_type,
 	div_type,
-	chk_exc_fn_type
+	chk_exc_fn_type,
+	bitvector_merges
 ]
 
 def replacePatterns(ACL2ast, env):

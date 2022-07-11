@@ -43,23 +43,25 @@ def specialTokens():
 		'defun': 			tr_define,
 		'make-event': 		tr_make_event,
 		'defmacro': 		tr_defmacro,
+		'defabbrev':		tr_defmacro, # TODO: Handle differently?
 		'mbe': 				tr_mbe,
 		'if': 				tr_if,
 		'encapsulate': 		tr_encapsulate,
 		'the': 				tr_the,
 		'+': 				tr_plus,
 		'binary-+': 		tr_plus,
-		'*': 				num_op_gen('*', Sail_t_int(), operandType=Sail_t_int()),
+		'*': 				num_op_gen('*', Sail_t_int(), operandType=Sail_t_int(), infix=True),
 		'-': 				tr_minus,
+		'ash':				tr_ash,
 		'=': 				num_op_gen('==', Sail_t_bool(), numOfArgs=2, infix=True),
 		'equal': 			num_op_gen('==', Sail_t_bool(), numOfArgs=2, infix=True),
 		'eql': 				num_op_gen('==', Sail_t_bool(), numOfArgs=2, infix=True),
 		'int=': 			num_op_gen('==', Sail_t_bool(), numOfArgs=2, infix=True),
 		'eq': 				num_op_gen('==', Sail_t_bool(), numOfArgs=2, infix=True),
 		'/=': 				num_op_gen('!=', Sail_t_bool(), numOfArgs=2, infix=True),
-		'<': 				num_op_gen('<', Sail_t_bool(), operandType=Sail_t_int(), numOfArgs=2),
-		'>': 				num_op_gen('>', Sail_t_bool(), operandType=Sail_t_int(), numOfArgs=2),
-		'<=': 				num_op_gen('<=', Sail_t_bool(), operandType=Sail_t_int(), numOfArgs=2),
+		'<': 				num_op_gen('<', Sail_t_bool(), operandType=Sail_t_int(), numOfArgs=2, infix=True),
+		'>': 				num_op_gen('>', Sail_t_bool(), operandType=Sail_t_int(), numOfArgs=2, infix=True),
+		'<=': 				num_op_gen('<=', Sail_t_bool(), operandType=Sail_t_int(), numOfArgs=2, infix=True),
 		'and': 				num_op_gen('&', Sail_t_bool(), operandType=Sail_t_bool(), infix=True),
 		'or': 				num_op_gen('|', Sail_t_bool(), operandType=Sail_t_bool(), infix=True),
 		'logior':			bitwise_op_gen('logior'),
@@ -87,6 +89,7 @@ def specialTokens():
 		'er': 				tr_er,
 		'!!ms-fresh': 		tr_ms_fresh,  # `!!ms-fresh` etc. are macros defined in `decoding-and-spec-utils.lisp`
 		'!!fault-fresh': 	tr_fault_fresh,  # Again, macro defined in `decoding-and-spec-utils.lisp`
+		'!fault':		tr_fault_fresh,  # TODO: More proper fault handling
 		'ifix': 			tr_ifix,
 		'nfix':				tr_nfix,
 		'n-size':			tr_n_size,
@@ -98,6 +101,8 @@ def specialTokens():
 		'nil':				tr_nil,
 		'64-bit-compute-mandatory-prefix-for-two-byte-opcode': 	tr_pe,
 		'32-bit-compute-mandatory-prefix-for-two-byte-opcode': 	tr_pe,
+                'rb':                           tr_rb,
+                'wb':                           tr_wb,
 
 		# The following ACL2 tokens are ignored (we do not translate them).
 		#  -  `defthm` and `defthmd` relate to theorem proving in ACL2 and have
@@ -108,6 +113,7 @@ def specialTokens():
 
 		'defthm': 					tr_ignore,
 		'defthmd': 					tr_ignore,
+		'defrule': 					tr_ignore,
 		'add-macro-alias': 			tr_ignore,
 		'defthm-signed-byte-p': 	tr_ignore,
 		'defthm-unsigned-byte-p': 	tr_ignore,
@@ -116,6 +122,7 @@ def specialTokens():
 		'def-ruleset': 				tr_ignore,
 		'set-non-linearp': 			tr_ignore,
 		'defxdoc': 					tr_ignore,
+		'defun-nx': 					tr_ignore,
 
 		# The following ACL2 tokens are functions which return various errors
 		'x86-illegal-instruction': 	tr_fault_fresh,
@@ -154,6 +161,8 @@ def specialTokens():
 		'zmmi',
 		'ctri',
 		'stri',
+                'app-view',
+                'marking-view'
 	]
 	for r in register_accessors:
 		name_to_fn_map[r.upper()] = tr_register_read
@@ -184,9 +193,7 @@ def handwritten():
 		'logext'				: binary_logext_fn,
 		'rgfi'					: rgfi_fn,
 		'!rgfi'					: write_rgfi_fn,
-		'app-view'				: app_view_fn,
 		'memi'					: memi_fn,
-		'ash'					: ash_fn,
 		'abs'					: abs_fn,
 		'floor'					: floor_fn,
 		'mod'					: mod_fn,
@@ -212,7 +219,7 @@ def handwritten():
 
 	dependentHandwrittenDefs = {
 		'logbitp'	: dependent_fn(logbitp_fn, 2, coerceActuals=True),
-		'logbit'	: dependent_fn(logbit_fn, 2, coerceActuals=True),
+		'logbit'	: dependent_fn(logbit_fn, 2, coerceActuals=True)
 	}
 	for (name, fn) in dependentHandwrittenDefs.items():
 		name = name.upper()

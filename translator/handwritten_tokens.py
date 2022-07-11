@@ -51,11 +51,15 @@ logtail_fn = SailHandwrittenFn(
 				Sail_t_fn([Sail_t_int(), Sail_t_int()], Sail_t_int()))
 
 def logbitp_fn(args, env):
-	return SailHandwrittenFn('logbitp', Sail_t_fn([Sail_t_int(), args[1].getType()], Sail_t_bool()))
-
+	# Coerce argument to integer if it might be negative, just to be on the safe side...
+	# TODO: Add signed variant that returns the MSB if we ask for a bit
+	# that is beyond the width of a signed bitvector
+	argType = args[1].getType() if isNonnegativeType(args[1].getType()) else Sail_t_int()
+	return SailHandwrittenFn('logbitp', Sail_t_fn([Sail_t_int(), argType], Sail_t_bool()))
 
 def logbit_fn(args, env):
-	return SailHandwrittenFn('logbit', Sail_t_fn([Sail_t_int(), args[1].getType()], Sail_t_bits(1)))
+	argType = args[1].getType() if isNonnegativeType(args[1].getType()) else Sail_t_int()
+	return SailHandwrittenFn('logbit', Sail_t_fn([Sail_t_int(), argType], Sail_t_bits(1)))
 
 
 lognot_fn = SailHandwrittenFn(
@@ -255,6 +259,40 @@ bang_memi_fn = SailHandwrittenFn(
 	'bang_memi',
 	Sail_t_fn([Sail_t_bits(64), Sail_t_bits(8)], Sail_t_unit(), {'eamem', 'wmv', 'rreg'})
 )
+
+def rb_fn(args, env):
+	if isinstance(args[0], SailNumLit):
+		nBytes = args[0].getNum()
+	elif isinstance(args[0].getType(), Sail_t_member) and args[0].getType().subType == Sail_t_member.INT:
+		# Hack: Normally rb is used with constant number of bytes, but
+		# in the fall-through case of rml-size, it's used with a
+		# variable length.  However, looking at the constraints on the
+		# variable, that fall-through case is actually unreachable, so
+		# it doesn't really matter...
+		nBytes = max(args[0].getType().members)
+	else:
+		sys.exit(f"Error: unsupported number of bytes {args[0].pp()} in rb")
+	valTyp = Sail_t_bits(8 * nBytes)
+	retTyp = Sail_t_tuple([Sail_t_option(Sail_t_string()), valTyp])
+	# virtual addresses are signed 48-bit values in the ACL2 model
+	vaTyp = Sail_t_bits(48, signed=True)
+	fnTyp = Sail_t_fn([Sail_t_nat(), vaTyp, Sail_t_string()], retTyp)
+	return SailHandwrittenFn('rb', fnTyp)
+
+def wb_fn(args, env):
+	if isinstance(args[0], SailNumLit):
+		nBytes = args[0].getNum()
+	elif isinstance(args[0].getType(), Sail_t_member) and args[0].getType().subType == Sail_t_member.INT:
+		# Hack: See rb_fn above...
+		nBytes = max(args[0].getType().members)
+	else:
+		sys.exit(f"Error: non-constant number of bytes {args[0].pp()} in wb")
+	valTyp = Sail_t_bits(8 * nBytes)
+	retTyp = Sail_t_option(Sail_t_string())
+	# virtual addresses are signed 48-bit values in the ACL2 model
+	vaTyp = Sail_t_bits(48, signed=True)
+	fnTyp = Sail_t_fn([Sail_t_nat(), vaTyp, Sail_t_string(), valTyp], retTyp)
+	return SailHandwrittenFn('wb', fnTyp)
 
 b_xor_fn = SailHandwrittenFn(
 	'b_xor',
