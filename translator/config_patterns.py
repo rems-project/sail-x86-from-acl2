@@ -130,6 +130,10 @@ exclude_lisp = {
 		['defmacro', 'def-inst'],
 	],
 
+        'dispatch-macros' : [
+		['include-book']
+	],
+
 	'register-readers-and-writers' : [
 		['include-book', 'rflags-spec'],
 		['include-book', 'fp-structures'],
@@ -150,6 +154,10 @@ exclude_lisp = {
 		['include-book', ACL2String('tools/include-raw')],
 		['defttag'],
 		['include-raw', ACL2String('register-readers-and-writers-raw.lsp')],
+	],
+
+	'syscall': [
+		['def-inst', 'x86-syscall-app-view']
 	],
 
 	'linear-memory': [
@@ -238,6 +246,7 @@ only_translate = {
 		['include-book', ACL2String('string')],
 		['include-book', ACL2String('subroutine')],
 		['include-book', ACL2String('fp/top')],
+		['include-book', ACL2String('syscall')],
 
 		['def-inst', 'x86-hlt'],
 		['def-inst', 'x86-cmc/clc/stc/cld/std'],
@@ -277,29 +286,6 @@ only_translate = {
 
 		['defsection', 'mandatory-prefixes-computation'],
 		['define', 'compute-mandatory-prefix-for-two-byte-opcode'],
-	],
-	'dispatch-macros' : [
-		['defmacro', 'ud-Lock-used'],
-		['defmacro', 'ud-ModR/M.Mod-indicates-Register'],
-		['defmacro', 'ud-Lock-used-mod-indicates-register'],
-		['defmacro', 'ud-Lock-used-Dest-not-Memory-Op'],
-		['defmacro', 'ud-second-operand-is-a-register'],
-		['defmacro', 'ud-source-operand-is-a-register'],
-		['defmacro', 'gp-cpl-not-0'],
-		['defmacro', 'cplx86'],
-		['defmacro', 'NM-CR0-TS-IS-1'],
-		['defmacro', 'NM-CR0-EM-IS-1'],
-		['defmacro', 'CR0'],
-		['defmacro', 'gp-cr4-umip-is-1'],
-		['defmacro', 'cr4'],
-		['defmacro', 'ud-cpl-is-not-zero'],
-		['defmacro', 'ud-opr-used'],
-		['defmacro', 'ud-reps-used'],
-		['defmacro', 'chk-exc'],
-		['define', 'chk-exc-fn'],
-		['defmacro', 'CS.D'],
-		['defmacro', 'feature-flag-macro'],
-		['defmacro', 'feature-flags-macro'],
 	],
 	'modes': [
 		['include-book', ACL2String('register-readers-and-writers')],

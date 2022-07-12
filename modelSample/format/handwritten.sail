@@ -20,7 +20,7 @@ function feature_flags_fn features = {
     }
 }
 
-union exception = {Emsg : string}
+union exception = {Emsg : string, Syscall : unit}
 
 val undef_read_logic : unit -> nat
 
@@ -97,6 +97,18 @@ val bits_of_int : forall 'n, 'n >= 0. (int, int('n)) -> bits('n)
 
 function bits_of_int (x, n) = {
     get_slice_int(n, x, 0)
+}
+
+val fits_in_bitvector : (int, int) -> bool
+
+function fits_in_bitvector (n, x) = {
+    0 <= x & x < pow2(n)
+}
+
+val fits_in_signed_bitvector : (int, int) -> bool
+
+function fits_in_signed_bitvector (n, x) = {
+    negate(2 ^ (n - 1)) <= x & x < pow2(n - 1)
 }
 
 val isEven : int -> bool
@@ -624,4 +636,10 @@ function unimplemented_vex_decode_and_execute (_, _, _, _, _, _) = {
 
 function unimplemented_evex_decode_and_execute (_, _, _, _, _, _) = {
     throw(Emsg("Error: evex decoding not implemented"))
+}
+
+val unimplemented_x86_syscall_app_view : (range(0, 4), sbits(48), sbits(48), bits(52), bits(8), bits(8), bits(8), bits(8)) -> unit
+
+function unimplemented_x86_syscall_app_view (_, _, _, _, _, _, _, _) = {
+    throw(Syscall())
 }

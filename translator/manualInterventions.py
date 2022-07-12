@@ -166,7 +166,7 @@ def implemented_opcode(ACL2ast, env):
 	# Note #3:	Floating point opcodes implemented: 16, 17, 18, 19, 20, 21,
 	# 			22, 23, 40, 41, 111, 127, 198
 	casesToIncludeTwoByte = \
-						[0, 1, 2, 3, 6, 8, 9, 11, 13, 16, 17, 18, 19, 20, 21, 22, 23, 24, 24, 26, 27, 28, 29, 30, 31,
+						[0, 1, 2, 3, 5, 6, 7, 8, 9, 11, 13, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31,
 						32, 33, 34, 35, 40, 41, 64, 65, 66, 67, 68, 69, 70, 71, 72, 73, 74, 75, 76, 77, 78, 79, 110,
 						111, 127, 128, 129, 130, 131, 132, 133, 134, 135, 136, 137, 138, 139, 140, 141, 142, 143,
 						144, 145, 146, 147, 148, 149, 150, 151, 152, 153, 154, 155, 156, 157, 158, 159, 160, 163,
@@ -373,6 +373,18 @@ def bitvector_merges(ACL2ast, env):
 		else:
 			return None
 
+def syscall_numbers(ACL2ast, env):
+	if env.getFile().lower() == "syscall-numbers" and \
+			isinstance(ACL2ast, list) and len(ACL2ast) == 4 and \
+			isinstance(ACL2ast[0], str) and ACL2ast[0].lower() == "if" and \
+			isinstance(ACL2ast[1], list) and len(ACL2ast[1]) == 2 and \
+			isinstance(ACL2ast[1][0], str) and ACL2ast[1][0].lower() == "app-view" and \
+			isinstance(ACL2ast[3], str) and ACL2ast[3].lower() == "nil":
+		# TODO: Assert app-view?
+		ifTerm, env, _ = transform.transformACL2asttoSail(ACL2ast[1], env)
+		thenTerm, env, _ = transform.transformACL2asttoSail(ACL2ast[2], env)
+		return True, thenTerm, env
+
 interventionsList = [
 	x86_token,
 	and_macro,
@@ -390,7 +402,8 @@ interventionsList = [
 	seg_descriptor_type,
 	div_type,
 	chk_exc_fn_type,
-	bitvector_merges
+	bitvector_merges,
+	syscall_numbers
 ]
 
 def replacePatterns(ACL2ast, env):

@@ -123,6 +123,7 @@ def specialTokens():
 		'set-non-linearp': 			tr_ignore,
 		'defxdoc': 					tr_ignore,
 		'defun-nx': 					tr_ignore,
+		'defconst': 					tr_ignore,
 
 		# The following ACL2 tokens are functions which return various errors
 		'x86-illegal-instruction': 	tr_fault_fresh,
@@ -142,9 +143,11 @@ def specialTokens():
 		n_num = "n{:02d}".format(i)
 		i_num = "i{:02d}".format(i)
 		n_to_i = n_num + "-to-" + i_num
+		n_pred = n_num + "p"
 		name_to_fn_map[n_num.upper()] = gen_coercion_to_bits(i, signed=False)
 		name_to_fn_map[i_num.upper()] = gen_coercion_to_bits(i, signed=True)
 		name_to_fn_map[n_to_i.upper()] = gen_coercion_to_bits(i, signed=True)
+		name_to_fn_map[n_pred.upper()] = gen_bits_check(i, signed=True)
 
 	register_accessors = [
 		'rip',
@@ -162,7 +165,8 @@ def specialTokens():
 		'ctri',
 		'stri',
                 'app-view',
-                'marking-view'
+                'marking-view',
+                'os-info'
 	]
 	for r in register_accessors:
 		name_to_fn_map[r.upper()] = tr_register_read
@@ -259,6 +263,7 @@ def unimplemented():
 		#	Name					numOfArgs	Type
 		('vex-decode-and-execute', 6, Sail_t_fn([Sail_t_int()] * 6, Sail_t_unit(), {'escape'})),
 		('evex-decode-and-execute', 6, Sail_t_fn([Sail_t_int()] * 6, Sail_t_unit(), {'escape'})),
+		('x86-syscall-app-view', 8, Sail_t_fn([Sail_t_int()] + ([Sail_t_bits(48, True)] * 2) + [Sail_t_bits(52)] + ([Sail_t_bits(8)] * 4), Sail_t_unit(), {'escape'})),
 	]
 
 	# And these have not yet been implemented

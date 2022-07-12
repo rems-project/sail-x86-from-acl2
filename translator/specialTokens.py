@@ -788,7 +788,7 @@ def tr_ignore(ACL2ast, env):
 	"""
 	return [None], env, len(ACL2ast)
 
-def _assert_helper(sailTerm):
+def assert_helper(sailTerm):
 	assert_fn = SailHandwrittenFn('assert', Sail_t_fn([Sail_t_bool()], Sail_t_unit()))
 	return SailApp(assert_fn, [sailTerm])
 
@@ -836,7 +836,7 @@ def tr_if(ACL2ast, env):
 	if isinstance(ifTerm, list) and len(ifTerm) == 2 and ifTerm[0].lower() == 'mbt':
 		(assertionSail, env, _) = transform.transformACL2asttoSail(ifTerm[1], env)
 		(thenTermSail, env, _) = transform.transformACL2asttoSail(thenTerm, env)
-		toReturn = [SailBlock([_assert_helper(assertionSail[0]), thenTermSail[0]])]
+		toReturn = [SailBlock([assert_helper(assertionSail[0]), thenTermSail[0]])]
 	elif isinstance(thenTerm, str) and thenTerm.lower() == 't' and \
 			isinstance(elseTerm, str) and elseTerm.lower() == 'nil':
 
@@ -1700,6 +1700,7 @@ def get_register_info(name):
 		'str':			(Sail_t_bits(80,    signed=False),	2),
 		'app-view':		(Sail_t_bool(),				None),
 		'marking-view':		(Sail_t_bool(),				None),
+		'os-info':		(Sail_t_string(),			None),
 	}
 
 	if name[0] == '!' or name[0] == ':':
@@ -2244,6 +2245,11 @@ def tr_defbitstruct(ACL2ast, env):
 
 	return accessors + updaters + [changeFn], env, len(ACL2ast)
 
+def throwHelper(exn):
+	throwType = Sail_t_fn([Sail_t_error()], Sail_t_error(), {'escape'}) # sort of
+	throwFn = SailHandwrittenFn(name='throw', typ=throwType)
+	return SailApp(throwFn, actuals=[exn])
+
 def errorHelper(msg):
 	"""
 	The ACL2 model distinguishes between:
@@ -2278,19 +2284,10 @@ def errorHelper(msg):
 		- Generated different exception types to represent
 		  the additional information.
 	"""
-	return SailApp(
-		fn=SailHandwrittenFn(
-			name='throw',
-			typ=Sail_t_fn([], Sail_t_error(), {'escape'}) # Sort of
-		),
-		actuals=[SailApp(
-			fn=SailHandwrittenFn(
-				name='Emsg',
-				typ=Sail_t_fn([Sail_t_string()], Sail_t_string()) # Sort of
-			),
-			actuals=[SailStringLit(msg)]
-		)]
-	)
+	exnType = Sail_t_fn([Sail_t_string()], Sail_t_error()) # Sort of
+	exnFn = SailHandwrittenFn(name='Emsg', typ=exnType)
+	exn = SailApp(exnFn, actuals=[SailStringLit(msg)])
+	return throwHelper(exn)
 
 
 def throwsException(sailExp):
@@ -2379,6 +2376,19 @@ def gen_coercion_to_bits(size, signed=False):
 		toReturn = coerceExpr(targetSail[0], retType)
 		if toReturn is None:
 			sys.exit(f"Error: Failed to coerce {targetSail[0].pp()} to {retType.pp()} in `gen_coercion_to_bits`")
+		return [toReturn], env, len(ACL2ast)
+	return tr
+
+def gen_bits_check(size, signed=False):
+	def tr(ACL2ast, env):
+		(targetSail, env, _) = transform.transformACL2asttoSail(ACL2ast[1], env)
+		fnType = Sail_t_fn([Sail_t_int(), Sail_t_int()], Sail_t_bool())
+		fnName = "fits_in_signed_bitvector" if signed else "fits_in_bitvector"
+		fn = SailHandwrittenFn(fnName, fnType)
+		intTarget = coerceExpr(targetSail[0], Sail_t_int())
+		if intTarget is None:
+			sys.exit(f"Error: Failed to coerce {targetSail[0].pp()} to int in `gen_bits_check`")
+		toReturn = SailApp(fn, [SailNumLit(size), intTarget])
 		return [toReturn], env, len(ACL2ast)
 	return tr
 

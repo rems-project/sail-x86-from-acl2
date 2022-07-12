@@ -13,6 +13,7 @@ $include "rotate_and_shift.sail"
 $include "segmentationinst.sail"
 $include "signextend.sail"
 $include "string.sail"
+$include "syscall.sail"
 $include "subroutine.sail"
 $include "topfp.sail"
 val x86_hlt : (range(0, 4), sbits(48), sbits(48), bits(52), bits(8), bits(8), bits(8), bits(8)) -> unit effect {escape}

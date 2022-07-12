@@ -549,7 +549,7 @@ class Sail_t_fn(SailType):
 		)
 
 	def containsUnknown(self):
-		return any((t == None or t.containsUnknown()) for t in self.lhs) or (self.rhs == None or self.rhs.containsUnknown())
+		return any(containsUnknownType(t) for t in self.lhs) or containsUnknownType(self.rhs)
 
 	def pp(self):
 		lhs = Sail_t_tuple(self.lhs) if len(self.lhs) > 0 else Sail_t_unit()

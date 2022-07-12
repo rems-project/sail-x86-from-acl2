@@ -57,7 +57,8 @@ function feature_flags_fn (features) =
 /*-----------------------------------------------------------------*/
 
 union exception = {
-	Emsg : string
+	Emsg : string,
+	Syscall : unit /* TODO: Pass data? */
 }
 
 
@@ -132,9 +133,15 @@ function sail_mask_signed(len, v) = if len <= length(v) then truncate(v, len) el
 val bits_of_int : forall 'n, 'n >= 0. (int, int('n)) -> bits('n)
 function bits_of_int (x, n) = get_slice_int(n, x, 0)
 
+val fits_in_bitvector : (int, int) -> bool
+function fits_in_bitvector (n, x) = (0 <= x & x < pow2(n))
+
+val fits_in_signed_bitvector : (int, int) -> bool
+function fits_in_signed_bitvector (n, x) = (negate(pow2(n - 1)) <= x & x < pow2(n - 1))
+
 val isEven : int -> bool
 function isEven x =
-	if get_slice_int(1, x, 0) == 0b0 then true else false
+       if get_slice_int(1, x, 0) == 0b0 then true else false
 
 // b-xor: http://www.cs.utexas.edu/users/moore/acl2/manuals/current/manual/?topic=ACL2____B-XOR
 val b_xor : (int, int) -> int effect {escape}
@@ -798,3 +805,6 @@ val unimplemented_evex_decode_and_execute : (int, int, int, int, int, int) -> un
 
 function unimplemented_vex_decode_and_execute (_, _, _, _, _, _) = throw(Emsg("Error: vex decoding not implemented"))
 function unimplemented_evex_decode_and_execute (_, _, _, _, _, _) = throw(Emsg("Error: evex decoding not implemented"))
+
+val unimplemented_x86_syscall_app_view : (range(0, 4), sbits(48), sbits(48), bits(52), bits(8), bits(8), bits(8), bits(8)) -> unit
+function unimplemented_x86_syscall_app_view (_, _, _, _, _, _, _, _) = throw(Syscall())

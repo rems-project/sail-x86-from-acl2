@@ -523,6 +523,21 @@ _ => throw(Emsg("Model state error: Unimplemented exception in x86isa!"))
 }
 else { throw(Emsg("Model state error: Opcode Unimplemented in x86isa!"))
 } },
+5 => { if (proc_mode) == (0)
+then let fault_var : option(string) = { (if ((0xf0) == (prefixes_get_lck(prefixes))) | ((ia32_eferbits_get_sce(truncate(msrs[0], 12))) == (0b0))
+then Some(":UD")
+else None() : option(string)) } in
+if is_some(fault_var)
+then { (match fault_var {
+Some(":UD") => throw(Emsg("A fault occurred.  Original ACL2 AST:
+['X86-ILLEGAL-INSTRUCTION', STRING: #UD Encountered!, 'START-RIP', 'TEMP-RIP', 'X86']")),
+_ => throw(Emsg("Model state error: Unimplemented exception in x86isa!"))
+}) : unit
+}
+else { x86_syscall_both_views(proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode, modr_m, sib)
+}
+else throw(Emsg("A fault occurred.  Original ACL2 AST:
+['X86-ILLEGAL-INSTRUCTION', STRING: #UD Encountered!, 'START-RIP', 'TEMP-RIP', 'X86']")) },
 6 => { let fault_var : option(string) = { (if (0xf0) == (prefixes_get_lck(prefixes))
 then Some(":UD")
 else if not_bool((unsigned({ ();
@@ -541,6 +556,27 @@ _ => throw(Emsg("Model state error: Unimplemented exception in x86isa!"))
 }
 else { throw(Emsg("Model state error: Opcode Unimplemented in x86isa!"))
 } },
+7 => { if (proc_mode) == (0)
+then let fault_var : option(string) = { (if ((0xf0) == (prefixes_get_lck(prefixes))) | ((ia32_eferbits_get_sce(truncate(msrs[0], 12))) == (0b0))
+then Some(":UD")
+else if not_bool((unsigned({ ();
+segment_selectorbits_get_rpl(seg_visibles[1])
+})) == (0))
+then Some(":GP")
+else None() : option(string)) } in
+if is_some(fault_var)
+then { (match fault_var {
+Some(":UD") => throw(Emsg("A fault occurred.  Original ACL2 AST:
+['X86-ILLEGAL-INSTRUCTION', STRING: #UD Encountered!, 'START-RIP', 'TEMP-RIP', 'X86']")),
+Some(":GP") => throw(Emsg("A fault occurred.  Original ACL2 AST:
+['X86-GENERAL-PROTECTION', STRING: #GP Encountered!, 'START-RIP', 'TEMP-RIP', 'X86']")),
+_ => throw(Emsg("Model state error: Unimplemented exception in x86isa!"))
+}) : unit
+}
+else { x86_sysret(proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode, modr_m, sib)
+}
+else throw(Emsg("A fault occurred.  Original ACL2 AST:
+['X86-ILLEGAL-INSTRUCTION', STRING: #UD Encountered!, 'START-RIP', 'TEMP-RIP', 'X86']")) },
 8 => { let fault_var : option(string) = { (if (0xf0) == (prefixes_get_lck(prefixes))
 then Some(":UD")
 else None() : option(string)) } in
@@ -1151,6 +1187,7 @@ else if (modr_m_get_mod(modr_m)) == (0b11)
 then throw(Emsg("Model state error: Opcode Unimplemented in x86isa!"))
 else throw(Emsg("A fault occurred.  Original ACL2 AST:
 ['X86-ILLEGAL-INSTRUCTION', STRING: #UD Encountered!, 'START-RIP', 'TEMP-RIP', 'X86']")) },
+25 => throw(Emsg("Model state error: Opcode Unimplemented in x86isa!")),
 26 => { if (not_bool((modr_m_get_mod(modr_m)) == (0b11))) & ((mandatory_prefix) == (0x00))
 then let fault_var : option(string) = { (if ((feature_flags_fn([|":MPX"|])) == (0)) | (((0xf0) == (prefixes_get_lck(prefixes))) | (((4) <= (unsigned(reg_index(modr_m_get_reg(modr_m), rex_byte, 0b10)))) | (if (proc_mode) == (0)
 then ((modr_m_get_mod(modr_m)) == (0b00)) & (((modr_m_get_r_m(modr_m)) == (0b101)) | (((modr_m_get_r_m(modr_m)) == (0b100)) & (((sib_get_base(sib)) == (0b101)) & ((sib_get_index(sib)) == (0b100)))))
@@ -2611,13 +2648,10 @@ else { x86_shufpd_op_en_rmi(proc_mode, start_rip, temp_rip, prefixes, rex_byte, 
 else throw(Emsg("A fault occurred.  Original ACL2 AST:
 ['X86-ILLEGAL-INSTRUCTION', STRING: #UD Encountered!, 'START-RIP', 'TEMP-RIP', 'X86']")) },
 4 => throw(Emsg("Translation error: two-byte opcode 4 not translated")),
-5 => throw(Emsg("Translation error: two-byte opcode 5 not translated")),
-7 => throw(Emsg("Translation error: two-byte opcode 7 not translated")),
 10 => throw(Emsg("Translation error: two-byte opcode 10 not translated")),
 12 => throw(Emsg("Translation error: two-byte opcode 12 not translated")),
 14 => throw(Emsg("Translation error: two-byte opcode 14 not translated")),
 15 => throw(Emsg("Translation error: two-byte opcode 15 not translated")),
-25 => throw(Emsg("Translation error: two-byte opcode 25 not translated")),
 36 => throw(Emsg("Translation error: two-byte opcode 36 not translated")),
 37 => throw(Emsg("Translation error: two-byte opcode 37 not translated")),
 38 => throw(Emsg("Translation error: two-byte opcode 38 not translated")),
