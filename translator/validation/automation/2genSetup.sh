@@ -1,5 +1,5 @@
 # Find .s files
-SFILES=$(find ${KFSIT} -type f -iname "*.s")
+SFILES=$(find ${KFSIT} -type f -name "*.s")
 
 for i in ${SFILES}; do
 	# Split directory and filename.

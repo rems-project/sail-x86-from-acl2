@@ -23,7 +23,7 @@ emu_path = args.emupath[0]
 sa, ha = sharedFunctions.getAddresses(fpath)
 
 # Generate the shell command
-command = "{} -e a.out -C rip={} -C rsp=35184372088832 -C rflags=2 -C ha={} -C set64bit=1".format(
+command = "{} -e a.out -C rip={} -C rsp=35184372088832 -C rflags=2 -C ha={} -C set64bit=1 -C app_view=1  -C cr4=512".format(
 	emu_path,
 	sa,
 	ha,)

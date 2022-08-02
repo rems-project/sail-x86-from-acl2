@@ -8,9 +8,8 @@
  {}
  ;; Initial values of General-Purpose Registers 
  '((#.*rsp* . #.*2^45*)) 
- ;; Control Registers: a value of nil will not nullify existing 
- ;; values. 
- nil 
+ ;; Control Registers: set cr4.osfxsr, needed for some instructions in the test suite
+ '((4 . 512))
  ;; Model-Specific Registers: a value of nil will not nullify existing 
  ;; values. 
  nil 

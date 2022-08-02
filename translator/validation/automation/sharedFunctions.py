@@ -9,6 +9,9 @@ def getAddresses(fpath):
 
 		# We have something like 'start address 0x0000000000400233'
 		# Extract the start addr from this and convert to an integer
+		if not saLine.startswith('start address '):
+			print('Error: failed to parse start address')
+			sys.exit()
 		sa = saLine[14:]
 		sa = int(sa, 16)
 

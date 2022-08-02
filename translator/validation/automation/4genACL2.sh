@@ -1,8 +1,12 @@
-set -e
+#!/bin/bash
+
+if [ -z "${KFSIT}" ]; then
+	echo "Error: Set KFSIT environment variable."
+	exit 1
+fi
 
 # Find instrument.sail files excluding some rep folders
-folder=${KFSIT}
-SFILES=$(find ${folder} -type f -iname "runSail.sh" ! -path '*rep_mov*')
+SFILES=$(find ${KFSIT} -type f -name "runSail.sh")
 
 # Parallel version
 # parallel --group 'echo {#}; echo {//}; rm -f {//}/runACL2.lisp; python3 getACL2.py {//}' ::: ${SFILES}
@@ -18,7 +22,4 @@ for i in ${SFILES}; do
 
 	# Run a Python script to generate the top level `instrument` file
 	python3 getACL2.py ${DIR}
-
-	# Make it executable
-	chmod +x ${DIR}/runSail.sh
 done;

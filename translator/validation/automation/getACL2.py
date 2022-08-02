@@ -20,7 +20,8 @@ sa, _ = sharedFunctions.getAddresses(fpath)
 # Name we will use for the output file
 outName = os.path.join(fpath, 'runACL2.lisp')
 
-def printNiceError(errString):
+def formatError(errString):
+	# Return a formatted error
 	if errString.startswith('Translation error: two-byte opcode '):
 		return f"NT 2 {errString[35:38]}"
 	if errString in ['Model state error: Opcode Unimplemented in x86isa!\n', 'Model state error: Unimplemented exception in x86isa!\n']:
@@ -33,32 +34,27 @@ def printNiceError(errString):
 		return f'MS-fault illegal-instruction'
 	return errString
 
-def printError(fpath, string, ls):
+def printStatus(fpath, string):
 	name = fpath.split('/')[-1]
 	print(f"{name} {string}")
 	# print("Last lines of Sail log read:")
 	# print('\n\t'+ '\n\t'.join(ls[-5:]))
 
 # Get the number of steps the Sail execution took
-fault = True
+status = 'OK'
 with open(os.path.join(fpath, 'sailOut.log'), 'r') as f:
 	# The number of lines should be on the penultimate non-empty line
 	# But an error might have occurred
 	ls = f.readlines()
 	if ls == []:
-		printError(fpath, 'blank', ls)
-	elif not ls[-2].startswith('rip'):
-		printError(fpath, printNiceError(ls[-2]), ls)
-		# print(f"Error in Sail log file in: {fpath} - third last line starts with {ls[-3][:3]} not `rip`")
-	elif not ls[-1].startswith('Steps = '):
-		printError(fpath, 'notSteps', ls)
-		# print(f"Error finding number of steps taken in: {fpath} - second last line not `steps`")
-	else:
-		numSteps = int(ls[-1].split(' ')[-1])
-		fault = False
-
-if fault:
-	sys.exit()
+		printStatus(fpath, 'blank')
+		sys.exit()
+	if not ls[-1].startswith('Steps = '):
+		printStatus(fpath, 'notSteps')
+		sys.exit()
+	if not ls[-2].startswith('rip'):
+		status = formatError(ls[-2])
+	numSteps = int(ls[-1].split(' ')[-1])
 
 # Read the instrument template file for ACL2
 with open('acl2RunTemplate.lisp', 'r') as templateFile:
@@ -70,7 +66,7 @@ lisp = template.format(
 			numSteps)
 
 # print(f"Generated ACL2 for {fpath}")
-print(f"{fpath.split('/')[-1]} OK")
+printStatus(fpath, status)
 
 with open(outName, 'w') as outfile:
 	outfile.write(lisp)

@@ -59,29 +59,19 @@ function initialiseState2 () = {
 // Using the __SetConfig method.  See aarch32 example for example.
 val __SetConfig : (string, int) -> unit effect {escape, rreg, wreg}
 function __SetConfig (arg, value) =
-	match () {
-		() if arg == "rip" => {
-			rip = get_slice_int(48, value, 0)
-		},
-		() if arg == "rdi" => {
-			write_rgfi(7, get_slice_int(64, value, 0))
-		},
-		() if arg == "rsp" => {
-			write_rgfi(4, get_slice_int(64, value, 0))
-		},
-		() if arg == "rflags" => {
-			rflags = get_slice_int(32, value, 0)
-		},
-		() if arg == "ha" => {
-			haltAddrReg = get_slice_int(48, value, 0)
-		},
-		() if arg == "set64bit" => {
+	match arg {
+		"rip" => { rip = get_slice_int(48, value, 0) },
+		"rdi" => { write_rgfi(7, get_slice_int(64, value, 0)) },
+		"rsp" => { write_rgfi(4, get_slice_int(64, value, 0)) },
+		"rflags" => { rflags = get_slice_int(32, value, 0) },
+		"cr4" => { ctrs[4] = get_slice_int(64, value, 0) },
+		"ha" => { haltAddrReg = get_slice_int(48, value, 0) },
+		"set64bit" => {
 			// Ignore the value
 			initialise_64_bit_mode()
 		},
-		_ => {
-			throw(Emsg("Unrecognised Config"))
-		}
+		"app_view" => { app_view = (value != 0) },
+		_ => throw(Emsg("Unrecognised Config"))
 	}
 
 // This should print information about __SetConfig to stderr.

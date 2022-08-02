@@ -1278,6 +1278,38 @@ class SailVectorProject(SailASTelem):
 		sys.exit("Finish implementing nil resolution functions for SailVectorProject!")
 
 
+class SailBitsSubrange(SailASTelem):
+	"""A Sail bitvector subrange"""
+
+	def __init__(self, bits, high, low, coerceIndices=True):
+		"""
+		Args:
+			vector: SailASTelem : Sail_t_bits
+			high, low: int
+		"""
+		super().__init__()
+		# nBits = bits.getType().getLength()
+		# indexType = Sail_t_range(0, nBits - 1) if nBits is not None else None
+		self.bits = bits
+		self.high = high # coerceExpr(high, indexType) if coerceIndex and indexType is not None else high
+		self.low = low # coerceExpr(low, indexType) if coerceIndex and indexType is not None else low
+
+	### Required methods ###
+	def getType(self):
+		return Sail_t_bits(self.high - self.low + 1)
+
+	def getEffects(self, ctx):
+		return self.bits.getEffects(ctx)
+
+	def getChildrenByPred(self, p):
+		return self.bits.getChildrenByPred(p)
+
+	def pp(self):
+		# Add paranthesis, unless the vector is just a variable
+		vector_pp = '(' + self.bits.pp() + ')' if not isinstance(self.bits, SailBoundVar) else self.bits.pp()
+		return f"{vector_pp}[{self.high} .. {self.low}]"
+
+
 class SailListLit(SailASTelem):
 	"""A Sail list literal"""
 	def __init__(self, members):

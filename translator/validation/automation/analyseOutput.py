@@ -1,5 +1,4 @@
 import sys, os
-sys.path.insert(1, os.path.join(sys.path[0], '..'))
 import lex_parse
 
 def convertNum(stringValue):
@@ -172,7 +171,7 @@ class MemoryEvent:
 		Where the numbers are decimal integers
 		'''
 		s = s.split()
-		self.ip = int(s[0][:-1])
+		self.ip = int(s[0][:-1], base=0)
 		type = s[1]
 		if type == 'R':
 			self.type = MemoryEvent.R
@@ -180,9 +179,9 @@ class MemoryEvent:
 			self.type = MemoryEvent.W
 		else:
 			sys.exit(f"Error: unknown memory event type: {s}")
-		self.addr = int(s[2])
-		self.len = int(s[3])
-		self.data = int(s[4])
+		self.addr = int(s[2], base=0)
+		self.len = int(s[3], base=0)
+		self.data = int(s[4], base=0)
 
 		self.initialised = True
 

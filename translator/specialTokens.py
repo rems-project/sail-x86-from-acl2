@@ -1140,24 +1140,42 @@ def tr_part_select(ACL2ast, env):
 	(target, _, _, _, _) = _filterExtract(ACL2ast, 6, [None] * 5, [None] * 5, "`part_select`")
 	(targetSail, env, _) = transform.transformACL2asttoSail(target, env)
 
-	retType = Sail_t_bits(size)
 	targetType = targetSail[0].getType()
 
-	# Create the slice function application
-	if isinstance(targetType, Sail_t_bits):
-		sailTerm = SailApp(fn = SailHandwrittenFn(
-								name = 'slice',
-								typ = Sail_t_fn([targetType, Sail_t_int(), Sail_t_int()], retType)),
-						actuals = [targetSail[0], lowASTsail[0], sizeASTsail])
+	innerRetType = Sail_t_bits(size)
+	if size is not None:
+		outerSize = size
+	elif size is None and isinstance(sizeASTsail.getType(), Sail_t_member):
+		# If the bitslice has dynamic length, but it is known to be one
+		# of a set of choices, coerce the final expression to the
+		# maximum width, so that the further translation has a concrete
+		# bitvector width to work with
+		outerSize = max(sizeASTsail.getType().members)
 	else:
-		sailTerm = SailApp(fn = SailHandwrittenFn(
-								name = 'get_slice_int',
-								typ = Sail_t_fn([Sail_t_int(), Sail_t_int(), Sail_t_int()], retType)),
-						actuals = [sizeASTsail, targetSail[0], lowASTsail[0]])
+		sys.exit(f"Error: can't handle output size {sizeASTsail.pp()} in part_select expression")
+	outerRetType = Sail_t_bits(outerSize)
 
-	if size is None and isinstance(sizeASTsail.getType(), Sail_t_member):
-		maxSize = max(sizeASTsail.getType().members)
-		sailTerm = coerceExpr(sailTerm, Sail_t_bits(maxSize))
+	# Create the slice expression
+	if isinstance(targetType, Sail_t_bits):
+		targetWidth = targetType.getLength()
+		if targetWidth is not None and size is not None \
+				and isinstance(lowASTsail[0], SailNumLit) \
+				and lowASTsail[0].getNum() + size <= targetWidth:
+			low = lowASTsail[0].getNum()
+			sailTerm = SailBitsSubrange(targetSail[0], low + size - 1, low)
+		else:
+			fnName = 'signed_bitslice' if targetType.signed else 'bitslice'
+			fnTyp = Sail_t_fn([targetType, Sail_t_int(), Sail_t_int()], innerRetType)
+			fnArgs = [targetSail[0], lowASTsail[0], sizeASTsail]
+			sailTerm = SailApp(fn = SailHandwrittenFn(fnName, fnTyp), actuals = fnArgs)
+	else:
+		fnTyp = Sail_t_fn([Sail_t_int(), Sail_t_int(), Sail_t_int()], innerRetType)
+		fnArgs = [sizeASTsail, targetSail[0], lowASTsail[0]]
+		sailTerm = SailApp(fn = SailHandwrittenFn(name = 'get_slice_int', typ = fnTyp), actuals = fnArgs)
+
+	sailTerm = coerceExpr(sailTerm, outerRetType)
+	if sailTerm is None:
+		sys.exit(f"Error: coerceExpr failed in {ACL2ast}")
 
 	return [sailTerm], env, len(ACL2ast)
 

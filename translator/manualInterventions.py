@@ -334,11 +334,14 @@ def div_type(ACL2ast, env):
 
 def chk_exc_fn_type(ACL2ast, env):
 	"""
-	Force type of `chk-exc-fn` to be option(string).
+	Force type of `chk-exc-fn` to be option(string), and add a success case for `cond`.
 	"""
-	if env.getDefineSlot().lower() == 'chk-exc-fn' and isinstance(ACL2ast, str) and ACL2ast.lower() in [':ud', ':nm'] and \
-			env.peekContext2 != 'cond':
-		return True, [someHelper(SailStringLit(ACL2ast))], env
+	if env.getDefineSlot().lower() == 'chk-exc-fn':
+		if isinstance(ACL2ast, str) and ACL2ast.lower() in [':ud', ':nm'] and env.peekContext2 != 'cond':
+			return True, [someHelper(SailStringLit(ACL2ast.upper()))], env
+		elif isinstance(ACL2ast, list) and isinstance(ACL2ast[0], str) and ACL2ast[0].lower() == 'cond':
+			sail, env, _ = specialTokens.tr_cond(ACL2ast + [['t', 'nil']], env)
+			return True, sail, env
 
 def bitvector_merges(ACL2ast, env):
 	pattern = re.compile(r"(bitops::)?merge-(\d{1,3})-u(\d{1,3})s")
