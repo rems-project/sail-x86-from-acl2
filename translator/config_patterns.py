@@ -224,8 +224,8 @@ only_translate = {
 		['include-book', ACL2String('instructions/top')],
 		['include-book', ACL2String('two-byte-opcodes-dispatch')],
 		['include-book', ACL2String('three-byte-opcodes-dispatch')],
-		# ['include-book', ACL2String('vex-opcodes-dispatch')],
-		# ['include-book', ACL2String('evex-opcodes-dispatch')],
+		['include-book', ACL2String('vex-opcodes-dispatch')],
+		['include-book', ACL2String('evex-opcodes-dispatch')],
 		['define', 'get-prefixes'],
 		['define', 'x86-fetch-decode-execute'],
 		['make-event'], # Deceptive, but actually the main route into the semantic functions, makes one-byte-opcode-execute
