@@ -3,8 +3,8 @@ val mul_spec_8 : (bits(8), bits(8)) -> (bits(8), bits(8), bits(16))
 
 function mul_spec_8 (dst, src) = {
     let product : bits(16) = bits_of_int(unsigned(dst) * unsigned(src), 16);
-    let product_high : bits(8) = slice(product, 8, 8);
-    let product_low : bits(8) = slice(product, 0, 8);
+    let product_high : bits(8) = product[15 .. 8];
+    let product_low : bits(8) = product[7 .. 0];
     (product_high, product_low, product)
 }
 
@@ -12,8 +12,8 @@ val mul_spec_16 : (bits(16), bits(16)) -> (bits(16), bits(16), bits(32))
 
 function mul_spec_16 (dst, src) = {
     let product : bits(32) = bits_of_int(unsigned(dst) * unsigned(src), 32);
-    let product_high : bits(16) = slice(product, 16, 16);
-    let product_low : bits(16) = slice(product, 0, 16);
+    let product_high : bits(16) = product[31 .. 16];
+    let product_low : bits(16) = product[15 .. 0];
     (product_high, product_low, product)
 }
 
@@ -21,8 +21,8 @@ val mul_spec_32 : (bits(32), bits(32)) -> (bits(32), bits(32), bits(64))
 
 function mul_spec_32 (dst, src) = {
     let product : bits(64) = bits_of_int(unsigned(dst) * unsigned(src), 64);
-    let product_high : bits(32) = slice(product, 32, 32);
-    let product_low : bits(32) = slice(product, 0, 32);
+    let product_high : bits(32) = product[63 .. 32];
+    let product_low : bits(32) = product[31 .. 0];
     (product_high, product_low, product)
 }
 
@@ -30,8 +30,8 @@ val mul_spec_64 : (bits(64), bits(64)) -> (bits(64), bits(64), bits(128))
 
 function mul_spec_64 (dst, src) = {
     let product : bits(128) = bits_of_int(unsigned(dst) * unsigned(src), 128);
-    let product_high : bits(64) = slice(product, 64, 64);
-    let product_low : bits(64) = slice(product, 0, 64);
+    let product_high : bits(64) = product[127 .. 64];
+    let product_low : bits(64) = product[63 .. 0];
     (product_high, product_low, product)
 }
 
@@ -63,8 +63,8 @@ function imul_spec_8 (dst, src) = {
     let src_int : sbits(8) = src;
     let product_int : sbits(16) = bits_of_int(signed(dst_int) * signed(src_int), 16);
     let product : bits(16) = product_int;
-    let product_high : bits(8) = slice(product, 8, 8);
-    let product_low : bits(8) = slice(product, 0, 8);
+    let product_high : bits(8) = product[15 .. 8];
+    let product_low : bits(8) = product[7 .. 0];
     let product_low_int : sbits(8) = product_low;
     let cf_and_of : bits(1) = bool_to_bit(not_bool(sail_sign_extend(product_low_int, 16) == product_int));
     (product_high, product_low, product, cf_and_of)
@@ -77,8 +77,8 @@ function imul_spec_16 (dst, src) = {
     let src_int : sbits(16) = src;
     let product_int : sbits(32) = bits_of_int(signed(dst_int) * signed(src_int), 32);
     let product : bits(32) = product_int;
-    let product_high : bits(16) = slice(product, 16, 16);
-    let product_low : bits(16) = slice(product, 0, 16);
+    let product_high : bits(16) = product[31 .. 16];
+    let product_low : bits(16) = product[15 .. 0];
     let product_low_int : sbits(16) = product_low;
     let cf_and_of : bits(1) = bool_to_bit(not_bool(sail_sign_extend(product_low_int, 32) == product_int));
     (product_high, product_low, product, cf_and_of)
@@ -91,8 +91,8 @@ function imul_spec_32 (dst, src) = {
     let src_int : sbits(32) = src;
     let product_int : sbits(64) = bits_of_int(signed(dst_int) * signed(src_int), 64);
     let product : bits(64) = product_int;
-    let product_high : bits(32) = slice(product, 32, 32);
-    let product_low : bits(32) = slice(product, 0, 32);
+    let product_high : bits(32) = product[63 .. 32];
+    let product_low : bits(32) = product[31 .. 0];
     let product_low_int : sbits(32) = product_low;
     let cf_and_of : bits(1) = bool_to_bit(not_bool(sail_sign_extend(product_low_int, 64) == product_int));
     (product_high, product_low, product, cf_and_of)
@@ -105,8 +105,8 @@ function imul_spec_64 (dst, src) = {
     let src_int : sbits(64) = src;
     let product_int : sbits(128) = bits_of_int(signed(dst_int) * signed(src_int), 128);
     let product : bits(128) = product_int;
-    let product_high : bits(64) = slice(product, 64, 64);
-    let product_low : bits(64) = slice(product, 0, 64);
+    let product_high : bits(64) = product[127 .. 64];
+    let product_low : bits(64) = product[63 .. 0];
     let product_low_int : sbits(64) = product_low;
     let cf_and_of : bits(1) = bool_to_bit(not_bool(sail_sign_extend(product_low_int, 128) == product_int));
     (product_high, product_low, product, cf_and_of)

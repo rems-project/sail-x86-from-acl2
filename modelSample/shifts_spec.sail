@@ -7,7 +7,7 @@ let raw_result : int = (ash(unsigned(dst), unsigned(src))) in
 let result : bits(8) = (bits_of_int(raw_result, 8)) in
 let (output_rflags, undefined_flags) : (bits(32), bits(32)) = { (match src {
 0 => (input_rflags, 0x0000_0000),
-1 => { let cf : bits(1) = (slice(dst, 7, 1)) in
+1 => { let cf : bits(1) = (dst[7 .. 7]) in
 let pf : bits(1) = (pf_spec8(result)) in
 let zf : {|0, 1|} = (zf_spec(unsigned(result))) in
 let sf : bits(1) = (sf_spec8(result)) in
@@ -22,7 +22,7 @@ let sf : bits(1) = (sf_spec8(result)) in
 let output_rflags : bits(32) = (change_rflagsbits(input_rflags, None(), None(), Some(pf), None(), None(), None(), Some(bits_of_int(zf, 1)), Some(sf), None(), None(), None(), None(), None(), None(), None(), None(), None(), None(), None(), None(), None(), None())) in
 let undefined_flags : bits(32) = (change_rflagsbits(0x0000_0000, Some(0b1), None(), None(), None(), Some(0b1), None(), None(), None(), None(), None(), None(), Some(0b1), None(), None(), None(), None(), None(), None(), None(), None(), None(), None())) in
 (output_rflags, undefined_flags)
-else let cf : bits(1) = (slice(dst, (8) - (unsigned(src)), 1)) in
+else let cf : bits(1) = (bitslice(dst, (8) - (unsigned(src)), 1)) in
 let pf : bits(1) = (pf_spec8(result)) in
 let zf : {|0, 1|} = (zf_spec(unsigned(result))) in
 let sf : bits(1) = (sf_spec8(result)) in
@@ -38,7 +38,7 @@ let raw_result : int = (ash(unsigned(dst), unsigned(src))) in
 let result : bits(16) = (bits_of_int(raw_result, 16)) in
 let (output_rflags, undefined_flags) : (bits(32), bits(32)) = { (match src {
 0 => (input_rflags, 0x0000_0000),
-1 => { let cf : bits(1) = (slice(dst, 15, 1)) in
+1 => { let cf : bits(1) = (dst[15 .. 15]) in
 let pf : bits(1) = (pf_spec16(result)) in
 let zf : {|0, 1|} = (zf_spec(unsigned(result))) in
 let sf : bits(1) = (sf_spec16(result)) in
@@ -53,7 +53,7 @@ let sf : bits(1) = (sf_spec16(result)) in
 let output_rflags : bits(32) = (change_rflagsbits(input_rflags, None(), None(), Some(pf), None(), None(), None(), Some(bits_of_int(zf, 1)), Some(sf), None(), None(), None(), None(), None(), None(), None(), None(), None(), None(), None(), None(), None(), None())) in
 let undefined_flags : bits(32) = (change_rflagsbits(0x0000_0000, Some(0b1), None(), None(), None(), Some(0b1), None(), None(), None(), None(), None(), None(), Some(0b1), None(), None(), None(), None(), None(), None(), None(), None(), None(), None())) in
 (output_rflags, undefined_flags)
-else let cf : bits(1) = (slice(dst, (16) - (unsigned(src)), 1)) in
+else let cf : bits(1) = (bitslice(dst, (16) - (unsigned(src)), 1)) in
 let pf : bits(1) = (pf_spec16(result)) in
 let zf : {|0, 1|} = (zf_spec(unsigned(result))) in
 let sf : bits(1) = (sf_spec16(result)) in
@@ -69,7 +69,7 @@ let raw_result : int = (ash(unsigned(dst), unsigned(src))) in
 let result : bits(32) = (bits_of_int(raw_result, 32)) in
 let (output_rflags, undefined_flags) : (bits(32), bits(32)) = { (match src {
 0 => (input_rflags, 0x0000_0000),
-1 => { let cf : bits(1) = (slice(dst, 31, 1)) in
+1 => { let cf : bits(1) = (dst[31 .. 31]) in
 let pf : bits(1) = (pf_spec32(result)) in
 let zf : {|0, 1|} = (zf_spec(unsigned(result))) in
 let sf : bits(1) = (sf_spec32(result)) in
@@ -84,7 +84,7 @@ let sf : bits(1) = (sf_spec32(result)) in
 let output_rflags : bits(32) = (change_rflagsbits(input_rflags, None(), None(), Some(pf), None(), None(), None(), Some(bits_of_int(zf, 1)), Some(sf), None(), None(), None(), None(), None(), None(), None(), None(), None(), None(), None(), None(), None(), None())) in
 let undefined_flags : bits(32) = (change_rflagsbits(0x0000_0000, Some(0b1), None(), None(), None(), Some(0b1), None(), None(), None(), None(), None(), None(), Some(0b1), None(), None(), None(), None(), None(), None(), None(), None(), None(), None())) in
 (output_rflags, undefined_flags)
-else let cf : bits(1) = (slice(dst, (32) - (unsigned(src)), 1)) in
+else let cf : bits(1) = (bitslice(dst, (32) - (unsigned(src)), 1)) in
 let pf : bits(1) = (pf_spec32(result)) in
 let zf : {|0, 1|} = (zf_spec(unsigned(result))) in
 let sf : bits(1) = (sf_spec32(result)) in
@@ -100,7 +100,7 @@ let raw_result : int = (ash(unsigned(dst), unsigned(src))) in
 let result : bits(64) = (bits_of_int(raw_result, 64)) in
 let (output_rflags, undefined_flags) : (bits(32), bits(32)) = { (match src {
 0 => (input_rflags, 0x0000_0000),
-1 => { let cf : bits(1) = (slice(dst, 63, 1)) in
+1 => { let cf : bits(1) = (dst[63 .. 63]) in
 let pf : bits(1) = (pf_spec64(result)) in
 let zf : {|0, 1|} = (zf_spec(unsigned(result))) in
 let sf : bits(1) = (sf_spec64(result)) in
@@ -115,7 +115,7 @@ let sf : bits(1) = (sf_spec64(result)) in
 let output_rflags : bits(32) = (change_rflagsbits(input_rflags, None(), None(), Some(pf), None(), None(), None(), Some(bits_of_int(zf, 1)), Some(sf), None(), None(), None(), None(), None(), None(), None(), None(), None(), None(), None(), None(), None(), None())) in
 let undefined_flags : bits(32) = (change_rflagsbits(0x0000_0000, Some(0b1), None(), None(), None(), Some(0b1), None(), None(), None(), None(), None(), None(), Some(0b1), None(), None(), None(), None(), None(), None(), None(), None(), None(), None())) in
 (output_rflags, undefined_flags)
-else let cf : bits(1) = (slice(dst, (64) - (unsigned(src)), 1)) in
+else let cf : bits(1) = (bitslice(dst, (64) - (unsigned(src)), 1)) in
 let pf : bits(1) = (pf_spec64(result)) in
 let zf : {|0, 1|} = (zf_spec(unsigned(result))) in
 let sf : bits(1) = (sf_spec64(result)) in
@@ -159,11 +159,11 @@ let raw_result : bits(8) = (bits_of_int(ash(unsigned(dst), signed(neg_src)), 8))
 let result : bits(8) = (raw_result) in
 let (output_rflags, undefined_flags) : (bits(32), bits(32)) = { (match src {
 0 => (input_rflags, 0x0000_0000),
-1 => { let cf : bits(1) = (slice(dst, 0, 1)) in
+1 => { let cf : bits(1) = (dst[0 .. 0]) in
 let pf : bits(1) = (pf_spec8(result)) in
 let zf : {|0, 1|} = (zf_spec(unsigned(result))) in
 let sf : bits(1) = (sf_spec8(result)) in
-let of : bits(1) = (slice(dst, 7, 1)) in
+let of : bits(1) = (dst[7 .. 7]) in
 let output_rflags : bits(32) = (change_rflagsbits(input_rflags, Some(cf), None(), Some(pf), None(), None(), None(), Some(bits_of_int(zf, 1)), Some(sf), None(), None(), None(), Some(of), None(), None(), None(), None(), None(), None(), None(), None(), None(), None())) in
 let undefined_flags : bits(32) = (set_rflagsbits_get_af(0b1, 0x0000_0000)) in
 (output_rflags, undefined_flags) },
@@ -174,7 +174,7 @@ let sf : bits(1) = (sf_spec8(result)) in
 let output_rflags : bits(32) = (change_rflagsbits(input_rflags, None(), None(), Some(pf), None(), None(), None(), Some(bits_of_int(zf, 1)), Some(sf), None(), None(), None(), None(), None(), None(), None(), None(), None(), None(), None(), None(), None(), None())) in
 let undefined_flags : bits(32) = (change_rflagsbits(0x0000_0000, Some(0b1), None(), None(), None(), Some(0b1), None(), None(), None(), None(), None(), None(), Some(0b1), None(), None(), None(), None(), None(), None(), None(), None(), None(), None())) in
 (output_rflags, undefined_flags)
-else let cf : bits(1) = (slice(dst, (unsigned(src)) - (1), 1)) in
+else let cf : bits(1) = (bitslice(dst, (unsigned(src)) - (1), 1)) in
 let pf : bits(1) = (pf_spec8(result)) in
 let zf : {|0, 1|} = (zf_spec(unsigned(result))) in
 let sf : bits(1) = (sf_spec8(result)) in
@@ -191,11 +191,11 @@ let raw_result : bits(16) = (bits_of_int(ash(unsigned(dst), signed(neg_src)), 16
 let result : bits(16) = (raw_result) in
 let (output_rflags, undefined_flags) : (bits(32), bits(32)) = { (match src {
 0 => (input_rflags, 0x0000_0000),
-1 => { let cf : bits(1) = (slice(dst, 0, 1)) in
+1 => { let cf : bits(1) = (dst[0 .. 0]) in
 let pf : bits(1) = (pf_spec16(result)) in
 let zf : {|0, 1|} = (zf_spec(unsigned(result))) in
 let sf : bits(1) = (sf_spec16(result)) in
-let of : bits(1) = (slice(dst, 15, 1)) in
+let of : bits(1) = (dst[15 .. 15]) in
 let output_rflags : bits(32) = (change_rflagsbits(input_rflags, Some(cf), None(), Some(pf), None(), None(), None(), Some(bits_of_int(zf, 1)), Some(sf), None(), None(), None(), Some(of), None(), None(), None(), None(), None(), None(), None(), None(), None(), None())) in
 let undefined_flags : bits(32) = (set_rflagsbits_get_af(0b1, 0x0000_0000)) in
 (output_rflags, undefined_flags) },
@@ -206,7 +206,7 @@ let sf : bits(1) = (sf_spec16(result)) in
 let output_rflags : bits(32) = (change_rflagsbits(input_rflags, None(), None(), Some(pf), None(), None(), None(), Some(bits_of_int(zf, 1)), Some(sf), None(), None(), None(), None(), None(), None(), None(), None(), None(), None(), None(), None(), None(), None())) in
 let undefined_flags : bits(32) = (change_rflagsbits(0x0000_0000, Some(0b1), None(), None(), None(), Some(0b1), None(), None(), None(), None(), None(), None(), Some(0b1), None(), None(), None(), None(), None(), None(), None(), None(), None(), None())) in
 (output_rflags, undefined_flags)
-else let cf : bits(1) = (slice(dst, (unsigned(src)) - (1), 1)) in
+else let cf : bits(1) = (bitslice(dst, (unsigned(src)) - (1), 1)) in
 let pf : bits(1) = (pf_spec16(result)) in
 let zf : {|0, 1|} = (zf_spec(unsigned(result))) in
 let sf : bits(1) = (sf_spec16(result)) in
@@ -223,11 +223,11 @@ let raw_result : bits(32) = (bits_of_int(ash(unsigned(dst), signed(neg_src)), 32
 let result : bits(32) = (raw_result) in
 let (output_rflags, undefined_flags) : (bits(32), bits(32)) = { (match src {
 0 => (input_rflags, 0x0000_0000),
-1 => { let cf : bits(1) = (slice(dst, 0, 1)) in
+1 => { let cf : bits(1) = (dst[0 .. 0]) in
 let pf : bits(1) = (pf_spec32(result)) in
 let zf : {|0, 1|} = (zf_spec(unsigned(result))) in
 let sf : bits(1) = (sf_spec32(result)) in
-let of : bits(1) = (slice(dst, 31, 1)) in
+let of : bits(1) = (dst[31 .. 31]) in
 let output_rflags : bits(32) = (change_rflagsbits(input_rflags, Some(cf), None(), Some(pf), None(), None(), None(), Some(bits_of_int(zf, 1)), Some(sf), None(), None(), None(), Some(of), None(), None(), None(), None(), None(), None(), None(), None(), None(), None())) in
 let undefined_flags : bits(32) = (set_rflagsbits_get_af(0b1, 0x0000_0000)) in
 (output_rflags, undefined_flags) },
@@ -238,7 +238,7 @@ let sf : bits(1) = (sf_spec32(result)) in
 let output_rflags : bits(32) = (change_rflagsbits(input_rflags, None(), None(), Some(pf), None(), None(), None(), Some(bits_of_int(zf, 1)), Some(sf), None(), None(), None(), None(), None(), None(), None(), None(), None(), None(), None(), None(), None(), None())) in
 let undefined_flags : bits(32) = (change_rflagsbits(0x0000_0000, Some(0b1), None(), None(), None(), Some(0b1), None(), None(), None(), None(), None(), None(), Some(0b1), None(), None(), None(), None(), None(), None(), None(), None(), None(), None())) in
 (output_rflags, undefined_flags)
-else let cf : bits(1) = (slice(dst, (unsigned(src)) - (1), 1)) in
+else let cf : bits(1) = (bitslice(dst, (unsigned(src)) - (1), 1)) in
 let pf : bits(1) = (pf_spec32(result)) in
 let zf : {|0, 1|} = (zf_spec(unsigned(result))) in
 let sf : bits(1) = (sf_spec32(result)) in
@@ -255,11 +255,11 @@ let raw_result : bits(64) = (bits_of_int(ash(unsigned(dst), signed(neg_src)), 64
 let result : bits(64) = (raw_result) in
 let (output_rflags, undefined_flags) : (bits(32), bits(32)) = { (match src {
 0 => (input_rflags, 0x0000_0000),
-1 => { let cf : bits(1) = (slice(dst, 0, 1)) in
+1 => { let cf : bits(1) = (dst[0 .. 0]) in
 let pf : bits(1) = (pf_spec64(result)) in
 let zf : {|0, 1|} = (zf_spec(unsigned(result))) in
 let sf : bits(1) = (sf_spec64(result)) in
-let of : bits(1) = (slice(dst, 63, 1)) in
+let of : bits(1) = (dst[63 .. 63]) in
 let output_rflags : bits(32) = (change_rflagsbits(input_rflags, Some(cf), None(), Some(pf), None(), None(), None(), Some(bits_of_int(zf, 1)), Some(sf), None(), None(), None(), Some(of), None(), None(), None(), None(), None(), None(), None(), None(), None(), None())) in
 let undefined_flags : bits(32) = (set_rflagsbits_get_af(0b1, 0x0000_0000)) in
 (output_rflags, undefined_flags) },
@@ -270,7 +270,7 @@ let sf : bits(1) = (sf_spec64(result)) in
 let output_rflags : bits(32) = (change_rflagsbits(input_rflags, None(), None(), Some(pf), None(), None(), None(), Some(bits_of_int(zf, 1)), Some(sf), None(), None(), None(), None(), None(), None(), None(), None(), None(), None(), None(), None(), None(), None())) in
 let undefined_flags : bits(32) = (change_rflagsbits(0x0000_0000, Some(0b1), None(), None(), None(), Some(0b1), None(), None(), None(), None(), None(), None(), Some(0b1), None(), None(), None(), None(), None(), None(), None(), None(), None(), None())) in
 (output_rflags, undefined_flags)
-else let cf : bits(1) = (slice(dst, (unsigned(src)) - (1), 1)) in
+else let cf : bits(1) = (bitslice(dst, (unsigned(src)) - (1), 1)) in
 let pf : bits(1) = (pf_spec64(result)) in
 let zf : {|0, 1|} = (zf_spec(unsigned(result))) in
 let sf : bits(1) = (sf_spec64(result)) in
@@ -317,7 +317,7 @@ else unsigned(raw_result_not_sign_extended)) } in
 let result : bits(8) = (bits_of_int(raw_result, 8)) in
 let (output_rflags, undefined_flags) : (bits(32), bits(32)) = { (match src {
 0 => (input_rflags, 0x0000_0000),
-1 => { let cf : bits(1) = (slice(dst, 0, 1)) in
+1 => { let cf : bits(1) = (dst[0 .. 0]) in
 let pf : bits(1) = (pf_spec8(result)) in
 let zf : {|0, 1|} = (zf_spec(unsigned(result))) in
 let sf : bits(1) = (sf_spec8(result)) in
@@ -332,7 +332,7 @@ let sf : bits(1) = (sf_spec8(result)) in
 let output_rflags : bits(32) = (change_rflagsbits(input_rflags, None(), None(), Some(pf), None(), None(), None(), Some(bits_of_int(zf, 1)), Some(sf), None(), None(), None(), None(), None(), None(), None(), None(), None(), None(), None(), None(), None(), None())) in
 let undefined_flags : bits(32) = (change_rflagsbits(0x0000_0000, Some(0b1), None(), None(), None(), Some(0b1), None(), None(), None(), None(), None(), None(), Some(0b1), None(), None(), None(), None(), None(), None(), None(), None(), None(), None())) in
 (output_rflags, undefined_flags)
-else let cf : bits(1) = (slice(dst, (unsigned(src)) - (1), 1)) in
+else let cf : bits(1) = (bitslice(dst, (unsigned(src)) - (1), 1)) in
 let pf : bits(1) = (pf_spec8(result)) in
 let zf : {|0, 1|} = (zf_spec(unsigned(result))) in
 let sf : bits(1) = (sf_spec8(result)) in
@@ -352,7 +352,7 @@ else unsigned(raw_result_not_sign_extended)) } in
 let result : bits(16) = (bits_of_int(raw_result, 16)) in
 let (output_rflags, undefined_flags) : (bits(32), bits(32)) = { (match src {
 0 => (input_rflags, 0x0000_0000),
-1 => { let cf : bits(1) = (slice(dst, 0, 1)) in
+1 => { let cf : bits(1) = (dst[0 .. 0]) in
 let pf : bits(1) = (pf_spec16(result)) in
 let zf : {|0, 1|} = (zf_spec(unsigned(result))) in
 let sf : bits(1) = (sf_spec16(result)) in
@@ -367,7 +367,7 @@ let sf : bits(1) = (sf_spec16(result)) in
 let output_rflags : bits(32) = (change_rflagsbits(input_rflags, None(), None(), Some(pf), None(), None(), None(), Some(bits_of_int(zf, 1)), Some(sf), None(), None(), None(), None(), None(), None(), None(), None(), None(), None(), None(), None(), None(), None())) in
 let undefined_flags : bits(32) = (change_rflagsbits(0x0000_0000, Some(0b1), None(), None(), None(), Some(0b1), None(), None(), None(), None(), None(), None(), Some(0b1), None(), None(), None(), None(), None(), None(), None(), None(), None(), None())) in
 (output_rflags, undefined_flags)
-else let cf : bits(1) = (slice(dst, (unsigned(src)) - (1), 1)) in
+else let cf : bits(1) = (bitslice(dst, (unsigned(src)) - (1), 1)) in
 let pf : bits(1) = (pf_spec16(result)) in
 let zf : {|0, 1|} = (zf_spec(unsigned(result))) in
 let sf : bits(1) = (sf_spec16(result)) in
@@ -387,7 +387,7 @@ else unsigned(raw_result_not_sign_extended)) } in
 let result : bits(32) = (bits_of_int(raw_result, 32)) in
 let (output_rflags, undefined_flags) : (bits(32), bits(32)) = { (match src {
 0 => (input_rflags, 0x0000_0000),
-1 => { let cf : bits(1) = (slice(dst, 0, 1)) in
+1 => { let cf : bits(1) = (dst[0 .. 0]) in
 let pf : bits(1) = (pf_spec32(result)) in
 let zf : {|0, 1|} = (zf_spec(unsigned(result))) in
 let sf : bits(1) = (sf_spec32(result)) in
@@ -402,7 +402,7 @@ let sf : bits(1) = (sf_spec32(result)) in
 let output_rflags : bits(32) = (change_rflagsbits(input_rflags, None(), None(), Some(pf), None(), None(), None(), Some(bits_of_int(zf, 1)), Some(sf), None(), None(), None(), None(), None(), None(), None(), None(), None(), None(), None(), None(), None(), None())) in
 let undefined_flags : bits(32) = (change_rflagsbits(0x0000_0000, Some(0b1), None(), None(), None(), Some(0b1), None(), None(), None(), None(), None(), None(), Some(0b1), None(), None(), None(), None(), None(), None(), None(), None(), None(), None())) in
 (output_rflags, undefined_flags)
-else let cf : bits(1) = (slice(dst, (unsigned(src)) - (1), 1)) in
+else let cf : bits(1) = (bitslice(dst, (unsigned(src)) - (1), 1)) in
 let pf : bits(1) = (pf_spec32(result)) in
 let zf : {|0, 1|} = (zf_spec(unsigned(result))) in
 let sf : bits(1) = (sf_spec32(result)) in
@@ -422,7 +422,7 @@ else unsigned(raw_result_not_sign_extended)) } in
 let result : bits(64) = (bits_of_int(raw_result, 64)) in
 let (output_rflags, undefined_flags) : (bits(32), bits(32)) = { (match src {
 0 => (input_rflags, 0x0000_0000),
-1 => { let cf : bits(1) = (slice(dst, 0, 1)) in
+1 => { let cf : bits(1) = (dst[0 .. 0]) in
 let pf : bits(1) = (pf_spec64(result)) in
 let zf : {|0, 1|} = (zf_spec(unsigned(result))) in
 let sf : bits(1) = (sf_spec64(result)) in
@@ -437,7 +437,7 @@ let sf : bits(1) = (sf_spec64(result)) in
 let output_rflags : bits(32) = (change_rflagsbits(input_rflags, None(), None(), Some(pf), None(), None(), None(), Some(bits_of_int(zf, 1)), Some(sf), None(), None(), None(), None(), None(), None(), None(), None(), None(), None(), None(), None(), None(), None())) in
 let undefined_flags : bits(32) = (change_rflagsbits(0x0000_0000, Some(0b1), None(), None(), None(), Some(0b1), None(), None(), None(), None(), None(), None(), Some(0b1), None(), None(), None(), None(), None(), None(), None(), None(), None(), None())) in
 (output_rflags, undefined_flags)
-else let cf : bits(1) = (slice(dst, (unsigned(src)) - (1), 1)) in
+else let cf : bits(1) = (bitslice(dst, (unsigned(src)) - (1), 1)) in
 let pf : bits(1) = (pf_spec64(result)) in
 let zf : {|0, 1|} = (zf_spec(unsigned(result))) in
 let sf : bits(1) = (sf_spec64(result)) in
@@ -482,7 +482,7 @@ let dst_src : bits(32) = (logior(bits_of_int(ash(unsigned(dst), 16), 32), sail_z
 let output_dst : bits(16) = (bits_of_int(ash(unsigned(dst_src), unsigned(sail_zero_extend(cnt, 16))), 16)) in
 let (output_rflags, undefined_flags) : (bits(32), bits(32)) = { (match cnt {
 0 => (input_rflags, 0x0000_0000),
-1 => { let cf : bits(1) = (slice(dst, 15, 1)) in
+1 => { let cf : bits(1) = (dst[15 .. 15]) in
 let of : {|0, 1|} = { (if (logbit(15, dst)) == (logbit(15, output_dst))
 then 0
 else 1) } in
@@ -493,7 +493,7 @@ let output_rflags : bits(32) = (change_rflagsbits(input_rflags, Some(cf), None()
 let undefined_flags : bits(32) = (set_rflagsbits_get_af(0b1, 0x0000_0000)) in
 (output_rflags, undefined_flags) },
 _ => { if (unsigned(cnt)) <= (16)
-then let cf : bits(1) = (slice(dst, (16) - (unsigned(cnt)), 1)) in
+then let cf : bits(1) = (bitslice(dst, (16) - (unsigned(cnt)), 1)) in
 let pf : bits(1) = (pf_spec16(output_dst)) in
 let zf : {|0, 1|} = (zf_spec(unsigned(output_dst))) in
 let sf : bits(1) = (sf_spec16(output_dst)) in
@@ -512,7 +512,7 @@ let dst_src : bits(64) = (logior(bits_of_int(ash(unsigned(dst), 32), 64), sail_z
 let output_dst : bits(32) = (bits_of_int(ash(unsigned(dst_src), unsigned(sail_zero_extend(cnt, 32))), 32)) in
 let (output_rflags, undefined_flags) : (bits(32), bits(32)) = { (match cnt {
 0 => (input_rflags, 0x0000_0000),
-1 => { let cf : bits(1) = (slice(dst, 31, 1)) in
+1 => { let cf : bits(1) = (dst[31 .. 31]) in
 let of : {|0, 1|} = { (if (logbit(31, dst)) == (logbit(31, output_dst))
 then 0
 else 1) } in
@@ -523,7 +523,7 @@ let output_rflags : bits(32) = (change_rflagsbits(input_rflags, Some(cf), None()
 let undefined_flags : bits(32) = (set_rflagsbits_get_af(0b1, 0x0000_0000)) in
 (output_rflags, undefined_flags) },
 _ => { if (unsigned(cnt)) <= (32)
-then let cf : bits(1) = (slice(dst, (32) - (unsigned(cnt)), 1)) in
+then let cf : bits(1) = (bitslice(dst, (32) - (unsigned(cnt)), 1)) in
 let pf : bits(1) = (pf_spec32(output_dst)) in
 let zf : {|0, 1|} = (zf_spec(unsigned(output_dst))) in
 let sf : bits(1) = (sf_spec32(output_dst)) in
@@ -542,7 +542,7 @@ let dst_src : bits(128) = (logior(bits_of_int(ash(unsigned(dst), 64), 128), sail
 let output_dst : bits(64) = (bits_of_int(ash(unsigned(dst_src), unsigned(sail_zero_extend(cnt, 64))), 64)) in
 let (output_rflags, undefined_flags) : (bits(32), bits(32)) = { (match cnt {
 0 => (input_rflags, 0x0000_0000),
-1 => { let cf : bits(1) = (slice(dst, 63, 1)) in
+1 => { let cf : bits(1) = (dst[63 .. 63]) in
 let of : {|0, 1|} = { (if (logbit(63, dst)) == (logbit(63, output_dst))
 then 0
 else 1) } in
@@ -553,7 +553,7 @@ let output_rflags : bits(32) = (change_rflagsbits(input_rflags, Some(cf), None()
 let undefined_flags : bits(32) = (set_rflagsbits_get_af(0b1, 0x0000_0000)) in
 (output_rflags, undefined_flags) },
 _ => { if (unsigned(cnt)) <= (64)
-then let cf : bits(1) = (slice(dst, (64) - (unsigned(cnt)), 1)) in
+then let cf : bits(1) = (bitslice(dst, (64) - (unsigned(cnt)), 1)) in
 let pf : bits(1) = (pf_spec64(output_dst)) in
 let zf : {|0, 1|} = (zf_spec(unsigned(output_dst))) in
 let sf : bits(1) = (sf_spec64(output_dst)) in
@@ -585,7 +585,7 @@ let neg_cnt : sbits(17) = (bits_of_int(negate(unsigned(cnt)), 17)) in
 let output_dst : bits(16) = (bits_of_int(ash(unsigned(src_dst), signed(neg_cnt)), 16)) in
 let (output_rflags, undefined_flags) : (bits(32), bits(32)) = { (match cnt {
 0 => (input_rflags, 0x0000_0000),
-1 => { let cf : bits(1) = (slice(dst, 0, 1)) in
+1 => { let cf : bits(1) = (dst[0 .. 0]) in
 let of : {|0, 1|} = { (if (logbit(15, dst)) == (logbit(15, output_dst))
 then 0
 else 1) } in
@@ -596,7 +596,7 @@ let output_rflags : bits(32) = (change_rflagsbits(input_rflags, Some(cf), None()
 let undefined_flags : bits(32) = (set_rflagsbits_get_af(0b1, 0x0000_0000)) in
 (output_rflags, undefined_flags) },
 _ => { if (unsigned(cnt)) <= (16)
-then let cf : bits(1) = (slice(dst, (unsigned(cnt)) - (1), 1)) in
+then let cf : bits(1) = (bitslice(dst, (unsigned(cnt)) - (1), 1)) in
 let pf : bits(1) = (pf_spec16(output_dst)) in
 let zf : {|0, 1|} = (zf_spec(unsigned(output_dst))) in
 let sf : bits(1) = (sf_spec16(output_dst)) in
@@ -616,7 +616,7 @@ let neg_cnt : sbits(33) = (bits_of_int(negate(unsigned(cnt)), 33)) in
 let output_dst : bits(32) = (bits_of_int(ash(unsigned(src_dst), signed(neg_cnt)), 32)) in
 let (output_rflags, undefined_flags) : (bits(32), bits(32)) = { (match cnt {
 0 => (input_rflags, 0x0000_0000),
-1 => { let cf : bits(1) = (slice(dst, 0, 1)) in
+1 => { let cf : bits(1) = (dst[0 .. 0]) in
 let of : {|0, 1|} = { (if (logbit(31, dst)) == (logbit(31, output_dst))
 then 0
 else 1) } in
@@ -627,7 +627,7 @@ let output_rflags : bits(32) = (change_rflagsbits(input_rflags, Some(cf), None()
 let undefined_flags : bits(32) = (set_rflagsbits_get_af(0b1, 0x0000_0000)) in
 (output_rflags, undefined_flags) },
 _ => { if (unsigned(cnt)) <= (32)
-then let cf : bits(1) = (slice(dst, (unsigned(cnt)) - (1), 1)) in
+then let cf : bits(1) = (bitslice(dst, (unsigned(cnt)) - (1), 1)) in
 let pf : bits(1) = (pf_spec32(output_dst)) in
 let zf : {|0, 1|} = (zf_spec(unsigned(output_dst))) in
 let sf : bits(1) = (sf_spec32(output_dst)) in
@@ -647,7 +647,7 @@ let neg_cnt : sbits(65) = (bits_of_int(negate(unsigned(cnt)), 65)) in
 let output_dst : bits(64) = (bits_of_int(ash(unsigned(src_dst), signed(neg_cnt)), 64)) in
 let (output_rflags, undefined_flags) : (bits(32), bits(32)) = { (match cnt {
 0 => (input_rflags, 0x0000_0000),
-1 => { let cf : bits(1) = (slice(dst, 0, 1)) in
+1 => { let cf : bits(1) = (dst[0 .. 0]) in
 let of : {|0, 1|} = { (if (logbit(63, dst)) == (logbit(63, output_dst))
 then 0
 else 1) } in
@@ -658,7 +658,7 @@ let output_rflags : bits(32) = (change_rflagsbits(input_rflags, Some(cf), None()
 let undefined_flags : bits(32) = (set_rflagsbits_get_af(0b1, 0x0000_0000)) in
 (output_rflags, undefined_flags) },
 _ => { if (unsigned(cnt)) <= (64)
-then let cf : bits(1) = (slice(dst, (unsigned(cnt)) - (1), 1)) in
+then let cf : bits(1) = (bitslice(dst, (unsigned(cnt)) - (1), 1)) in
 let pf : bits(1) = (pf_spec64(output_dst)) in
 let zf : {|0, 1|} = (zf_spec(unsigned(output_dst))) in
 let sf : bits(1) = (sf_spec64(output_dst)) in

@@ -111,12 +111,12 @@ let result : bits(8) = (truncate(bits_of_int(rotate_left(unsigned(dst), 8, unsig
 let (output_rflags, undefined_flags) : (bits(32), bits(32)) = { (match src {
 0 => { let undefined_flags : bits(32) = (set_rflagsbits_get_of(0b1, 0x0000_0000)) in
 (input_rflags, undefined_flags) },
-1 => { let (elem0, elem1) : (bits(32), {|0|}) = { (let cf : bits(1) = (slice(result, 0, 1)) in
+1 => { let (elem0, elem1) : (bits(32), {|0|}) = { (let cf : bits(1) = (result[0 .. 0]) in
 let of : int = (b_xor(unsigned(cf), unsigned(logbit(7, result)))) in
 let output_rflags : bits(32) = (change_rflagsbits(input_rflags, Some(cf), None(), None(), None(), None(), None(), None(), None(), None(), None(), None(), Some(bits_of_int(of, 1)), None(), None(), None(), None(), None(), None(), None(), None(), None(), None())) in
 (output_rflags, 0)) } in
 (elem0, bits_of_int(elem1, 32)) },
-_ => { let cf : bits(1) = (slice(result, 0, 1)) in
+_ => { let cf : bits(1) = (result[0 .. 0]) in
 let output_rflags : bits(32) = (set_rflagsbits_get_cf(cf, input_rflags)) in
 let undefined_flags : bits(32) = (set_rflagsbits_get_of(0b1, 0x0000_0000)) in
 (output_rflags, undefined_flags) }
@@ -129,12 +129,12 @@ let result : bits(16) = (truncate(bits_of_int(rotate_left(unsigned(dst), 16, uns
 let (output_rflags, undefined_flags) : (bits(32), bits(32)) = { (match src {
 0 => { let undefined_flags : bits(32) = (set_rflagsbits_get_of(0b1, 0x0000_0000)) in
 (input_rflags, undefined_flags) },
-1 => { let (elem0, elem1) : (bits(32), {|0|}) = { (let cf : bits(1) = (slice(result, 0, 1)) in
+1 => { let (elem0, elem1) : (bits(32), {|0|}) = { (let cf : bits(1) = (result[0 .. 0]) in
 let of : int = (b_xor(unsigned(cf), unsigned(logbit(15, result)))) in
 let output_rflags : bits(32) = (change_rflagsbits(input_rflags, Some(cf), None(), None(), None(), None(), None(), None(), None(), None(), None(), None(), Some(bits_of_int(of, 1)), None(), None(), None(), None(), None(), None(), None(), None(), None(), None())) in
 (output_rflags, 0)) } in
 (elem0, bits_of_int(elem1, 32)) },
-_ => { let cf : bits(1) = (slice(result, 0, 1)) in
+_ => { let cf : bits(1) = (result[0 .. 0]) in
 let output_rflags : bits(32) = (set_rflagsbits_get_cf(cf, input_rflags)) in
 let undefined_flags : bits(32) = (set_rflagsbits_get_of(0b1, 0x0000_0000)) in
 (output_rflags, undefined_flags) }
@@ -147,12 +147,12 @@ let result : bits(32) = (truncate(bits_of_int(rotate_left(unsigned(dst), 32, uns
 let (output_rflags, undefined_flags) : (bits(32), bits(32)) = { (match src {
 0 => { let undefined_flags : bits(32) = (set_rflagsbits_get_of(0b1, 0x0000_0000)) in
 (input_rflags, undefined_flags) },
-1 => { let (elem0, elem1) : (bits(32), {|0|}) = { (let cf : bits(1) = (slice(result, 0, 1)) in
+1 => { let (elem0, elem1) : (bits(32), {|0|}) = { (let cf : bits(1) = (result[0 .. 0]) in
 let of : int = (b_xor(unsigned(cf), unsigned(logbit(31, result)))) in
 let output_rflags : bits(32) = (change_rflagsbits(input_rflags, Some(cf), None(), None(), None(), None(), None(), None(), None(), None(), None(), None(), Some(bits_of_int(of, 1)), None(), None(), None(), None(), None(), None(), None(), None(), None(), None())) in
 (output_rflags, 0)) } in
 (elem0, bits_of_int(elem1, 32)) },
-_ => { let cf : bits(1) = (slice(result, 0, 1)) in
+_ => { let cf : bits(1) = (result[0 .. 0]) in
 let output_rflags : bits(32) = (set_rflagsbits_get_cf(cf, input_rflags)) in
 let undefined_flags : bits(32) = (set_rflagsbits_get_of(0b1, 0x0000_0000)) in
 (output_rflags, undefined_flags) }
@@ -165,12 +165,12 @@ let result : bits(64) = (truncate(bits_of_int(rotate_left(unsigned(dst), 64, uns
 let (output_rflags, undefined_flags) : (bits(32), bits(32)) = { (match src {
 0 => { let undefined_flags : bits(32) = (set_rflagsbits_get_of(0b1, 0x0000_0000)) in
 (input_rflags, undefined_flags) },
-1 => { let (elem0, elem1) : (bits(32), {|0|}) = { (let cf : bits(1) = (slice(result, 0, 1)) in
+1 => { let (elem0, elem1) : (bits(32), {|0|}) = { (let cf : bits(1) = (result[0 .. 0]) in
 let of : int = (b_xor(unsigned(cf), unsigned(logbit(63, result)))) in
 let output_rflags : bits(32) = (change_rflagsbits(input_rflags, Some(cf), None(), None(), None(), None(), None(), None(), None(), None(), None(), None(), Some(bits_of_int(of, 1)), None(), None(), None(), None(), None(), None(), None(), None(), None(), None())) in
 (output_rflags, 0)) } in
 (elem0, bits_of_int(elem1, 32)) },
-_ => { let cf : bits(1) = (slice(result, 0, 1)) in
+_ => { let cf : bits(1) = (result[0 .. 0]) in
 let output_rflags : bits(32) = (set_rflagsbits_get_cf(cf, input_rflags)) in
 let undefined_flags : bits(32) = (set_rflagsbits_get_of(0b1, 0x0000_0000)) in
 (output_rflags, undefined_flags) }
@@ -211,7 +211,7 @@ let result : bits(8) = (truncate(raw_result, 8)) in
 let (output_rflags, undefined_flags) : (bits(32), bits(32)) = { (match src {
 0 => (input_rflags, 0x0000_0000),
 1 => { let (elem0, elem1) : (bits(32), {|0|}) = { (let cf : bits(1) = (logbit(8, raw_result)) in
-let of : int = (b_xor(unsigned(logbit(7, result)), unsigned(slice(result, 6, 1)))) in
+let of : int = (b_xor(unsigned(logbit(7, result)), unsigned(result[6 .. 6]))) in
 let output_rflags : bits(32) = (change_rflagsbits(input_rflags, Some(cf), None(), None(), None(), None(), None(), None(), None(), None(), None(), None(), Some(bits_of_int(of, 1)), None(), None(), None(), None(), None(), None(), None(), None(), None(), None())) in
 (output_rflags, 0)) } in
 (elem0, bits_of_int(elem1, 32)) },
@@ -231,7 +231,7 @@ let result : bits(16) = (truncate(raw_result, 16)) in
 let (output_rflags, undefined_flags) : (bits(32), bits(32)) = { (match src {
 0 => (input_rflags, 0x0000_0000),
 1 => { let (elem0, elem1) : (bits(32), {|0|}) = { (let cf : bits(1) = (logbit(16, raw_result)) in
-let of : int = (b_xor(unsigned(logbit(15, result)), unsigned(slice(result, 14, 1)))) in
+let of : int = (b_xor(unsigned(logbit(15, result)), unsigned(result[14 .. 14]))) in
 let output_rflags : bits(32) = (change_rflagsbits(input_rflags, Some(cf), None(), None(), None(), None(), None(), None(), None(), None(), None(), None(), Some(bits_of_int(of, 1)), None(), None(), None(), None(), None(), None(), None(), None(), None(), None())) in
 (output_rflags, 0)) } in
 (elem0, bits_of_int(elem1, 32)) },
@@ -251,7 +251,7 @@ let result : bits(32) = (truncate(raw_result, 32)) in
 let (output_rflags, undefined_flags) : (bits(32), bits(32)) = { (match src {
 0 => (input_rflags, 0x0000_0000),
 1 => { let (elem0, elem1) : (bits(32), {|0|}) = { (let cf : bits(1) = (logbit(32, raw_result)) in
-let of : int = (b_xor(unsigned(logbit(31, result)), unsigned(slice(result, 30, 1)))) in
+let of : int = (b_xor(unsigned(logbit(31, result)), unsigned(result[30 .. 30]))) in
 let output_rflags : bits(32) = (change_rflagsbits(input_rflags, Some(cf), None(), None(), None(), None(), None(), None(), None(), None(), None(), None(), Some(bits_of_int(of, 1)), None(), None(), None(), None(), None(), None(), None(), None(), None(), None())) in
 (output_rflags, 0)) } in
 (elem0, bits_of_int(elem1, 32)) },
@@ -271,7 +271,7 @@ let result : bits(64) = (truncate(raw_result, 64)) in
 let (output_rflags, undefined_flags) : (bits(32), bits(32)) = { (match src {
 0 => (input_rflags, 0x0000_0000),
 1 => { let (elem0, elem1) : (bits(32), {|0|}) = { (let cf : bits(1) = (logbit(64, raw_result)) in
-let of : int = (b_xor(unsigned(logbit(63, result)), unsigned(slice(result, 62, 1)))) in
+let of : int = (b_xor(unsigned(logbit(63, result)), unsigned(result[62 .. 62]))) in
 let output_rflags : bits(32) = (change_rflagsbits(input_rflags, Some(cf), None(), None(), None(), None(), None(), None(), None(), None(), None(), None(), Some(bits_of_int(of, 1)), None(), None(), None(), None(), None(), None(), None(), None(), None(), None())) in
 (output_rflags, 0)) } in
 (elem0, bits_of_int(elem1, 32)) },
@@ -313,11 +313,11 @@ let (output_rflags, undefined_flags) : (bits(32), bits(32)) = { (match src {
 0 => { let undefined_flags : bits(32) = (set_rflagsbits_get_of(0b1, 0x0000_0000)) in
 (input_rflags, undefined_flags) },
 1 => { let (elem0, elem1) : (bits(32), {|0|}) = { (let cf : bits(1) = (logbit(7, result)) in
-let of : int = (b_xor(unsigned(logbit(7, result)), unsigned(slice(result, 6, 1)))) in
+let of : int = (b_xor(unsigned(logbit(7, result)), unsigned(result[6 .. 6]))) in
 let output_rflags : bits(32) = (change_rflagsbits(input_rflags, Some(cf), None(), None(), None(), None(), None(), None(), None(), None(), None(), None(), Some(bits_of_int(of, 1)), None(), None(), None(), None(), None(), None(), None(), None(), None(), None())) in
 (output_rflags, 0)) } in
 (elem0, bits_of_int(elem1, 32)) },
-_ => { let cf : bits(1) = (slice(result, 0, 1)) in
+_ => { let cf : bits(1) = (result[0 .. 0]) in
 let output_rflags : bits(32) = (set_rflagsbits_get_cf(cf, input_rflags)) in
 let undefined_flags : bits(32) = (set_rflagsbits_get_of(0b1, 0x0000_0000)) in
 (output_rflags, undefined_flags) }
@@ -331,11 +331,11 @@ let (output_rflags, undefined_flags) : (bits(32), bits(32)) = { (match src {
 0 => { let undefined_flags : bits(32) = (set_rflagsbits_get_of(0b1, 0x0000_0000)) in
 (input_rflags, undefined_flags) },
 1 => { let (elem0, elem1) : (bits(32), {|0|}) = { (let cf : bits(1) = (logbit(15, result)) in
-let of : int = (b_xor(unsigned(logbit(15, result)), unsigned(slice(result, 14, 1)))) in
+let of : int = (b_xor(unsigned(logbit(15, result)), unsigned(result[14 .. 14]))) in
 let output_rflags : bits(32) = (change_rflagsbits(input_rflags, Some(cf), None(), None(), None(), None(), None(), None(), None(), None(), None(), None(), Some(bits_of_int(of, 1)), None(), None(), None(), None(), None(), None(), None(), None(), None(), None())) in
 (output_rflags, 0)) } in
 (elem0, bits_of_int(elem1, 32)) },
-_ => { let cf : bits(1) = (slice(result, 0, 1)) in
+_ => { let cf : bits(1) = (result[0 .. 0]) in
 let output_rflags : bits(32) = (set_rflagsbits_get_cf(cf, input_rflags)) in
 let undefined_flags : bits(32) = (set_rflagsbits_get_of(0b1, 0x0000_0000)) in
 (output_rflags, undefined_flags) }
@@ -349,11 +349,11 @@ let (output_rflags, undefined_flags) : (bits(32), bits(32)) = { (match src {
 0 => { let undefined_flags : bits(32) = (set_rflagsbits_get_of(0b1, 0x0000_0000)) in
 (input_rflags, undefined_flags) },
 1 => { let (elem0, elem1) : (bits(32), {|0|}) = { (let cf : bits(1) = (logbit(31, result)) in
-let of : int = (b_xor(unsigned(logbit(31, result)), unsigned(slice(result, 30, 1)))) in
+let of : int = (b_xor(unsigned(logbit(31, result)), unsigned(result[30 .. 30]))) in
 let output_rflags : bits(32) = (change_rflagsbits(input_rflags, Some(cf), None(), None(), None(), None(), None(), None(), None(), None(), None(), None(), Some(bits_of_int(of, 1)), None(), None(), None(), None(), None(), None(), None(), None(), None(), None())) in
 (output_rflags, 0)) } in
 (elem0, bits_of_int(elem1, 32)) },
-_ => { let cf : bits(1) = (slice(result, 0, 1)) in
+_ => { let cf : bits(1) = (result[0 .. 0]) in
 let output_rflags : bits(32) = (set_rflagsbits_get_cf(cf, input_rflags)) in
 let undefined_flags : bits(32) = (set_rflagsbits_get_of(0b1, 0x0000_0000)) in
 (output_rflags, undefined_flags) }
@@ -367,11 +367,11 @@ let (output_rflags, undefined_flags) : (bits(32), bits(32)) = { (match src {
 0 => { let undefined_flags : bits(32) = (set_rflagsbits_get_of(0b1, 0x0000_0000)) in
 (input_rflags, undefined_flags) },
 1 => { let (elem0, elem1) : (bits(32), {|0|}) = { (let cf : bits(1) = (logbit(63, result)) in
-let of : int = (b_xor(unsigned(logbit(63, result)), unsigned(slice(result, 62, 1)))) in
+let of : int = (b_xor(unsigned(logbit(63, result)), unsigned(result[62 .. 62]))) in
 let output_rflags : bits(32) = (change_rflagsbits(input_rflags, Some(cf), None(), None(), None(), None(), None(), None(), None(), None(), None(), None(), Some(bits_of_int(of, 1)), None(), None(), None(), None(), None(), None(), None(), None(), None(), None())) in
 (output_rflags, 0)) } in
 (elem0, bits_of_int(elem1, 32)) },
-_ => { let cf : bits(1) = (slice(result, 0, 1)) in
+_ => { let cf : bits(1) = (result[0 .. 0]) in
 let output_rflags : bits(32) = (set_rflagsbits_get_cf(cf, input_rflags)) in
 let undefined_flags : bits(32) = (set_rflagsbits_get_of(0b1, 0x0000_0000)) in
 (output_rflags, undefined_flags) }

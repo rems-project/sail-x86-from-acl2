@@ -40,8 +40,8 @@ function x86_lgdt (proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode, m
           _ => 24
         }
     };
-    let gdtr_limit : bits(80) = set_gdtr_idtrbits_get_limit(slice(mem, 0, 16), 0x00000000000000000000);
-    let gdtr : bits(80) = set_gdtr_idtrbits_get_base_addr(sail_mask(64, slice(mem, 16, base_bits)), gdtr_limit);
+    let gdtr_limit : bits(80) = set_gdtr_idtrbits_get_limit(mem[15 .. 0], 0x00000000000000000000);
+    let gdtr : bits(80) = set_gdtr_idtrbits_get_base_addr(sail_mask(64, bitslice(mem, 16, base_bits)), gdtr_limit);
     strs[0] = gdtr;
     write_iptr(proc_mode, temp_rip)
 }
@@ -87,8 +87,8 @@ function x86_lidt (proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode, m
           _ => 24
         }
     };
-    let idtr_limit : bits(80) = set_gdtr_idtrbits_get_limit(slice(mem, 0, 16), 0x00000000000000000000);
-    let idtr : bits(80) = set_gdtr_idtrbits_get_base_addr(sail_mask(64, slice(mem, 16, base_bits)), idtr_limit);
+    let idtr_limit : bits(80) = set_gdtr_idtrbits_get_limit(mem[15 .. 0], 0x00000000000000000000);
+    let idtr : bits(80) = set_gdtr_idtrbits_get_base_addr(sail_mask(64, bitslice(mem, 16, base_bits)), idtr_limit);
     strs[1] = idtr;
     write_iptr(proc_mode, temp_rip)
 }

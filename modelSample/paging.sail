@@ -58,25 +58,25 @@ set_ia32e_page_tablesbits_get_d(0b1, entry)
 val page_table_entry_addr : (sbits(48), bits(52)) -> bits(52) effect {escape}
 function page_table_entry_addr (lin_addr, base_addr) =
 { assert((unsigned_byte_p(52, unsigned(base_addr))) & ((loghead(12, unsigned(base_addr))) == (0)));
-changeSlice(base_addr, 3, 9, slice(lin_addr, 12, 9))
+changeSlice(base_addr, 3, 9, lin_addr[20 .. 12])
 }
 
 val page_directory_entry_addr : (sbits(48), bits(52)) -> bits(52) effect {escape}
 function page_directory_entry_addr (lin_addr, base_addr) =
 { assert((unsigned_byte_p(52, unsigned(base_addr))) & ((loghead(12, unsigned(base_addr))) == (0)));
-changeSlice(base_addr, 3, 9, slice(lin_addr, 21, 9))
+changeSlice(base_addr, 3, 9, lin_addr[29 .. 21])
 }
 
 val page_dir_ptr_table_entry_addr : (sbits(48), bits(52)) -> bits(52) effect {escape}
 function page_dir_ptr_table_entry_addr (lin_addr, base_addr) =
 { assert((unsigned_byte_p(52, unsigned(base_addr))) & ((loghead(12, unsigned(base_addr))) == (0)));
-changeSlice(base_addr, 3, 9, slice(lin_addr, 30, 9))
+changeSlice(base_addr, 3, 9, lin_addr[38 .. 30])
 }
 
 val pml4_table_entry_addr : (sbits(48), bits(52)) -> bits(52) effect {escape}
 function pml4_table_entry_addr (lin_addr, base_addr) =
 { assert((unsigned_byte_p(52, unsigned(base_addr))) & ((loghead(12, unsigned(base_addr))) == (0)));
-changeSlice(base_addr, 3, 9, slice(lin_addr, 39, 9))
+changeSlice(base_addr, 3, 9, lin_addr[47 .. 39])
 }
 
 /*Determining access rights and detecting page faults*/

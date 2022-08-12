@@ -8,7 +8,7 @@ let ia32_efer : bits(12) = (truncate(msrs[0], 12)) in
 let ia32_efer_sce : bits(1) = (ia32_eferbits_get_sce(ia32_efer)) in
 { if (ia32_efer_sce) == (0)
 then throw(Emsg("A fault occurred.  Original ACL2 AST:
-['!!FAULT-FRESH', ':UD', 'NIL', ':IA32-EFER-SCE=0', ['CONS', <lex_parse.ACL2quote object at 0x7f16a2f97d30>, 'IA32-EFER']]"))
+['!!FAULT-FRESH', ':UD', 'NIL', ':IA32-EFER-SCE=0', ['CONS', <lex_parse.ACL2quote object at 0x7f0977179978>, 'IA32-EFER']]"))
 else ();
 let cs_attr : bits(16) = (seg_hidden_attrs[1]) in
 { write_rgfi(1, sail_sign_extend(temp_rip, 64));
@@ -25,7 +25,7 @@ let not_fmask : int = (lognot(unsigned(fmask))) in
 let new_eflags : bits(32) = (bits_of_int(logand(unsigned(eflags), not_fmask), 32)) in
 { rflags = new_eflags;
 let star : bits(64) = (msrs[4]) in
-let new_cs_selector : bits(16) = (logand(slice(star, 32, 16), 0xfffc)) in
+let new_cs_selector : bits(16) = (logand(star[47 .. 32], 0xfffc)) in
 { seg_visibles[1] = new_cs_selector;
 let cs_hidden_base_addr : {|0|} = (0) in
 let cs_hidden_limit : {|4294967295|} = (4294967295) in
@@ -33,7 +33,7 @@ let cs_attr : bits(16) = (change_code_segment_descriptor_attributesbits(cs_attr,
 { seg_hidden_bases[1] = bits_of_int(cs_hidden_base_addr, 64);
 seg_hidden_limits[1] = bits_of_int(cs_hidden_limit, 32);
 seg_hidden_attrs[1] = cs_attr;
-let new_ss_selector : int = ((unsigned(slice(star, 32, 16))) + (8)) in
+let new_ss_selector : int = ((unsigned(star[47 .. 32])) + (8)) in
 { if not_bool(fits_in_signed_bitvector(16, new_ss_selector))
 then throw(Emsg("Model state error: :NEW-SS-SELECTOR-TOO-LARGE"))
 else ();
@@ -83,13 +83,13 @@ let ia32_efer : bits(12) = (truncate(msrs[0], 12)) in
 let ia32_efer_sce : bits(1) = (ia32_eferbits_get_sce(ia32_efer)) in
 { if (ia32_efer_sce) == (0)
 then throw(Emsg("A fault occurred.  Original ACL2 AST:
-['!!FAULT-FRESH', ':UD', 'NIL', ':IA32-EFER-SCE=0', ['CONS', <lex_parse.ACL2quote object at 0x7f16a2f30668>, 'IA32-EFER']]"))
+['!!FAULT-FRESH', ':UD', 'NIL', ':IA32-EFER-SCE=0', ['CONS', <lex_parse.ACL2quote object at 0x7f0976f2b940>, 'IA32-EFER']]"))
 else ();
 let current_cs_register : bits(16) = (seg_visibles[1]) in
 let cpl : bits(2) = (segment_selectorbits_get_rpl(current_cs_register)) in
 { if not_bool((0b00) == (cpl))
 then throw(Emsg("A fault occurred.  Original ACL2 AST:
-['!!FAULT-FRESH', ':GP', '0', ':CPL!=0', ['CONS', <lex_parse.ACL2quote object at 0x7f16a28feac8>, 'CURRENT-CS-REGISTER']]"))
+['!!FAULT-FRESH', ':GP', '0', ':CPL!=0', ['CONS', <lex_parse.ACL2quote object at 0x7f0976aeecf8>, 'CURRENT-CS-REGISTER']]"))
 else ();
 let rcx_var : sbits(64) = (rgfi(1)) in
 { if not_bool(canonical_address_p(signed(rcx_var)))
@@ -99,7 +99,7 @@ rip = truncate(rcx_var, 48);
 let r11_var : bits(32) = (truncate(rgfi(11), 32)) in
 { rflags = logior(logand(r11_var, 0x003c_7fd7), 0x0000_0002);
 let star : bits(64) = (msrs[4]) in
-let new_cs_selector : int = ((unsigned(slice(star, 48, 16))) + (16)) in
+let new_cs_selector : int = ((unsigned(star[63 .. 48])) + (16)) in
 { if not_bool(fits_in_signed_bitvector(16, new_cs_selector))
 then throw(Emsg("Model state error: :NEW-CS-SELECTOR-TOO-LARGE"))
 else ();
@@ -114,7 +114,7 @@ seg_hidden_limits[1] = bits_of_int(cs_limit, 32);
 seg_hidden_attrs[1] = cs_attr;
 let current_cs_register : bits(16) = (set_segment_selectorbits_get_rpl(0b00, current_cs_register)) in
 { seg_visibles[1] = current_cs_register;
-let new_ss_selector : int = ((unsigned(slice(star, 48, 16))) + (8)) in
+let new_ss_selector : int = ((unsigned(star[63 .. 48])) + (8)) in
 { if not_bool(fits_in_signed_bitvector(16, new_ss_selector))
 then throw(Emsg("Model state error: :NEW-SS-SELECTOR-TOO-LARGE"))
 else ();

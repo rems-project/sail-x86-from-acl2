@@ -260,7 +260,7 @@ function x86_movhps_movhpd_op_en_mr (proc_mode, start_rip, temp_rip, prefixes, r
     let reg : bits(3) = modr_m_get_reg(modr_m);
     let xmm_index : bits(4) = reg_index(reg, rex_byte, 0b10);
     let xmm : bits(128) = xmmi_size(0b10000, xmm_index);
-    let high_qword : bits(64) = slice(xmm, 64, 64);
+    let high_qword : bits(64) = xmm[127 .. 64];
     let p2 : bits(8) = prefixes_get_seg(prefixes);
     let p4? : bool = 0x67 == prefixes_get_adr(prefixes);
     let seg_reg : {|0, 1, 2, 3, 4, 5|} = select_segment_register(proc_mode, p2, p4?, mod_var, r_m, sib);

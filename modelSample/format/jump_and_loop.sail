@@ -79,7 +79,7 @@ function x86_far_jmp_op_en_d (proc_mode, start_rip, temp_rip, prefixes, rex_byte
     let badlength? : option(int) = check_instruction_length(start_rip, temp_rip, increment_rip_by);
     if is_some(badlength?) then throw(Emsg("A fault occurred.  Original ACL2 AST:\n['!!FAULT-FRESH', ':GP', '0', ':INSTRUCTION-LENGTH', 'BADLENGTH?']"));
     let selector : bits(16) = truncate(mem, 16);
-    let offset : bits(64) = sail_mask(64, slice(mem, 16, ash(offset_size, 3)));
+    let offset : bits(64) = sail_mask(64, bitslice(mem, 16, ash(offset_size, 3)));
     let sel_index : bits(13) = segment_selectorbits_get_index(selector);
     let sel_ti : bits(1) = segment_selectorbits_get_ti(selector);
     let sel_rpl : bits(2) = segment_selectorbits_get_rpl(selector);

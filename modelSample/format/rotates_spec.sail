@@ -152,7 +152,7 @@ function rol_spec_8 (dst, src, input_rflags) = {
           },
           1 => {
               let (elem0, elem1) : (bits(32), {|0|}) = {
-                  let cf : bits(1) = slice(result, 0, 1);
+                  let cf : bits(1) = result[0 .. 0];
                   let of : int = b_xor(unsigned(cf), unsigned(logbit(7, result)));
                   let output_rflags : bits(32) = change_rflagsbits(input_rflags, Some(cf), None(), None(), None(), None(), None(), None(), None(), None(), None(), None(), Some(bits_of_int(of, 1)), None(), None(), None(), None(), None(), None(), None(), None(), None(), None());
                   (output_rflags, 0)
@@ -160,7 +160,7 @@ function rol_spec_8 (dst, src, input_rflags) = {
               (elem0, bits_of_int(elem1, 32))
           },
           _ => {
-              let cf : bits(1) = slice(result, 0, 1);
+              let cf : bits(1) = result[0 .. 0];
               let output_rflags : bits(32) = set_rflagsbits_get_cf(cf, input_rflags);
               let undefined_flags : bits(32) = set_rflagsbits_get_of(0b1, 0x00000000);
               (output_rflags, undefined_flags)
@@ -182,7 +182,7 @@ function rol_spec_16 (dst, src, input_rflags) = {
           },
           1 => {
               let (elem0, elem1) : (bits(32), {|0|}) = {
-                  let cf : bits(1) = slice(result, 0, 1);
+                  let cf : bits(1) = result[0 .. 0];
                   let of : int = b_xor(unsigned(cf), unsigned(logbit(15, result)));
                   let output_rflags : bits(32) = change_rflagsbits(input_rflags, Some(cf), None(), None(), None(), None(), None(), None(), None(), None(), None(), None(), Some(bits_of_int(of, 1)), None(), None(), None(), None(), None(), None(), None(), None(), None(), None());
                   (output_rflags, 0)
@@ -190,7 +190,7 @@ function rol_spec_16 (dst, src, input_rflags) = {
               (elem0, bits_of_int(elem1, 32))
           },
           _ => {
-              let cf : bits(1) = slice(result, 0, 1);
+              let cf : bits(1) = result[0 .. 0];
               let output_rflags : bits(32) = set_rflagsbits_get_cf(cf, input_rflags);
               let undefined_flags : bits(32) = set_rflagsbits_get_of(0b1, 0x00000000);
               (output_rflags, undefined_flags)
@@ -212,7 +212,7 @@ function rol_spec_32 (dst, src, input_rflags) = {
           },
           1 => {
               let (elem0, elem1) : (bits(32), {|0|}) = {
-                  let cf : bits(1) = slice(result, 0, 1);
+                  let cf : bits(1) = result[0 .. 0];
                   let of : int = b_xor(unsigned(cf), unsigned(logbit(31, result)));
                   let output_rflags : bits(32) = change_rflagsbits(input_rflags, Some(cf), None(), None(), None(), None(), None(), None(), None(), None(), None(), None(), Some(bits_of_int(of, 1)), None(), None(), None(), None(), None(), None(), None(), None(), None(), None());
                   (output_rflags, 0)
@@ -220,7 +220,7 @@ function rol_spec_32 (dst, src, input_rflags) = {
               (elem0, bits_of_int(elem1, 32))
           },
           _ => {
-              let cf : bits(1) = slice(result, 0, 1);
+              let cf : bits(1) = result[0 .. 0];
               let output_rflags : bits(32) = set_rflagsbits_get_cf(cf, input_rflags);
               let undefined_flags : bits(32) = set_rflagsbits_get_of(0b1, 0x00000000);
               (output_rflags, undefined_flags)
@@ -242,7 +242,7 @@ function rol_spec_64 (dst, src, input_rflags) = {
           },
           1 => {
               let (elem0, elem1) : (bits(32), {|0|}) = {
-                  let cf : bits(1) = slice(result, 0, 1);
+                  let cf : bits(1) = result[0 .. 0];
                   let of : int = b_xor(unsigned(cf), unsigned(logbit(63, result)));
                   let output_rflags : bits(32) = change_rflagsbits(input_rflags, Some(cf), None(), None(), None(), None(), None(), None(), None(), None(), None(), None(), Some(bits_of_int(of, 1)), None(), None(), None(), None(), None(), None(), None(), None(), None(), None());
                   (output_rflags, 0)
@@ -250,7 +250,7 @@ function rol_spec_64 (dst, src, input_rflags) = {
               (elem0, bits_of_int(elem1, 32))
           },
           _ => {
-              let cf : bits(1) = slice(result, 0, 1);
+              let cf : bits(1) = result[0 .. 0];
               let output_rflags : bits(32) = set_rflagsbits_get_cf(cf, input_rflags);
               let undefined_flags : bits(32) = set_rflagsbits_get_of(0b1, 0x00000000);
               (output_rflags, undefined_flags)
@@ -294,7 +294,7 @@ function rcr_spec_8 (dst, src, input_rflags) = {
           1 => {
               let (elem0, elem1) : (bits(32), {|0|}) = {
                   let cf : bits(1) = logbit(8, raw_result);
-                  let of : int = b_xor(unsigned(logbit(7, result)), unsigned(slice(result, 6, 1)));
+                  let of : int = b_xor(unsigned(logbit(7, result)), unsigned(result[6 .. 6]));
                   let output_rflags : bits(32) = change_rflagsbits(input_rflags, Some(cf), None(), None(), None(), None(), None(), None(), None(), None(), None(), None(), Some(bits_of_int(of, 1)), None(), None(), None(), None(), None(), None(), None(), None(), None(), None());
                   (output_rflags, 0)
               };
@@ -324,7 +324,7 @@ function rcr_spec_16 (dst, src, input_rflags) = {
           1 => {
               let (elem0, elem1) : (bits(32), {|0|}) = {
                   let cf : bits(1) = logbit(16, raw_result);
-                  let of : int = b_xor(unsigned(logbit(15, result)), unsigned(slice(result, 14, 1)));
+                  let of : int = b_xor(unsigned(logbit(15, result)), unsigned(result[14 .. 14]));
                   let output_rflags : bits(32) = change_rflagsbits(input_rflags, Some(cf), None(), None(), None(), None(), None(), None(), None(), None(), None(), None(), Some(bits_of_int(of, 1)), None(), None(), None(), None(), None(), None(), None(), None(), None(), None());
                   (output_rflags, 0)
               };
@@ -354,7 +354,7 @@ function rcr_spec_32 (dst, src, input_rflags) = {
           1 => {
               let (elem0, elem1) : (bits(32), {|0|}) = {
                   let cf : bits(1) = logbit(32, raw_result);
-                  let of : int = b_xor(unsigned(logbit(31, result)), unsigned(slice(result, 30, 1)));
+                  let of : int = b_xor(unsigned(logbit(31, result)), unsigned(result[30 .. 30]));
                   let output_rflags : bits(32) = change_rflagsbits(input_rflags, Some(cf), None(), None(), None(), None(), None(), None(), None(), None(), None(), None(), Some(bits_of_int(of, 1)), None(), None(), None(), None(), None(), None(), None(), None(), None(), None());
                   (output_rflags, 0)
               };
@@ -384,7 +384,7 @@ function rcr_spec_64 (dst, src, input_rflags) = {
           1 => {
               let (elem0, elem1) : (bits(32), {|0|}) = {
                   let cf : bits(1) = logbit(64, raw_result);
-                  let of : int = b_xor(unsigned(logbit(63, result)), unsigned(slice(result, 62, 1)));
+                  let of : int = b_xor(unsigned(logbit(63, result)), unsigned(result[62 .. 62]));
                   let output_rflags : bits(32) = change_rflagsbits(input_rflags, Some(cf), None(), None(), None(), None(), None(), None(), None(), None(), None(), None(), Some(bits_of_int(of, 1)), None(), None(), None(), None(), None(), None(), None(), None(), None(), None());
                   (output_rflags, 0)
               };
@@ -435,14 +435,14 @@ function ror_spec_8 (dst, src, input_rflags) = {
           1 => {
               let (elem0, elem1) : (bits(32), {|0|}) = {
                   let cf : bits(1) = logbit(7, result);
-                  let of : int = b_xor(unsigned(logbit(7, result)), unsigned(slice(result, 6, 1)));
+                  let of : int = b_xor(unsigned(logbit(7, result)), unsigned(result[6 .. 6]));
                   let output_rflags : bits(32) = change_rflagsbits(input_rflags, Some(cf), None(), None(), None(), None(), None(), None(), None(), None(), None(), None(), Some(bits_of_int(of, 1)), None(), None(), None(), None(), None(), None(), None(), None(), None(), None());
                   (output_rflags, 0)
               };
               (elem0, bits_of_int(elem1, 32))
           },
           _ => {
-              let cf : bits(1) = slice(result, 0, 1);
+              let cf : bits(1) = result[0 .. 0];
               let output_rflags : bits(32) = set_rflagsbits_get_cf(cf, input_rflags);
               let undefined_flags : bits(32) = set_rflagsbits_get_of(0b1, 0x00000000);
               (output_rflags, undefined_flags)
@@ -465,14 +465,14 @@ function ror_spec_16 (dst, src, input_rflags) = {
           1 => {
               let (elem0, elem1) : (bits(32), {|0|}) = {
                   let cf : bits(1) = logbit(15, result);
-                  let of : int = b_xor(unsigned(logbit(15, result)), unsigned(slice(result, 14, 1)));
+                  let of : int = b_xor(unsigned(logbit(15, result)), unsigned(result[14 .. 14]));
                   let output_rflags : bits(32) = change_rflagsbits(input_rflags, Some(cf), None(), None(), None(), None(), None(), None(), None(), None(), None(), None(), Some(bits_of_int(of, 1)), None(), None(), None(), None(), None(), None(), None(), None(), None(), None());
                   (output_rflags, 0)
               };
               (elem0, bits_of_int(elem1, 32))
           },
           _ => {
-              let cf : bits(1) = slice(result, 0, 1);
+              let cf : bits(1) = result[0 .. 0];
               let output_rflags : bits(32) = set_rflagsbits_get_cf(cf, input_rflags);
               let undefined_flags : bits(32) = set_rflagsbits_get_of(0b1, 0x00000000);
               (output_rflags, undefined_flags)
@@ -495,14 +495,14 @@ function ror_spec_32 (dst, src, input_rflags) = {
           1 => {
               let (elem0, elem1) : (bits(32), {|0|}) = {
                   let cf : bits(1) = logbit(31, result);
-                  let of : int = b_xor(unsigned(logbit(31, result)), unsigned(slice(result, 30, 1)));
+                  let of : int = b_xor(unsigned(logbit(31, result)), unsigned(result[30 .. 30]));
                   let output_rflags : bits(32) = change_rflagsbits(input_rflags, Some(cf), None(), None(), None(), None(), None(), None(), None(), None(), None(), None(), Some(bits_of_int(of, 1)), None(), None(), None(), None(), None(), None(), None(), None(), None(), None());
                   (output_rflags, 0)
               };
               (elem0, bits_of_int(elem1, 32))
           },
           _ => {
-              let cf : bits(1) = slice(result, 0, 1);
+              let cf : bits(1) = result[0 .. 0];
               let output_rflags : bits(32) = set_rflagsbits_get_cf(cf, input_rflags);
               let undefined_flags : bits(32) = set_rflagsbits_get_of(0b1, 0x00000000);
               (output_rflags, undefined_flags)
@@ -525,14 +525,14 @@ function ror_spec_64 (dst, src, input_rflags) = {
           1 => {
               let (elem0, elem1) : (bits(32), {|0|}) = {
                   let cf : bits(1) = logbit(63, result);
-                  let of : int = b_xor(unsigned(logbit(63, result)), unsigned(slice(result, 62, 1)));
+                  let of : int = b_xor(unsigned(logbit(63, result)), unsigned(result[62 .. 62]));
                   let output_rflags : bits(32) = change_rflagsbits(input_rflags, Some(cf), None(), None(), None(), None(), None(), None(), None(), None(), None(), None(), Some(bits_of_int(of, 1)), None(), None(), None(), None(), None(), None(), None(), None(), None(), None());
                   (output_rflags, 0)
               };
               (elem0, bits_of_int(elem1, 32))
           },
           _ => {
-              let cf : bits(1) = slice(result, 0, 1);
+              let cf : bits(1) = result[0 .. 0];
               let output_rflags : bits(32) = set_rflagsbits_get_cf(cf, input_rflags);
               let undefined_flags : bits(32) = set_rflagsbits_get_of(0b1, 0x00000000);
               (output_rflags, undefined_flags)

@@ -25,10 +25,10 @@ val wm_low_32 : (bits(52), bits(32)) -> unit
 function wm_low_32 (addr, sailval) = {
     assert(not_bool(app_view));
     let addr : int = unsigned(addr);
-    let byte0 : bits(8) = slice(sailval, 0, 8);
-    let byte1 : bits(8) = slice(sailval, 8, 8);
-    let byte2 : bits(8) = slice(sailval, 16, 8);
-    let byte3 : bits(8) = slice(sailval, 24, 8);
+    let byte0 : bits(8) = sailval[7 .. 0];
+    let byte1 : bits(8) = sailval[15 .. 8];
+    let byte2 : bits(8) = sailval[23 .. 16];
+    let byte3 : bits(8) = sailval[31 .. 24];
     bang_memi(bits_of_int(addr, 64), byte0);
     bang_memi(bits_of_int(1 + addr, 64), byte1);
     bang_memi(bits_of_int(2 + addr, 64), byte2);
@@ -50,8 +50,8 @@ val wm_low_64 : (bits(52), bits(64)) -> unit
 function wm_low_64 (addr, sailval) = {
     assert(not_bool(app_view));
     let addr : int = unsigned(addr);
-    let dword0 : bits(32) = slice(sailval, 0, 32);
-    let dword1 : bits(32) = slice(sailval, 32, 32);
+    let dword0 : bits(32) = sailval[31 .. 0];
+    let dword1 : bits(32) = sailval[63 .. 32];
     wm_low_32(bits_of_int(addr, 52), dword0);
     wm_low_32(bits_of_int(4 + addr, 52), dword1)
 }

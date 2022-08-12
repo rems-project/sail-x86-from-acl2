@@ -1,6 +1,8 @@
 $include "./handwritten.sail"
 $include "./top.sail"
 $include "./two_byte_opcodes_dispatch.sail"
+$include "./vex_opcodes_dispatch.sail"
+$include "./evex_opcodes_dispatch.sail"
 
 val get_prefixes : (range(0, 4), sbits(48), bits(52), bits(8), range(0, 15)) -> (option(string), int, int)
 
@@ -6152,12 +6154,12 @@ function x86_fetch_decode_execute () = {
             }
         };
         if is_some(flg) then throw(Emsg("Model state error: :LES/LDS-DISTINGUISHING-BYTE-READ-ERROR"));
-        if vex_byte0? & (n64_bit_modep_var | not_bool(n64_bit_modep_var) & slice(les_lds_distinguishing_byte : bits(8), 6, 2) == 0b11) then {
+        if vex_byte0? & (n64_bit_modep_var | not_bool(n64_bit_modep_var) & les_lds_distinguishing_byte : bits(8)[7 .. 6] == 0b11) then {
             let (flg, temp_rip) : (option(string), sbits(49)) = add_to_iptr(proc_mode, truncate(temp_rip, 48), 0x000000000001);
             if is_some(flg) then throw(Emsg("Model state error: :VEX-BYTE1-INCREMENT-ERROR"));
             let vex_prefixes : bits(24) = set_vex_prefixes_get_byte0(opcode_vex_evex_byte, 0x000000);
             let vex_prefixes : bits(24) = set_vex_prefixes_get_byte1(les_lds_distinguishing_byte : bits(8), vex_prefixes);
-            unimplemented_vex_decode_and_execute(proc_mode, signed(start_rip), signed(temp_rip), unsigned(prefixes), unsigned(rex_byte), unsigned(vex_prefixes))
+            vex_decode_and_execute(proc_mode, start_rip, truncate(temp_rip, 48), prefixes, rex_byte, vex_prefixes)
         } else {
             let opcode_evex_byte : bits(8) = opcode_vex_evex_byte;
             let evex_byte0? : bool = opcode_evex_byte == 0x62;
@@ -6169,12 +6171,12 @@ function x86_fetch_decode_execute () = {
                 }
             };
             if is_some(flg) then throw(Emsg("Model state error: :BOUND-DISTINGUISHING-BYTE-READ-ERROR"));
-            if evex_byte0? & (n64_bit_modep_var | not_bool(n64_bit_modep_var) & slice(bound_distinguishing_byte, 6, 2) == 0b11) then {
+            if evex_byte0? & (n64_bit_modep_var | not_bool(n64_bit_modep_var) & bound_distinguishing_byte[7 .. 6] == 0b11) then {
                 let (flg, temp_rip) : (option(string), sbits(49)) = add_to_iptr(proc_mode, truncate(temp_rip, 48), 0x000000000001);
                 if is_some(flg) then throw(Emsg("Model state error: :EVEX-BYTE1-INCREMENT-ERROR"));
                 let evex_prefixes : bits(32) = set_evex_prefixes_get_byte0(opcode_evex_byte, 0x00000000);
                 let evex_prefixes : bits(32) = set_evex_prefixes_get_byte1(bound_distinguishing_byte, evex_prefixes);
-                unimplemented_evex_decode_and_execute(proc_mode, signed(start_rip), signed(temp_rip), unsigned(prefixes), unsigned(rex_byte), unsigned(evex_prefixes))
+                evex_decode_and_execute(proc_mode, start_rip, truncate(temp_rip, 48), prefixes, rex_byte, evex_prefixes)
             } else {
                 let opcode_byte : bits(8) = opcode_evex_byte;
                 let modr_m? : bool = one_byte_opcode_modr_m_p(proc_mode, opcode_byte);

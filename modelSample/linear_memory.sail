@@ -300,22 +300,22 @@ else let one_5_plus_lin_addr : sbits(63) = (bits_of_int((15) + (signed(lin_addr)
 let (flag, p_addr15) : (option(string), bits(52)) = (la_to_pa(truncate(one_5_plus_lin_addr, 48), ":W")) in
 if is_some(flag)
 then flag
-else let byte0 : bits(8) = (slice(sailval, 0, 8)) in
-let byte1 : bits(8) = (slice(sailval, 8, 8)) in
-let byte2 : bits(8) = (slice(sailval, 16, 8)) in
-let byte3 : bits(8) = (slice(sailval, 24, 8)) in
-let byte4 : bits(8) = (slice(sailval, 32, 8)) in
-let byte5 : bits(8) = (slice(sailval, 40, 8)) in
-let byte6 : bits(8) = (slice(sailval, 48, 8)) in
-let byte7 : bits(8) = (slice(sailval, 56, 8)) in
-let byte8 : bits(8) = (slice(sailval, 64, 8)) in
-let byte9 : bits(8) = (slice(sailval, 72, 8)) in
-let byte10 : bits(8) = (slice(sailval, 80, 8)) in
-let byte11 : bits(8) = (slice(sailval, 88, 8)) in
-let byte12 : bits(8) = (slice(sailval, 96, 8)) in
-let byte13 : bits(8) = (slice(sailval, 104, 8)) in
-let byte14 : bits(8) = (slice(sailval, 112, 8)) in
-let byte15 : bits(8) = (slice(sailval, 120, 8)) in
+else let byte0 : bits(8) = (sailval[7 .. 0]) in
+let byte1 : bits(8) = (sailval[15 .. 8]) in
+let byte2 : bits(8) = (sailval[23 .. 16]) in
+let byte3 : bits(8) = (sailval[31 .. 24]) in
+let byte4 : bits(8) = (sailval[39 .. 32]) in
+let byte5 : bits(8) = (sailval[47 .. 40]) in
+let byte6 : bits(8) = (sailval[55 .. 48]) in
+let byte7 : bits(8) = (sailval[63 .. 56]) in
+let byte8 : bits(8) = (sailval[71 .. 64]) in
+let byte9 : bits(8) = (sailval[79 .. 72]) in
+let byte10 : bits(8) = (sailval[87 .. 80]) in
+let byte11 : bits(8) = (sailval[95 .. 88]) in
+let byte12 : bits(8) = (sailval[103 .. 96]) in
+let byte13 : bits(8) = (sailval[111 .. 104]) in
+let byte14 : bits(8) = (sailval[119 .. 112]) in
+let byte15 : bits(8) = (sailval[127 .. 120]) in
 { bang_memi(sail_zero_extend(p_addr0, 64), byte0);
 bang_memi(sail_zero_extend(p_addr1, 64), byte1);
 bang_memi(sail_zero_extend(p_addr2, 64), byte2);
@@ -402,7 +402,7 @@ val write_canonical_address_to_memory_user_exec : (sbits(48), sbits(48)) -> opti
 function write_canonical_address_to_memory_user_exec (lin_addr, canonical_address) =
 { assert((app_view) & (canonical_address_p((7) + (signed(lin_addr)))));
 let canonical_address_low_nat : bits(32) = (truncate(canonical_address, 32)) in
-let canonical_address_high_int : sbits(32) = (sail_sign_extend(slice(canonical_address, 32, 16), 32)) in
+let canonical_address_high_int : sbits(32) = (sail_sign_extend(sail_zero_extend(canonical_address[47 .. 32], 16), 32)) in
 let flg0 : option(string) = (wml32(lin_addr, canonical_address_low_nat)) in
 let next_addr : sbits(49) = (bits_of_int((4) + (signed(lin_addr)), 49)) in
 if not_bool(canonical_address_p(signed(next_addr)))

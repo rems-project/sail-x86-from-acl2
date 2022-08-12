@@ -323,10 +323,10 @@ then throw(Emsg("A fault occurred.  Original ACL2 AST:
 else ();
 let register_size : {|1, 2, 4, 8|} = (select_operand_size(proc_mode, false, rex_byte, false, prefixes, false, false, false)) in
 let reg_mem : bits(128) = { (match reg_mem_size {
-1 => sail_zero_extend(sail_mask(64, slice(truncate(reg_mem, 8), 0, ash(register_size, 3))), 128),
+1 => sail_zero_extend(sail_mask(64, signed_bitslice(truncate(reg_mem, 8), 0, ash(register_size, 3))), 128),
 2 => { (match register_size {
 2 => reg_mem,
-_ => sail_zero_extend(sail_mask(64, slice(truncate(reg_mem, 16), 0, ash(register_size, 3))), 128)
+_ => sail_zero_extend(sail_mask(64, signed_bitslice(truncate(reg_mem, 16), 0, ash(register_size, 3))), 128)
 }) : bits(128) }
 }) } in
 { write_rgfi_size(bits_of_int(register_size, 4), reg_index(reg, rex_byte, 0b10), unsigned(reg_mem), rex_byte);

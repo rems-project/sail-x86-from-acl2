@@ -381,7 +381,7 @@ let mod_var : bits(2) = (modr_m_get_mod(modr_m)) in
 let reg : bits(3) = (modr_m_get_reg(modr_m)) in
 let xmm_index : bits(4) = (reg_index(reg, rex_byte, 0b10)) in
 let xmm : bits(128) = (xmmi_size(0b1_0000, xmm_index)) in
-let high_qword : bits(64) = (slice(xmm, 64, 64)) in
+let high_qword : bits(64) = (xmm[127 .. 64]) in
 let p2 : bits(8) = (prefixes_get_seg(prefixes)) in
 let p4? : bool = ((0x67) == (prefixes_get_adr(prefixes))) in
 let seg_reg : {|0, 1, 2, 3, 4, 5|} = (select_segment_register(proc_mode, p2, p4?, mod_var, r_m, sib)) in

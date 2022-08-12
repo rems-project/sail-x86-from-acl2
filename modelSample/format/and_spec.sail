@@ -2,7 +2,7 @@
 val gpr_and_spec_1 : (bits(8), bits(8), bits(32)) -> (bits(8), bits(32), bits(32))
 
 function gpr_and_spec_1 (dst, src, input_rflags) = {
-    let result : bits(8) = slice(logand(dst, src), 0, 8);
+    let result : bits(8) = logand(dst, src)[7 .. 0];
     let cf : {|0|} = 0;
     let pf : bits(1) = pf_spec8(result);
     let zf : bits(1) = bits_of_int(zf_spec(unsigned(result)), 1);
@@ -16,7 +16,7 @@ function gpr_and_spec_1 (dst, src, input_rflags) = {
 val gpr_and_spec_2 : (bits(16), bits(16), bits(32)) -> (bits(16), bits(32), bits(32))
 
 function gpr_and_spec_2 (dst, src, input_rflags) = {
-    let result : bits(16) = slice(logand(dst, src), 0, 16);
+    let result : bits(16) = logand(dst, src)[15 .. 0];
     let cf : {|0|} = 0;
     let pf : bits(1) = pf_spec16(result);
     let zf : bits(1) = bits_of_int(zf_spec(unsigned(result)), 1);
@@ -30,7 +30,7 @@ function gpr_and_spec_2 (dst, src, input_rflags) = {
 val gpr_and_spec_4 : (bits(32), bits(32), bits(32)) -> (bits(32), bits(32), bits(32))
 
 function gpr_and_spec_4 (dst, src, input_rflags) = {
-    let result : bits(32) = slice(logand(dst, src), 0, 32);
+    let result : bits(32) = logand(dst, src)[31 .. 0];
     let cf : {|0|} = 0;
     let pf : bits(1) = pf_spec32(result);
     let zf : bits(1) = bits_of_int(zf_spec(unsigned(result)), 1);
@@ -44,7 +44,7 @@ function gpr_and_spec_4 (dst, src, input_rflags) = {
 val gpr_and_spec_8 : (bits(64), bits(64), bits(32)) -> (bits(64), bits(32), bits(32))
 
 function gpr_and_spec_8 (dst, src, input_rflags) = {
-    let result : bits(64) = slice(logand(dst, src), 0, 64);
+    let result : bits(64) = logand(dst, src)[63 .. 0];
     let cf : {|0|} = 0;
     let pf : bits(1) = pf_spec64(result);
     let zf : bits(1) = bits_of_int(zf_spec(unsigned(result)), 1);

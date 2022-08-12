@@ -22,10 +22,10 @@ val wm_low_32 : (bits(52), bits(32)) -> unit effect {eamem, rreg, wmv}
 function wm_low_32 (addr, sailval) =
 { assert(not_bool(app_view));
 let addr : int = (unsigned(addr)) in
-let byte0 : bits(8) = (slice(sailval, 0, 8)) in
-let byte1 : bits(8) = (slice(sailval, 8, 8)) in
-let byte2 : bits(8) = (slice(sailval, 16, 8)) in
-let byte3 : bits(8) = (slice(sailval, 24, 8)) in
+let byte0 : bits(8) = (sailval[7 .. 0]) in
+let byte1 : bits(8) = (sailval[15 .. 8]) in
+let byte2 : bits(8) = (sailval[23 .. 16]) in
+let byte3 : bits(8) = (sailval[31 .. 24]) in
 { bang_memi(bits_of_int(addr, 64), byte0);
 bang_memi(bits_of_int((1) + (addr), 64), byte1);
 bang_memi(bits_of_int((2) + (addr), 64), byte2);
@@ -46,8 +46,8 @@ val wm_low_64 : (bits(52), bits(64)) -> unit effect {eamem, rreg, wmv}
 function wm_low_64 (addr, sailval) =
 { assert(not_bool(app_view));
 let addr : int = (unsigned(addr)) in
-let dword0 : bits(32) = (slice(sailval, 0, 32)) in
-let dword1 : bits(32) = (slice(sailval, 32, 32)) in
+let dword0 : bits(32) = (sailval[31 .. 0]) in
+let dword1 : bits(32) = (sailval[63 .. 32]) in
 { wm_low_32(bits_of_int(addr, 52), dword0);
 wm_low_32(bits_of_int((4) + (addr), 52), dword1)
 }

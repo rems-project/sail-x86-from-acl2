@@ -111,6 +111,37 @@ function bit_to_bool (b) = match b {
 val trunc : forall 'n 'm, 'n in {1, 2, 4, 8, 16} & 'm > 0. (int('n), bits('m)) -> bits(8 * 'n)
 function trunc (n, x) = sail_mask(8 * n, x)
 
+// Bit slicing functions for translating part_select.  This may be called with
+// indices that go beyond the length of the bitvector, so handle the case where
+// we have to zero-extend or sign-extend, depending on whether the original
+// bitvector is treated as signed or not.
+val bitslice : forall 'n 'low 'width. (bits('n), int('low), int('width)) -> bits('width)
+function bitslice (x, low, width) = {
+	assert('n >= 0 & low >= 0 & width > 0);
+	if (low + width <= 'n) then {
+		x[low + width - 1 .. low]
+	} else if (low < 'n - 1) then {
+		sail_zeros(low + width - 'n) @ x['n - 1 .. low]
+	} else {
+		sail_zeros(width)
+	}
+}
+
+// Signed bitslicing function that sign-extends rather than zero-extends in
+// case the slice goes out of bounds
+val signed_bitslice : forall 'n 'low 'width. (bits('n), int('low), int('width)) -> bits('width)
+function signed_bitslice (x, low, width) = {
+	assert('n >= 0 & low >= 0 & width > 0);
+	if (low + width <= 'n) then {
+		x[low + width - 1 .. low]
+	} else if (low < 'n - 1) then {
+		// Sign-extend by replicating the MSB
+		replicate_bits([x['n - 1]], low + width - 'n) @ x['n - 1 .. low]
+	} else {
+		sail_zeros(width)
+	}
+}
+
 val nat_of_int : (int) -> nat effect {escape}
 function nat_of_int i = {
 	assert (i >= 0);

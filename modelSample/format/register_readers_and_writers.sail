@@ -18,7 +18,7 @@ function rr08 (reg, rex) = {
         truncate(qword, 8)
     } else {
         let qword : sbits(64) = rgfi(unsigned(bits_of_int(reg - 4, 4)));
-        slice(qword, 8, 8)
+        qword[15 .. 8]
     }
 }
 
@@ -28,11 +28,11 @@ function wr08 (reg, rex, byte) = {
     let reg : nat = unsigned(reg);
     if not_bool(rex == 0x00) | reg < 4 then {
         let qword : sbits(64) = rgfi(reg);
-        write_rgfi(reg, changeSlice(slice(qword, 0, 64), 0, 8, byte))
+        write_rgfi(reg, changeSlice(qword[63 .. 0], 0, 8, byte))
     } else {
         let index : bits(4) = bits_of_int(unsigned(bits_of_int(reg, 4)) - 4, 4);
         let qword : sbits(64) = rgfi(unsigned(index));
-        write_rgfi(unsigned(index), changeSlice(slice(qword, 0, 64), 8, 8, byte))
+        write_rgfi(unsigned(index), changeSlice(qword[63 .. 0], 8, 8, byte))
     }
 }
 
@@ -46,7 +46,7 @@ val wr16 : (bits(4), bits(16)) -> unit
 
 function wr16 (reg, sailval) = {
     let qword : sbits(64) = rgfi(unsigned(reg));
-    write_rgfi(unsigned(reg), changeSlice(slice(qword, 0, 64), 0, 16, sailval))
+    write_rgfi(unsigned(reg), changeSlice(qword[63 .. 0], 0, 16, sailval))
 }
 
 val rr32 : bits(4) -> bits(32)

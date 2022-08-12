@@ -3,10 +3,10 @@ val extract_32_bits : (bits(128), bits(2)) -> bits(32)
 
 function extract_32_bits (x, n) = {
     (match n {
-      0 => slice(x, 0, 32),
-      1 => slice(x, 32, 32),
-      2 => slice(x, 64, 32),
-      _ => slice(x, 96, 32)
+      0 => x[31 .. 0],
+      1 => x[63 .. 32],
+      2 => x[95 .. 64],
+      _ => x[127 .. 96]
     }) : bits(32)
 }
 
@@ -14,8 +14,8 @@ val extract_64_bits : (bits(128), range(0, 1)) -> bits(64)
 
 function extract_64_bits (x, n) = {
     (match n {
-      0 => slice(x, 0, 64),
-      _ => slice(x, 64, 64)
+      0 => x[63 .. 0],
+      _ => x[127 .. 64]
     }) : bits(64)
 }
 
@@ -45,10 +45,10 @@ function x86_shufps_op_en_rmi (proc_mode, start_rip, temp_rip, prefixes, rex_byt
     if is_some(flg) then throw(Emsg("Model state error: :RIP-INCREMENT-ERROR"));
     let badlength? : option(int) = check_instruction_length(start_rip, temp_rip, 0b000);
     if is_some(badlength?) then throw(Emsg("A fault occurred.  Original ACL2 AST:\n['!!FAULT-FRESH', ':GP', '0', ':INSTRUCTION-LENGTH', 'BADLENGTH?']"));
-    let imm0 : bits(2) = slice(imm, 0, 2);
-    let imm1 : bits(2) = slice(imm, 2, 2);
-    let imm2 : bits(2) = slice(imm, 4, 2);
-    let imm3 : bits(2) = slice(imm, 6, 2);
+    let imm0 : bits(2) = imm[1 .. 0];
+    let imm1 : bits(2) = imm[3 .. 2];
+    let imm2 : bits(2) = imm[5 .. 4];
+    let imm3 : bits(2) = imm[7 .. 6];
     let dword0 : bits(32) = extract_32_bits(xmm, imm0);
     let dword1 : bits(32) = extract_32_bits(xmm, imm1);
     let dword2 : bits(32) = extract_32_bits(xmm_mem, imm2);
@@ -115,30 +115,30 @@ function x86_unpck?ps_op_en_rm (high_low, proc_mode, start_rip, temp_rip, prefix
     if is_some(badlength?) then throw(Emsg("A fault occurred.  Original ACL2 AST:\n['!!FAULT-FRESH', ':GP', '0', ':INSTRUCTION-LENGTH', 'BADLENGTH?']"));
     let dword0 : bits(32) = {
         if high_low == 1 then {
-            slice(xmm, 64, 32)
+            xmm[95 .. 64]
         } else {
-            slice(xmm, 0, 32)
+            xmm[31 .. 0]
         }
     };
     let dword1 : bits(32) = {
         if high_low == 1 then {
-            slice(xmm_mem, 64, 32)
+            xmm_mem[95 .. 64]
         } else {
-            slice(xmm_mem, 0, 32)
+            xmm_mem[31 .. 0]
         }
     };
     let dword2 : bits(32) = {
         if high_low == 1 then {
-            slice(xmm, 96, 32)
+            xmm[127 .. 96]
         } else {
-            slice(xmm, 32, 32)
+            xmm[63 .. 32]
         }
     };
     let dword3 : bits(32) = {
         if high_low == 1 then {
-            slice(xmm_mem, 96, 32)
+            xmm_mem[127 .. 96]
         } else {
-            slice(xmm_mem, 32, 32)
+            xmm_mem[63 .. 32]
         }
     };
     let result : bits(128) = dword3 @ (dword2 @ (dword1 @ dword0));
@@ -168,16 +168,16 @@ function x86_unpck?pd_op_en_rm (high_low, proc_mode, start_rip, temp_rip, prefix
     if is_some(badlength?) then throw(Emsg("A fault occurred.  Original ACL2 AST:\n['!!FAULT-FRESH', ':GP', '0', ':INSTRUCTION-LENGTH', 'BADLENGTH?']"));
     let qword0 : bits(64) = {
         if high_low == 1 then {
-            slice(xmm, 64, 64)
+            xmm[127 .. 64]
         } else {
-            slice(xmm, 0, 64)
+            xmm[63 .. 0]
         }
     };
     let qword1 : bits(64) = {
         if high_low == 1 then {
-            slice(xmm_mem, 64, 64)
+            xmm_mem[127 .. 64]
         } else {
-            slice(xmm_mem, 0, 64)
+            xmm_mem[63 .. 0]
         }
     };
     let result : bits(128) = qword1 @ qword0;

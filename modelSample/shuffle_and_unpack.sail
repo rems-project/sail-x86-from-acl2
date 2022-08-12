@@ -4,17 +4,17 @@ $include <string.sail>
 val extract_32_bits : (bits(128), bits(2)) -> bits(32)
 function extract_32_bits (x, n) =
 (match n {
-0 => slice(x, 0, 32),
-1 => slice(x, 32, 32),
-2 => slice(x, 64, 32),
-_ => slice(x, 96, 32)
+0 => x[31 .. 0],
+1 => x[63 .. 32],
+2 => x[95 .. 64],
+_ => x[127 .. 96]
 }) : bits(32)
 
 val extract_64_bits : (bits(128), range(0, 1)) -> bits(64)
 function extract_64_bits (x, n) =
 (match n {
-0 => slice(x, 0, 64),
-_ => slice(x, 64, 64)
+0 => x[63 .. 0],
+_ => x[127 .. 64]
 }) : bits(64)
 
 /*Shuffle packed single-precision floating-point values*/
@@ -56,10 +56,10 @@ let badlength? : option(int) = (check_instruction_length(start_rip, temp_rip, 0b
 then throw(Emsg("A fault occurred.  Original ACL2 AST:
 ['!!FAULT-FRESH', ':GP', '0', ':INSTRUCTION-LENGTH', 'BADLENGTH?']"))
 else ();
-let imm0 : bits(2) = (slice(imm, 0, 2)) in
-let imm1 : bits(2) = (slice(imm, 2, 2)) in
-let imm2 : bits(2) = (slice(imm, 4, 2)) in
-let imm3 : bits(2) = (slice(imm, 6, 2)) in
+let imm0 : bits(2) = (imm[1 .. 0]) in
+let imm1 : bits(2) = (imm[3 .. 2]) in
+let imm2 : bits(2) = (imm[5 .. 4]) in
+let imm3 : bits(2) = (imm[7 .. 6]) in
 let dword0 : bits(32) = (extract_32_bits(xmm, imm0)) in
 let dword1 : bits(32) = (extract_32_bits(xmm, imm1)) in
 let dword2 : bits(32) = (extract_32_bits(xmm_mem, imm2)) in
@@ -159,17 +159,17 @@ then throw(Emsg("A fault occurred.  Original ACL2 AST:
 ['!!FAULT-FRESH', ':GP', '0', ':INSTRUCTION-LENGTH', 'BADLENGTH?']"))
 else ();
 let dword0 : bits(32) = { (if (high_low) == (1)
-then slice(xmm, 64, 32)
-else slice(xmm, 0, 32)) } in
+then xmm[95 .. 64]
+else xmm[31 .. 0]) } in
 let dword1 : bits(32) = { (if (high_low) == (1)
-then slice(xmm_mem, 64, 32)
-else slice(xmm_mem, 0, 32)) } in
+then xmm_mem[95 .. 64]
+else xmm_mem[31 .. 0]) } in
 let dword2 : bits(32) = { (if (high_low) == (1)
-then slice(xmm, 96, 32)
-else slice(xmm, 32, 32)) } in
+then xmm[127 .. 96]
+else xmm[63 .. 32]) } in
 let dword3 : bits(32) = { (if (high_low) == (1)
-then slice(xmm_mem, 96, 32)
-else slice(xmm_mem, 32, 32)) } in
+then xmm_mem[127 .. 96]
+else xmm_mem[63 .. 32]) } in
 let result : bits(128) = ((dword3) @ ((dword2) @ ((dword1) @ (dword0)))) in
 { write_xmmi_size(0b1_0000, xmm_index, unsigned(result));
 write_iptr(proc_mode, temp_rip)
@@ -210,11 +210,11 @@ then throw(Emsg("A fault occurred.  Original ACL2 AST:
 ['!!FAULT-FRESH', ':GP', '0', ':INSTRUCTION-LENGTH', 'BADLENGTH?']"))
 else ();
 let qword0 : bits(64) = { (if (high_low) == (1)
-then slice(xmm, 64, 64)
-else slice(xmm, 0, 64)) } in
+then xmm[127 .. 64]
+else xmm[63 .. 0]) } in
 let qword1 : bits(64) = { (if (high_low) == (1)
-then slice(xmm_mem, 64, 64)
-else slice(xmm_mem, 0, 64)) } in
+then xmm_mem[127 .. 64]
+else xmm_mem[63 .. 0]) } in
 let result : bits(128) = ((qword1) @ (qword0)) in
 { write_xmmi_size(0b1_0000, xmm_index, unsigned(result));
 write_iptr(proc_mode, temp_rip)

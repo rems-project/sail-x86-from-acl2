@@ -134,7 +134,7 @@ then throw(Emsg("A fault occurred.  Original ACL2 AST:
 ['!!FAULT-FRESH', ':GP', '0', ':INSTRUCTION-LENGTH', 'BADLENGTH?']"))
 else ();
 let selector : bits(16) = (truncate(mem, 16)) in
-let offset : bits(64) = (sail_mask(64, slice(mem, 16, ash(offset_size, 3)))) in
+let offset : bits(64) = (sail_mask(64, bitslice(mem, 16, ash(offset_size, 3)))) in
 let sel_index : bits(13) = (segment_selectorbits_get_index(selector)) in
 let sel_ti : bits(1) = (segment_selectorbits_get_ti(selector)) in
 let sel_rpl : bits(2) = (segment_selectorbits_get_rpl(selector)) in

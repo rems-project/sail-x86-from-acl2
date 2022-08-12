@@ -69,7 +69,7 @@ if (not_bool((rex) == (0x00))) | ((reg) < (4))
 then let qword : sbits(64) = (rgfi(reg)) in
 truncate(qword, 8)
 else let qword : sbits(64) = (rgfi(unsigned(bits_of_int((reg) - (4), 4)))) in
-slice(qword, 8, 8)
+qword[15 .. 8]
 
 /*Writing to byte general-purpose registers*/
 /*<p>Note Intel Vol. 1 Sec. 3.4.1.1 
@@ -104,10 +104,10 @@ function wr08 (reg, rex, byte) =
 let reg : nat = (unsigned(reg)) in
 if (not_bool((rex) == (0x00))) | ((reg) < (4))
 then let qword : sbits(64) = (rgfi(reg)) in
-write_rgfi(reg, changeSlice(slice(qword, 0, 64), 0, 8, byte))
+write_rgfi(reg, changeSlice(qword[63 .. 0], 0, 8, byte))
 else let index : bits(4) = (bits_of_int((unsigned(bits_of_int(reg, 4))) - (4), 4)) in
 let qword : sbits(64) = (rgfi(unsigned(index))) in
-write_rgfi(unsigned(index), changeSlice(slice(qword, 0, 64), 8, 8, byte))
+write_rgfi(unsigned(index), changeSlice(qword[63 .. 0], 8, 8, byte))
 
 /*Read from word general-purpose registers*/
 val rr16 : (bits(4)) -> bits(16) effect {escape, rreg}
@@ -145,7 +145,7 @@ truncate(rgfi(unsigned(reg)), 16)
 val wr16 : (bits(4), bits(16)) -> unit effect {escape, rreg, wreg}
 function wr16 (reg, sailval) =
 let qword : sbits(64) = (rgfi(unsigned(reg))) in
-write_rgfi(unsigned(reg), changeSlice(slice(qword, 0, 64), 0, 16, sailval))
+write_rgfi(unsigned(reg), changeSlice(qword[63 .. 0], 0, 16, sailval))
 
 /*Read from doubleword general-purpose registers*/
 val rr32 : (bits(4)) -> bits(32) effect {escape, rreg}

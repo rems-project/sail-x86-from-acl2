@@ -35,28 +35,32 @@ function initialiseState2 () = {
 val __SetConfig : (string, int) -> unit
 
 function __SetConfig (arg, value) = {
-    match () {
-      () if arg == "rip" => {
+    match arg {
+      "rip" => {
           rip = get_slice_int(48, value, 0)
       },
-      () if arg == "rdi" => {
+      "rdi" => {
           write_rgfi(7, get_slice_int(64, value, 0))
       },
-      () if arg == "rsp" => {
+      "rsp" => {
           write_rgfi(4, get_slice_int(64, value, 0))
       },
-      () if arg == "rflags" => {
+      "rflags" => {
           rflags = get_slice_int(32, value, 0)
       },
-      () if arg == "ha" => {
+      "cr4" => {
+          ctrs[4] = get_slice_int(64, value, 0)
+      },
+      "ha" => {
           haltAddrReg = get_slice_int(48, value, 0)
       },
-      () if arg == "set64bit" => {
+      "set64bit" => {
           initialise_64_bit_mode()
       },
-      _ => {
-          throw(Emsg("Unrecognised Config"))
-      }
+      "app_view" => {
+          app_view = value != 0
+      },
+      _ => throw(Emsg("Unrecognised Config"))
     }
 }
 

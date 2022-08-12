@@ -399,22 +399,22 @@ function wml128 (lin_addr, sailval) = {
                                                                         if is_some(flag) then {
                                                                             flag
                                                                         } else {
-                                                                            let byte0 : bits(8) = slice(sailval, 0, 8);
-                                                                            let byte1 : bits(8) = slice(sailval, 8, 8);
-                                                                            let byte2 : bits(8) = slice(sailval, 16, 8);
-                                                                            let byte3 : bits(8) = slice(sailval, 24, 8);
-                                                                            let byte4 : bits(8) = slice(sailval, 32, 8);
-                                                                            let byte5 : bits(8) = slice(sailval, 40, 8);
-                                                                            let byte6 : bits(8) = slice(sailval, 48, 8);
-                                                                            let byte7 : bits(8) = slice(sailval, 56, 8);
-                                                                            let byte8 : bits(8) = slice(sailval, 64, 8);
-                                                                            let byte9 : bits(8) = slice(sailval, 72, 8);
-                                                                            let byte10 : bits(8) = slice(sailval, 80, 8);
-                                                                            let byte11 : bits(8) = slice(sailval, 88, 8);
-                                                                            let byte12 : bits(8) = slice(sailval, 96, 8);
-                                                                            let byte13 : bits(8) = slice(sailval, 104, 8);
-                                                                            let byte14 : bits(8) = slice(sailval, 112, 8);
-                                                                            let byte15 : bits(8) = slice(sailval, 120, 8);
+                                                                            let byte0 : bits(8) = sailval[7 .. 0];
+                                                                            let byte1 : bits(8) = sailval[15 .. 8];
+                                                                            let byte2 : bits(8) = sailval[23 .. 16];
+                                                                            let byte3 : bits(8) = sailval[31 .. 24];
+                                                                            let byte4 : bits(8) = sailval[39 .. 32];
+                                                                            let byte5 : bits(8) = sailval[47 .. 40];
+                                                                            let byte6 : bits(8) = sailval[55 .. 48];
+                                                                            let byte7 : bits(8) = sailval[63 .. 56];
+                                                                            let byte8 : bits(8) = sailval[71 .. 64];
+                                                                            let byte9 : bits(8) = sailval[79 .. 72];
+                                                                            let byte10 : bits(8) = sailval[87 .. 80];
+                                                                            let byte11 : bits(8) = sailval[95 .. 88];
+                                                                            let byte12 : bits(8) = sailval[103 .. 96];
+                                                                            let byte13 : bits(8) = sailval[111 .. 104];
+                                                                            let byte14 : bits(8) = sailval[119 .. 112];
+                                                                            let byte15 : bits(8) = sailval[127 .. 120];
                                                                             bang_memi(sail_zero_extend(p_addr0, 64), byte0);
                                                                             bang_memi(sail_zero_extend(p_addr1, 64), byte1);
                                                                             bang_memi(sail_zero_extend(p_addr2, 64), byte2);
@@ -553,7 +553,7 @@ val write_canonical_address_to_memory_user_exec : (sbits(48), sbits(48)) -> opti
 function write_canonical_address_to_memory_user_exec (lin_addr, canonical_address) = {
     assert(app_view & canonical_address_p(7 + signed(lin_addr)));
     let canonical_address_low_nat : bits(32) = truncate(canonical_address, 32);
-    let canonical_address_high_int : sbits(32) = sail_sign_extend(slice(canonical_address, 32, 16), 32);
+    let canonical_address_high_int : sbits(32) = sail_sign_extend(sail_zero_extend(canonical_address[47 .. 32], 16), 32);
     let flg0 : option(string) = wml32(lin_addr, canonical_address_low_nat);
     let next_addr : sbits(49) = bits_of_int(4 + signed(lin_addr), 49);
     if not_bool(canonical_address_p(signed(next_addr))) then {

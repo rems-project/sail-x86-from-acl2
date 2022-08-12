@@ -101,19 +101,19 @@ bool_to_bit(not_bool(logbitp(0, logcount(loghead(8, result)))))
 
 val sf_spec8 : (bits(8)) -> bits(1)
 function sf_spec8 (result) =
-slice(result, 7, 1)
+result[7 .. 7]
 
 val sf_spec16 : (bits(16)) -> bits(1)
 function sf_spec16 (result) =
-slice(result, 15, 1)
+result[15 .. 15]
 
 val sf_spec32 : (bits(32)) -> bits(1)
 function sf_spec32 (result) =
-slice(result, 31, 1)
+result[31 .. 31]
 
 val sf_spec64 : (bits(64)) -> bits(1)
 function sf_spec64 (result) =
-slice(result, 63, 1)
+result[63 .. 63]
 
 /*<p>General @ ( ' SF ' ) Specification ( Source: Intel Manuals, 
  Vol. 1, Section 3.4.3.1 ) :</p> 
@@ -127,128 +127,128 @@ get_slice_int(1, result, (result_nbits) - (1))
 
 val add_af_spec8 : (bits(8), bits(8)) -> bits(1)
 function add_af_spec8 (dst, src) =
-let dst_3_0 : bits(4) = (slice(dst, 0, 4)) in
-let src_3_0 : bits(4) = (slice(src, 0, 4)) in
+let dst_3_0 : bits(4) = (dst[3 .. 0]) in
+let src_3_0 : bits(4) = (src[3 .. 0]) in
 let add : bits(5) = (bits_of_int((unsigned(dst_3_0)) + (unsigned(src_3_0)), 5)) in
 let af : bits(1) = (bool_to_bit((15) < (unsigned(add)))) in
 af
 
 val add_af_spec16 : (bits(16), bits(16)) -> bits(1)
 function add_af_spec16 (dst, src) =
-let dst_3_0 : bits(4) = (slice(dst, 0, 4)) in
-let src_3_0 : bits(4) = (slice(src, 0, 4)) in
+let dst_3_0 : bits(4) = (dst[3 .. 0]) in
+let src_3_0 : bits(4) = (src[3 .. 0]) in
 let add : bits(5) = (bits_of_int((unsigned(dst_3_0)) + (unsigned(src_3_0)), 5)) in
 let af : bits(1) = (bool_to_bit((15) < (unsigned(add)))) in
 af
 
 val add_af_spec32 : (bits(32), bits(32)) -> bits(1)
 function add_af_spec32 (dst, src) =
-let dst_3_0 : bits(4) = (slice(dst, 0, 4)) in
-let src_3_0 : bits(4) = (slice(src, 0, 4)) in
+let dst_3_0 : bits(4) = (dst[3 .. 0]) in
+let src_3_0 : bits(4) = (src[3 .. 0]) in
 let add : bits(5) = (bits_of_int((unsigned(dst_3_0)) + (unsigned(src_3_0)), 5)) in
 let af : bits(1) = (bool_to_bit((15) < (unsigned(add)))) in
 af
 
 val add_af_spec64 : (bits(64), bits(64)) -> bits(1)
 function add_af_spec64 (dst, src) =
-let dst_3_0 : bits(4) = (slice(dst, 0, 4)) in
-let src_3_0 : bits(4) = (slice(src, 0, 4)) in
+let dst_3_0 : bits(4) = (dst[3 .. 0]) in
+let src_3_0 : bits(4) = (src[3 .. 0]) in
 let add : bits(5) = (bits_of_int((unsigned(dst_3_0)) + (unsigned(src_3_0)), 5)) in
 let af : bits(1) = (bool_to_bit((15) < (unsigned(add)))) in
 af
 
 val sub_af_spec8 : (bits(8), bits(8)) -> bits(1)
 function sub_af_spec8 (dst, src) =
-let dst_3_0 : bits(4) = (slice(dst, 0, 4)) in
-let src_3_0 : bits(4) = (slice(src, 0, 4)) in
+let dst_3_0 : bits(4) = (dst[3 .. 0]) in
+let src_3_0 : bits(4) = (src[3 .. 0]) in
 let sub : sbits(5) = (bits_of_int((unsigned(dst_3_0)) - (unsigned(src_3_0)), 5)) in
 let af : bits(1) = (bool_to_bit((signed(sub)) < (0))) in
 af
 
 val sub_af_spec16 : (bits(16), bits(16)) -> bits(1)
 function sub_af_spec16 (dst, src) =
-let dst_3_0 : bits(4) = (slice(dst, 0, 4)) in
-let src_3_0 : bits(4) = (slice(src, 0, 4)) in
+let dst_3_0 : bits(4) = (dst[3 .. 0]) in
+let src_3_0 : bits(4) = (src[3 .. 0]) in
 let sub : sbits(5) = (bits_of_int((unsigned(dst_3_0)) - (unsigned(src_3_0)), 5)) in
 let af : bits(1) = (bool_to_bit((signed(sub)) < (0))) in
 af
 
 val sub_af_spec32 : (bits(32), bits(32)) -> bits(1)
 function sub_af_spec32 (dst, src) =
-let dst_3_0 : bits(4) = (slice(dst, 0, 4)) in
-let src_3_0 : bits(4) = (slice(src, 0, 4)) in
+let dst_3_0 : bits(4) = (dst[3 .. 0]) in
+let src_3_0 : bits(4) = (src[3 .. 0]) in
 let sub : sbits(5) = (bits_of_int((unsigned(dst_3_0)) - (unsigned(src_3_0)), 5)) in
 let af : bits(1) = (bool_to_bit((signed(sub)) < (0))) in
 af
 
 val sub_af_spec64 : (bits(64), bits(64)) -> bits(1)
 function sub_af_spec64 (dst, src) =
-let dst_3_0 : bits(4) = (slice(dst, 0, 4)) in
-let src_3_0 : bits(4) = (slice(src, 0, 4)) in
+let dst_3_0 : bits(4) = (dst[3 .. 0]) in
+let src_3_0 : bits(4) = (src[3 .. 0]) in
 let sub : sbits(5) = (bits_of_int((unsigned(dst_3_0)) - (unsigned(src_3_0)), 5)) in
 let af : bits(1) = (bool_to_bit((signed(sub)) < (0))) in
 af
 
 val adc_af_spec8 : (bits(8), bits(8), bits(1)) -> bits(1)
 function adc_af_spec8 (dst, src, cf) =
-let dst_3_0 : bits(4) = (slice(dst, 0, 4)) in
-let src_3_0 : bits(4) = (slice(src, 0, 4)) in
+let dst_3_0 : bits(4) = (dst[3 .. 0]) in
+let src_3_0 : bits(4) = (src[3 .. 0]) in
 let adc : bits(6) = (bits_of_int((unsigned(dst_3_0)) + ((unsigned(src_3_0)) + (unsigned(cf))), 6)) in
 let af : bits(1) = (bool_to_bit((15) < (unsigned(adc)))) in
 af
 
 val adc_af_spec16 : (bits(16), bits(16), bits(1)) -> bits(1)
 function adc_af_spec16 (dst, src, cf) =
-let dst_3_0 : bits(4) = (slice(dst, 0, 4)) in
-let src_3_0 : bits(4) = (slice(src, 0, 4)) in
+let dst_3_0 : bits(4) = (dst[3 .. 0]) in
+let src_3_0 : bits(4) = (src[3 .. 0]) in
 let adc : bits(6) = (bits_of_int((unsigned(dst_3_0)) + ((unsigned(src_3_0)) + (unsigned(cf))), 6)) in
 let af : bits(1) = (bool_to_bit((15) < (unsigned(adc)))) in
 af
 
 val adc_af_spec32 : (bits(32), bits(32), bits(1)) -> bits(1)
 function adc_af_spec32 (dst, src, cf) =
-let dst_3_0 : bits(4) = (slice(dst, 0, 4)) in
-let src_3_0 : bits(4) = (slice(src, 0, 4)) in
+let dst_3_0 : bits(4) = (dst[3 .. 0]) in
+let src_3_0 : bits(4) = (src[3 .. 0]) in
 let adc : bits(6) = (bits_of_int((unsigned(dst_3_0)) + ((unsigned(src_3_0)) + (unsigned(cf))), 6)) in
 let af : bits(1) = (bool_to_bit((15) < (unsigned(adc)))) in
 af
 
 val adc_af_spec64 : (bits(64), bits(64), bits(1)) -> bits(1)
 function adc_af_spec64 (dst, src, cf) =
-let dst_3_0 : bits(4) = (slice(dst, 0, 4)) in
-let src_3_0 : bits(4) = (slice(src, 0, 4)) in
+let dst_3_0 : bits(4) = (dst[3 .. 0]) in
+let src_3_0 : bits(4) = (src[3 .. 0]) in
 let adc : bits(6) = (bits_of_int((unsigned(dst_3_0)) + ((unsigned(src_3_0)) + (unsigned(cf))), 6)) in
 let af : bits(1) = (bool_to_bit((15) < (unsigned(adc)))) in
 af
 
 val sbb_af_spec8 : (bits(8), bits(8), bits(1)) -> bits(1)
 function sbb_af_spec8 (dst, src, cf) =
-let dst_3_0 : bits(4) = (slice(dst, 0, 4)) in
-let src_3_0 : bits(4) = (slice(src, 0, 4)) in
+let dst_3_0 : bits(4) = (dst[3 .. 0]) in
+let src_3_0 : bits(4) = (src[3 .. 0]) in
 let sbb : int = ((unsigned(dst_3_0)) - ((unsigned(src_3_0)) + (unsigned(sail_zero_extend(cf, 4))))) in
 let af : bits(1) = (bool_to_bit((sbb) < (0))) in
 af
 
 val sbb_af_spec16 : (bits(16), bits(16), bits(1)) -> bits(1)
 function sbb_af_spec16 (dst, src, cf) =
-let dst_3_0 : bits(4) = (slice(dst, 0, 4)) in
-let src_3_0 : bits(4) = (slice(src, 0, 4)) in
+let dst_3_0 : bits(4) = (dst[3 .. 0]) in
+let src_3_0 : bits(4) = (src[3 .. 0]) in
 let sbb : int = ((unsigned(dst_3_0)) - ((unsigned(src_3_0)) + (unsigned(sail_zero_extend(cf, 4))))) in
 let af : bits(1) = (bool_to_bit((sbb) < (0))) in
 af
 
 val sbb_af_spec32 : (bits(32), bits(32), bits(1)) -> bits(1)
 function sbb_af_spec32 (dst, src, cf) =
-let dst_3_0 : bits(4) = (slice(dst, 0, 4)) in
-let src_3_0 : bits(4) = (slice(src, 0, 4)) in
+let dst_3_0 : bits(4) = (dst[3 .. 0]) in
+let src_3_0 : bits(4) = (src[3 .. 0]) in
 let sbb : int = ((unsigned(dst_3_0)) - ((unsigned(src_3_0)) + (unsigned(sail_zero_extend(cf, 4))))) in
 let af : bits(1) = (bool_to_bit((sbb) < (0))) in
 af
 
 val sbb_af_spec64 : (bits(64), bits(64), bits(1)) -> bits(1)
 function sbb_af_spec64 (dst, src, cf) =
-let dst_3_0 : bits(4) = (slice(dst, 0, 4)) in
-let src_3_0 : bits(4) = (slice(src, 0, 4)) in
+let dst_3_0 : bits(4) = (dst[3 .. 0]) in
+let src_3_0 : bits(4) = (src[3 .. 0]) in
 let sbb : int = ((unsigned(dst_3_0)) - ((unsigned(src_3_0)) + (unsigned(sail_zero_extend(cf, 4))))) in
 let af : bits(1) = (bool_to_bit((sbb) < (0))) in
 af

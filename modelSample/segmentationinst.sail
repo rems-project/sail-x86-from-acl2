@@ -62,8 +62,8 @@ let base_bits : {|24, 32, 64|} = { (match operand_size {
 4 => 32,
 _ => 24
 }) } in
-let gdtr_limit : bits(80) = (set_gdtr_idtrbits_get_limit(slice(mem, 0, 16), 0x0000_0000_0000_0000_0000)) in
-let gdtr : bits(80) = (set_gdtr_idtrbits_get_base_addr(sail_mask(64, slice(mem, 16, base_bits)), gdtr_limit)) in
+let gdtr_limit : bits(80) = (set_gdtr_idtrbits_get_limit(mem[15 .. 0], 0x0000_0000_0000_0000_0000)) in
+let gdtr : bits(80) = (set_gdtr_idtrbits_get_base_addr(sail_mask(64, bitslice(mem, 16, base_bits)), gdtr_limit)) in
 { strs[0] = gdtr;
 write_iptr(proc_mode, temp_rip)
 }
@@ -133,8 +133,8 @@ let base_bits : {|24, 32, 64|} = { (match operand_size {
 4 => 32,
 _ => 24
 }) } in
-let idtr_limit : bits(80) = (set_gdtr_idtrbits_get_limit(slice(mem, 0, 16), 0x0000_0000_0000_0000_0000)) in
-let idtr : bits(80) = (set_gdtr_idtrbits_get_base_addr(sail_mask(64, slice(mem, 16, base_bits)), idtr_limit)) in
+let idtr_limit : bits(80) = (set_gdtr_idtrbits_get_limit(mem[15 .. 0], 0x0000_0000_0000_0000_0000)) in
+let idtr : bits(80) = (set_gdtr_idtrbits_get_base_addr(sail_mask(64, bitslice(mem, 16, base_bits)), idtr_limit)) in
 { strs[1] = idtr;
 write_iptr(proc_mode, temp_rip)
 }

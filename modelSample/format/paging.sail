@@ -74,28 +74,28 @@ val page_table_entry_addr : (sbits(48), bits(52)) -> bits(52)
 
 function page_table_entry_addr (lin_addr, base_addr) = {
     assert(unsigned_byte_p(52, unsigned(base_addr)) & loghead(12, unsigned(base_addr)) == 0);
-    changeSlice(base_addr, 3, 9, slice(lin_addr, 12, 9))
+    changeSlice(base_addr, 3, 9, lin_addr[20 .. 12])
 }
 
 val page_directory_entry_addr : (sbits(48), bits(52)) -> bits(52)
 
 function page_directory_entry_addr (lin_addr, base_addr) = {
     assert(unsigned_byte_p(52, unsigned(base_addr)) & loghead(12, unsigned(base_addr)) == 0);
-    changeSlice(base_addr, 3, 9, slice(lin_addr, 21, 9))
+    changeSlice(base_addr, 3, 9, lin_addr[29 .. 21])
 }
 
 val page_dir_ptr_table_entry_addr : (sbits(48), bits(52)) -> bits(52)
 
 function page_dir_ptr_table_entry_addr (lin_addr, base_addr) = {
     assert(unsigned_byte_p(52, unsigned(base_addr)) & loghead(12, unsigned(base_addr)) == 0);
-    changeSlice(base_addr, 3, 9, slice(lin_addr, 30, 9))
+    changeSlice(base_addr, 3, 9, lin_addr[38 .. 30])
 }
 
 val pml4_table_entry_addr : (sbits(48), bits(52)) -> bits(52)
 
 function pml4_table_entry_addr (lin_addr, base_addr) = {
     assert(unsigned_byte_p(52, unsigned(base_addr)) & loghead(12, unsigned(base_addr)) == 0);
-    changeSlice(base_addr, 3, 9, slice(lin_addr, 39, 9))
+    changeSlice(base_addr, 3, 9, lin_addr[47 .. 39])
 }
 
 struct struct_paging_entry_no_page_fault_p = {supervisor_mode_access_type : int}
