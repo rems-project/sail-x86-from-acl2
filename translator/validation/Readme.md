@@ -36,7 +36,7 @@ Many of scripts require various environment variables to be set.  Some of these 
 
 This section uses the example in `add1example/` where `add1.c` is a simple example which adds `1` to a number.
 
-The instructions here are really just a condensed version of the instructions for simulating in the ACL2 model but translated for the Sail model.  Please do read the ACL2 instructions, found at: http://www.cs.utexas.edu/users/moore/acl2/manuals/current/manual/index-seo.php/X86ISA____PROGRAM-EXECUTION
+The instructions here are really just a condensed version of the instructions for simulating in the ACL2 model but translated for the Sail model.  Please do read the ACL2 instructions, found at: <http://www.cs.utexas.edu/users/moore/acl2/manuals/current/manual/index-seo.php/X86ISA____PROGRAM-EXECUTION>
 
 1. Compile the `.c` file using `gcc add1.c -o add1.elf`
 
@@ -60,12 +60,16 @@ The instructions here are really just a condensed version of the instructions fo
 
    5. Let's set the halt address to the address following the `callq` - i.e. `0x400662`.
 
-   6. Finally, we need to tell the simulator the model should be in 64 bit mode.
+   6. Some of the tests in the K framework test suite also need the control register bit `cr4.osfxsr` to be set;  otherwise, some instructions used in those tests fail.
+
+   7. We need to tell the simulator the model should be in 64 bit mode.
+
+   8. Finally, we need to either initialise the address translation tables, or tell the simulator to use the application-level view of the model;  we currently choose the latter.
 
 4. To set all these parameters and run the simulation use:
 
    ```
-   ${X86EMU} -e add1.elf -C rip=0x40065d -C rsp=35184372088832 -C rflags=2 -C ha=0x400662 -C set64bit=1
+   ${X86EMU} -e add1.elf -C rip=0x40065d -C rsp=35184372088832 -C rflags=2 -C ha=0x400662 -C cr4=512 -C set64bit=1 -C app_view=1
    ```
 
 5. The state of each register at each step and a record of memory reads and writes should be printed.  The final line should read `Steps = 10`, indicating 10 cycles were simulated.  Also note the value in `rax` for the last step: `rax = 0x0000000000000001`.  This is the value returned from `add1()` and represents the calculation `0+1`, i.e. `1`.
@@ -141,7 +145,7 @@ This section describes how to use the scripts included in `automation/` for co-s
    * If this file is empty it indicates that the register states at each step matched (co-simulation succeeded).  To find such files run `find ${KFSIT} -iname "analyseOut.log" -size 0`.
    * If the file is non-empty the contents indicate the differences in co-simulation.  To find such files run `find ${KFSIT} -iname "analyseOut.log" -size +0`.
    * Memory reads/writes and not compared due to Lisp not reliably saving this data.
-7. `./7concatCoverage.sh` collects all the generated `sail_coverage` files and concatenates them into `total_sail_coverage`.  It then runs the Sail coverage tool and saves the resulting html in `coverage_html/`.  It saves the reports text to `coverage_html/report.txt` and prints it to the terminal.
+7. If the tests were run with an emulator that has support for generating model coverage information (not tested with current versions of Sail), then `./7concatCoverage.sh` collects all the generated `sail_coverage` files and concatenates them into `total_sail_coverage`.  It then runs the Sail coverage tool and saves the resulting html in `coverage_html/`.  It saves the reports text to `coverage_html/report.txt` and prints it to the terminal.
 
 As mentioned in 'Running an Example', the above steps can be performed manually on specific examples.  In this case the functions in `analyseOutput.py` can be used to compare outputs.
 
