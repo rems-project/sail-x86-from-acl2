@@ -19,6 +19,8 @@ Many of scripts require various environment variables to be set.  Some of these 
 
 ## Compiling the Model
 
+0. Install [Sail](https://github.com/rems-project/sail), if necessary, as described [here](https://github.com/rems-project/sail/blob/sail2/INSTALL.md).  These instructions were last tested with Sail git revision `4f8532ae`, built from source.
+
 1. Set the environment variables `SAIL_DIR` and `x86SAIL_DIR` then.
 
 2. Connect to `emulator/`
@@ -129,7 +131,7 @@ This section describes how to use the scripts included in `automation/` for co-s
    export KFSIT=${PWD}/X86-64-semantics/tests/single-instruction-tests
    ```
    
-3. Set the ACL2 environment variable.
+3. Set the `ACL2` environment variable.
 
 4. Connect to `automation/` folder.
 

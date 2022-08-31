@@ -1,6 +1,6 @@
 # Original Documentation
 
-This directory contains documentation of the original prototype of the translator written by Patrick Taylor, in particular Patrick's dissertation in `doc/diss/latex/diss.pdf`.  Much of this still applies to the current version of the translator, but it has not been kept up to date with the development of the translator, and some aspects have changed;  for example, the type inference now generates fixed-width bitvector type annotations where possible, rather than using unbounded integers.
+This directory contains documentation of the original prototype of the translator written by Patrick Taylor, in particular Patrick's dissertation in `diss/latex/diss.pdf`.  Much of this still applies to the current version of the translator, but it has not been kept up to date with the development of the translator, and some aspects have changed;  for example, the type inference now generates fixed-width bitvector type annotations where possible, rather than using unbounded integers.
 
 We keep this original documentation for reference.  Apart from the dissertation, it also includes:
 
