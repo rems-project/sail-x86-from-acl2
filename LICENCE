@@ -1,9 +1,10 @@
-All files and directories are subject to the BSD two-clause licence below
-except the translated x86 model files in the `modelSample/` directory which
+All files and directories are subject to the BSD two-clause licence below,
+except the translated x86 model files in the `modelSample/` directory, which
 are subject to the BSD three-clause licence of the original authors (see
-`modelSample/licence.txt`).
+`modelSample/LICENSE`).
 
 Copyright (c) 2020 Patrick Taylor
+Copyright (c) 2022 Thomas Bauereiss
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
