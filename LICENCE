@@ -4,7 +4,15 @@ are subject to the BSD three-clause licence of the original authors (see
 `modelSample/LICENSE`).
 
 Copyright (c) 2020 Patrick Taylor
-Copyright (c) 2022 Thomas Bauereiss
+Copyright (c) 2022 Capabilities Limited
+
+This software was partly developed by SRI International, the University
+of Cambridge Computer Laboratory (Department of Computer Science and
+Technology), and Capabilities Limited under Defense Advanced Research
+Projects Agency (DARPA) Contract No. HR001122C0110 ("ETC").
+
+Portions of this software were developed by Thomas Bauereiss under
+contract to Capabilities Limited.
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
