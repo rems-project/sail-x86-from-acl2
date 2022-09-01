@@ -1,12 +1,13 @@
-All files and directories are subject to the BSD two-clause licence below,
-except the translated x86 model files in the `modelSample/` directory, which
-are subject to the BSD three-clause licence of the original authors (see
-`modelSample/LICENSE`).
+All files and directories are subject to the BSD two-clause licence
+below, except the translated x86 model files in the `modelSample/`
+directory, which are subject to the terms of a BSD three-clause licence
+and additionally the licence of the original ACL2 x86 model, from which
+the Sail model is generated (see `modelSample/LICENSE`).
 
 Copyright (c) 2020 Patrick Taylor
 Copyright (c) 2022 Capabilities Limited
 
-This software was partly developed by SRI International, the University
+This software was developed in part by SRI International, the University
 of Cambridge Computer Laboratory (Department of Computer Science and
 Technology), and Capabilities Limited under Defense Advanced Research
 Projects Agency (DARPA) Contract No. HR001122C0110 ("ETC").
