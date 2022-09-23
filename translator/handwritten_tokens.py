@@ -122,14 +122,14 @@ write_rflags_fn = SailHandwrittenFn(
 	Sail_t_fn([Sail_t_int(), Sail_t_int()], Sail_t_int(), {'wreg'})
 )
 
-r_rip_fn = SailHandwrittenFn(
-	'ripi',
-	Sail_t_fn([Sail_t_int()], Sail_t_int())
+read_rip_fn = SailHandwrittenFn(
+	'read_rip',
+	Sail_t_fn([], Sail_t_bits(48, signed=True))
 )
 
 write_rip_fn = SailHandwrittenFn(
 	'write_rip',
-	Sail_t_fn([Sail_t_int(), Sail_t_int()], Sail_t_int(), {'wreg'})
+	Sail_t_fn([Sail_t_bits(48, signed=True)], Sail_t_unit())
 )
 
 rgfi_fn = SailHandwrittenFn(
@@ -322,4 +322,29 @@ merge_2_u32s_fn = SailHandwrittenFn(
 merge_4_u32s_fn = SailHandwrittenFn(
 	'merge_4_u32s',
 	Sail_t_fn([Sail_t_bits(32), Sail_t_bits(32), Sail_t_bits(32), Sail_t_bits(32)], Sail_t_bits(128))
+)
+
+def bits_list(bits):
+	return [Sail_t_bits(n) for n in bits]
+
+ext_one_byte_opcode_execute_fn = SailHandwrittenFn(
+	'ext_one_byte_opcode_execute',
+	Sail_t_fn([Sail_t_range(0, 4)] + [Sail_t_bits(48, signed=True)] * 2 + bits_list([52, 8, 8, 8, 8]), Sail_t_unit())
+)
+
+ext_two_byte_opcode_execute_fn = SailHandwrittenFn(
+	'ext_two_byte_opcode_execute',
+	Sail_t_fn([Sail_t_range(0, 4)] + [Sail_t_bits(48, signed=True)] * 2 + bits_list([52, 8, 8, 8, 8, 8]), Sail_t_unit())
+)
+
+def ext_vex_execute_fn(name):
+	ext_name = 'ext_' + utils.sanitiseSymbol(name)
+	args = [Sail_t_range(0, 4)] + [Sail_t_bits(48, signed=True)] * 2 + bits_list([52, 8, 24, 8, 8, 8])
+	return SailHandwrittenFn(ext_name, Sail_t_fn(args, Sail_t_unit())
+)
+
+def ext_evex_execute_fn(name):
+	ext_name = 'ext_' + utils.sanitiseSymbol(name)
+	args = [Sail_t_range(0, 4)] + [Sail_t_bits(48, signed=True)] * 2 + bits_list([52, 8, 32, 8, 8, 8])
+	return SailHandwrittenFn(ext_name, Sail_t_fn(args, Sail_t_unit())
 )

@@ -1,6 +1,7 @@
 from lex_parse import ACL2quote
 from SailASTelems import *
 import specialTokens
+import handwritten_tokens
 import transform
 import re
 
@@ -190,14 +191,15 @@ def implemented_opcode(ACL2ast, env):
 		newACL2ast = ACL2ast[:2] + [case for case in ACL2ast[2:-1] if int(case[0]) in casesToInclude]
 		sailAST, env, _ = specialTokens.tr_case(newACL2ast, env)
 
-		# Make the missing opcodes throw exceptions
+		# Forward the missing opcodes to the extension hook
 		matchesList = sailAST[0].getMatches()
+		ext_call, env = gen_ext_opcode_execute_call(env)
 		for i in range(256):
 			if i not in casesToInclude:
-				matchesList.append(
-					(SailNumLit(i), specialTokens.errorHelper(f"Translation error: {msg}-byte opcode {i} not translated")))
-		matchesList.append(
-			(SailUnderScoreLit(), specialTokens.errorHelper(f"Translation error: invalid {msg}-byte opcode")))
+				matchesList.append((SailNumLit(i), ext_call[0]))
+					# (SailNumLit(i), specialTokens.errorHelper(f"Translation error: {msg}-byte opcode {i} not translated")))
+		matchesList.append((SailUnderScoreLit(), ext_call[0]))
+			# (SailUnderScoreLit(), specialTokens.errorHelper(f"Translation error: invalid {msg}-byte opcode")))
 
 		return True, sailAST, env
 
@@ -388,6 +390,51 @@ def syscall_numbers(ACL2ast, env):
 		thenTerm, env, _ = transform.transformACL2asttoSail(ACL2ast[2], env)
 		return True, thenTerm, env
 
+base_decodes = ['one-byte-opcode-execute', 'two-byte-opcode-execute']
+vex_decodes = ['vex-0f-execute', 'vex-0f38-execute', 'vex-0f3a-execute']
+evex_decodes = ['evex-0f-execute', 'evex-0f38-execute', 'evex-0f3a-execute']
+all_decodes = base_decodes + vex_decodes + evex_decodes
+
+def gen_ext_opcode_execute_call(env):
+	name = env.getDefineSlot().lower()
+	if name == 'one-byte-opcode-execute':
+		fn = handwritten_tokens.ext_one_byte_opcode_execute_fn
+		arg_names = ["proc-mode", "start-rip", "temp-rip", "prefixes", "rex-byte", "opcode", "modr/m", "sib"]
+	elif name == 'two-byte-opcode-execute':
+		fn = handwritten_tokens.ext_two_byte_opcode_execute_fn
+		arg_names = ["proc-mode", "start-rip", "temp-rip", "prefixes", "mandatory-prefix", "rex-byte", "opcode", "modr/m", "sib"]
+	elif name in vex_decodes:
+		fn = handwritten_tokens.ext_vex_execute_fn(name)
+		arg_names = ["proc-mode", "start-rip", "temp-rip", "prefixes", "rex-byte", "vex-prefixes", "opcode", "modr/m", "sib"]
+	elif name in evex_decodes:
+		fn = handwritten_tokens.ext_evex_execute_fn(name)
+		arg_names = ["proc-mode", "start-rip", "temp-rip", "prefixes", "rex-byte", "evex-prefixes", "opcode", "modr/m", "sib"]
+	else:
+		assert False
+	args = []
+	for n in arg_names:
+		sail, env, _ = env.lookup(n)(n, env)
+		args += sail
+	return [SailApp(fn, args)], env
+
+def ext_opcode_hooks(ACL2ast, env):
+	if env.getDefineSlot().lower() in all_decodes and \
+			isinstance(ACL2ast, list) and len(ACL2ast) >= 1 and \
+			isinstance(ACL2ast[0], str) and ACL2ast[0].lower() == 'x86-step-unimplemented':
+		sail, env = gen_ext_opcode_execute_call(env)
+		return True, sail, env
+		# if env.getDefineSlot().lower() == 'one-byte-opcode-execute':
+		# 	fn = handwritten_tokens.ext_one_byte_opcode_execute_fn
+		# 	arg_names = ["proc-mode", "start-rip", "temp-rip", "prefixes", "rex-byte", "opcode", "modr/m", "sib"]
+		# else:
+		# 	fn = handwritten_tokens.ext_two_byte_opcode_execute_fn
+		# 	arg_names = ["proc-mode", "start-rip", "temp-rip", "prefixes", "mandatory-prefix", "rex-byte", "opcode", "modr/m", "sib"]
+		# args = []
+		# for n in arg_names:
+		# 	sail, env, _ = env.lookup(n)(n, env)
+		# 	args += sail
+		# return True, [SailApp(fn, args)], env
+
 interventionsList = [
 	x86_token,
 	and_macro,
@@ -398,6 +445,7 @@ interventionsList = [
 	implemented_opcode,
 	t_in_get_prefixes,
 	fault_var_int_dispatch_creator,
+	ext_opcode_hooks,
 	x86_illegal_instruction,
 	x86_step_unimplemented,
 	push_and_pop_errors,

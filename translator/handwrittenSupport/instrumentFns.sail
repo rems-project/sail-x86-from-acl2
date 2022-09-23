@@ -24,6 +24,14 @@ function printState () = {
 	print_bits("rip = ", rip);
 }
 
+function log_memory_read(addr, value) = {
+	print_endline(bits_str(rip) ^ ": R " ^ bits_str(addr) ^ " " ^ dec_str(1) ^ " " ^ bits_str(value))
+}
+
+function log_memory_write(addr, value) = {
+	print_endline(bits_str(rip) ^ ": W " ^ bits_str(addr) ^ " " ^ dec_str(1) ^ " " ^ bits_str(value))
+}
+
 val x86_step_print_halt : (sbits(48), bool, bool, int) -> bool effect {eamem, escape, rmem, rreg, undef, wmv, wreg}
 function x86_step_print_halt(haltAddr, printEachStep, printCount, count) = {
 	if rip == haltAddr then {

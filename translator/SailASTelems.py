@@ -4,6 +4,7 @@ import utils
 
 import sys
 import os
+from pathlib import Path
 
 """
 This file is split into two parts:
@@ -1716,8 +1717,16 @@ def saveSail(SailAST, path, name, env, includeHeaders):
 	# Get the pretty printed version
 	pp = "\n".join([elem.pp() for elem in SailAST])
 
+	sanitisedName = utils.sanitiseSymbol(name)
+	fileName = sanitisedName + '.sail'
+	filePath = Path(path) / fileName
+
 	# Also output into a file
-	with open(os.path.join(path, f"{utils.sanitiseSymbol(name)}.sail"), 'w') as f:
+	with open(filePath, 'w') as f:
+		ppConstant = f'__X86_{sanitisedName.upper()}'
+		f.write(f'$ifndef {ppConstant}\n')
+		f.write(f'$define {ppConstant}\n')
+
 		if includeHeaders:
 			f.write("$ifndef _DEFAULT_DEC\n")
 			f.write("\tdefault Order dec\n")
@@ -1730,12 +1739,17 @@ def saveSail(SailAST, path, name, env, includeHeaders):
 			f.write('$include "auxiliary.sail"\n')
 
 		if includeHeaders:
-			f.write('$include "handwritten.sail"\n')
+			f.write('$include "prelude.sail"\n')
+			f.write('$include "register_types.sail"\n')
+			f.write('$include "registers.sail"\n')
+			f.write('$include "register_accessors.sail"\n')
+			f.write('$include "opcode_ext.sail"\n')
 
 		f.write(pp)
 
 		# A trailing new line is needed for, for example, file only containing `$include`s.
 		f.write("\n")
+		f.write('$endif\n')
 
 		print(f"Successfully saved file path: {path}; name: {name}")
 

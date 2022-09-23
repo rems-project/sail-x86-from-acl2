@@ -197,6 +197,8 @@ def handwritten():
 		'logext'				: binary_logext_fn,
 		'rgfi'					: rgfi_fn,
 		'!rgfi'					: write_rgfi_fn,
+		'rip'					: read_rip_fn,
+		'!rip'					: write_rip_fn,
 		'memi'					: memi_fn,
 		'abs'					: abs_fn,
 		'floor'					: floor_fn,
