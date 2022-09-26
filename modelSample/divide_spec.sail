@@ -1,3 +1,5 @@
+$ifndef __X86_DIVIDE_SPEC
+$define __X86_DIVIDE_SPEC
 $include <prelude.sail>
 $include <string.sail>
 
@@ -117,3 +119,4 @@ function idiv_spec (size, dst, src) =
 _ => (false, 0x0000_0000_0000_0000, 0x0000_0000_0000_0000)
 }) : (bool, bits(64), bits(64))
 
+$endif

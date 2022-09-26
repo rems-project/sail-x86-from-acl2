@@ -1,3 +1,5 @@
+$ifndef __X86_LINEAR_MEMORY
+$define __X86_LINEAR_MEMORY
 $include <prelude.sail>
 $include <string.sail>
 $include "paging.sail"
@@ -423,3 +425,4 @@ else let canonical_address_unsigned_val : int = (loghead(64, signed(canonical_ad
 wml64(lin_addr, bits_of_int(canonical_address_unsigned_val, 64))
 else Some("write-canonical-address-to-memory-error")
 
+$endif

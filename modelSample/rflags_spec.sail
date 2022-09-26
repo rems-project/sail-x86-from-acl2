@@ -1,3 +1,5 @@
+$ifndef __X86_RFLAGS_SPEC
+$define __X86_RFLAGS_SPEC
 $include <prelude.sail>
 $include <string.sail>
 $include "application_level_memory.sail"
@@ -253,3 +255,4 @@ let sbb : int = ((unsigned(dst_3_0)) - ((unsigned(src_3_0)) + (unsigned(sail_zer
 let af : bits(1) = (bool_to_bit((sbb) < (0))) in
 af
 
+$endif

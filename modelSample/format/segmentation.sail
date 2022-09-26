@@ -21,14 +21,14 @@ function segment_base_and_bounds (proc_mode, seg_reg) = {
               let attr : int = loghead(16, unsigned(seg_hidden_attrs[seg_reg]));
               let d_b : bits(1) = {
                   if seg_reg == 1 then {
-                      code_segment_descriptor_attributesbits_get_d(bits_of_int(attr, 16))
+                      Mk_code_segment_descriptor_attributesbits(bits_of_int(attr, 16))[d]
                   } else {
-                      data_segment_descriptor_attributesbits_get_d_b(bits_of_int(attr, 16))
+                      Mk_data_segment_descriptor_attributesbits(bits_of_int(attr, 16))[d_b]
                   }
               };
               let e : bits(1) = {
                   if seg_reg == 1 then 0b0 else {
-                      data_segment_descriptor_attributesbits_get_e(bits_of_int(attr, 16))
+                      Mk_data_segment_descriptor_attributesbits(bits_of_int(attr, 16))[e]
                   }
               };
               let lower : int = {
@@ -99,15 +99,15 @@ function ea_to_la (proc_mode, eff_addr, seg_reg, nbytes) = {
 val ia32e_valid_code_segment_descriptor_p : bits(64) -> (bool, (string, bits(64)))
 
 function ia32e_valid_code_segment_descriptor_p descriptor = {
-    if not_bool(code_segment_descriptorbits_get_msb_of_type(descriptor) == 0b1) then {
+    if not_bool(Mk_code_segment_descriptorbits(descriptor)[msb_of_type] == 0b1) then {
         (false, (":INVALID-SEGMENT-TYPE", descriptor))
-    } else if not_bool(code_segment_descriptorbits_get_s(descriptor) == 0b1) then {
+    } else if not_bool(Mk_code_segment_descriptorbits(descriptor)[s] == 0b1) then {
         (false, (":INVALID-SEGMENT-TYPE", descriptor))
-    } else if not_bool(code_segment_descriptorbits_get_p(descriptor) == 0b1) then {
+    } else if not_bool(Mk_code_segment_descriptorbits(descriptor)[p] == 0b1) then {
         (false, (":SEGMENT-NOT-PRESENT", descriptor))
-    } else if not_bool(code_segment_descriptorbits_get_l(descriptor) == 0b1) then {
+    } else if not_bool(Mk_code_segment_descriptorbits(descriptor)[l] == 0b1) then {
         (false, (":IA32E-MODE-OFF", descriptor))
-    } else if not_bool(code_segment_descriptorbits_get_d(descriptor) == 0b0) then {
+    } else if not_bool(Mk_code_segment_descriptorbits(descriptor)[d] == 0b0) then {
         (false, (":IA32E-DEFAULT-OPERAND-SIZE-INCORRECT", descriptor))
     } else {
         (true, ("", 0x0000000000000000))
@@ -117,14 +117,14 @@ function ia32e_valid_code_segment_descriptor_p descriptor = {
 val ia32e_valid_ldt_segment_descriptor_p : bits(128) -> (bool, (string, bits(128)))
 
 function ia32e_valid_ldt_segment_descriptor_p descriptor = {
-    let sailtype : bits(4) = system_segment_descriptorbits_get_type(descriptor);
+    let sailtype : bits(4) = Mk_system_segment_descriptorbits(descriptor)[sailtype];
     if not_bool(sailtype == 0x2) then {
         (false, (":INVALID-TYPE", descriptor))
-    } else if not_bool(system_segment_descriptorbits_get_s(descriptor) == 0b0) then {
+    } else if not_bool(Mk_system_segment_descriptorbits(descriptor)[s] == 0b0) then {
         (false, (":INVALID-SEGMENT-TYPE", descriptor))
-    } else if not_bool(system_segment_descriptorbits_get_p(descriptor) == 0b1) then {
+    } else if not_bool(Mk_system_segment_descriptorbits(descriptor)[p] == 0b1) then {
         (false, (":SEGMENT-NOT-PRESENT", descriptor))
-    } else if not_bool(system_segment_descriptorbits_get_all_zeroes?(descriptor) == 0b00000) then {
+    } else if not_bool(Mk_system_segment_descriptorbits(descriptor)[all_zeroes?] == 0b00000) then {
         (false, (":ALL-ZEROES-ABSENT", descriptor))
     } else {
         (true, ("", 0x00000000000000000000000000000000))
@@ -134,44 +134,44 @@ function ia32e_valid_ldt_segment_descriptor_p descriptor = {
 val ia32e_valid_call_gate_segment_descriptor_p : bits(128) -> (bool, (string, bits(128)))
 
 function ia32e_valid_call_gate_segment_descriptor_p descriptor = {
-    let sailtype : bits(4) = call_gate_descriptorbits_get_type(descriptor);
+    let sailtype : bits(4) = Mk_call_gate_descriptorbits(descriptor)[sailtype];
     if not_bool(sailtype == 0xc) then {
         (false, (":INVALID-TYPE", descriptor))
-    } else if not_bool(call_gate_descriptorbits_get_s(descriptor) == 0b0) then {
+    } else if not_bool(Mk_call_gate_descriptorbits(descriptor)[s] == 0b0) then {
         (false, (":INVALID-SEGMENT-TYPE", descriptor))
-    } else if not_bool(call_gate_descriptorbits_get_p(descriptor) == 0b1) then {
+    } else if not_bool(Mk_call_gate_descriptorbits(descriptor)[p] == 0b1) then {
         (false, (":SEGMENT-NOT-PRESENT", descriptor))
-    } else if not_bool(call_gate_descriptorbits_get_all_zeroes?(descriptor) == 0b00000) then {
+    } else if not_bool(Mk_call_gate_descriptorbits(descriptor)[all_zeroes?] == 0b00000) then {
         (false, (":ALL-ZEROES-ABSENT", descriptor))
     } else {
         (true, ("", 0x00000000000000000000000000000000))
     }
 }
 
-val make_code_segment_attr_field : bits(64) -> bits(16)
+val make_code_segment_attr_field : bits(64) -> code_segment_descriptor_attributesbits
 
 function make_code_segment_attr_field descriptor = {
-    let a : bits(1) = code_segment_descriptorbits_get_a(descriptor);
-    let r : bits(1) = code_segment_descriptorbits_get_r(descriptor);
-    let c : bits(1) = code_segment_descriptorbits_get_c(descriptor);
-    let msb_of_type : bits(1) = code_segment_descriptorbits_get_msb_of_type(descriptor);
-    let s : bits(1) = code_segment_descriptorbits_get_s(descriptor);
-    let dpl : bits(2) = code_segment_descriptorbits_get_dpl(descriptor);
-    let p : bits(1) = code_segment_descriptorbits_get_p(descriptor);
-    let avl : bits(1) = code_segment_descriptorbits_get_avl(descriptor);
-    let l : bits(1) = code_segment_descriptorbits_get_l(descriptor);
-    let g : bits(1) = code_segment_descriptorbits_get_g(descriptor);
-    change_code_segment_descriptor_attributesbits(0x0000, Some(a), Some(r), Some(c), Some(msb_of_type), Some(s), Some(dpl), Some(p), Some(avl), Some(l), None(), Some(g), None())
+    let a : bits(1) = Mk_code_segment_descriptorbits(descriptor)[a];
+    let r : bits(1) = Mk_code_segment_descriptorbits(descriptor)[r];
+    let c : bits(1) = Mk_code_segment_descriptorbits(descriptor)[c];
+    let msb_of_type : bits(1) = Mk_code_segment_descriptorbits(descriptor)[msb_of_type];
+    let s : bits(1) = Mk_code_segment_descriptorbits(descriptor)[s];
+    let dpl : bits(2) = Mk_code_segment_descriptorbits(descriptor)[dpl];
+    let p : bits(1) = Mk_code_segment_descriptorbits(descriptor)[p];
+    let avl : bits(1) = Mk_code_segment_descriptorbits(descriptor)[avl];
+    let l : bits(1) = Mk_code_segment_descriptorbits(descriptor)[l];
+    let g : bits(1) = Mk_code_segment_descriptorbits(descriptor)[g];
+    [Mk_code_segment_descriptor_attributesbits(0x0000) with a, r, c, msb_of_type, s, dpl, p, avl, l, g]
 }
 
-val make_system_segment_attr_field : bits(128) -> bits(16)
+val make_system_segment_attr_field : bits(128) -> system_segment_descriptor_attributesbits
 
 function make_system_segment_attr_field descriptor = {
-    let sailtype : bits(4) = system_segment_descriptorbits_get_type(descriptor);
-    let s : bits(1) = system_segment_descriptorbits_get_s(descriptor);
-    let dpl : bits(2) = system_segment_descriptorbits_get_dpl(descriptor);
-    let p : bits(1) = system_segment_descriptorbits_get_p(descriptor);
-    let avl : bits(1) = system_segment_descriptorbits_get_avl(descriptor);
-    let g : bits(1) = system_segment_descriptorbits_get_g(descriptor);
-    change_system_segment_descriptor_attributesbits(0x0000, Some(sailtype), Some(s), Some(dpl), Some(p), Some(avl), Some(g), None())
+    let sailtype : bits(4) = Mk_system_segment_descriptorbits(descriptor)[sailtype];
+    let s : bits(1) = Mk_system_segment_descriptorbits(descriptor)[s];
+    let dpl : bits(2) = Mk_system_segment_descriptorbits(descriptor)[dpl];
+    let p : bits(1) = Mk_system_segment_descriptorbits(descriptor)[p];
+    let avl : bits(1) = Mk_system_segment_descriptorbits(descriptor)[avl];
+    let g : bits(1) = Mk_system_segment_descriptorbits(descriptor)[g];
+    [Mk_system_segment_descriptor_attributesbits(0x0000) with sailtype, s, dpl, p, avl, g]
 }

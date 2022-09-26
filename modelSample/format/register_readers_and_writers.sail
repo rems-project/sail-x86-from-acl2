@@ -247,64 +247,64 @@ val write_user_rflags : (bits(32), bits(32)) -> unit
 
 function write_user_rflags (user_flags_vector, undefined_mask) = {
     let input_rflags : bits(32) = rflags;
-    if rflagsbits_get_cf(undefined_mask) == 0b1 then {
+    if Mk_rflagsbits(undefined_mask)[cf] == 0b1 then {
         let rflags_var : bits(32) = rflags;
         let sailval : bits(1) = undef_flg();
-        let new_rflags : bits(32) = set_rflagsbits_get_cf(sailval, rflags_var);
-        rflags = new_rflags
+        let new_rflags : rflagsbits = [Mk_rflagsbits(rflags_var) with cf = sailval];
+        rflags = new_rflags.bits
     } else {
         let rflags_var : bits(32) = rflags;
-        let new_rflags : bits(32) = set_rflagsbits_get_cf(rflagsbits_get_cf(user_flags_vector), rflags_var);
-        rflags = new_rflags
+        let new_rflags : rflagsbits = [Mk_rflagsbits(rflags_var) with cf = Mk_rflagsbits(user_flags_vector)[cf]];
+        rflags = new_rflags.bits
     };
-    if rflagsbits_get_pf(undefined_mask) == 0b1 then {
+    if Mk_rflagsbits(undefined_mask)[pf] == 0b1 then {
         let rflags_var : bits(32) = rflags;
         let sailval : bits(1) = undef_flg();
-        let new_rflags : bits(32) = set_rflagsbits_get_pf(sailval, rflags_var);
-        rflags = new_rflags
+        let new_rflags : rflagsbits = [Mk_rflagsbits(rflags_var) with pf = sailval];
+        rflags = new_rflags.bits
     } else {
         let rflags_var : bits(32) = rflags;
-        let new_rflags : bits(32) = set_rflagsbits_get_pf(rflagsbits_get_pf(user_flags_vector), rflags_var);
-        rflags = new_rflags
+        let new_rflags : rflagsbits = [Mk_rflagsbits(rflags_var) with pf = Mk_rflagsbits(user_flags_vector)[pf]];
+        rflags = new_rflags.bits
     };
-    if rflagsbits_get_af(undefined_mask) == 0b1 then {
+    if Mk_rflagsbits(undefined_mask)[af] == 0b1 then {
         let rflags_var : bits(32) = rflags;
         let sailval : bits(1) = undef_flg();
-        let new_rflags : bits(32) = set_rflagsbits_get_af(sailval, rflags_var);
-        rflags = new_rflags
+        let new_rflags : rflagsbits = [Mk_rflagsbits(rflags_var) with af = sailval];
+        rflags = new_rflags.bits
     } else {
         let rflags_var : bits(32) = rflags;
-        let new_rflags : bits(32) = set_rflagsbits_get_af(rflagsbits_get_af(user_flags_vector), rflags_var);
-        rflags = new_rflags
+        let new_rflags : rflagsbits = [Mk_rflagsbits(rflags_var) with af = Mk_rflagsbits(user_flags_vector)[af]];
+        rflags = new_rflags.bits
     };
-    if rflagsbits_get_zf(undefined_mask) == 0b1 then {
+    if Mk_rflagsbits(undefined_mask)[zf] == 0b1 then {
         let rflags_var : bits(32) = rflags;
         let sailval : bits(1) = undef_flg();
-        let new_rflags : bits(32) = set_rflagsbits_get_zf(sailval, rflags_var);
-        rflags = new_rflags
+        let new_rflags : rflagsbits = [Mk_rflagsbits(rflags_var) with zf = sailval];
+        rflags = new_rflags.bits
     } else {
         let rflags_var : bits(32) = rflags;
-        let new_rflags : bits(32) = set_rflagsbits_get_zf(rflagsbits_get_zf(user_flags_vector), rflags_var);
-        rflags = new_rflags
+        let new_rflags : rflagsbits = [Mk_rflagsbits(rflags_var) with zf = Mk_rflagsbits(user_flags_vector)[zf]];
+        rflags = new_rflags.bits
     };
-    if rflagsbits_get_sf(undefined_mask) == 0b1 then {
+    if Mk_rflagsbits(undefined_mask)[sf] == 0b1 then {
         let rflags_var : bits(32) = rflags;
         let sailval : bits(1) = undef_flg();
-        let new_rflags : bits(32) = set_rflagsbits_get_sf(sailval, rflags_var);
-        rflags = new_rflags
+        let new_rflags : rflagsbits = [Mk_rflagsbits(rflags_var) with sf = sailval];
+        rflags = new_rflags.bits
     } else {
         let rflags_var : bits(32) = rflags;
-        let new_rflags : bits(32) = set_rflagsbits_get_sf(rflagsbits_get_sf(user_flags_vector), rflags_var);
-        rflags = new_rflags
+        let new_rflags : rflagsbits = [Mk_rflagsbits(rflags_var) with sf = Mk_rflagsbits(user_flags_vector)[sf]];
+        rflags = new_rflags.bits
     };
-    if rflagsbits_get_of(undefined_mask) == 0b1 then {
+    if Mk_rflagsbits(undefined_mask)[of] == 0b1 then {
         let rflags_var : bits(32) = rflags;
         let sailval : bits(1) = undef_flg();
-        let new_rflags : bits(32) = set_rflagsbits_get_of(sailval, rflags_var);
-        rflags = new_rflags
+        let new_rflags : rflagsbits = [Mk_rflagsbits(rflags_var) with of = sailval];
+        rflags = new_rflags.bits
     } else {
         let rflags_var : bits(32) = rflags;
-        let new_rflags : bits(32) = set_rflagsbits_get_of(rflagsbits_get_of(user_flags_vector), rflags_var);
-        rflags = new_rflags
+        let new_rflags : rflagsbits = [Mk_rflagsbits(rflags_var) with of = Mk_rflagsbits(user_flags_vector)[of]];
+        rflags = new_rflags.bits
     }
 }

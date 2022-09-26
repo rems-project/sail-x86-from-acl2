@@ -1,23 +1,24 @@
+$ifndef __X86_STRING
+$define __X86_STRING
 $include <prelude.sail>
 $include <string.sail>
 
 
-val x86_movs : (range(0, 4), sbits(48), sbits(48), bits(52), bits(8), bits(8), bits(8), bits(8)) -> unit effect {eamem, escape, rmem, rreg, wmv, wreg}
+val x86_movs : (range(0, 4), sbits(48), sbits(48), prefixes, bits(8), bits(8), modr_m, sib) -> unit effect {eamem, escape, rmem, rreg, wmv, wreg}
 function x86_movs (proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode, modr_m, sib) =
 let ctx : string = ("X86-MOVS") in
-let r_m : bits(3) = (modr_m_get_r_m(modr_m)) in
-let mod_var : bits(2) = (modr_m_get_mod(modr_m)) in
-let reg : bits(3) = (modr_m_get_reg(modr_m)) in
-let group_1_prefix : bits(8) = (prefixes_get_rep(prefixes)) in
+let r_m : bits(3) = ((modr_m)[r_m]) in
+let mod_var : bits(2) = ((modr_m)[mod]) in
+let reg : bits(3) = ((modr_m)[reg]) in
+let group_1_prefix : bits(8) = ((prefixes)[rep]) in
 let badlength? : option(int) = (check_instruction_length(start_rip, temp_rip, 0b000)) in
 { if is_some(badlength?)
-then throw(Emsg("A fault occurred.  Original ACL2 AST:
-['!!FAULT-FRESH', ':GP', '0', ':INSTRUCTION-LENGTH', 'BADLENGTH?']"))
+then throw(Emsg("A fault occurred.  Original ACL2 AST: (!!FAULT-FRESH :GP 0 :INSTRUCTION-LENGTH BADLENGTH?)"))
 else ();
-let p2 : bits(8) = (prefixes_get_seg(prefixes)) in
-let p4? : bool = ((0x67) == (prefixes_get_adr(prefixes))) in
+let p2 : bits(8) = ((prefixes)[seg]) in
+let p4? : bool = ((0x67) == ((prefixes)[adr])) in
 let df : bits(1) = (truncate(let rflags_var : bits(32) = (rflags) in
-sail_zero_extend(rflagsbits_get_df(rflags_var), 2), 1)) in
+sail_zero_extend((Mk_rflagsbits(rflags_var))[df], 2), 1)) in
 let counter_addr_size : {|2, 4, 8|} = (select_address_size(proc_mode, p4?)) in
 let select_byte_operand : bool = ((0xa4) == (opcode)) in
 let operand_size : {|1, 2, 4, 8|} = (select_operand_size(proc_mode, select_byte_operand, rex_byte, false, prefixes, false, false, false)) in
@@ -65,7 +66,7 @@ else ();
 243 => { let counter : bits(64) = (rgfi_size(bits_of_int(counter_addr_size, 4), 0x1, rex_byte)) in
 let counter : bits(64) = (sail_mask(64, trunc(counter_addr_size, bits_of_int((unsigned(counter)) - (1), 64)))) in
 if ((counter) == (0x0000_0000_0000_0000)) | ((truncate(let rflags_var : bits(32) = (rflags) in
-sail_zero_extend(rflagsbits_get_zf(rflags_var), 2), 1)) == (0b0))
+sail_zero_extend((Mk_rflagsbits(rflags_var))[zf], 2), 1)) == (0b0))
 then { write_rgfi_size(bits_of_int(counter_addr_size, 4), 0x1, unsigned(counter), rex_byte)
 }
 else { { write_rgfi_size(bits_of_int(counter_addr_size, 4), 0x1, unsigned(counter), rex_byte);
@@ -75,7 +76,7 @@ write_iptr(proc_mode, temp_rip)
 242 => { let counter : bits(64) = (rgfi_size(bits_of_int(counter_addr_size, 4), 0x1, rex_byte)) in
 let counter : bits(64) = (sail_mask(64, trunc(counter_addr_size, bits_of_int((unsigned(counter)) - (1), 64)))) in
 if ((counter) == (0x0000_0000_0000_0000)) | ((truncate(let rflags_var : bits(32) = (rflags) in
-sail_zero_extend(rflagsbits_get_zf(rflags_var), 2), 1)) == (0b1))
+sail_zero_extend((Mk_rflagsbits(rflags_var))[zf], 2), 1)) == (0b1))
 then { { write_rgfi_size(bits_of_int(counter_addr_size, 4), 0x1, unsigned(counter), rex_byte);
 write_iptr(proc_mode, temp_rip)
 }
@@ -100,22 +101,21 @@ _ => write_rgfi(7, sail_sign_extend(dst_addr, 64))
 }
 }
 
-val x86_cmps : (range(0, 4), sbits(48), sbits(48), bits(52), bits(8), bits(8), bits(8), bits(8)) -> unit effect {eamem, escape, rmem, rreg, undef, wmv, wreg}
+val x86_cmps : (range(0, 4), sbits(48), sbits(48), prefixes, bits(8), bits(8), modr_m, sib) -> unit effect {eamem, escape, rmem, rreg, undef, wmv, wreg}
 function x86_cmps (proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode, modr_m, sib) =
 let ctx : string = ("X86-CMPS") in
-let r_m : bits(3) = (modr_m_get_r_m(modr_m)) in
-let mod_var : bits(2) = (modr_m_get_mod(modr_m)) in
-let reg : bits(3) = (modr_m_get_reg(modr_m)) in
-let group_1_prefix : bits(8) = (prefixes_get_rep(prefixes)) in
+let r_m : bits(3) = ((modr_m)[r_m]) in
+let mod_var : bits(2) = ((modr_m)[mod]) in
+let reg : bits(3) = ((modr_m)[reg]) in
+let group_1_prefix : bits(8) = ((prefixes)[rep]) in
 let badlength? : option(int) = (check_instruction_length(start_rip, temp_rip, 0b000)) in
 { if is_some(badlength?)
-then throw(Emsg("A fault occurred.  Original ACL2 AST:
-['!!FAULT-FRESH', ':GP', '0', ':INSTRUCTION-LENGTH', 'BADLENGTH?']"))
+then throw(Emsg("A fault occurred.  Original ACL2 AST: (!!FAULT-FRESH :GP 0 :INSTRUCTION-LENGTH BADLENGTH?)"))
 else ();
-let p2 : bits(8) = (prefixes_get_seg(prefixes)) in
-let p4? : bool = ((0x67) == (prefixes_get_adr(prefixes))) in
+let p2 : bits(8) = ((prefixes)[seg]) in
+let p4? : bool = ((0x67) == ((prefixes)[adr])) in
 let df : bits(1) = (truncate(let rflags_var : bits(32) = (rflags) in
-sail_zero_extend(rflagsbits_get_df(rflags_var), 2), 1)) in
+sail_zero_extend((Mk_rflagsbits(rflags_var))[df], 2), 1)) in
 let counter_addr_size : {|2, 4, 8|} = (select_address_size(proc_mode, p4?)) in
 let select_byte_operand : bool = ((0xa6) == (opcode)) in
 let operand_size : {|1, 2, 4, 8|} = (select_operand_size(proc_mode, select_byte_operand, rex_byte, false, prefixes, false, false, false)) in
@@ -143,8 +143,8 @@ let (flg0, dst) : (option(string), bits(128)) = (rme_size(proc_mode, operand_siz
 then throw(Emsg("Model state error: :DST-RME-SIZE-ERROR"))
 else ();
 let input_rflags : bits(32) = (rflags) in
-let (result, output_rflags, undefined_flags) : (bits(64), bits(32), bits(32)) = (gpr_arith_logic_spec(operand_size, 4, truncate(dst, 64), truncate(src, 64), input_rflags)) in
-{ write_user_rflags(output_rflags, undefined_flags);
+let (result, output_rflags, undefined_flags) : (bits(64), rflagsbits, rflagsbits) = (gpr_arith_logic_spec(operand_size, 4, truncate(dst, 64), truncate(src, 64), Mk_rflagsbits(input_rflags))) in
+{ write_user_rflags((output_rflags).bits, (undefined_flags).bits);
 let (src_addr, dst_addr) : (int, int) = { (match operand_size {
 1 => { if (df) == (0b0)
 then ((signed(truncate(src_addr, 48))) + (1), (signed(truncate(dst_addr, 48))) + (1))
@@ -165,7 +165,7 @@ let dst_addr : sbits(49) = (bits_of_int(dst_addr, 49)) in
 243 => { let counter : bits(64) = (rgfi_size(bits_of_int(counter_addr_size, 4), 0x1, rex_byte)) in
 let counter : bits(64) = (sail_mask(64, trunc(counter_addr_size, bits_of_int((unsigned(counter)) - (1), 64)))) in
 if ((counter) == (0x0000_0000_0000_0000)) | ((truncate(let rflags_var : bits(32) = (rflags) in
-sail_zero_extend(rflagsbits_get_zf(rflags_var), 2), 1)) == (0b0))
+sail_zero_extend((Mk_rflagsbits(rflags_var))[zf], 2), 1)) == (0b0))
 then { write_rgfi_size(bits_of_int(counter_addr_size, 4), 0x1, unsigned(counter), rex_byte)
 }
 else { { write_rgfi_size(bits_of_int(counter_addr_size, 4), 0x1, unsigned(counter), rex_byte);
@@ -175,7 +175,7 @@ write_iptr(proc_mode, temp_rip)
 242 => { let counter : bits(64) = (rgfi_size(bits_of_int(counter_addr_size, 4), 0x1, rex_byte)) in
 let counter : bits(64) = (sail_mask(64, trunc(counter_addr_size, bits_of_int((unsigned(counter)) - (1), 64)))) in
 if ((counter) == (0x0000_0000_0000_0000)) | ((truncate(let rflags_var : bits(32) = (rflags) in
-sail_zero_extend(rflagsbits_get_zf(rflags_var), 2), 1)) == (0b1))
+sail_zero_extend((Mk_rflagsbits(rflags_var))[zf], 2), 1)) == (0b1))
 then { { write_rgfi_size(bits_of_int(counter_addr_size, 4), 0x1, unsigned(counter), rex_byte);
 write_iptr(proc_mode, temp_rip)
 }
@@ -202,18 +202,17 @@ _ => write_rgfi(7, sail_sign_extend(dst_addr, 64))
 }
 }
 
-val x86_stos : (range(0, 4), sbits(48), sbits(48), bits(52), bits(8), bits(8), bits(8), bits(8)) -> unit effect {eamem, escape, rmem, rreg, wmv, wreg}
+val x86_stos : (range(0, 4), sbits(48), sbits(48), prefixes, bits(8), bits(8), modr_m, sib) -> unit effect {eamem, escape, rmem, rreg, wmv, wreg}
 function x86_stos (proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode, modr_m, sib) =
 let ctx : string = ("X86-STOS") in
-let group_1_prefix : bits(8) = (prefixes_get_seg(prefixes)) in
+let group_1_prefix : bits(8) = ((prefixes)[seg]) in
 let badlength? : option(int) = (check_instruction_length(start_rip, temp_rip, 0b000)) in
 { if is_some(badlength?)
-then throw(Emsg("A fault occurred.  Original ACL2 AST:
-['!!FAULT-FRESH', ':GP', '0', ':INSTRUCTION-LENGTH', 'BADLENGTH?']"))
+then throw(Emsg("A fault occurred.  Original ACL2 AST: (!!FAULT-FRESH :GP 0 :INSTRUCTION-LENGTH BADLENGTH?)"))
 else ();
-let p4? : bool = ((0x67) == (prefixes_get_adr(prefixes))) in
+let p4? : bool = ((0x67) == ((prefixes)[adr])) in
 let df : bits(1) = (truncate(let rflags_var : bits(32) = (rflags) in
-sail_zero_extend(rflagsbits_get_df(rflags_var), 2), 1)) in
+sail_zero_extend((Mk_rflagsbits(rflags_var))[df], 2), 1)) in
 let counter_addr_size : {|2, 4, 8|} = (select_address_size(proc_mode, p4?)) in
 let counter_addr_size_2_4? : bool = (((counter_addr_size) == (2)) | ((counter_addr_size) == (4))) in
 let dst_addr : sbits(65) = { (if counter_addr_size_2_4?
@@ -248,7 +247,7 @@ else (-8) + (signed(truncate(dst_addr, 48))) }
 243 => { let counter : bits(64) = (rgfi_size(bits_of_int(counter_addr_size, 4), 0x1, rex_byte)) in
 let counter : bits(64) = (sail_mask(64, trunc(counter_addr_size, bits_of_int((unsigned(counter)) - (1), 64)))) in
 if ((counter) == (0x0000_0000_0000_0000)) | ((truncate(let rflags_var : bits(32) = (rflags) in
-sail_zero_extend(rflagsbits_get_zf(rflags_var), 2), 1)) == (0b0))
+sail_zero_extend((Mk_rflagsbits(rflags_var))[zf], 2), 1)) == (0b0))
 then { write_rgfi_size(bits_of_int(counter_addr_size, 4), 0x1, unsigned(counter), rex_byte)
 }
 else { { write_rgfi_size(bits_of_int(counter_addr_size, 4), 0x1, unsigned(counter), rex_byte);
@@ -258,7 +257,7 @@ write_iptr(proc_mode, temp_rip)
 242 => { let counter : bits(64) = (rgfi_size(bits_of_int(counter_addr_size, 4), 0x1, rex_byte)) in
 let counter : bits(64) = (sail_mask(64, trunc(counter_addr_size, bits_of_int((unsigned(counter)) - (1), 64)))) in
 if ((counter) == (0x0000_0000_0000_0000)) | ((truncate(let rflags_var : bits(32) = (rflags) in
-sail_zero_extend(rflagsbits_get_zf(rflags_var), 2), 1)) == (0b1))
+sail_zero_extend((Mk_rflagsbits(rflags_var))[zf], 2), 1)) == (0b1))
 then { { write_rgfi_size(bits_of_int(counter_addr_size, 4), 0x1, unsigned(counter), rex_byte);
 write_iptr(proc_mode, temp_rip)
 }
@@ -277,3 +276,4 @@ _ => write_rgfi(7, sail_sign_extend(dst_addr, 64))
 }
 }
 
+$endif

@@ -19,17 +19,17 @@ function extract_64_bits (x, n) = {
     }) : bits(64)
 }
 
-val x86_shufps_op_en_rmi : (range(0, 4), sbits(48), sbits(48), bits(52), bits(8), bits(8), bits(8), bits(8)) -> unit
+val x86_shufps_op_en_rmi : (range(0, 4), sbits(48), sbits(48), prefixes, bits(8), bits(8), modr_m, sib) -> unit
 
 function x86_shufps_op_en_rmi (proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode, modr_m, sib) = {
     let ctx : string = "X86-SHUFPS-OP/EN-RMI";
-    let r_m : bits(3) = modr_m_get_r_m(modr_m);
-    let mod_var : bits(2) = modr_m_get_mod(modr_m);
-    let reg : bits(3) = modr_m_get_reg(modr_m);
+    let r_m : bits(3) = modr_m[r_m];
+    let mod_var : bits(2) = modr_m[mod];
+    let reg : bits(3) = modr_m[reg];
     let xmm_index : bits(4) = reg_index(reg, rex_byte, 0b10);
     let xmm : bits(128) = xmmi_size(0b10000, xmm_index);
-    let p2 : bits(8) = prefixes_get_seg(prefixes);
-    let p4? : bool = 0x67 == prefixes_get_adr(prefixes);
+    let p2 : bits(8) = prefixes[seg];
+    let p4? : bool = 0x67 == prefixes[adr];
     let seg_reg : {|0, 1, 2, 3, 4, 5|} = select_segment_register(proc_mode, p2, p4?, mod_var, r_m, sib);
     let inst_ac? : bool = true;
     let (flg0, xmm_mem, increment_rip_by, addr) : (option(string), bits(128), {|0, 1, 2, 4|}, sbits(64)) = x86_operand_from_modr_m_and_sib_bytes(proc_mode, 0b1, 16, inst_ac?, false, seg_reg, p4?, temp_rip, rex_byte, r_m, mod_var, sib, 0b001);
@@ -44,7 +44,7 @@ function x86_shufps_op_en_rmi (proc_mode, start_rip, temp_rip, prefixes, rex_byt
     let temp_rip : sbits(48) = truncate(temp_rip, 48);
     if is_some(flg) then throw(Emsg("Model state error: :RIP-INCREMENT-ERROR"));
     let badlength? : option(int) = check_instruction_length(start_rip, temp_rip, 0b000);
-    if is_some(badlength?) then throw(Emsg("A fault occurred.  Original ACL2 AST:\n['!!FAULT-FRESH', ':GP', '0', ':INSTRUCTION-LENGTH', 'BADLENGTH?']"));
+    if is_some(badlength?) then throw(Emsg("A fault occurred.  Original ACL2 AST: (!!FAULT-FRESH :GP 0 :INSTRUCTION-LENGTH BADLENGTH?)"));
     let imm0 : bits(2) = imm[1 .. 0];
     let imm1 : bits(2) = imm[3 .. 2];
     let imm2 : bits(2) = imm[5 .. 4];
@@ -58,17 +58,17 @@ function x86_shufps_op_en_rmi (proc_mode, start_rip, temp_rip, prefixes, rex_byt
     write_iptr(proc_mode, temp_rip)
 }
 
-val x86_shufpd_op_en_rmi : (range(0, 4), sbits(48), sbits(48), bits(52), bits(8), bits(8), bits(8), bits(8)) -> unit
+val x86_shufpd_op_en_rmi : (range(0, 4), sbits(48), sbits(48), prefixes, bits(8), bits(8), modr_m, sib) -> unit
 
 function x86_shufpd_op_en_rmi (proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode, modr_m, sib) = {
     let ctx : string = "X86-SHUFPD-OP/EN-RMI";
-    let r_m : bits(3) = modr_m_get_r_m(modr_m);
-    let mod_var : bits(2) = modr_m_get_mod(modr_m);
-    let reg : bits(3) = modr_m_get_reg(modr_m);
+    let r_m : bits(3) = modr_m[r_m];
+    let mod_var : bits(2) = modr_m[mod];
+    let reg : bits(3) = modr_m[reg];
     let xmm_index : bits(4) = reg_index(reg, rex_byte, 0b10);
     let xmm : bits(128) = xmmi_size(0b10000, xmm_index);
-    let p2 : bits(8) = prefixes_get_seg(prefixes);
-    let p4? : bool = 0x67 == prefixes_get_adr(prefixes);
+    let p2 : bits(8) = prefixes[seg];
+    let p4? : bool = 0x67 == prefixes[adr];
     let seg_reg : {|0, 1, 2, 3, 4, 5|} = select_segment_register(proc_mode, p2, p4?, mod_var, r_m, sib);
     let inst_ac? : bool = true;
     let (flg0, xmm_mem, increment_rip_by, addr) : (option(string), bits(128), {|0, 1, 2, 4|}, sbits(64)) = x86_operand_from_modr_m_and_sib_bytes(proc_mode, 0b1, 16, inst_ac?, false, seg_reg, p4?, temp_rip, rex_byte, r_m, mod_var, sib, 0b001);
@@ -83,7 +83,7 @@ function x86_shufpd_op_en_rmi (proc_mode, start_rip, temp_rip, prefixes, rex_byt
     let temp_rip : sbits(48) = truncate(temp_rip, 48);
     if is_some(flg) then throw(Emsg("Model state error: :RIP-INCREMENT-ERROR"));
     let badlength? : option(int) = check_instruction_length(start_rip, temp_rip, 0b000);
-    if is_some(badlength?) then throw(Emsg("A fault occurred.  Original ACL2 AST:\n['!!FAULT-FRESH', ':GP', '0', ':INSTRUCTION-LENGTH', 'BADLENGTH?']"));
+    if is_some(badlength?) then throw(Emsg("A fault occurred.  Original ACL2 AST: (!!FAULT-FRESH :GP 0 :INSTRUCTION-LENGTH BADLENGTH?)"));
     let imm0 : bits(1) = logbit(0, imm);
     let imm1 : bits(1) = logbit(1, imm);
     let qword0 : bits(64) = extract_64_bits(xmm, unsigned(imm0));
@@ -93,17 +93,17 @@ function x86_shufpd_op_en_rmi (proc_mode, start_rip, temp_rip, prefixes, rex_byt
     write_iptr(proc_mode, temp_rip)
 }
 
-val x86_unpck?ps_op_en_rm : (range(0, 1), range(0, 4), sbits(48), sbits(48), bits(52), bits(8), bits(8), bits(8), bits(8)) -> unit
+val x86_unpck?ps_op_en_rm : (range(0, 1), range(0, 4), sbits(48), sbits(48), prefixes, bits(8), bits(8), modr_m, sib) -> unit
 
 function x86_unpck?ps_op_en_rm (high_low, proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode, modr_m, sib) = {
     let ctx : string = "X86-UNPCK?PS-OP/EN-RM";
-    let r_m : bits(3) = modr_m_get_r_m(modr_m);
-    let mod_var : bits(2) = modr_m_get_mod(modr_m);
-    let reg : bits(3) = modr_m_get_reg(modr_m);
+    let r_m : bits(3) = modr_m[r_m];
+    let mod_var : bits(2) = modr_m[mod];
+    let reg : bits(3) = modr_m[reg];
     let xmm_index : bits(4) = reg_index(reg, rex_byte, 0b10);
     let xmm : bits(128) = xmmi_size(0b10000, xmm_index);
-    let p2 : bits(8) = prefixes_get_seg(prefixes);
-    let p4? : bool = 0x67 == prefixes_get_adr(prefixes);
+    let p2 : bits(8) = prefixes[seg];
+    let p4? : bool = 0x67 == prefixes[adr];
     let seg_reg : {|0, 1, 2, 3, 4, 5|} = select_segment_register(proc_mode, p2, p4?, mod_var, r_m, sib);
     let inst_ac? : bool = true;
     let (flg0, xmm_mem, increment_rip_by, addr) : (option(string), bits(128), {|0, 1, 2, 4|}, sbits(64)) = x86_operand_from_modr_m_and_sib_bytes(proc_mode, 0b1, 16, inst_ac?, false, seg_reg, p4?, temp_rip, rex_byte, r_m, mod_var, sib, 0b000);
@@ -112,7 +112,7 @@ function x86_unpck?ps_op_en_rm (high_low, proc_mode, start_rip, temp_rip, prefix
     let temp_rip : sbits(48) = truncate(temp_rip, 48);
     if is_some(flg) then throw(Emsg("Model state error: :RIP-INCREMENT-ERROR"));
     let badlength? : option(int) = check_instruction_length(start_rip, temp_rip, 0b000);
-    if is_some(badlength?) then throw(Emsg("A fault occurred.  Original ACL2 AST:\n['!!FAULT-FRESH', ':GP', '0', ':INSTRUCTION-LENGTH', 'BADLENGTH?']"));
+    if is_some(badlength?) then throw(Emsg("A fault occurred.  Original ACL2 AST: (!!FAULT-FRESH :GP 0 :INSTRUCTION-LENGTH BADLENGTH?)"));
     let dword0 : bits(32) = {
         if high_low == 1 then {
             xmm[95 .. 64]
@@ -146,17 +146,17 @@ function x86_unpck?ps_op_en_rm (high_low, proc_mode, start_rip, temp_rip, prefix
     write_iptr(proc_mode, temp_rip)
 }
 
-val x86_unpck?pd_op_en_rm : (range(0, 1), range(0, 4), sbits(48), sbits(48), bits(52), bits(8), bits(8), bits(8), bits(8)) -> unit
+val x86_unpck?pd_op_en_rm : (range(0, 1), range(0, 4), sbits(48), sbits(48), prefixes, bits(8), bits(8), modr_m, sib) -> unit
 
 function x86_unpck?pd_op_en_rm (high_low, proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode, modr_m, sib) = {
     let ctx : string = "X86-UNPCK?PD-OP/EN-RM";
-    let r_m : bits(3) = modr_m_get_r_m(modr_m);
-    let mod_var : bits(2) = modr_m_get_mod(modr_m);
-    let reg : bits(3) = modr_m_get_reg(modr_m);
+    let r_m : bits(3) = modr_m[r_m];
+    let mod_var : bits(2) = modr_m[mod];
+    let reg : bits(3) = modr_m[reg];
     let xmm_index : bits(4) = reg_index(reg, rex_byte, 0b10);
     let xmm : bits(128) = xmmi_size(0b10000, xmm_index);
-    let p2 : bits(8) = prefixes_get_seg(prefixes);
-    let p4? : bool = 0x67 == prefixes_get_adr(prefixes);
+    let p2 : bits(8) = prefixes[seg];
+    let p4? : bool = 0x67 == prefixes[adr];
     let seg_reg : {|0, 1, 2, 3, 4, 5|} = select_segment_register(proc_mode, p2, p4?, mod_var, r_m, sib);
     let inst_ac? : bool = true;
     let (flg0, xmm_mem, increment_rip_by, addr) : (option(string), bits(128), {|0, 1, 2, 4|}, sbits(64)) = x86_operand_from_modr_m_and_sib_bytes(proc_mode, 0b1, 16, inst_ac?, false, seg_reg, p4?, temp_rip, rex_byte, r_m, mod_var, sib, 0b000);
@@ -165,7 +165,7 @@ function x86_unpck?pd_op_en_rm (high_low, proc_mode, start_rip, temp_rip, prefix
     let temp_rip : sbits(48) = truncate(temp_rip, 48);
     if is_some(flg) then throw(Emsg("Model state error: :RIP-INCREMENT-ERROR"));
     let badlength? : option(int) = check_instruction_length(start_rip, temp_rip, 0b000);
-    if is_some(badlength?) then throw(Emsg("A fault occurred.  Original ACL2 AST:\n['!!FAULT-FRESH', ':GP', '0', ':INSTRUCTION-LENGTH', 'BADLENGTH?']"));
+    if is_some(badlength?) then throw(Emsg("A fault occurred.  Original ACL2 AST: (!!FAULT-FRESH :GP 0 :INSTRUCTION-LENGTH BADLENGTH?)"));
     let qword0 : bits(64) = {
         if high_low == 1 then {
             xmm[127 .. 64]

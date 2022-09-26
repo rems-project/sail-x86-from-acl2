@@ -7,7 +7,7 @@ function get_one_byte_prefix_array_code byte = {
     [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 4, 3, 2, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 0, 0, 0, 0, 0, 0, 0, 2, 0, 0, 0, 0, 0, 0, 0, 2, 0, 0, 0, 0, 0, 0, 0, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0] : vector(256, dec, {|0, 1, 2, 3, 4|})[check_range(0, 255, loghead(8, unsigned(byte)))]
 }
 
-val compute_mandatory_prefix_for_two_byte_opcode : (range(0, 4), bits(8), bits(52)) -> bits(8)
+val compute_mandatory_prefix_for_two_byte_opcode : (range(0, 4), bits(8), prefixes) -> bits(8)
 
 function compute_mandatory_prefix_for_two_byte_opcode (proc_mode, opcode, prefixes) = {
     (match proc_mode {
@@ -70,7 +70,7 @@ function two_byte_opcode_modr_m_p (proc_mode, mandatory_prefix, opcode) = {
     }
 }
 
-val vex_opcode_modr_m_p : (bits(24), bits(8)) -> bool
+val vex_opcode_modr_m_p : (vex_prefixes, bits(8)) -> bool
 
 function vex_opcode_modr_m_p (vex_prefixes, opcode) = {
     if not_bool(opcode == 0x77) then true else {
@@ -78,9 +78,9 @@ function vex_opcode_modr_m_p (vex_prefixes, opcode) = {
     }
 }
 
-val x86_decode_sib_p : (bits(8), bool) -> bool
+val x86_decode_sib_p : (modr_m, bool) -> bool
 
 function x86_decode_sib_p (modr_m, n16_bit_addressp) = {
-    not_bool(n16_bit_addressp) & (let r_m : bits(3) = modr_m_get_r_m(modr_m) in
-    let mod_var : bits(2) = modr_m_get_mod(modr_m) in r_m == 0b100 & not_bool(mod_var == 0b11))
+    not_bool(n16_bit_addressp) & (let r_m : bits(3) = modr_m[r_m] in
+    let mod_var : bits(2) = modr_m[mod] in r_m == 0b100 & not_bool(mod_var == 0b11))
 }

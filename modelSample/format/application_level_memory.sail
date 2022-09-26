@@ -1,4 +1,3 @@
-$include "./state.sail"
 
 val canonical_address_p : int -> bool
 

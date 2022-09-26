@@ -1,3 +1,5 @@
+$ifndef __X86_PHYSICAL_MEMORY
+$define __X86_PHYSICAL_MEMORY
 $include <prelude.sail>
 $include <string.sail>
 $include "modes.sail"
@@ -53,3 +55,4 @@ wm_low_32(bits_of_int((4) + (addr), 52), dword1)
 }
 }
 
+$endif

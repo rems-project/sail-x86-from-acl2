@@ -1,3 +1,5 @@
+$ifndef __X86_PUSH_AND_POP
+$define __X86_PUSH_AND_POP
 $include <prelude.sail>
 $include <string.sail>
 
@@ -10,22 +12,20 @@ $include <string.sail>
  <p>PUSH does not have a separate instruction semantic function, unlike other 
  opcodes like ADD, SUB, etc. The decoding is coupled with the execution in 
  this case.</p>*/
-val x86_push_general_register : (range(0, 4), sbits(48), sbits(48), bits(52), bits(8), bits(8), bits(8), bits(8)) -> unit effect {eamem, escape, rmem, rreg, wmv, wreg}
+val x86_push_general_register : (range(0, 4), sbits(48), sbits(48), prefixes, bits(8), bits(8), modr_m, sib) -> unit effect {eamem, escape, rmem, rreg, wmv, wreg}
 function x86_push_general_register (proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode, modr_m, sib) =
 let ctx : string = ("X86-PUSH-GENERAL-REGISTER") in
 let operand_size : {|1, 2, 4, 8|} = (select_operand_size(proc_mode, false, rex_byte, false, prefixes, true, true, false)) in
 let rsp_var : sbits(64) = (read_sptr(proc_mode)) in
 let (flg, new_rsp) : (option(string), sbits(64)) = (add_to_sptr(proc_mode, rsp_var, bits_of_int(negate(operand_size), 64))) in
 { if is_some(flg)
-then throw(Emsg("A fault occurred.  Original ACL2 AST:
-['!!FAULT-FRESH', ':SS', '0', ':PUSH', 'FLG']"))
+then throw(Emsg("A fault occurred.  Original ACL2 AST: (!!FAULT-FRESH :SS 0 :PUSH FLG)"))
 else ();
 let reg : int = (loghead(3, unsigned(opcode))) in
 let sailval : bits(64) = (rgfi_size(bits_of_int(operand_size, 4), reg_index(bits_of_int(reg, 3), rex_byte, 0b00), rex_byte)) in
 let badlength? : option(int) = (check_instruction_length(start_rip, temp_rip, 0b000)) in
 { if is_some(badlength?)
-then throw(Emsg("A fault occurred.  Original ACL2 AST:
-['!!FAULT-FRESH', ':GP', '0', ':INSTRUCTION-LENGTH', 'BADLENGTH?']"))
+then throw(Emsg("A fault occurred.  Original ACL2 AST: (!!FAULT-FRESH :GP 0 :INSTRUCTION-LENGTH BADLENGTH?)"))
 else ();
 let flg : option(string) = (wme_size(proc_mode, operand_size, sail_sign_extend(truncate(new_rsp, 48), 64), 2, unsigned(sailval), alignment_checking_enabled_p(), struct {mem_ptr? = false})) in
 { if is_some(flg)
@@ -49,20 +49,19 @@ write_iptr(proc_mode, temp_rip)
  
  <p>This opcode belongs to Group 5, and it has an opcode 
  extension ( ModR/m.reg = 6 ) .</p>*/
-val x86_push_ev : (range(0, 4), sbits(48), sbits(48), bits(52), bits(8), bits(8), bits(8), bits(8)) -> unit effect {eamem, escape, rmem, rreg, wmv, wreg}
+val x86_push_ev : (range(0, 4), sbits(48), sbits(48), prefixes, bits(8), bits(8), modr_m, sib) -> unit effect {eamem, escape, rmem, rreg, wmv, wreg}
 function x86_push_ev (proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode, modr_m, sib) =
 let ctx : string = ("X86-PUSH-EV") in
-let r_m : bits(3) = (modr_m_get_r_m(modr_m)) in
-let mod_var : bits(2) = (modr_m_get_mod(modr_m)) in
-let reg : bits(3) = (modr_m_get_reg(modr_m)) in
-let p2 : bits(8) = (prefixes_get_seg(prefixes)) in
-let p4? : bool = ((0x67) == (prefixes_get_adr(prefixes))) in
+let r_m : bits(3) = ((modr_m)[r_m]) in
+let mod_var : bits(2) = ((modr_m)[mod]) in
+let reg : bits(3) = ((modr_m)[reg]) in
+let p2 : bits(8) = ((prefixes)[seg]) in
+let p4? : bool = ((0x67) == ((prefixes)[adr])) in
 let operand_size : {|1, 2, 4, 8|} = (select_operand_size(proc_mode, false, rex_byte, false, prefixes, true, true, false)) in
 let rsp_var : sbits(64) = (read_sptr(proc_mode)) in
 let (flg, new_rsp) : (option(string), sbits(64)) = (add_to_sptr(proc_mode, rsp_var, bits_of_int(negate(operand_size), 64))) in
 { if is_some(flg)
-then throw(Emsg("A fault occurred.  Original ACL2 AST:
-['!!FAULT-FRESH', ':SS', '0', ':PUSH', 'FLG']"))
+then throw(Emsg("A fault occurred.  Original ACL2 AST: (!!FAULT-FRESH :SS 0 :PUSH FLG)"))
 else ();
 let seg_reg : {|0, 1, 2, 3, 4, 5|} = (select_segment_register(proc_mode, p2, p4?, mod_var, r_m, sib)) in
 let (flg0, e, increment_rip_by, e_addr) : (option(string), bits(128), {|0, 1, 2, 4|}, sbits(64)) = (x86_operand_from_modr_m_and_sib_bytes(proc_mode, 0b0, operand_size, true, false, seg_reg, p4?, temp_rip, rex_byte, r_m, mod_var, sib, 0b000)) in
@@ -72,13 +71,11 @@ then throw(Emsg("Model state error: :X86-OPERAND-FROM-MODR/M-AND-SIB-BYTES"))
 else ();
 let (flg, temp_rip) : (option(string), sbits(49)) = (add_to_iptr(proc_mode, temp_rip, sail_zero_extend(increment_rip_by, 48))) in
 { if is_some(flg)
-then throw(Emsg("A fault occurred.  Original ACL2 AST:
-['!!FAULT-FRESH', ':GP', '0', ':INCREMENT-IP-ERROR', 'FLG']"))
+then throw(Emsg("A fault occurred.  Original ACL2 AST: (!!FAULT-FRESH :GP 0 :INCREMENT-IP-ERROR FLG)"))
 else ();
 let badlength? : option(int) = (check_instruction_length(start_rip, truncate(temp_rip, 48), 0b000)) in
 { if is_some(badlength?)
-then throw(Emsg("A fault occurred.  Original ACL2 AST:
-['!!FAULT-FRESH', ':GP', '0', ':INSTRUCTION-LENGTH', 'BADLENGTH?']"))
+then throw(Emsg("A fault occurred.  Original ACL2 AST: (!!FAULT-FRESH :GP 0 :INSTRUCTION-LENGTH BADLENGTH?)"))
 else ();
 let flg : option(string) = (wme_size(proc_mode, operand_size, sail_sign_extend(truncate(new_rsp, 48), 64), 2, unsigned(e), alignment_checking_enabled_p(), struct {mem_ptr? = false})) in
 { if is_some(flg)
@@ -107,7 +104,7 @@ write_iptr(proc_mode, truncate(temp_rip, 48))
  <p>PUSH doesn ' t have a separate instruction semantic function, unlike other 
  opcodes like ADD, SUB, etc. The decoding is coupled the decoding with the 
  execution in this case.</p>*/
-val x86_push_i : (range(0, 4), sbits(48), sbits(48), bits(52), bits(8), bits(8), bits(8), bits(8)) -> unit effect {eamem, escape, rmem, rreg, wmv, wreg}
+val x86_push_i : (range(0, 4), sbits(48), sbits(48), prefixes, bits(8), bits(8), modr_m, sib) -> unit effect {eamem, escape, rmem, rreg, wmv, wreg}
 function x86_push_i (proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode, modr_m, sib) =
 let ctx : string = ("X86-PUSH-I") in
 let byte_imm? : bool = ((opcode) == (0x6a)) in
@@ -116,8 +113,7 @@ let operand_size : {|1, 2, 4, 8|} = (select_operand_size(proc_mode, false, rex_b
 let rsp_var : sbits(64) = (read_sptr(proc_mode)) in
 let (flg, new_rsp) : (option(string), sbits(64)) = (add_to_sptr(proc_mode, rsp_var, bits_of_int(negate(operand_size), 64))) in
 { if is_some(flg)
-then throw(Emsg("A fault occurred.  Original ACL2 AST:
-['!!FAULT-FRESH', ':SS', '0', ':PUSH', 'FLG']"))
+then throw(Emsg("A fault occurred.  Original ACL2 AST: (!!FAULT-FRESH :SS 0 :PUSH FLG)"))
 else ();
 let (flg0, imm) : (option(string), sbits(64)) = (rime_size(proc_mode, imm_size, sail_sign_extend(temp_rip, 64), 1, ":X", false, struct {mem_ptr? = false})) in
 let imm : sbits(32) = (truncate(imm, 32)) in
@@ -127,13 +123,11 @@ else ();
 let (flg, temp_rip) : (option(string), sbits(49)) = (add_to_iptr(proc_mode, temp_rip, bits_of_int(imm_size, 48))) in
 let temp_rip : sbits(48) = (truncate(temp_rip, 48)) in
 { if is_some(flg)
-then throw(Emsg("A fault occurred.  Original ACL2 AST:
-['!!FAULT-FRESH', ':GP', '0', ':TEMP-RIP-NOT-CANONICAL', 'TEMP-RIP']"))
+then throw(Emsg("A fault occurred.  Original ACL2 AST: (!!FAULT-FRESH :GP 0 :TEMP-RIP-NOT-CANONICAL TEMP-RIP)"))
 else ();
 let badlength? : option(int) = (check_instruction_length(start_rip, temp_rip, 0b000)) in
 { if is_some(badlength?)
-then throw(Emsg("A fault occurred.  Original ACL2 AST:
-['!!FAULT-FRESH', ':GP', '0', ':INSTRUCTION-LENGTH', 'BADLENGTH?']"))
+then throw(Emsg("A fault occurred.  Original ACL2 AST: (!!FAULT-FRESH :GP 0 :INSTRUCTION-LENGTH BADLENGTH?)"))
 else ();
 let flg1 : option(string) = (wme_size(proc_mode, operand_size, new_rsp, 2, nat_of_int(loghead(ash(operand_size, 3), signed(imm))), alignment_checking_enabled_p(), struct {mem_ptr? = false})) in
 { if is_some(flg1)
@@ -173,15 +167,14 @@ write_iptr(proc_mode, temp_rip)
  <p>PUSH doesn ' t have a separate instruction semantic function, unlike other 
  opcodes like ADD, SUB, etc. The decoding is coupled with the execution in 
  this case.</p>*/
-val x86_push_segment_register : (range(0, 4), sbits(48), sbits(48), bits(52), bits(8), bits(8), bits(8), bits(8)) -> unit effect {eamem, escape, rmem, rreg, wmv, wreg}
+val x86_push_segment_register : (range(0, 4), sbits(48), sbits(48), prefixes, bits(8), bits(8), modr_m, sib) -> unit effect {eamem, escape, rmem, rreg, wmv, wreg}
 function x86_push_segment_register (proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode, modr_m, sib) =
 let ctx : string = ("X86-PUSH-SEGMENT-REGISTER") in
 let operand_size : {|1, 2, 4, 8|} = (select_operand_size(proc_mode, false, rex_byte, false, prefixes, true, true, false)) in
 let rsp_var : sbits(64) = (read_sptr(proc_mode)) in
 let (flg, new_rsp) : (option(string), sbits(64)) = (add_to_sptr(proc_mode, rsp_var, bits_of_int(negate(operand_size), 64))) in
 { if is_some(flg)
-then throw(Emsg("A fault occurred.  Original ACL2 AST:
-['!!FAULT-FRESH', ':SS', '0', ':PUSH', 'FLG']"))
+then throw(Emsg("A fault occurred.  Original ACL2 AST: (!!FAULT-FRESH :SS 0 :PUSH FLG)"))
 else ();
 let sailval : bits(16) = (seg_visibles[(match opcode {
 14 => 1,
@@ -211,15 +204,14 @@ write_iptr(proc_mode, temp_rip)
  <p>POP does not have a separate instruction semantic function, unlike other 
  opcodes like ADD, SUB, etc. The decoding is coupled with the execution in 
  this case.</p>*/
-val x86_pop_general_register : (range(0, 4), sbits(48), sbits(48), bits(52), bits(8), bits(8), bits(8), bits(8)) -> unit effect {eamem, escape, rmem, rreg, wmv, wreg}
+val x86_pop_general_register : (range(0, 4), sbits(48), sbits(48), prefixes, bits(8), bits(8), modr_m, sib) -> unit effect {eamem, escape, rmem, rreg, wmv, wreg}
 function x86_pop_general_register (proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode, modr_m, sib) =
 let ctx : string = ("X86-POP-GENERAL-REGISTER") in
 let operand_size : {|1, 2, 4, 8|} = (select_operand_size(proc_mode, false, rex_byte, false, prefixes, true, true, false)) in
 let rsp_var : sbits(64) = (read_sptr(proc_mode)) in
 let (flg, new_rsp) : (option(string), sbits(64)) = (add_to_sptr(proc_mode, rsp_var, bits_of_int(operand_size, 64))) in
 { if is_some(flg)
-then throw(Emsg("A fault occurred.  Original ACL2 AST:
-['!!FAULT-FRESH', ':SS', '0', ':POP', 'FLG']"))
+then throw(Emsg("A fault occurred.  Original ACL2 AST: (!!FAULT-FRESH :SS 0 :POP FLG)"))
 else ();
 let (flg0, sailval) : (option(string), bits(128)) = (rme_size(proc_mode, operand_size, rsp_var, 2, ":R", alignment_checking_enabled_p(), struct {mem_ptr? = false})) in
 { if is_some(flg0)
@@ -228,8 +220,7 @@ else ();
 let reg : bits(8) = (logand(opcode, 0x07)) in
 let badlength? : option(int) = (check_instruction_length(start_rip, temp_rip, 0b000)) in
 { if is_some(badlength?)
-then throw(Emsg("A fault occurred.  Original ACL2 AST:
-['!!FAULT-FRESH', ':GP', '0', ':INSTRUCTION-LENGTH', 'BADLENGTH?']"))
+then throw(Emsg("A fault occurred.  Original ACL2 AST: (!!FAULT-FRESH :GP 0 :INSTRUCTION-LENGTH BADLENGTH?)"))
 else ();
 write_sptr(proc_mode, new_rsp);
 write_rgfi_size(bits_of_int(operand_size, 4), reg_index(truncate(reg, 3), rex_byte, 0b00), unsigned(sailval), rex_byte);
@@ -250,20 +241,19 @@ write_iptr(proc_mode, temp_rip)
  
  <p>This opcode belongs to Group 1A, and it has an opcode 
  extension ( ModR/m.reg = 0 ) .</p>*/
-val x86_pop_ev : (range(0, 4), sbits(48), sbits(48), bits(52), bits(8), bits(8), bits(8), bits(8)) -> unit effect {eamem, escape, rmem, rreg, wmv, wreg}
+val x86_pop_ev : (range(0, 4), sbits(48), sbits(48), prefixes, bits(8), bits(8), modr_m, sib) -> unit effect {eamem, escape, rmem, rreg, wmv, wreg}
 function x86_pop_ev (proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode, modr_m, sib) =
 let ctx : string = ("X86-POP-EV") in
-let r_m : bits(3) = (modr_m_get_r_m(modr_m)) in
-let mod_var : bits(2) = (modr_m_get_mod(modr_m)) in
-let reg : bits(3) = (modr_m_get_reg(modr_m)) in
-let p2 : bits(8) = (prefixes_get_seg(prefixes)) in
-let p4? : bool = ((0x67) == (prefixes_get_adr(prefixes))) in
+let r_m : bits(3) = ((modr_m)[r_m]) in
+let mod_var : bits(2) = ((modr_m)[mod]) in
+let reg : bits(3) = ((modr_m)[reg]) in
+let p2 : bits(8) = ((prefixes)[seg]) in
+let p4? : bool = ((0x67) == ((prefixes)[adr])) in
 let operand_size : {|1, 2, 4, 8|} = (select_operand_size(proc_mode, false, rex_byte, false, prefixes, true, true, false)) in
 let rsp_var : sbits(64) = (read_sptr(proc_mode)) in
 let (flg, new_rsp) : (option(string), sbits(64)) = (add_to_sptr(proc_mode, rsp_var, bits_of_int(operand_size, 64))) in
 { if is_some(flg)
-then throw(Emsg("A fault occurred.  Original ACL2 AST:
-['!!FAULT-FRESH', ':SS', '0', ':POP', 'FLG']"))
+then throw(Emsg("A fault occurred.  Original ACL2 AST: (!!FAULT-FRESH :SS 0 :POP FLG)"))
 else ();
 let check_alignment? : bool = (alignment_checking_enabled_p()) in
 let (flg0, sailval) : (option(string), bits(128)) = (rme_size(proc_mode, operand_size, rsp_var, 2, ":R", check_alignment?, struct {mem_ptr? = false})) in
@@ -280,13 +270,11 @@ else ();
 let seg_reg : {|0, 1, 2, 3, 4, 5|} = (select_segment_register(proc_mode, p2, p4?, mod_var, r_m, sib)) in
 let (flg, temp_rip) : (option(string), sbits(49)) = (add_to_iptr(proc_mode, temp_rip, sail_zero_extend(increment_rip_by, 48))) in
 { if is_some(flg)
-then throw(Emsg("A fault occurred.  Original ACL2 AST:
-['!!FAULT-FRESH', ':GP', '0', ':INCREMENT-IP-ERROR', 'FLG']"))
+then throw(Emsg("A fault occurred.  Original ACL2 AST: (!!FAULT-FRESH :GP 0 :INCREMENT-IP-ERROR FLG)"))
 else ();
 let badlength? : option(int) = (check_instruction_length(start_rip, truncate(temp_rip, 48), 0b000)) in
 { if is_some(badlength?)
-then throw(Emsg("A fault occurred.  Original ACL2 AST:
-['!!FAULT-FRESH', ':GP', '0', ':INSTRUCTION-LENGTH', 'BADLENGTH?']"))
+then throw(Emsg("A fault occurred.  Original ACL2 AST: (!!FAULT-FRESH :GP 0 :INSTRUCTION-LENGTH BADLENGTH?)"))
 else ();
 write_sptr(proc_mode, new_rsp);
 let flg3 : option(string) = (x86_operand_to_reg_mem(proc_mode, operand_size, check_alignment?, false, unsigned(sailval), seg_reg, addr, rex_byte, r_m, mod_var)) in
@@ -301,15 +289,14 @@ write_iptr(proc_mode, truncate(temp_rip, 48))
 }
 }
 
-val x86_pushf : (range(0, 4), sbits(48), sbits(48), bits(52), bits(8), bits(8), bits(8), bits(8)) -> unit effect {eamem, escape, rmem, rreg, wmv, wreg}
+val x86_pushf : (range(0, 4), sbits(48), sbits(48), prefixes, bits(8), bits(8), modr_m, sib) -> unit effect {eamem, escape, rmem, rreg, wmv, wreg}
 function x86_pushf (proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode, modr_m, sib) =
 let ctx : string = ("X86-PUSHF") in
 let operand_size : {|1, 2, 4, 8|} = (select_operand_size(proc_mode, false, rex_byte, false, prefixes, true, true, false)) in
 let rsp_var : sbits(64) = (read_sptr(proc_mode)) in
 let (flg, new_rsp) : (option(string), sbits(64)) = (add_to_sptr(proc_mode, rsp_var, bits_of_int(negate(operand_size), 64))) in
 { if is_some(flg)
-then throw(Emsg("A fault occurred.  Original ACL2 AST:
-['!!FAULT-FRESH', ':SS', '0', ':PUSH', 'FLG']"))
+then throw(Emsg("A fault occurred.  Original ACL2 AST: (!!FAULT-FRESH :SS 0 :PUSH FLG)"))
 else ();
 let eflags : bits(32) = (rflags) in
 let eflags : bits(32) = { (match operand_size {
@@ -325,15 +312,14 @@ write_iptr(proc_mode, temp_rip)
 }
 }
 
-val x86_popf : (range(0, 4), sbits(48), sbits(48), bits(52), bits(8), bits(8), bits(8), bits(8)) -> unit effect {eamem, escape, rmem, rreg, wmv, wreg}
+val x86_popf : (range(0, 4), sbits(48), sbits(48), prefixes, bits(8), bits(8), modr_m, sib) -> unit effect {eamem, escape, rmem, rreg, wmv, wreg}
 function x86_popf (proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode, modr_m, sib) =
 let ctx : string = ("X86-POPF") in
 let operand_size : {|1, 2, 4, 8|} = (select_operand_size(proc_mode, false, rex_byte, false, prefixes, true, true, false)) in
 let rsp_var : sbits(64) = (read_sptr(proc_mode)) in
 let (flg, new_rsp) : (option(string), sbits(64)) = (add_to_sptr(proc_mode, rsp_var, bits_of_int(operand_size, 64))) in
 { if is_some(flg)
-then throw(Emsg("A fault occurred.  Original ACL2 AST:
-['!!FAULT-FRESH', ':SS', '0', ':PUSH', 'FLG']"))
+then throw(Emsg("A fault occurred.  Original ACL2 AST: (!!FAULT-FRESH :SS 0 :PUSH FLG)"))
 else ();
 let (flg0, sailval) : (option(string), bits(128)) = (rme_size(proc_mode, operand_size, rsp_var, 2, ":R", alignment_checking_enabled_p(), struct {mem_ptr? = false})) in
 { if is_some(flg0)
@@ -344,22 +330,22 @@ let sailval : bits(32) = (logior(0x0000_0002, truncate(logand(0x0000_0000_0000_0
 (match operand_size {
 2 => rflags = sailval,
 _ => { let rf : bits(1) = (truncate(let rflags_var : bits(32) = (rflags) in
-sail_zero_extend(rflagsbits_get_rf(rflags_var), 2), 1)) in
+sail_zero_extend((Mk_rflagsbits(rflags_var))[rf], 2), 1)) in
 let vm : bits(1) = (truncate(let rflags_var : bits(32) = (rflags) in
-sail_zero_extend(rflagsbits_get_vm(rflags_var), 2), 1)) in
+sail_zero_extend((Mk_rflagsbits(rflags_var))[vm], 2), 1)) in
 { rflags = sailval;
 let rflags_var : bits(32) = (rflags) in
-let new_rflags : bits(32) = (set_rflagsbits_get_rf(rf, rflags_var)) in
-rflags = new_rflags;
+let new_rflags : rflagsbits = ([(Mk_rflagsbits(rflags_var)) with rf = (rf)]) in
+rflags = (new_rflags).bits;
 let rflags_var : bits(32) = (rflags) in
-let new_rflags : bits(32) = (set_rflagsbits_get_vm(vm, rflags_var)) in
-rflags = new_rflags;
+let new_rflags : rflagsbits = ([(Mk_rflagsbits(rflags_var)) with vm = (vm)]) in
+rflags = (new_rflags).bits;
 let rflags_var : bits(32) = (rflags) in
-let new_rflags : bits(32) = (set_rflagsbits_get_vip(0b0, rflags_var)) in
-rflags = new_rflags;
+let new_rflags : rflagsbits = ([(Mk_rflagsbits(rflags_var)) with vip = (0b0)]) in
+rflags = (new_rflags).bits;
 let rflags_var : bits(32) = (rflags) in
-let new_rflags : bits(32) = (set_rflagsbits_get_vif(0b0, rflags_var)) in
-rflags = new_rflags
+let new_rflags : rflagsbits = ([(Mk_rflagsbits(rflags_var)) with vif = (0b0)]) in
+rflags = (new_rflags).bits
 } }
 }) : unit;
 write_iptr(proc_mode, temp_rip)
@@ -386,7 +372,7 @@ write_iptr(proc_mode, temp_rip)
  We use some simple and repetitive code to write the registers into the stack. 
  It may be possible to optimize it by pushing all the registers in one shot. 
  </p>*/
-val x86_pusha : (range(0, 4), sbits(48), sbits(48), bits(52), bits(8), bits(8), bits(8), bits(8)) -> unit effect {eamem, escape, rmem, rreg, wmv, wreg}
+val x86_pusha : (range(0, 4), sbits(48), sbits(48), prefixes, bits(8), bits(8), modr_m, sib) -> unit effect {eamem, escape, rmem, rreg, wmv, wreg}
 function x86_pusha (proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode, modr_m, sib) =
 let ctx : string = ("X86-PUSHA") in
 let operand_size : {|2, 4|} = (check_range(2, 4, select_operand_size(proc_mode, false, 0x00, false, prefixes, false, false, false))) in
@@ -402,8 +388,7 @@ let edi_di : bits(64) = (rgfi_size(bits_of_int(operand_size, 4), 0x7, 0x00)) in
 let check_alignment? : bool = (alignment_checking_enabled_p()) in
 let (flg, rsp_var) : (option(string), sbits(64)) = (add_to_sptr(proc_mode, rsp_var, bits_of_int(negate(operand_size), 64))) in
 { if is_some(flg)
-then throw(Emsg("A fault occurred.  Original ACL2 AST:
-['!!FAULT-FRESH', ':SS', '0', ':PUSH', 'FLG']"))
+then throw(Emsg("A fault occurred.  Original ACL2 AST: (!!FAULT-FRESH :SS 0 :PUSH FLG)"))
 else ();
 let flg : option(string) = (wme_size(proc_mode, operand_size, rsp_var, 2, unsigned(eax_ax), check_alignment?, struct {mem_ptr? = false})) in
 { if is_some(flg)
@@ -412,73 +397,59 @@ else ();
 let check_alignment? : bool = (false) in
 let (flg, rsp_var) : (option(string), sbits(64)) = (add_to_sptr(proc_mode, rsp_var, bits_of_int(negate(operand_size), 64))) in
 { if is_some(flg)
-then throw(Emsg("A fault occurred.  Original ACL2 AST:
-['!!FAULT-FRESH', ':SS', '0', ':PUSH', 'FLG']"))
+then throw(Emsg("A fault occurred.  Original ACL2 AST: (!!FAULT-FRESH :SS 0 :PUSH FLG)"))
 else ();
 let flg : option(string) = (wme_size(proc_mode, operand_size, rsp_var, 2, unsigned(ecx_cx), check_alignment?, struct {mem_ptr? = false})) in
 { if is_some(flg)
-then throw(Emsg("A fault occurred.  Original ACL2 AST:
-['!!FAULT-FRESH', ':SS', '0', ':PUSH', 'FLG']"))
+then throw(Emsg("A fault occurred.  Original ACL2 AST: (!!FAULT-FRESH :SS 0 :PUSH FLG)"))
 else ();
 let (flg, rsp_var) : (option(string), sbits(64)) = (add_to_sptr(proc_mode, rsp_var, bits_of_int(negate(operand_size), 64))) in
 { if is_some(flg)
-then throw(Emsg("A fault occurred.  Original ACL2 AST:
-['!!FAULT-FRESH', ':SS', '0', ':PUSH', 'FLG']"))
+then throw(Emsg("A fault occurred.  Original ACL2 AST: (!!FAULT-FRESH :SS 0 :PUSH FLG)"))
 else ();
 let flg : option(string) = (wme_size(proc_mode, operand_size, rsp_var, 2, unsigned(edx_dx), check_alignment?, struct {mem_ptr? = false})) in
 { if is_some(flg)
-then throw(Emsg("A fault occurred.  Original ACL2 AST:
-['!!FAULT-FRESH', ':SS', '0', ':PUSH', 'FLG']"))
+then throw(Emsg("A fault occurred.  Original ACL2 AST: (!!FAULT-FRESH :SS 0 :PUSH FLG)"))
 else ();
 let (flg, rsp_var) : (option(string), sbits(64)) = (add_to_sptr(proc_mode, rsp_var, bits_of_int(negate(operand_size), 64))) in
 { if is_some(flg)
-then throw(Emsg("A fault occurred.  Original ACL2 AST:
-['!!FAULT-FRESH', ':SS', '0', ':PUSH', 'FLG']"))
+then throw(Emsg("A fault occurred.  Original ACL2 AST: (!!FAULT-FRESH :SS 0 :PUSH FLG)"))
 else ();
 let flg : option(string) = (wme_size(proc_mode, operand_size, rsp_var, 2, unsigned(ebx_bx), check_alignment?, struct {mem_ptr? = false})) in
 { if is_some(flg)
-then throw(Emsg("A fault occurred.  Original ACL2 AST:
-['!!FAULT-FRESH', ':SS', '0', ':PUSH', 'FLG']"))
+then throw(Emsg("A fault occurred.  Original ACL2 AST: (!!FAULT-FRESH :SS 0 :PUSH FLG)"))
 else ();
 let (flg, rsp_var) : (option(string), sbits(64)) = (add_to_sptr(proc_mode, rsp_var, bits_of_int(negate(operand_size), 64))) in
 { if is_some(flg)
-then throw(Emsg("A fault occurred.  Original ACL2 AST:
-['!!FAULT-FRESH', ':SS', '0', ':PUSH', 'FLG']"))
+then throw(Emsg("A fault occurred.  Original ACL2 AST: (!!FAULT-FRESH :SS 0 :PUSH FLG)"))
 else ();
 let flg : option(string) = (wme_size(proc_mode, operand_size, rsp_var, 2, unsigned(esp_sp), check_alignment?, struct {mem_ptr? = false})) in
 { if is_some(flg)
-then throw(Emsg("A fault occurred.  Original ACL2 AST:
-['!!FAULT-FRESH', ':SS', '0', ':PUSH', 'FLG']"))
+then throw(Emsg("A fault occurred.  Original ACL2 AST: (!!FAULT-FRESH :SS 0 :PUSH FLG)"))
 else ();
 let (flg, rsp_var) : (option(string), sbits(64)) = (add_to_sptr(proc_mode, rsp_var, bits_of_int(negate(operand_size), 64))) in
 { if is_some(flg)
-then throw(Emsg("A fault occurred.  Original ACL2 AST:
-['!!FAULT-FRESH', ':SS', '0', ':PUSH', 'FLG']"))
+then throw(Emsg("A fault occurred.  Original ACL2 AST: (!!FAULT-FRESH :SS 0 :PUSH FLG)"))
 else ();
 let flg : option(string) = (wme_size(proc_mode, operand_size, rsp_var, 2, unsigned(ebp_bp), check_alignment?, struct {mem_ptr? = false})) in
 { if is_some(flg)
-then throw(Emsg("A fault occurred.  Original ACL2 AST:
-['!!FAULT-FRESH', ':SS', '0', ':PUSH', 'FLG']"))
+then throw(Emsg("A fault occurred.  Original ACL2 AST: (!!FAULT-FRESH :SS 0 :PUSH FLG)"))
 else ();
 let (flg, rsp_var) : (option(string), sbits(64)) = (add_to_sptr(proc_mode, rsp_var, bits_of_int(negate(operand_size), 64))) in
 { if is_some(flg)
-then throw(Emsg("A fault occurred.  Original ACL2 AST:
-['!!FAULT-FRESH', ':SS', '0', ':PUSH', 'FLG']"))
+then throw(Emsg("A fault occurred.  Original ACL2 AST: (!!FAULT-FRESH :SS 0 :PUSH FLG)"))
 else ();
 let flg : option(string) = (wme_size(proc_mode, operand_size, rsp_var, 2, unsigned(esi_si), check_alignment?, struct {mem_ptr? = false})) in
 { if is_some(flg)
-then throw(Emsg("A fault occurred.  Original ACL2 AST:
-['!!FAULT-FRESH', ':SS', '0', ':PUSH', 'FLG']"))
+then throw(Emsg("A fault occurred.  Original ACL2 AST: (!!FAULT-FRESH :SS 0 :PUSH FLG)"))
 else ();
 let (flg, rsp_var) : (option(string), sbits(64)) = (add_to_sptr(proc_mode, rsp_var, bits_of_int(negate(operand_size), 64))) in
 { if is_some(flg)
-then throw(Emsg("A fault occurred.  Original ACL2 AST:
-['!!FAULT-FRESH', ':SS', '0', ':PUSH', 'FLG']"))
+then throw(Emsg("A fault occurred.  Original ACL2 AST: (!!FAULT-FRESH :SS 0 :PUSH FLG)"))
 else ();
 let flg : option(string) = (wme_size(proc_mode, operand_size, rsp_var, 2, unsigned(edi_di), check_alignment?, struct {mem_ptr? = false})) in
 { if is_some(flg)
-then throw(Emsg("A fault occurred.  Original ACL2 AST:
-['!!FAULT-FRESH', ':SS', '0', ':PUSH', 'FLG']"))
+then throw(Emsg("A fault occurred.  Original ACL2 AST: (!!FAULT-FRESH :SS 0 :PUSH FLG)"))
 else ();
 write_sptr(proc_mode, rsp_var);
 write_iptr(proc_mode, temp_rip)
@@ -507,7 +478,7 @@ write_iptr(proc_mode, temp_rip)
  We use some simple and repetitive code to read the registers from the stack. 
  It may be possible to optimize it by popping all the registers in one shot. 
  </p>*/
-val x86_popa : (range(0, 4), sbits(48), sbits(48), bits(52), bits(8), bits(8), bits(8), bits(8)) -> unit effect {eamem, escape, rmem, rreg, wmv, wreg}
+val x86_popa : (range(0, 4), sbits(48), sbits(48), prefixes, bits(8), bits(8), modr_m, sib) -> unit effect {eamem, escape, rmem, rreg, wmv, wreg}
 function x86_popa (proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode, modr_m, sib) =
 let ctx : string = ("X86-POPA") in
 let operand_size : {|2, 4|} = (check_range(2, 4, select_operand_size(proc_mode, false, 0x00, false, prefixes, false, false, false))) in
@@ -519,74 +490,60 @@ then throw(Emsg("This error is generated by the translator and represents a more
 else ();
 let (flg, rsp_var) : (option(string), sbits(64)) = (add_to_sptr(proc_mode, rsp_var, bits_of_int(operand_size, 64))) in
 { if is_some(flg)
-then throw(Emsg("A fault occurred.  Original ACL2 AST:
-['!!FAULT-FRESH', ':SS', '0', ':POP', 'FLG']"))
+then throw(Emsg("A fault occurred.  Original ACL2 AST: (!!FAULT-FRESH :SS 0 :POP FLG)"))
 else ();
 let check_alignment? : bool = (false) in
 let (flg, esi_si) : (option(string), bits(128)) = (rme_size(proc_mode, operand_size, rsp_var, 2, ":R", check_alignment?, struct {mem_ptr? = false})) in
 { if is_some(flg)
-then throw(Emsg("A fault occurred.  Original ACL2 AST:
-['!!FAULT-FRESH', ':SS', '0', ':POP', 'FLG']"))
+then throw(Emsg("A fault occurred.  Original ACL2 AST: (!!FAULT-FRESH :SS 0 :POP FLG)"))
 else ();
 let (flg, rsp_var) : (option(string), sbits(64)) = (add_to_sptr(proc_mode, rsp_var, bits_of_int(operand_size, 64))) in
 { if is_some(flg)
-then throw(Emsg("A fault occurred.  Original ACL2 AST:
-['!!FAULT-FRESH', ':SS', '0', ':POP', 'FLG']"))
+then throw(Emsg("A fault occurred.  Original ACL2 AST: (!!FAULT-FRESH :SS 0 :POP FLG)"))
 else ();
 let (flg, ebp_bp) : (option(string), bits(128)) = (rme_size(proc_mode, operand_size, rsp_var, 2, ":R", check_alignment?, struct {mem_ptr? = false})) in
 { if is_some(flg)
-then throw(Emsg("A fault occurred.  Original ACL2 AST:
-['!!FAULT-FRESH', ':SS', '0', ':POP', 'FLG']"))
+then throw(Emsg("A fault occurred.  Original ACL2 AST: (!!FAULT-FRESH :SS 0 :POP FLG)"))
 else ();
 let (flg, rsp_var) : (option(string), sbits(64)) = (add_to_sptr(proc_mode, rsp_var, bits_of_int(operand_size, 64))) in
 { if is_some(flg)
-then throw(Emsg("A fault occurred.  Original ACL2 AST:
-['!!FAULT-FRESH', ':SS', '0', ':POP', 'FLG']"))
+then throw(Emsg("A fault occurred.  Original ACL2 AST: (!!FAULT-FRESH :SS 0 :POP FLG)"))
 else ();
 let (flg, rsp_var) : (option(string), sbits(64)) = (add_to_sptr(proc_mode, rsp_var, bits_of_int(operand_size, 64))) in
 { if is_some(flg)
-then throw(Emsg("A fault occurred.  Original ACL2 AST:
-['!!FAULT-FRESH', ':SS', '0', ':POP', 'FLG']"))
+then throw(Emsg("A fault occurred.  Original ACL2 AST: (!!FAULT-FRESH :SS 0 :POP FLG)"))
 else ();
 let (flg, ebx_bx) : (option(string), bits(128)) = (rme_size(proc_mode, operand_size, rsp_var, 2, ":R", check_alignment?, struct {mem_ptr? = false})) in
 { if is_some(flg)
-then throw(Emsg("A fault occurred.  Original ACL2 AST:
-['!!FAULT-FRESH', ':SS', '0', ':POP', 'FLG']"))
+then throw(Emsg("A fault occurred.  Original ACL2 AST: (!!FAULT-FRESH :SS 0 :POP FLG)"))
 else ();
 let (flg, rsp_var) : (option(string), sbits(64)) = (add_to_sptr(proc_mode, rsp_var, bits_of_int(operand_size, 64))) in
 { if is_some(flg)
-then throw(Emsg("A fault occurred.  Original ACL2 AST:
-['!!FAULT-FRESH', ':SS', '0', ':POP', 'FLG']"))
+then throw(Emsg("A fault occurred.  Original ACL2 AST: (!!FAULT-FRESH :SS 0 :POP FLG)"))
 else ();
 let (flg, edx_dx) : (option(string), bits(128)) = (rme_size(proc_mode, operand_size, rsp_var, 2, ":R", check_alignment?, struct {mem_ptr? = false})) in
 { if is_some(flg)
-then throw(Emsg("A fault occurred.  Original ACL2 AST:
-['!!FAULT-FRESH', ':SS', '0', ':POP', 'FLG']"))
+then throw(Emsg("A fault occurred.  Original ACL2 AST: (!!FAULT-FRESH :SS 0 :POP FLG)"))
 else ();
 let (flg, rsp_var) : (option(string), sbits(64)) = (add_to_sptr(proc_mode, rsp_var, bits_of_int(operand_size, 64))) in
 { if is_some(flg)
-then throw(Emsg("A fault occurred.  Original ACL2 AST:
-['!!FAULT-FRESH', ':SS', '0', ':POP', 'FLG']"))
+then throw(Emsg("A fault occurred.  Original ACL2 AST: (!!FAULT-FRESH :SS 0 :POP FLG)"))
 else ();
 let (flg, ecx_cx) : (option(string), bits(128)) = (rme_size(proc_mode, operand_size, rsp_var, 2, ":R", check_alignment?, struct {mem_ptr? = false})) in
 { if is_some(flg)
-then throw(Emsg("A fault occurred.  Original ACL2 AST:
-['!!FAULT-FRESH', ':SS', '0', ':POP', 'FLG']"))
+then throw(Emsg("A fault occurred.  Original ACL2 AST: (!!FAULT-FRESH :SS 0 :POP FLG)"))
 else ();
 let (flg, rsp_var) : (option(string), sbits(64)) = (add_to_sptr(proc_mode, rsp_var, bits_of_int(operand_size, 64))) in
 { if is_some(flg)
-then throw(Emsg("A fault occurred.  Original ACL2 AST:
-['!!FAULT-FRESH', ':SS', '0', ':POP', 'FLG']"))
+then throw(Emsg("A fault occurred.  Original ACL2 AST: (!!FAULT-FRESH :SS 0 :POP FLG)"))
 else ();
 let (flg, eax_ax) : (option(string), bits(128)) = (rme_size(proc_mode, operand_size, rsp_var, 2, ":R", check_alignment?, struct {mem_ptr? = false})) in
 { if is_some(flg)
-then throw(Emsg("A fault occurred.  Original ACL2 AST:
-['!!FAULT-FRESH', ':SS', '0', ':POP', 'FLG']"))
+then throw(Emsg("A fault occurred.  Original ACL2 AST: (!!FAULT-FRESH :SS 0 :POP FLG)"))
 else ();
 let (flg, rsp_var) : (option(string), sbits(64)) = (add_to_sptr(proc_mode, rsp_var, bits_of_int(operand_size, 64))) in
 { if is_some(flg)
-then throw(Emsg("A fault occurred.  Original ACL2 AST:
-['!!FAULT-FRESH', ':SS', '0', ':POP', 'FLG']"))
+then throw(Emsg("A fault occurred.  Original ACL2 AST: (!!FAULT-FRESH :SS 0 :POP FLG)"))
 else ();
 write_rgfi_size(bits_of_int(operand_size, 4), 0x7, unsigned(edi_di), 0x00);
 write_rgfi_size(bits_of_int(operand_size, 4), 0x6, unsigned(esi_si), 0x00);
@@ -613,3 +570,4 @@ write_iptr(proc_mode, temp_rip)
 }
 }
 
+$endif

@@ -22,7 +22,7 @@ val rme08 : (range(0, 4), sbits(64), range(0, 5), string) -> (option(string), bi
 function rme08 (proc_mode, eff_addr, seg_reg, r_x) = {
     if proc_mode != 0 & seg_reg == 1 & r_x == ":R" & (let attr : int = loghead(16, unsigned(seg_hidden_attrs[seg_reg]))
     in
-    let r : bits(1) = code_segment_descriptor_attributesbits_get_r(bits_of_int(attr, 16)) in r == 0b0) then {
+    let r : bits(1) = Mk_code_segment_descriptor_attributesbits(bits_of_int(attr, 16))[r] in r == 0b0) then {
         (Some(":EXECUTE-ONLY-CODE-SEGMENT"), 0x00)
     } else {
         let (flg, lin_addr) : (option(string), sbits(64)) = ea_to_la(proc_mode, eff_addr, seg_reg, 1);
@@ -39,7 +39,7 @@ val rime08 : (range(0, 4), sbits(64), range(0, 5), string) -> (option(string), s
 function rime08 (proc_mode, eff_addr, seg_reg, r_x) = {
     if proc_mode != 0 & seg_reg == 1 & r_x == ":R" & (let attr : int = loghead(16, unsigned(seg_hidden_attrs[seg_reg]))
     in
-    let r : bits(1) = code_segment_descriptor_attributesbits_get_r(bits_of_int(attr, 16)) in r == 0b0) then {
+    let r : bits(1) = Mk_code_segment_descriptor_attributesbits(bits_of_int(attr, 16))[r] in r == 0b0) then {
         (Some(":EXECUTE-ONLY-CODE-SEGMENT"), 0x00)
     } else {
         let (flg, lin_addr) : (option(string), sbits(64)) = ea_to_la(proc_mode, eff_addr, seg_reg, 1);
@@ -56,7 +56,7 @@ val rme16 : (range(0, 4), sbits(64), range(0, 5), string, bool) -> (option(strin
 function rme16 (proc_mode, eff_addr, seg_reg, r_x, check_alignment?) = {
     if proc_mode != 0 & seg_reg == 1 & r_x == ":R" & (let attr : int = loghead(16, unsigned(seg_hidden_attrs[seg_reg]))
     in
-    let r : bits(1) = code_segment_descriptor_attributesbits_get_r(bits_of_int(attr, 16)) in r == 0b0) then {
+    let r : bits(1) = Mk_code_segment_descriptor_attributesbits(bits_of_int(attr, 16))[r] in r == 0b0) then {
         (Some(":EXECUTE-ONLY-CODE-SEGMENT"), 0x0000)
     } else {
         let (flg, lin_addr) : (option(string), sbits(64)) = ea_to_la(proc_mode, eff_addr, seg_reg, 2);
@@ -75,7 +75,7 @@ val rime16 : (range(0, 4), sbits(64), range(0, 5), string, bool) -> (option(stri
 function rime16 (proc_mode, eff_addr, seg_reg, r_x, check_alignment?) = {
     if proc_mode != 0 & seg_reg == 1 & r_x == ":R" & (let attr : int = loghead(16, unsigned(seg_hidden_attrs[seg_reg]))
     in
-    let r : bits(1) = code_segment_descriptor_attributesbits_get_r(bits_of_int(attr, 16)) in r == 0b0) then {
+    let r : bits(1) = Mk_code_segment_descriptor_attributesbits(bits_of_int(attr, 16))[r] in r == 0b0) then {
         (Some(":EXECUTE-ONLY-CODE-SEGMENT"), 0x0000)
     } else {
         let (flg, lin_addr) : (option(string), sbits(64)) = ea_to_la(proc_mode, eff_addr, seg_reg, 2);
@@ -96,7 +96,7 @@ val rme32 : (range(0, 4), sbits(64), range(0, 5), string, bool, struct_rme32) ->
 function rme32 (proc_mode, eff_addr, seg_reg, r_x, check_alignment?, keywords) = {
     if proc_mode != 0 & seg_reg == 1 & r_x == ":R" & (let attr : int = loghead(16, unsigned(seg_hidden_attrs[seg_reg]))
     in
-    let r : bits(1) = code_segment_descriptor_attributesbits_get_r(bits_of_int(attr, 16)) in r == 0b0) then {
+    let r : bits(1) = Mk_code_segment_descriptor_attributesbits(bits_of_int(attr, 16))[r] in r == 0b0) then {
         (Some(":EXECUTE-ONLY-CODE-SEGMENT"), 0x00000000)
     } else {
         let (flg, lin_addr) : (option(string), sbits(64)) = ea_to_la(proc_mode, eff_addr, seg_reg, 4);
@@ -117,7 +117,7 @@ val rime32 : (range(0, 4), sbits(64), range(0, 5), string, bool, struct_rime32) 
 function rime32 (proc_mode, eff_addr, seg_reg, r_x, check_alignment?, keywords) = {
     if proc_mode != 0 & seg_reg == 1 & r_x == ":R" & (let attr : int = loghead(16, unsigned(seg_hidden_attrs[seg_reg]))
     in
-    let r : bits(1) = code_segment_descriptor_attributesbits_get_r(bits_of_int(attr, 16)) in r == 0b0) then {
+    let r : bits(1) = Mk_code_segment_descriptor_attributesbits(bits_of_int(attr, 16))[r] in r == 0b0) then {
         (Some(":EXECUTE-ONLY-CODE-SEGMENT"), 0x00000000)
     } else {
         let (flg, lin_addr) : (option(string), sbits(64)) = ea_to_la(proc_mode, eff_addr, seg_reg, 4);
@@ -136,7 +136,7 @@ val rme48 : (range(0, 4), sbits(64), range(0, 5), string, bool) -> (option(strin
 function rme48 (proc_mode, eff_addr, seg_reg, r_x, check_alignment?) = {
     if proc_mode != 0 & seg_reg == 1 & r_x == ":R" & (let attr : int = loghead(16, unsigned(seg_hidden_attrs[seg_reg]))
     in
-    let r : bits(1) = code_segment_descriptor_attributesbits_get_r(bits_of_int(attr, 16)) in r == 0b0) then {
+    let r : bits(1) = Mk_code_segment_descriptor_attributesbits(bits_of_int(attr, 16))[r] in r == 0b0) then {
         (Some(":EXECUTE-ONLY-CODE-SEGMENT"), 0x000000000000)
     } else {
         let (flg, lin_addr) : (option(string), sbits(64)) = ea_to_la(proc_mode, eff_addr, seg_reg, 6);
@@ -155,7 +155,7 @@ val rme64 : (range(0, 4), sbits(64), range(0, 5), string, bool) -> (option(strin
 function rme64 (proc_mode, eff_addr, seg_reg, r_x, check_alignment?) = {
     if proc_mode != 0 & seg_reg == 1 & r_x == ":R" & (let attr : int = loghead(16, unsigned(seg_hidden_attrs[seg_reg]))
     in
-    let r : bits(1) = code_segment_descriptor_attributesbits_get_r(bits_of_int(attr, 16)) in r == 0b0) then {
+    let r : bits(1) = Mk_code_segment_descriptor_attributesbits(bits_of_int(attr, 16))[r] in r == 0b0) then {
         (Some(":EXECUTE-ONLY-CODE-SEGMENT"), 0x0000000000000000)
     } else {
         let (flg, lin_addr) : (option(string), sbits(64)) = ea_to_la(proc_mode, eff_addr, seg_reg, 8);
@@ -174,7 +174,7 @@ val rime64 : (range(0, 4), sbits(64), range(0, 5), string, bool) -> (option(stri
 function rime64 (proc_mode, eff_addr, seg_reg, r_x, check_alignment?) = {
     if proc_mode != 0 & seg_reg == 1 & r_x == ":R" & (let attr : int = loghead(16, unsigned(seg_hidden_attrs[seg_reg]))
     in
-    let r : bits(1) = code_segment_descriptor_attributesbits_get_r(bits_of_int(attr, 16)) in r == 0b0) then {
+    let r : bits(1) = Mk_code_segment_descriptor_attributesbits(bits_of_int(attr, 16))[r] in r == 0b0) then {
         (Some(":EXECUTE-ONLY-CODE-SEGMENT"), 0x0000000000000000)
     } else {
         let (flg, lin_addr) : (option(string), sbits(64)) = ea_to_la(proc_mode, eff_addr, seg_reg, 8);
@@ -193,7 +193,7 @@ val rme80 : (range(0, 4), sbits(64), range(0, 5), string, bool) -> (option(strin
 function rme80 (proc_mode, eff_addr, seg_reg, r_x, check_alignment?) = {
     if proc_mode != 0 & seg_reg == 1 & r_x == ":R" & (let attr : int = loghead(16, unsigned(seg_hidden_attrs[seg_reg]))
     in
-    let r : bits(1) = code_segment_descriptor_attributesbits_get_r(bits_of_int(attr, 16)) in r == 0b0) then {
+    let r : bits(1) = Mk_code_segment_descriptor_attributesbits(bits_of_int(attr, 16))[r] in r == 0b0) then {
         (Some(":EXECUTE-ONLY-CODE-SEGMENT"), 0x00000000000000000000)
     } else {
         let (flg, lin_addr) : (option(string), sbits(64)) = ea_to_la(proc_mode, eff_addr, seg_reg, 10);
@@ -212,7 +212,7 @@ val rme128 : (range(0, 4), sbits(64), range(0, 5), string, bool) -> (option(stri
 function rme128 (proc_mode, eff_addr, seg_reg, r_x, check_alignment?) = {
     if proc_mode != 0 & seg_reg == 1 & r_x == ":R" & (let attr : int = loghead(16, unsigned(seg_hidden_attrs[seg_reg]))
     in
-    let r : bits(1) = code_segment_descriptor_attributesbits_get_r(bits_of_int(attr, 16)) in r == 0b0) then {
+    let r : bits(1) = Mk_code_segment_descriptor_attributesbits(bits_of_int(attr, 16))[r] in r == 0b0) then {
         (Some(":EXECUTE-ONLY-CODE-SEGMENT"), 0x00000000000000000000000000000000)
     } else {
         let (flg, lin_addr) : (option(string), sbits(64)) = ea_to_la(proc_mode, eff_addr, seg_reg, 16);
@@ -233,7 +233,7 @@ val rme_size : (range(0, 4), {|1, 2, 4, 6, 8, 10, 16|}, sbits(64), range(0, 5), 
 function rme_size (proc_mode, nbytes, eff_addr, seg_reg, r_x, check_alignment?, keywords) = {
     if proc_mode != 0 & seg_reg == 1 & r_x == ":R" & (let attr : int = loghead(16, unsigned(seg_hidden_attrs[seg_reg]))
     in
-    let r : bits(1) = code_segment_descriptor_attributesbits_get_r(bits_of_int(attr, 16)) in r == 0b0) then {
+    let r : bits(1) = Mk_code_segment_descriptor_attributesbits(bits_of_int(attr, 16))[r] in r == 0b0) then {
         (Some(":EXECUTE-ONLY-CODE-SEGMENT"), 0x00000000000000000000000000000000)
     } else {
         let (flg, lin_addr) : (option(string), sbits(64)) = ea_to_la(proc_mode, eff_addr, seg_reg, nbytes);
@@ -254,7 +254,7 @@ val rime_size : (range(0, 4), {|1, 2, 4, 8|}, sbits(64), range(0, 5), string, bo
 function rime_size (proc_mode, nbytes, eff_addr, seg_reg, r_x, check_alignment?, keywords) = {
     if proc_mode != 0 & seg_reg == 1 & r_x == ":R" & (let attr : int = loghead(16, unsigned(seg_hidden_attrs[seg_reg]))
     in
-    let r : bits(1) = code_segment_descriptor_attributesbits_get_r(bits_of_int(attr, 16)) in r == 0b0) then {
+    let r : bits(1) = Mk_code_segment_descriptor_attributesbits(bits_of_int(attr, 16))[r] in r == 0b0) then {
         (Some(":EXECUTE-ONLY-CODE-SEGMENT"), 0x0000000000000000)
     } else {
         let (flg, lin_addr) : (option(string), sbits(64)) = ea_to_la(proc_mode, eff_addr, seg_reg, nbytes);
@@ -272,7 +272,7 @@ val wme08 : (range(0, 4), sbits(64), range(0, 5), bits(8)) -> option(string)
 
 function wme08 (proc_mode, eff_addr, seg_reg, sailval) = {
     if proc_mode != 0 & (seg_reg == 1 | (let attr : int = loghead(16, unsigned(seg_hidden_attrs[seg_reg])) in
-    let w : bits(1) = data_segment_descriptor_attributesbits_get_w(bits_of_int(attr, 16)) in w == 0b0)) then {
+    let w : bits(1) = Mk_data_segment_descriptor_attributesbits(bits_of_int(attr, 16))[w] in w == 0b0)) then {
         Some(":NON-WRITABLE-SEGMENT")
     } else {
         let (flg, lin_addr) : (option(string), sbits(64)) = ea_to_la(proc_mode, eff_addr, seg_reg, 1);
@@ -288,7 +288,7 @@ val wime08 : (range(0, 4), sbits(64), range(0, 5), sbits(8)) -> option(string)
 
 function wime08 (proc_mode, eff_addr, seg_reg, sailval) = {
     if proc_mode != 0 & (seg_reg == 1 | (let attr : int = loghead(16, unsigned(seg_hidden_attrs[seg_reg])) in
-    let w : bits(1) = data_segment_descriptor_attributesbits_get_w(bits_of_int(attr, 16)) in w == 0b0)) then {
+    let w : bits(1) = Mk_data_segment_descriptor_attributesbits(bits_of_int(attr, 16))[w] in w == 0b0)) then {
         Some(":NON-WRITABLE-SEGMENT")
     } else {
         let (flg, lin_addr) : (option(string), sbits(64)) = ea_to_la(proc_mode, eff_addr, seg_reg, 1);
@@ -304,7 +304,7 @@ val wme16 : (range(0, 4), sbits(64), range(0, 5), bits(16), bool) -> option(stri
 
 function wme16 (proc_mode, eff_addr, seg_reg, sailval, check_alignment?) = {
     if proc_mode != 0 & (seg_reg == 1 | (let attr : int = loghead(16, unsigned(seg_hidden_attrs[seg_reg])) in
-    let w : bits(1) = data_segment_descriptor_attributesbits_get_w(bits_of_int(attr, 16)) in w == 0b0)) then {
+    let w : bits(1) = Mk_data_segment_descriptor_attributesbits(bits_of_int(attr, 16))[w] in w == 0b0)) then {
         Some(":NON-WRITABLE-SEGMENT")
     } else {
         let (flg, lin_addr) : (option(string), sbits(64)) = ea_to_la(proc_mode, eff_addr, seg_reg, 2);
@@ -322,7 +322,7 @@ val wime16 : (range(0, 4), sbits(64), range(0, 5), sbits(16), bool) -> option(st
 
 function wime16 (proc_mode, eff_addr, seg_reg, sailval, check_alignment?) = {
     if proc_mode != 0 & (seg_reg == 1 | (let attr : int = loghead(16, unsigned(seg_hidden_attrs[seg_reg])) in
-    let w : bits(1) = data_segment_descriptor_attributesbits_get_w(bits_of_int(attr, 16)) in w == 0b0)) then {
+    let w : bits(1) = Mk_data_segment_descriptor_attributesbits(bits_of_int(attr, 16))[w] in w == 0b0)) then {
         Some(":NON-WRITABLE-SEGMENT")
     } else {
         let (flg, lin_addr) : (option(string), sbits(64)) = ea_to_la(proc_mode, eff_addr, seg_reg, 2);
@@ -342,7 +342,7 @@ val wme32 : (range(0, 4), sbits(64), range(0, 5), bits(32), bool, struct_wme32) 
 
 function wme32 (proc_mode, eff_addr, seg_reg, sailval, check_alignment?, keywords) = {
     if proc_mode != 0 & (seg_reg == 1 | (let attr : int = loghead(16, unsigned(seg_hidden_attrs[seg_reg])) in
-    let w : bits(1) = data_segment_descriptor_attributesbits_get_w(bits_of_int(attr, 16)) in w == 0b0)) then {
+    let w : bits(1) = Mk_data_segment_descriptor_attributesbits(bits_of_int(attr, 16))[w] in w == 0b0)) then {
         Some(":NON-WRITABLE-SEGMENT")
     } else {
         let (flg, lin_addr) : (option(string), sbits(64)) = ea_to_la(proc_mode, eff_addr, seg_reg, 4);
@@ -362,7 +362,7 @@ val wime32 : (range(0, 4), sbits(64), range(0, 5), sbits(32), bool, struct_wime3
 
 function wime32 (proc_mode, eff_addr, seg_reg, sailval, check_alignment?, keywords) = {
     if proc_mode != 0 & (seg_reg == 1 | (let attr : int = loghead(16, unsigned(seg_hidden_attrs[seg_reg])) in
-    let w : bits(1) = data_segment_descriptor_attributesbits_get_w(bits_of_int(attr, 16)) in w == 0b0)) then {
+    let w : bits(1) = Mk_data_segment_descriptor_attributesbits(bits_of_int(attr, 16))[w] in w == 0b0)) then {
         Some(":NON-WRITABLE-SEGMENT")
     } else {
         let (flg, lin_addr) : (option(string), sbits(64)) = ea_to_la(proc_mode, eff_addr, seg_reg, 4);
@@ -380,7 +380,7 @@ val wme48 : (range(0, 4), sbits(64), range(0, 5), bits(48), bool) -> option(stri
 
 function wme48 (proc_mode, eff_addr, seg_reg, sailval, check_alignment?) = {
     if proc_mode != 0 & (seg_reg == 1 | (let attr : int = loghead(16, unsigned(seg_hidden_attrs[seg_reg])) in
-    let w : bits(1) = data_segment_descriptor_attributesbits_get_w(bits_of_int(attr, 16)) in w == 0b0)) then {
+    let w : bits(1) = Mk_data_segment_descriptor_attributesbits(bits_of_int(attr, 16))[w] in w == 0b0)) then {
         Some(":NON-WRITABLE-SEGMENT")
     } else {
         let (flg, lin_addr) : (option(string), sbits(64)) = ea_to_la(proc_mode, eff_addr, seg_reg, 6);
@@ -398,7 +398,7 @@ val wme64 : (range(0, 4), sbits(64), range(0, 5), bits(64), bool) -> option(stri
 
 function wme64 (proc_mode, eff_addr, seg_reg, sailval, check_alignment?) = {
     if proc_mode != 0 & (seg_reg == 1 | (let attr : int = loghead(16, unsigned(seg_hidden_attrs[seg_reg])) in
-    let w : bits(1) = data_segment_descriptor_attributesbits_get_w(bits_of_int(attr, 16)) in w == 0b0)) then {
+    let w : bits(1) = Mk_data_segment_descriptor_attributesbits(bits_of_int(attr, 16))[w] in w == 0b0)) then {
         Some(":NON-WRITABLE-SEGMENT")
     } else {
         let (flg, lin_addr) : (option(string), sbits(64)) = ea_to_la(proc_mode, eff_addr, seg_reg, 8);
@@ -416,7 +416,7 @@ val wime64 : (range(0, 4), sbits(64), range(0, 5), sbits(64), bool) -> option(st
 
 function wime64 (proc_mode, eff_addr, seg_reg, sailval, check_alignment?) = {
     if proc_mode != 0 & (seg_reg == 1 | (let attr : int = loghead(16, unsigned(seg_hidden_attrs[seg_reg])) in
-    let w : bits(1) = data_segment_descriptor_attributesbits_get_w(bits_of_int(attr, 16)) in w == 0b0)) then {
+    let w : bits(1) = Mk_data_segment_descriptor_attributesbits(bits_of_int(attr, 16))[w] in w == 0b0)) then {
         Some(":NON-WRITABLE-SEGMENT")
     } else {
         let (flg, lin_addr) : (option(string), sbits(64)) = ea_to_la(proc_mode, eff_addr, seg_reg, 8);
@@ -434,7 +434,7 @@ val wme80 : (range(0, 4), sbits(64), range(0, 5), bits(80), bool) -> option(stri
 
 function wme80 (proc_mode, eff_addr, seg_reg, sailval, check_alignment?) = {
     if proc_mode != 0 & (seg_reg == 1 | (let attr : int = loghead(16, unsigned(seg_hidden_attrs[seg_reg])) in
-    let w : bits(1) = data_segment_descriptor_attributesbits_get_w(bits_of_int(attr, 16)) in w == 0b0)) then {
+    let w : bits(1) = Mk_data_segment_descriptor_attributesbits(bits_of_int(attr, 16))[w] in w == 0b0)) then {
         Some(":NON-WRITABLE-SEGMENT")
     } else {
         let (flg, lin_addr) : (option(string), sbits(64)) = ea_to_la(proc_mode, eff_addr, seg_reg, 10);
@@ -452,7 +452,7 @@ val wme128 : (range(0, 4), sbits(64), range(0, 5), bits(128), bool) -> option(st
 
 function wme128 (proc_mode, eff_addr, seg_reg, sailval, check_alignment?) = {
     if proc_mode != 0 & (seg_reg == 1 | (let attr : int = loghead(16, unsigned(seg_hidden_attrs[seg_reg])) in
-    let w : bits(1) = data_segment_descriptor_attributesbits_get_w(bits_of_int(attr, 16)) in w == 0b0)) then {
+    let w : bits(1) = Mk_data_segment_descriptor_attributesbits(bits_of_int(attr, 16))[w] in w == 0b0)) then {
         Some(":NON-WRITABLE-SEGMENT")
     } else {
         let (flg, lin_addr) : (option(string), sbits(64)) = ea_to_la(proc_mode, eff_addr, seg_reg, 16);
@@ -472,7 +472,7 @@ val wme_size : (range(0, 4), {|1, 2, 4, 6, 8, 10, 16|}, sbits(64), range(0, 5), 
 
 function wme_size (proc_mode, nbytes, eff_addr, seg_reg, sailval, check_alignment?, keywords) = {
     if proc_mode != 0 & (seg_reg == 1 | (let attr : int = loghead(16, unsigned(seg_hidden_attrs[seg_reg])) in
-    let w : bits(1) = data_segment_descriptor_attributesbits_get_w(bits_of_int(attr, 16)) in w == 0b0)) then {
+    let w : bits(1) = Mk_data_segment_descriptor_attributesbits(bits_of_int(attr, 16))[w] in w == 0b0)) then {
         Some(":NON-WRITABLE-SEGMENT")
     } else {
         let (flg, lin_addr) : (option(string), sbits(64)) = ea_to_la(proc_mode, eff_addr, seg_reg, nbytes);
@@ -492,7 +492,7 @@ val wime_size : (range(0, 4), {|1, 2, 4, 8|}, sbits(64), range(0, 5), int, bool,
 
 function wime_size (proc_mode, nbytes, eff_addr, seg_reg, sailval, check_alignment?, keywords) = {
     if proc_mode != 0 & (seg_reg == 1 | (let attr : int = loghead(16, unsigned(seg_hidden_attrs[seg_reg])) in
-    let w : bits(1) = data_segment_descriptor_attributesbits_get_w(bits_of_int(attr, 16)) in w == 0b0)) then {
+    let w : bits(1) = Mk_data_segment_descriptor_attributesbits(bits_of_int(attr, 16))[w] in w == 0b0)) then {
         Some(":NON-WRITABLE-SEGMENT")
     } else {
         let (flg, lin_addr) : (option(string), sbits(64)) = ea_to_la(proc_mode, eff_addr, seg_reg, nbytes);

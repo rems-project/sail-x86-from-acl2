@@ -1,3 +1,5 @@
+$ifndef __X86_MODES
+$define __X86_MODES
 $include <prelude.sail>
 $include <string.sail>
 $include "register_readers_and_writers.sail"
@@ -32,9 +34,9 @@ $include "register_readers_and_writers.sail"
 val n64_bit_modep : unit -> bool effect {escape}
 function n64_bit_modep () =
 let ia32_efer : bits(12) = (truncate(msrs[0], 12)) in
-let ia32_efer_lma : bits(1) = (ia32_eferbits_get_lma(ia32_efer)) in
+let ia32_efer_lma : bits(1) = ((Mk_ia32_eferbits(ia32_efer))[lma]) in
 let cs_attr : bits(16) = (seg_hidden_attrs[1]) in
-let cs_l : bits(1) = (code_segment_descriptor_attributesbits_get_l(cs_attr)) in
+let cs_l : bits(1) = ((Mk_code_segment_descriptor_attributesbits(cs_attr))[l]) in
 ((ia32_efer_lma) == (0b1)) & ((cs_l) == (0b1))
 
 /*Returns the current mode of operation of the x86 machine*/
@@ -47,3 +49,4 @@ if n64_bit_modep()
 then 0
 else 1
 
+$endif

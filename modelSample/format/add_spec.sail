@@ -1,6 +1,6 @@
 $include "./rflags_spec.sail"
 
-val gpr_add_spec_1 : (bits(8), bits(8), bits(32)) -> (bits(8), bits(32), bits(32))
+val gpr_add_spec_1 : (bits(8), bits(8), rflagsbits) -> (bits(8), rflagsbits, rflagsbits)
 
 function gpr_add_spec_1 (dst, src, input_rflags) = {
     let raw_result : bits(9) = bits_of_int(unsigned(dst) + unsigned(src), 9);
@@ -12,12 +12,12 @@ function gpr_add_spec_1 (dst, src, input_rflags) = {
     let zf : bits(1) = bits_of_int(zf_spec(unsigned(result)), 1);
     let sf : bits(1) = sf_spec8(result);
     let of : bits(1) = of_spec8(signed_raw_result);
-    let output_rflags : bits(32) = change_rflagsbits(input_rflags, Some(cf), None(), Some(pf), None(), Some(af), None(), Some(zf), Some(sf), None(), None(), None(), Some(of), None(), None(), None(), None(), None(), None(), None(), None(), None(), None());
-    let undefined_flags : bits(32) = 0x00000000;
+    let output_rflags : rflagsbits = [input_rflags with cf, pf, af, zf, sf, of];
+    let undefined_flags : rflagsbits = Mk_rflagsbits(0x00000000);
     (result, output_rflags, undefined_flags)
 }
 
-val gpr_add_spec_2 : (bits(16), bits(16), bits(32)) -> (bits(16), bits(32), bits(32))
+val gpr_add_spec_2 : (bits(16), bits(16), rflagsbits) -> (bits(16), rflagsbits, rflagsbits)
 
 function gpr_add_spec_2 (dst, src, input_rflags) = {
     let raw_result : bits(17) = bits_of_int(unsigned(dst) + unsigned(src), 17);
@@ -29,12 +29,12 @@ function gpr_add_spec_2 (dst, src, input_rflags) = {
     let zf : bits(1) = bits_of_int(zf_spec(unsigned(result)), 1);
     let sf : bits(1) = sf_spec16(result);
     let of : bits(1) = of_spec16(signed_raw_result);
-    let output_rflags : bits(32) = change_rflagsbits(input_rflags, Some(cf), None(), Some(pf), None(), Some(af), None(), Some(zf), Some(sf), None(), None(), None(), Some(of), None(), None(), None(), None(), None(), None(), None(), None(), None(), None());
-    let undefined_flags : bits(32) = 0x00000000;
+    let output_rflags : rflagsbits = [input_rflags with cf, pf, af, zf, sf, of];
+    let undefined_flags : rflagsbits = Mk_rflagsbits(0x00000000);
     (result, output_rflags, undefined_flags)
 }
 
-val gpr_add_spec_4 : (bits(32), bits(32), bits(32)) -> (bits(32), bits(32), bits(32))
+val gpr_add_spec_4 : (bits(32), bits(32), rflagsbits) -> (bits(32), rflagsbits, rflagsbits)
 
 function gpr_add_spec_4 (dst, src, input_rflags) = {
     let raw_result : bits(33) = bits_of_int(unsigned(dst) + unsigned(src), 33);
@@ -46,12 +46,12 @@ function gpr_add_spec_4 (dst, src, input_rflags) = {
     let zf : bits(1) = bits_of_int(zf_spec(unsigned(result)), 1);
     let sf : bits(1) = sf_spec32(result);
     let of : bits(1) = of_spec32(signed_raw_result);
-    let output_rflags : bits(32) = change_rflagsbits(input_rflags, Some(cf), None(), Some(pf), None(), Some(af), None(), Some(zf), Some(sf), None(), None(), None(), Some(of), None(), None(), None(), None(), None(), None(), None(), None(), None(), None());
-    let undefined_flags : bits(32) = 0x00000000;
+    let output_rflags : rflagsbits = [input_rflags with cf, pf, af, zf, sf, of];
+    let undefined_flags : rflagsbits = Mk_rflagsbits(0x00000000);
     (result, output_rflags, undefined_flags)
 }
 
-val gpr_add_spec_8 : (bits(64), bits(64), bits(32)) -> (bits(64), bits(32), bits(32))
+val gpr_add_spec_8 : (bits(64), bits(64), rflagsbits) -> (bits(64), rflagsbits, rflagsbits)
 
 function gpr_add_spec_8 (dst, src, input_rflags) = {
     let raw_result : bits(65) = bits_of_int(unsigned(dst) + unsigned(src), 65);
@@ -63,15 +63,15 @@ function gpr_add_spec_8 (dst, src, input_rflags) = {
     let zf : bits(1) = bits_of_int(zf_spec(unsigned(result)), 1);
     let sf : bits(1) = sf_spec64(result);
     let of : bits(1) = of_spec64(signed_raw_result);
-    let output_rflags : bits(32) = change_rflagsbits(input_rflags, Some(cf), None(), Some(pf), None(), Some(af), None(), Some(zf), Some(sf), None(), None(), None(), Some(of), None(), None(), None(), None(), None(), None(), None(), None(), None(), None());
-    let undefined_flags : bits(32) = 0x00000000;
+    let output_rflags : rflagsbits = [input_rflags with cf, pf, af, zf, sf, of];
+    let undefined_flags : rflagsbits = Mk_rflagsbits(0x00000000);
     (result, output_rflags, undefined_flags)
 }
 
-val gpr_adc_spec_1 : (bits(8), bits(8), bits(32)) -> (bits(8), bits(32), bits(32))
+val gpr_adc_spec_1 : (bits(8), bits(8), rflagsbits) -> (bits(8), rflagsbits, rflagsbits)
 
 function gpr_adc_spec_1 (dst, src, input_rflags) = {
-    let input_cf : bits(1) = rflagsbits_get_cf(input_rflags);
+    let input_cf : bits(1) = input_rflags[cf];
     let raw_result : bits(9) = bits_of_int(unsigned(dst) + (unsigned(src) + unsigned(input_cf)), 9);
     let signed_raw_result : sbits(9) = bits_of_int(signed(dst) + (signed(src) + unsigned(input_cf)), 9);
     let result : bits(8) = truncate(raw_result, 8);
@@ -81,15 +81,15 @@ function gpr_adc_spec_1 (dst, src, input_rflags) = {
     let zf : bits(1) = bits_of_int(zf_spec(unsigned(result)), 1);
     let sf : bits(1) = sf_spec8(result);
     let of : bits(1) = of_spec8(signed_raw_result);
-    let output_rflags : bits(32) = change_rflagsbits(input_rflags, Some(cf), None(), Some(pf), None(), Some(af), None(), Some(zf), Some(sf), None(), None(), None(), Some(of), None(), None(), None(), None(), None(), None(), None(), None(), None(), None());
-    let undefined_flags : bits(32) = 0x00000000;
+    let output_rflags : rflagsbits = [input_rflags with cf, pf, af, zf, sf, of];
+    let undefined_flags : rflagsbits = Mk_rflagsbits(0x00000000);
     (result, output_rflags, undefined_flags)
 }
 
-val gpr_adc_spec_2 : (bits(16), bits(16), bits(32)) -> (bits(16), bits(32), bits(32))
+val gpr_adc_spec_2 : (bits(16), bits(16), rflagsbits) -> (bits(16), rflagsbits, rflagsbits)
 
 function gpr_adc_spec_2 (dst, src, input_rflags) = {
-    let input_cf : bits(1) = rflagsbits_get_cf(input_rflags);
+    let input_cf : bits(1) = input_rflags[cf];
     let raw_result : bits(17) = bits_of_int(unsigned(dst) + (unsigned(src) + unsigned(input_cf)), 17);
     let signed_raw_result : sbits(17) = bits_of_int(signed(dst) + (signed(src) + unsigned(input_cf)), 17);
     let result : bits(16) = truncate(raw_result, 16);
@@ -99,15 +99,15 @@ function gpr_adc_spec_2 (dst, src, input_rflags) = {
     let zf : bits(1) = bits_of_int(zf_spec(unsigned(result)), 1);
     let sf : bits(1) = sf_spec16(result);
     let of : bits(1) = of_spec16(signed_raw_result);
-    let output_rflags : bits(32) = change_rflagsbits(input_rflags, Some(cf), None(), Some(pf), None(), Some(af), None(), Some(zf), Some(sf), None(), None(), None(), Some(of), None(), None(), None(), None(), None(), None(), None(), None(), None(), None());
-    let undefined_flags : bits(32) = 0x00000000;
+    let output_rflags : rflagsbits = [input_rflags with cf, pf, af, zf, sf, of];
+    let undefined_flags : rflagsbits = Mk_rflagsbits(0x00000000);
     (result, output_rflags, undefined_flags)
 }
 
-val gpr_adc_spec_4 : (bits(32), bits(32), bits(32)) -> (bits(32), bits(32), bits(32))
+val gpr_adc_spec_4 : (bits(32), bits(32), rflagsbits) -> (bits(32), rflagsbits, rflagsbits)
 
 function gpr_adc_spec_4 (dst, src, input_rflags) = {
-    let input_cf : bits(1) = rflagsbits_get_cf(input_rflags);
+    let input_cf : bits(1) = input_rflags[cf];
     let raw_result : bits(33) = bits_of_int(unsigned(dst) + (unsigned(src) + unsigned(input_cf)), 33);
     let signed_raw_result : sbits(33) = bits_of_int(signed(dst) + (signed(src) + unsigned(input_cf)), 33);
     let result : bits(32) = truncate(raw_result, 32);
@@ -117,15 +117,15 @@ function gpr_adc_spec_4 (dst, src, input_rflags) = {
     let zf : bits(1) = bits_of_int(zf_spec(unsigned(result)), 1);
     let sf : bits(1) = sf_spec32(result);
     let of : bits(1) = of_spec32(signed_raw_result);
-    let output_rflags : bits(32) = change_rflagsbits(input_rflags, Some(cf), None(), Some(pf), None(), Some(af), None(), Some(zf), Some(sf), None(), None(), None(), Some(of), None(), None(), None(), None(), None(), None(), None(), None(), None(), None());
-    let undefined_flags : bits(32) = 0x00000000;
+    let output_rflags : rflagsbits = [input_rflags with cf, pf, af, zf, sf, of];
+    let undefined_flags : rflagsbits = Mk_rflagsbits(0x00000000);
     (result, output_rflags, undefined_flags)
 }
 
-val gpr_adc_spec_8 : (bits(64), bits(64), bits(32)) -> (bits(64), bits(32), bits(32))
+val gpr_adc_spec_8 : (bits(64), bits(64), rflagsbits) -> (bits(64), rflagsbits, rflagsbits)
 
 function gpr_adc_spec_8 (dst, src, input_rflags) = {
-    let input_cf : bits(1) = rflagsbits_get_cf(input_rflags);
+    let input_cf : bits(1) = input_rflags[cf];
     let raw_result : bits(65) = bits_of_int(unsigned(dst) + (unsigned(src) + unsigned(input_cf)), 65);
     let signed_raw_result : sbits(65) = bits_of_int(signed(dst) + (signed(src) + unsigned(input_cf)), 65);
     let result : bits(64) = truncate(raw_result, 64);
@@ -135,7 +135,7 @@ function gpr_adc_spec_8 (dst, src, input_rflags) = {
     let zf : bits(1) = bits_of_int(zf_spec(unsigned(result)), 1);
     let sf : bits(1) = sf_spec64(result);
     let of : bits(1) = of_spec64(signed_raw_result);
-    let output_rflags : bits(32) = change_rflagsbits(input_rflags, Some(cf), None(), Some(pf), None(), Some(af), None(), Some(zf), Some(sf), None(), None(), None(), Some(of), None(), None(), None(), None(), None(), None(), None(), None(), None(), None());
-    let undefined_flags : bits(32) = 0x00000000;
+    let output_rflags : rflagsbits = [input_rflags with cf, pf, af, zf, sf, of];
+    let undefined_flags : rflagsbits = Mk_rflagsbits(0x00000000);
     (result, output_rflags, undefined_flags)
 }

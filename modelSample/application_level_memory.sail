@@ -1,3 +1,5 @@
+$ifndef __X86_APPLICATION_LEVEL_MEMORY
+$define __X86_APPLICATION_LEVEL_MEMORY
 $include <prelude.sail>
 $include <string.sail>
 $include "state.sail"
@@ -25,3 +27,4 @@ None() : option(string)
 }
 else Some("wvm08")
 
+$endif

@@ -535,7 +535,7 @@ val merge_4_u32s : (bits(32), bits(32), bits(32), bits(32)) -> bits(128)
 function merge_4_u32s (a3, a2, a1, a0) = a3 @ a2 @ a1 @ a0
 
 /*-----------------------------------------------------------------*/
-// Some state
+// Some bitvector operations
 /*-----------------------------------------------------------------*/
 
 infix 7 <<
@@ -554,10 +554,6 @@ function changeSlice_bits (x, low, width, v) = [x with (low + width - 1) .. low 
 
 overload changeSlice = {changeSlice_bits, changeSlice_int}
 
-// Although one would expect rflags to be 64 bits, the ACL2 models
-// it as 32 bits
-register rflags : bits(32)
-
 val genericBitstructAccessor : forall 'width 'n 'low, 'width > 0 & 'low >= 0 & 'low + 'width <= 'n.
   (int('width), bits('n), int('low)) -> bits('width)
 function genericBitstructAccessor (width, inputBits, low) =
@@ -568,157 +564,12 @@ val genericBitstructUpdater : forall 'width 'n 'low, 'width > 0 & 'low >= 0 & 'l
 function genericBitstructUpdater (width, spliceBits, low, inputBits) =
         [inputBits with (low + width - 1) .. low = spliceBits]
 
-// Registers
-register rip : sbits(48)
-
-// In ACL2 rgfi() is often called with a `defconst` argument.  E.g.
-//      ` (rgfi *rax*) `
-// Unfortunately the translator currently translates these as number literals.
-// So (ignoring the dummy x86 variable) the above will become:
-//      ` rgfi(0)`
-// To find the number *rax* maps to, one can simply type `*rax*` into and ACL2
-// terminal with the x86 ISA project loaded.
-//
-// Each of the gprs is defined separately below, as opposed to a vector of
-// bitvectors as other registers are.  This is so they play nicely with
-// concurrency tools.  It also means rgfi() and write_rgfi() must work out
-// which reg to access themselves, instead of indexing an array.
-//
-// See here for some hints on rgfi:
-// http://www.cs.utexas.edu/users/moore/acl2/manuals/current/manual/index-seo.php/X86ISA____GPRS-READS-AND-WRITES?path=3532/29063/10660/6710/25183
-
-register rax : sbits(64)
-register rbx : sbits(64)
-register rcx : sbits(64)
-register rdx : sbits(64)
-register rsi : sbits(64)
-register rdi : sbits(64)
-register rsp : sbits(64)
-register rbp : sbits(64)
-register r8 : sbits(64)
-register r9 : sbits(64)
-register r10 : sbits(64)
-register r11 : sbits(64)
-register r12 : sbits(64)
-register r13 : sbits(64)
-register r14 : sbits(64)
-register r15 : sbits(64)
-
-val rgfi : (int) -> sbits(64) effect {escape, rreg}
-function rgfi (regNum) = {
-	assert(0 <= regNum & regNum < 16);
-    match regNum {
-        0 => rax,
-        1 => rcx,
-        2 => rdx,
-        3 => rbx,
-        4 => rsp,
-        5 => rbp,
-        6 => rsi,
-        7 => rdi,
-        8 => r8,
-        9 => r9,
-        10 => r10,
-        11 => r11,
-        12 => r12,
-        13 => r13,
-        14 => r14,
-        15 => r15,
-        _ =>  throw(Emsg("Invalid regNum in rfgi"))
-    }
-}
-
-val write_rgfi : (int, sbits(64)) -> unit effect {escape, wreg}
-function write_rgfi (regNum, val_to_write) = {
-	assert(0 <= regNum & regNum < 16);
-	match regNum {
-            0 => rax = val_to_write,
-            1 => rcx = val_to_write,
-            2 => rdx = val_to_write,
-            3 => rbx = val_to_write,
-            4 => rsp = val_to_write,
-            5 => rbp = val_to_write,
-            6 => rsi = val_to_write,
-            7 => rdi = val_to_write,
-            8 => r8 = val_to_write,
-            9 => r9 = val_to_write,
-            10 => r10 = val_to_write,
-            11 => r11 = val_to_write,
-            12 => r12 = val_to_write,
-            13 => r13 = val_to_write,
-            14 => r14 = val_to_write,
-            15 => r15 = val_to_write,
-            _ =>  throw(Emsg("Invalid regNum in write_rfgi"))
-        }
-}
-
-/*
-Model Specific Registers
-
-Footnote b in section 5.1 of Goel thesis says only 6 MSR registers
-(I think they mean 7) are thus far defined in the model.  For now,
-we enumerate some of them explicitely here.  Fortuantely, the indexes
-range from 0..6, and we can lump them into a vector of registers
-
-TODO: make this enumeration automatic
-*/
-register msrs : vector(7, dec, bits(64)) // 64 bits as per table 5.1 in thesis
-
-/*
-seg-visible registers etc..  From `concrete-state.lisp` we find
-there are 6 x 16bit registers
-
-TODO: make this automatic (including the number 6, which is a global
-constant but subject to change)
-
-TODO: in `xr` in ACL2 we have things like seg_hidden_attri* (i.e.
-with a trailing asterisk). Why is this?
-*/
-register seg_visibles : vector(6, dec, bits(16))
-
-register seg_hidden_attrs : vector(6, dec, bits(16))
-
-register seg_hidden_bases : vector(6, dec, bits(64))
-
-register seg_hidden_limits : vector(6, dec, bits(32))
-
-/*
-zmm registers.  From `concrete-state.lisp` we find there are
-32 x 512bit registers
-
-TODO: make this automatic (including the number 32, which is a global
-constant but subject to change)
-*/
-register zmms : vector (32, dec, bits(512))
-
-/*
-Control registers.  From `concrete-state.lisp` we find there are
-17 x 64bit registers
-
-TODO: make this automatic (including the number 17, which is a global
-constant but subject to change)
-*/
-register ctrs : vector (17, dec, bits(64))
-
-/*
-We can use `:pe ...` from `stri` and find we need the following.
-*/
-register strs : vector(2, dec, bits(80))
-
-/*
-ssr
-*/
-register ssr_visibles : vector(2, dec, bits(16))
-
-register ssr_hidden_bases : vector(2, dec, bits(64))
-
-register ssr_hidden_limits : vector(2, dec, bits(32))
-
-register ssr_hidden_attrs : vector(2, dec, bits(16))
-
 /*
 Reading from and writing to memory
 */
+
+val log_memory_read : forall 'addr_width, 'addr_width >= 0. (bits('addr_width), bits(8)) -> unit
+
 // TODO: Rename these
 val memi : forall 'addr_width, 'addr_width >= 0. (bits('addr_width)) -> bits(8) effect {rmem, rreg}
 function memi (addr) = {
@@ -727,13 +578,11 @@ function memi (addr) = {
 					sail_mask(64, addr),	// Address to read
 					1							// Number of bytes to read
 				);
-	print_endline(	bits_str(rip) ^
-			": R " ^
-			bits_str(addr) ^ " " ^
-			dec_str(1) ^ " " ^
-			bits_str(result));
+	log_memory_read(addr, result);
 	result
 }
+
+val log_memory_write : forall 'addr_width, 'addr_width >= 0. (bits('addr_width), bits(8)) -> unit
 
 val bang_memi : forall 'addr_width, 'addr_width >= 0. (bits('addr_width), bits(8)) -> unit effect {eamem, wmv, rreg}
 function bang_memi (addr, valToWrite) = {
@@ -749,11 +598,7 @@ function bang_memi (addr, valToWrite) = {
 					1,								// Number of bytes to write
 					valToWrite	// Value to write
 					);
-	print_endline(	bits_str(rip) ^
-			": W " ^
-			bits_str(addr) ^ " " ^
-			dec_str(1) ^ " " ^
-			bits_str(valToWrite))
+	log_memory_write(addr, valToWrite);
 }
 
 /*-----------------------------------------------------------------*/
@@ -827,15 +672,6 @@ function wb (n, addr, access_kind, value) = {
 /*-----------------------------------------------------------------*/
 // Untranslated functions
 /*-----------------------------------------------------------------*/
-
-
-val unimplemented_vex_decode_and_execute : (int, int, int, int, int, int) -> unit effect {escape}
-val unimplemented_evex_decode_and_execute : (int, int, int, int, int, int) -> unit effect {escape}
-
-// ---
-
-function unimplemented_vex_decode_and_execute (_, _, _, _, _, _) = throw(Emsg("Error: vex decoding not implemented"))
-function unimplemented_evex_decode_and_execute (_, _, _, _, _, _) = throw(Emsg("Error: evex decoding not implemented"))
 
 val unimplemented_x86_syscall_app_view : (range(0, 4), sbits(48), sbits(48), bits(52), bits(8), bits(8), bits(8), bits(8)) -> unit
 function unimplemented_x86_syscall_app_view (_, _, _, _, _, _, _, _) = throw(Syscall())

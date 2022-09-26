@@ -1,3 +1,5 @@
+$ifndef __X86_SEGMENTATION
+$define __X86_SEGMENTATION
 $include <prelude.sail>
 $include <string.sail>
 $include "segmentation_structures.sail"
@@ -87,11 +89,11 @@ else (0x0000_0000_0000_0000, 0, 0) },
 let limit : int = (loghead(32, unsigned(seg_hidden_limits[seg_reg]))) in
 let attr : int = (loghead(16, unsigned(seg_hidden_attrs[seg_reg]))) in
 let d_b : bits(1) = { (if (seg_reg) == (1)
-then code_segment_descriptor_attributesbits_get_d(bits_of_int(attr, 16))
-else data_segment_descriptor_attributesbits_get_d_b(bits_of_int(attr, 16))) } in
+then (Mk_code_segment_descriptor_attributesbits(bits_of_int(attr, 16)))[d]
+else (Mk_data_segment_descriptor_attributesbits(bits_of_int(attr, 16)))[d_b]) } in
 let e : bits(1) = { (if (seg_reg) == (1)
 then 0b0
-else data_segment_descriptor_attributesbits_get_e(bits_of_int(attr, 16))) } in
+else (Mk_data_segment_descriptor_attributesbits(bits_of_int(attr, 16)))[e]) } in
 let lower : int = { (if (e) == (0b1)
 then (1) + (limit)
 else 0) } in
@@ -264,69 +266,70 @@ _ => (Some(":UNIMPLEMENTED-PROC-MODE"), 0x0000_0000_0000_0000)
 /*Recognizer for a valid code segment descriptor in 64-bit mode*/
 val ia32e_valid_code_segment_descriptor_p : (bits(64)) -> (bool, (string, (bits(64))))
 function ia32e_valid_code_segment_descriptor_p (descriptor) =
-if not_bool((code_segment_descriptorbits_get_msb_of_type(descriptor)) == (0b1))
+if not_bool(((Mk_code_segment_descriptorbits(descriptor))[msb_of_type]) == (0b1))
 then (false, (":INVALID-SEGMENT-TYPE", (descriptor)))
-else if not_bool((code_segment_descriptorbits_get_s(descriptor)) == (0b1))
+else if not_bool(((Mk_code_segment_descriptorbits(descriptor))[s]) == (0b1))
 then (false, (":INVALID-SEGMENT-TYPE", (descriptor)))
-else if not_bool((code_segment_descriptorbits_get_p(descriptor)) == (0b1))
+else if not_bool(((Mk_code_segment_descriptorbits(descriptor))[p]) == (0b1))
 then (false, (":SEGMENT-NOT-PRESENT", (descriptor)))
-else if not_bool((code_segment_descriptorbits_get_l(descriptor)) == (0b1))
+else if not_bool(((Mk_code_segment_descriptorbits(descriptor))[l]) == (0b1))
 then (false, (":IA32E-MODE-OFF", (descriptor)))
-else if not_bool((code_segment_descriptorbits_get_d(descriptor)) == (0b0))
+else if not_bool(((Mk_code_segment_descriptorbits(descriptor))[d]) == (0b0))
 then (false, (":IA32E-DEFAULT-OPERAND-SIZE-INCORRECT", (descriptor)))
 else (true, ("", (0x0000_0000_0000_0000)))
 
 /*Recognizer for a valid LDT segment descriptor*/
 val ia32e_valid_ldt_segment_descriptor_p : (bits(128)) -> (bool, (string, (bits(128))))
 function ia32e_valid_ldt_segment_descriptor_p (descriptor) =
-let sailtype : bits(4) = (system_segment_descriptorbits_get_type(descriptor)) in
+let sailtype : bits(4) = ((Mk_system_segment_descriptorbits(descriptor))[sailtype]) in
 if not_bool((sailtype) == (0x2))
 then (false, (":INVALID-TYPE", (descriptor)))
-else if not_bool((system_segment_descriptorbits_get_s(descriptor)) == (0b0))
+else if not_bool(((Mk_system_segment_descriptorbits(descriptor))[s]) == (0b0))
 then (false, (":INVALID-SEGMENT-TYPE", (descriptor)))
-else if not_bool((system_segment_descriptorbits_get_p(descriptor)) == (0b1))
+else if not_bool(((Mk_system_segment_descriptorbits(descriptor))[p]) == (0b1))
 then (false, (":SEGMENT-NOT-PRESENT", (descriptor)))
-else if not_bool((system_segment_descriptorbits_get_all_zeroes?(descriptor)) == (0b0_0000))
+else if not_bool(((Mk_system_segment_descriptorbits(descriptor))[all_zeroes?]) == (0b0_0000))
 then (false, (":ALL-ZEROES-ABSENT", (descriptor)))
 else (true, ("", (0x0000_0000_0000_0000_0000_0000_0000_0000)))
 
 /*Recognizer for a valid Call Gate segment descriptor*/
 val ia32e_valid_call_gate_segment_descriptor_p : (bits(128)) -> (bool, (string, (bits(128))))
 function ia32e_valid_call_gate_segment_descriptor_p (descriptor) =
-let sailtype : bits(4) = (call_gate_descriptorbits_get_type(descriptor)) in
+let sailtype : bits(4) = ((Mk_call_gate_descriptorbits(descriptor))[sailtype]) in
 if not_bool((sailtype) == (0xc))
 then (false, (":INVALID-TYPE", (descriptor)))
-else if not_bool((call_gate_descriptorbits_get_s(descriptor)) == (0b0))
+else if not_bool(((Mk_call_gate_descriptorbits(descriptor))[s]) == (0b0))
 then (false, (":INVALID-SEGMENT-TYPE", (descriptor)))
-else if not_bool((call_gate_descriptorbits_get_p(descriptor)) == (0b1))
+else if not_bool(((Mk_call_gate_descriptorbits(descriptor))[p]) == (0b1))
 then (false, (":SEGMENT-NOT-PRESENT", (descriptor)))
-else if not_bool((call_gate_descriptorbits_get_all_zeroes?(descriptor)) == (0b0_0000))
+else if not_bool(((Mk_call_gate_descriptorbits(descriptor))[all_zeroes?]) == (0b0_0000))
 then (false, (":ALL-ZEROES-ABSENT", (descriptor)))
 else (true, ("", (0x0000_0000_0000_0000_0000_0000_0000_0000)))
 
 /*Constructor for the Code Segment attribute field*/
-val make_code_segment_attr_field : (bits(64)) -> bits(16)
+val make_code_segment_attr_field : (bits(64)) -> code_segment_descriptor_attributesbits
 function make_code_segment_attr_field (descriptor) =
-let a : bits(1) = (code_segment_descriptorbits_get_a(descriptor)) in
-let r : bits(1) = (code_segment_descriptorbits_get_r(descriptor)) in
-let c : bits(1) = (code_segment_descriptorbits_get_c(descriptor)) in
-let msb_of_type : bits(1) = (code_segment_descriptorbits_get_msb_of_type(descriptor)) in
-let s : bits(1) = (code_segment_descriptorbits_get_s(descriptor)) in
-let dpl : bits(2) = (code_segment_descriptorbits_get_dpl(descriptor)) in
-let p : bits(1) = (code_segment_descriptorbits_get_p(descriptor)) in
-let avl : bits(1) = (code_segment_descriptorbits_get_avl(descriptor)) in
-let l : bits(1) = (code_segment_descriptorbits_get_l(descriptor)) in
-let g : bits(1) = (code_segment_descriptorbits_get_g(descriptor)) in
-change_code_segment_descriptor_attributesbits(0x0000, Some(a), Some(r), Some(c), Some(msb_of_type), Some(s), Some(dpl), Some(p), Some(avl), Some(l), None(), Some(g), None())
+let a : bits(1) = ((Mk_code_segment_descriptorbits(descriptor))[a]) in
+let r : bits(1) = ((Mk_code_segment_descriptorbits(descriptor))[r]) in
+let c : bits(1) = ((Mk_code_segment_descriptorbits(descriptor))[c]) in
+let msb_of_type : bits(1) = ((Mk_code_segment_descriptorbits(descriptor))[msb_of_type]) in
+let s : bits(1) = ((Mk_code_segment_descriptorbits(descriptor))[s]) in
+let dpl : bits(2) = ((Mk_code_segment_descriptorbits(descriptor))[dpl]) in
+let p : bits(1) = ((Mk_code_segment_descriptorbits(descriptor))[p]) in
+let avl : bits(1) = ((Mk_code_segment_descriptorbits(descriptor))[avl]) in
+let l : bits(1) = ((Mk_code_segment_descriptorbits(descriptor))[l]) in
+let g : bits(1) = ((Mk_code_segment_descriptorbits(descriptor))[g]) in
+[([([([([([([([([([(Mk_code_segment_descriptor_attributesbits(0x0000)) with a = (a)]) with r = (r)]) with c = (c)]) with msb_of_type = (msb_of_type)]) with s = (s)]) with dpl = (dpl)]) with p = (p)]) with avl = (avl)]) with l = (l)]) with g = (g)]
 
 /*Constructor for the System Segment attribute field*/
-val make_system_segment_attr_field : (bits(128)) -> bits(16)
+val make_system_segment_attr_field : (bits(128)) -> system_segment_descriptor_attributesbits
 function make_system_segment_attr_field (descriptor) =
-let sailtype : bits(4) = (system_segment_descriptorbits_get_type(descriptor)) in
-let s : bits(1) = (system_segment_descriptorbits_get_s(descriptor)) in
-let dpl : bits(2) = (system_segment_descriptorbits_get_dpl(descriptor)) in
-let p : bits(1) = (system_segment_descriptorbits_get_p(descriptor)) in
-let avl : bits(1) = (system_segment_descriptorbits_get_avl(descriptor)) in
-let g : bits(1) = (system_segment_descriptorbits_get_g(descriptor)) in
-change_system_segment_descriptor_attributesbits(0x0000, Some(sailtype), Some(s), Some(dpl), Some(p), Some(avl), Some(g), None())
+let sailtype : bits(4) = ((Mk_system_segment_descriptorbits(descriptor))[sailtype]) in
+let s : bits(1) = ((Mk_system_segment_descriptorbits(descriptor))[s]) in
+let dpl : bits(2) = ((Mk_system_segment_descriptorbits(descriptor))[dpl]) in
+let p : bits(1) = ((Mk_system_segment_descriptorbits(descriptor))[p]) in
+let avl : bits(1) = ((Mk_system_segment_descriptorbits(descriptor))[avl]) in
+let g : bits(1) = ((Mk_system_segment_descriptorbits(descriptor))[g]) in
+[([([([([([(Mk_system_segment_descriptor_attributesbits(0x0000)) with sailtype = (sailtype)]) with s = (s)]) with dpl = (dpl)]) with p = (p)]) with avl = (avl)]) with g = (g)]
 
+$endif

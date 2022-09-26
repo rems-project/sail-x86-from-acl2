@@ -1,3 +1,5 @@
+$ifndef __X86_MULTIPLY_SPEC
+$define __X86_MULTIPLY_SPEC
 $include <prelude.sail>
 $include <string.sail>
 
@@ -105,3 +107,4 @@ function imul_spec (size, dst, src) =
 _ => (0x0000_0000_0000_0000, 0x0000_0000_0000_0000, 0x0000_0000_0000_0000_0000_0000_0000_0000, 0b0)
 }) : (bits(64), bits(64), bits(128), bits(1))
 
+$endif

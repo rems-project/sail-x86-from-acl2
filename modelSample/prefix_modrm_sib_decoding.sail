@@ -1,3 +1,5 @@
+$ifndef __X86_PREFIX_MODRM_SIB_DECODING
+$define __X86_PREFIX_MODRM_SIB_DECODING
 $include <prelude.sail>
 $include <string.sail>
 $include "auxiliary.sail"
@@ -55,7 +57,7 @@ function get_one_byte_prefix_array_code (byte) =
  </li> 
  
  </ol>*/
-val compute_mandatory_prefix_for_two_byte_opcode : (range(0, 4), bits(8), bits(52)) -> bits(8) effect {escape}
+val compute_mandatory_prefix_for_two_byte_opcode : (range(0, 4), bits(8), prefixes) -> bits(8) effect {escape}
 function compute_mandatory_prefix_for_two_byte_opcode (proc_mode, opcode, prefixes) =
 (match proc_mode {
 0 => n64_bit_compute_mandatory_prefix_for_two_byte_opcode(opcode, prefixes),
@@ -115,7 +117,7 @@ else n32_bit_mode_two_byte_opcode_modr_m_p(mandatory_prefix, opcode)
 
 /*Returns @ ( ' t ' ) if a VEX-encoded opcode requires a ModR/M byte; 
  @ ( ' nil ' ) otherwise.*/
-val vex_opcode_modr_m_p : (bits(24), bits(8)) -> bool
+val vex_opcode_modr_m_p : (vex_prefixes, bits(8)) -> bool
 function vex_opcode_modr_m_p (vex_prefixes, opcode) =
 if not_bool((opcode) == (0x77))
 then true
@@ -155,9 +157,10 @@ else not_bool(vex_prefixes_map_p(0x000f, vex_prefixes))
  In 64-bit mode, this argument is always @ ( ' nil ' ) . 
  In 32-bit mode, this argument may be @ ( ' t ' ) or @ ( ' nil ' ) . 
  </p>*/
-val x86_decode_sib_p : (bits(8), bool) -> bool
+val x86_decode_sib_p : (modr_m, bool) -> bool
 function x86_decode_sib_p (modr_m, n16_bit_addressp) =
-(not_bool(n16_bit_addressp)) & (let r_m : bits(3) = (modr_m_get_r_m(modr_m)) in
-let mod_var : bits(2) = (modr_m_get_mod(modr_m)) in
+(not_bool(n16_bit_addressp)) & (let r_m : bits(3) = ((modr_m)[r_m]) in
+let mod_var : bits(2) = ((modr_m)[mod]) in
 ((r_m) == (0b100)) & (not_bool((mod_var) == (0b11))))
 
+$endif

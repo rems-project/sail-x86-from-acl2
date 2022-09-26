@@ -449,8 +449,6 @@ function changeSlice_bits (x, low, width, v) = {
 
 overload changeSlice = {changeSlice_bits, changeSlice_int}
 
-register rflags : bits(32)
-
 val genericBitstructAccessor : forall 'width 'n 'low, ('width > 0 & 'low >= 0 & 'low + 'width <= 'n).
   (int('width), bits('n), int('low)) -> bits('width)
 
@@ -465,128 +463,24 @@ function genericBitstructUpdater (width, spliceBits, low, inputBits) = {
     [inputBits with (low + width - 1) .. low = spliceBits]
 }
 
-register rip : sbits(48)
-
-register rax : sbits(64)
-
-register rbx : sbits(64)
-
-register rcx : sbits(64)
-
-register rdx : sbits(64)
-
-register rsi : sbits(64)
-
-register rdi : sbits(64)
-
-register rsp : sbits(64)
-
-register rbp : sbits(64)
-
-register r8 : sbits(64)
-
-register r9 : sbits(64)
-
-register r10 : sbits(64)
-
-register r11 : sbits(64)
-
-register r12 : sbits(64)
-
-register r13 : sbits(64)
-
-register r14 : sbits(64)
-
-register r15 : sbits(64)
-
-val rgfi : int -> sbits(64)
-
-function rgfi regNum = {
-    assert(0 <= regNum & regNum < 16);
-    match regNum {
-      0 => rax,
-      1 => rcx,
-      2 => rdx,
-      3 => rbx,
-      4 => rsp,
-      5 => rbp,
-      6 => rsi,
-      7 => rdi,
-      8 => r8,
-      9 => r9,
-      10 => r10,
-      11 => r11,
-      12 => r12,
-      13 => r13,
-      14 => r14,
-      15 => r15,
-      _ => throw(Emsg("Invalid regNum in rfgi"))
-    }
-}
-
-val write_rgfi : (int, sbits(64)) -> unit
-
-function write_rgfi (regNum, val_to_write) = {
-    assert(0 <= regNum & regNum < 16);
-    match regNum {
-      0 => rax = val_to_write,
-      1 => rcx = val_to_write,
-      2 => rdx = val_to_write,
-      3 => rbx = val_to_write,
-      4 => rsp = val_to_write,
-      5 => rbp = val_to_write,
-      6 => rsi = val_to_write,
-      7 => rdi = val_to_write,
-      8 => r8 = val_to_write,
-      9 => r9 = val_to_write,
-      10 => r10 = val_to_write,
-      11 => r11 = val_to_write,
-      12 => r12 = val_to_write,
-      13 => r13 = val_to_write,
-      14 => r14 = val_to_write,
-      15 => r15 = val_to_write,
-      _ => throw(Emsg("Invalid regNum in write_rfgi"))
-    }
-}
-
-register msrs : vector(7, dec, bits(64))
-
-register seg_visibles : vector(6, dec, bits(16))
-
-register seg_hidden_attrs : vector(6, dec, bits(16))
-
-register seg_hidden_bases : vector(6, dec, bits(64))
-
-register seg_hidden_limits : vector(6, dec, bits(32))
-
-register zmms : vector(32, dec, bits(512))
-
-register ctrs : vector(17, dec, bits(64))
-
-register strs : vector(2, dec, bits(80))
-
-register ssr_visibles : vector(2, dec, bits(16))
-
-register ssr_hidden_bases : vector(2, dec, bits(64))
-
-register ssr_hidden_limits : vector(2, dec, bits(32))
-
-register ssr_hidden_attrs : vector(2, dec, bits(16))
+val log_memory_read : forall 'addr_width, 'addr_width >= 0. (bits('addr_width), bits(8)) -> unit
 
 val memi : forall 'addr_width, 'addr_width >= 0. bits('addr_width) -> bits(8)
 
 function memi addr = {
     result = __read_mem(Read_plain, 64, sail_mask(64, addr), 1);
-    print_endline(bits_str(rip) ^ ": R " ^ bits_str(addr) ^ " " ^ dec_str(1) ^ " " ^ bits_str(result));
+    log_memory_read(addr, result);
     result
 }
+
+val log_memory_write : forall 'addr_width, 'addr_width >= 0. (bits('addr_width), bits(8)) -> unit
 
 val bang_memi : forall 'addr_width, 'addr_width >= 0. (bits('addr_width), bits(8)) -> unit
 
 function bang_memi (addr, valToWrite) = {
     dummy = __write_mem_ea(Write_plain, 64, sail_mask(64, addr), 1);
     dummy2 = __write_mem(Write_plain, 64, sail_mask(64, addr), 1, valToWrite);
-    print_endline(bits_str(rip) ^ ": W " ^ bits_str(addr) ^ " " ^ dec_str(1) ^ " " ^ bits_str(valToWrite))
+    log_memory_write(addr, valToWrite)
 }
 
 register app_view : bool
@@ -650,18 +544,6 @@ function wb (n, addr, access_kind, value) = {
         bang_memi(phys_addr, value[8 * offset + 7 .. 8 * offset])
     };
     return(None())
-}
-
-val unimplemented_vex_decode_and_execute : (int, int, int, int, int, int) -> unit
-
-val unimplemented_evex_decode_and_execute : (int, int, int, int, int, int) -> unit
-
-function unimplemented_vex_decode_and_execute (_, _, _, _, _, _) = {
-    throw(Emsg("Error: vex decoding not implemented"))
-}
-
-function unimplemented_evex_decode_and_execute (_, _, _, _, _, _) = {
-    throw(Emsg("Error: evex decoding not implemented"))
 }
 
 val unimplemented_x86_syscall_app_view : (range(0, 4), sbits(48), sbits(48), bits(52), bits(8), bits(8), bits(8), bits(8)) -> unit

@@ -8,8 +8,8 @@ register haltAddrReg : sbits(48)
 val initialise_64_bit_mode : unit -> unit
 
 function initialise_64_bit_mode () = {
-    msrs[0] = sail_zero_extend(set_ia32_eferbits_get_lma(0b1, truncate(msrs[0], 12)), 64);
-    seg_hidden_attrs[1] = set_code_segment_descriptor_attributesbits_get_l(0b1, seg_hidden_attrs[1])
+    msrs[0][11 .. 0] = [Mk_ia32_eferbits(msrs[0][11 .. 0]) with lma = 0b1].bits;
+    seg_hidden_attrs[1][15 .. 0] = [Mk_code_segment_descriptor_attributesbits(seg_hidden_attrs[1][15 .. 0]) with l = 0b1].bits
 }
 
 val initialiseState : unit -> unit

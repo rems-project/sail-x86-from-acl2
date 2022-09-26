@@ -1,7 +1,9 @@
+$ifndef __X86_SIGNEXTEND
+$define __X86_SIGNEXTEND
 $include <prelude.sail>
 $include <string.sail>
 
-val x86_cbw_cwd_cdqe : (range(0, 4), sbits(48), sbits(48), bits(52), bits(8), bits(8), bits(8), bits(8)) -> unit effect {escape, rreg, wreg}
+val x86_cbw_cwd_cdqe : (range(0, 4), sbits(48), sbits(48), prefixes, bits(8), bits(8), modr_m, sib) -> unit effect {escape, rreg, wreg}
 function x86_cbw_cwd_cdqe (proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode, modr_m, sib) =
 let ctx : string = ("X86-CBW/CWD/CDQE") in
 let register_size : {|1, 2, 4, 8|} = (select_operand_size(proc_mode, false, rex_byte, false, prefixes, false, false, false)) in
@@ -18,7 +20,7 @@ else sail_zero_extend(src, 64)) } in
 write_iptr(proc_mode, temp_rip)
 }
 
-val x86_cwd_cdq_cqo : (range(0, 4), sbits(48), sbits(48), bits(52), bits(8), bits(8), bits(8), bits(8)) -> unit effect {escape, rreg, wreg}
+val x86_cwd_cdq_cqo : (range(0, 4), sbits(48), sbits(48), prefixes, bits(8), bits(8), modr_m, sib) -> unit effect {escape, rreg, wreg}
 function x86_cwd_cdq_cqo (proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode, modr_m, sib) =
 let ctx : string = ("X86-CWD/CDQ/CQO") in
 let src_size : {|1, 2, 4, 8|} = (select_operand_size(proc_mode, false, rex_byte, false, prefixes, false, false, false)) in
@@ -30,3 +32,4 @@ else 0x0000_0000_0000_0000) } in
 write_iptr(proc_mode, temp_rip)
 }
 
+$endif
