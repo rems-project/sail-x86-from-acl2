@@ -2,7 +2,6 @@ import transform
 from lex_parse import ACL2String, ACL2quote, ACL2qq, CodeTopLevel, pp_acl2, lexLispString, parseACL2
 from SailASTelems import *
 from SailTypes import parseGuard, Sail_t_fn, translateType, eqSet
-import config_files
 import config_patterns
 
 import os
@@ -280,7 +279,7 @@ def tr_include_book(ACL2ast, env):
 
 		# Add a Sail `include` for the file translated above
 		toReturn = SailInclude(sailAST,
-							   config_files.outputFolder,
+							   env.config.output_folder,
 							   thisFileRename,
 							   includeHeaders=False,
 							   env=env)
@@ -771,12 +770,12 @@ def tr_mbe(ACL2ast, env):
 	if type(execCode[0]) not in [list, str]: sys.exit(f"Error: Unexpected MBE :exec code type, expected list or string, got: {type(execCode[0])}")
 
 	# Select which branch
-	if config_files.mbe_branch == ':logic':
+	if env.config.mbe_branch == ':logic':
 		(SailAST, env, consumed) = transform.transformACL2asttoSail(logicCode[0], env)
-	elif config_files.mbe_branch == ':exec':
+	elif env.config.mbe_branch == ':exec':
 		(SailAST, env, consumed) = transform.transformACL2asttoSail(execCode[0], env)
 	else:
-		sys.exit(f"Error: unexpected mbe_switch value {config_files.mbe_branch}")
+		sys.exit(f"Error: unexpected mbe_switch value {env.config.mbe_branch}")
 
 	# Return
 	return SailAST, env, len(ACL2ast)
@@ -1013,8 +1012,8 @@ def _the_helper(theType, sailTerm):
 	Returns:
 		- [SailAstElem]
 	"""
-	if not config_files.translate_the:
-		return sailTerm
+	# if not config_files.translate_the:
+	# 	return sailTerm
 
 	# The sail term should be a symbol or single valued list
 	if type(sailTerm) not in [str, list]: sys.exit(f"Error: `the` term not a string or list - {sailTerm}")
@@ -1442,7 +1441,7 @@ def _bstar_helper(bindersRemaining, results, env):
 
 					return returnTerm, [name] + recursedNames, env
 
-			if config_files.translate_the and afters != []:
+			if afters != []: # and config_files.translate_the
 				(recursedSail, recursedNames, env) = afters_helper(afters, env)
 				boundNames.extend(recursedNames)
 			else:
@@ -2346,7 +2345,8 @@ def tr_fault_fresh(ACL2ast, env):
 	Translate `fault-fresh` as an inline exception.  See errorHelper()
 	docstring for more information.
 	"""
-	toReturn = errorHelper(f"A fault occurred.  Original ACL2 AST:\n{ACL2ast}")
+	orig = pp_acl2(ACL2ast).replace('"', '\\"')
+	toReturn = errorHelper(f"A fault occurred.  Original ACL2 AST: {orig}")
 	return [toReturn], env, len(ACL2ast)
 
 
@@ -2938,17 +2938,17 @@ def expand_macro_app(ACL2ast, env, useTrans1=True):
 
 	# Construct the term to send for evaluation
 	toSend = [':trans' if not useTrans1 else ':trans1', ACL2ast]
-	if config_files.print_acl2_interactions:
+	if env.config.print_acl2_interactions:
 		print(f'Sending this to be macro expanded: {toSend}')
 
 	# Send to the ACL2server for evaluation
 	newAST = env.evalACL2(toSend, debracket=True)
-	if config_files.print_acl2_interactions:
+	if env.config.print_acl2_interactions:
 		print(f'\nReceived this in return: {newAST}')
 
 	# Deconstruct the newAST to get the result
 	newAST = newAST[0]
-	if config_files.print_acl2_interactions:
+	if env.config.print_acl2_interactions:
 		print(f'\nAs an AST: {newAST}')
 
 	return newAST

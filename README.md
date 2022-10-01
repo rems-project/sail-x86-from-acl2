@@ -22,18 +22,17 @@ These first steps give us a current version of the ACL2 x86 model.  The certific
 
 1. Download and install ACL2 and certify the community books as detailed here: <http://www.cs.utexas.edu/users/moore/acl2/v8-5/HTML/installation/installation.html>.  SBCL is the recommended underlying Common Lisp - CCL seems to cause problems.
 2. Certify the `x86ISA` book as explained here: <https://www.cs.utexas.edu/users/moore/acl2/v8-5/combined-manual/index.html?topic=X86ISA____X86ISA-BUILD-INSTRUCTIONS>.  I ran `cert.pl top` from `<x86-project-folder>/tools/execution/` where `<x86-project-folder` is probably `<acl2-install-folder>/books/projects/x86isa/`.   `cert.pl` should be in `<alc2-install-folder>/books/build/`.
-3. Set the path to the ACL2 executable (probably called `saved_acl2`) by setting the configuration variable `acl2Process` in `translator/config_files.py`.
-4. Run `python3 translator/callACL2.py` to start a running instance of ACL2 with which the translator can interact.  You can change its port number by setting `acl2Port` in `config_files.py`.  Wait until it prints `Ready` before proceeding.  Leave this running and execute the next steps in a separate terminal.
+3. Go to the `translator` directory, and copy the configuration file template `config.toml.in` to `config.toml`.  Set the configuration varialbe `acl2_process` to the path to the ACL2 executable (probably called `saved_acl2`).
+4. Run `python3 callACL2.py` to start a running instance of ACL2 with which the translator can interact.  You can change its port number by setting `acl2_port` in `config.toml`.  Wait until it prints `Ready` before proceeding.  Leave this running and execute the next steps in a separate terminal.
 
 These steps run the translator.
 
-1. Set other options at the top of `translator/config_files.py`.  Most should be fine as default except:
+1. Set other options in `translator/config.toml`.  Most should be fine as default except:
    1. `x86_project_folder` location of the x86 ISA project folder (probably `<acl2-install-folder>/books/projects/x86isa/`).
    2. `outputFolder` - the Sail output files will be saved here.  Make sure that this directory exists before running the translation.
    3. `unresolvedTypesFile` - location of a log file for the type resolution algorithm.
-2. Connect to the `translator/` directory.
-3. Run `python3 ./transform.py` to perform the translation.
-4. The translation could take a few minutes - once it has completed the program will exit.
+2. Run `python3 ./transform.py` to perform the translation.
+3. The translation could take a few minutes - once it has completed the program will exit.
 
 ## Code Structure and File Guide
 
@@ -52,9 +51,9 @@ The following diagram shows the general structure of the translator.  Each file 
 * `handwritten_tokens.py` contains the names and types of the handwritten functions contained in `handwritten.sail`.
 * `manualInterventions.py` contains the code for Lisp forms which do not conform to the assumptions made in the translation functions and where a special case is required.
 
-**Configuration Scripts**
+**Configuration Files**
 
-* `config_files.py` contains file paths, most notably for locating the ACL2 model and setting output folder.  There are some global options in here as well.
+* `config.toml.in` is a configuration file template that should be copied to `config.toml` to enable it.  It contains file paths, most notably for locating the ACL2 model and setting output folder.  There are some global options in here as well.
 * `config_patterns.py` defines the slice of the model to translate by either specifying Lisp forms to exclude from files otherwise translated, or by specifying Lisp forms to translate from files otherwise excluded.
 * `config_function_maps.py` contains mappings of Lisp tokens to Python translation functions (drawn from the translation function files above).  These tables are used each time a token is encountered during translation.
 

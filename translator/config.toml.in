@@ -1,0 +1,23 @@
+# Top level file name to translate.  Likely `x86.lisp` (which is located at
+# `books/projects/x86isa/machine`).
+top_level_file = '../../acl2/books/projects/x86isa/machine/x86.lisp'
+
+# Path to the ACL2 executable, which is likely called `saved_acl2`.
+# Port on localhost the ACL2 instance listens on for expansion requests.
+acl2_process = '../../acl2/saved_acl2'
+acl2_port = 1159
+
+# Output folder for translated files.
+output_older = '../model'
+
+# Output paths for file which log data about the type resolution algorithm
+unresolved_types_file = '../model/unresolvedTypes.txt'
+
+# `mbe` forms allow us to choose between translating the `:logic` or `:exec`
+# branches.  See tr_mbe in specialTokens.py for more information or:
+# http://www.cs.utexas.edu/users/moore/acl2/manuals/current/manual/index.html?topic=ACL2____MBE
+mbe_branch = ':logic'
+
+# Printing interactions with the running ACL2 instance can increased the amount
+# of terminal output substantially but help debug problems.
+print_acl2_interactions = false

@@ -1,21 +1,22 @@
 import socketFuncs
-from config_files import acl2Process, acl2Port
+import argparse
 
 import subprocess
 import socket
+import tomli
 
 '''
 The translator requires a running ACL2 instance so macros can be expanded at
 translate time.  The functions here manage that process.
 
 Running `python3 callACL2.py` will start an ACL2 process and listen on port
-defined in config_files.py for strings to send to it.  Starting the ACL2
+defined in the configuration file for strings to send to it.  Starting the ACL2
 process and loading the x86isa project books may take a bit of time - the
 server is ready to receive requests after it prints 'Ready'.
 '''
 
 
-def initialiseInternal():
+def initialiseInternal(acl2Process):
 	"""
 	Starts the ACL2 process, loads the x86isa project and changes to the
 	X86ISA package.  This may take some time.
@@ -40,7 +41,7 @@ def initialiseInternal():
 
 	return acl2
 
-def initialiseExternal():
+def initialiseExternal(acl2Port):
 	"""
 	Set up the socket on which we will receive incoming requests.
 
@@ -168,14 +169,32 @@ def handleManyReqs(s, acl2):
 			s.close()
 			return
 
+def cleanup(s, acl2):
+	s.close()
+	try:
+		acl2.communicate(input=b'(quit)\n', timeout=5)
+	except subprocess.TimeoutExpired:
+		acl2.kill()
+
 if __name__ == '__main__':
 	"""
 	Start the acl2 server.
 	"""
 
+	parser = argparse.ArgumentParser(description='Translate ACL2 files into Sail')
+	parser.add_argument('-c', '--config', default="config.toml")
+	args = parser.parse_args()
+
+	# Load config
+	with open(args.config, "rb") as f:
+		config = tomli.load(f)
+
+	acl2Process = config.get('acl2_process', 'acl2')
+	acl2Port = config.get('acl2_port', 1159)
+
 	# Initialise the acl2 subprocess
 	print('Initialising (this may take some time)')
-	acl2 = initialiseInternal()
+	acl2 = initialiseInternal(acl2Process)
 
 	# An example call to acl2
 	resp = interactFromPrompt(b'(cf-spec-gen-fn 8)', acl2)
@@ -184,12 +203,12 @@ if __name__ == '__main__':
 
 	# External interface.  Only allow a single connection at once.
 	try:
-		s = initialiseExternal()
+		s = initialiseExternal(acl2Port)
 		s.listen(1)
 		while True:
 			(clientsocket, address) = s.accept()
 			handleManyReqs(clientsocket, acl2)
-	except:
-		s.close()
-		acl2.terminate()
-		raise
+	except KeyboardInterrupt:
+		pass
+	finally:
+		cleanup(s, acl2)

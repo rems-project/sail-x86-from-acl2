@@ -1,0 +1,6 @@
+__pycache__
+/model
+/unresolvedTypes.txt
+/translator/config.toml
+/translator/validation/emulator/emulator
+/translator/validation/emulator/emulator.c

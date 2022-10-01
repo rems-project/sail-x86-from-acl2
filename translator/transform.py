@@ -2,7 +2,6 @@ from lex_parse import lexLispFile, lexLispString, parseACL2, NewLine, ACL2Commen
 	CodeTopLevel
 from SailASTelems import *
 import socketFuncs
-import config_files
 import config_patterns
 import config_function_maps
 import manualInterventions
@@ -12,6 +11,8 @@ import sys
 import os
 from shutil import copyfile
 import socket
+import argparse
+import tomli
 
 
 """
@@ -33,11 +34,12 @@ class Env:
 	evalACL2() are worth looking at.
 	"""
 
-	def __init__(self):
+	def __init__(self, config):
 		"""
 		Initialise the environment state.
 		"""
 
+		self.config = config
 
 		'''
 		The manual and automatic environments map Sail tokens (of type str) to
@@ -149,7 +151,7 @@ class Env:
 		'''
 		self.s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 		try:
-			self.s.connect(('localhost', config_files.acl2Port))
+			self.s.connect(('localhost', self.config.acl2_port))
 		except:
 			print("Warning: env could not connect to ACL2 server")
 
@@ -429,14 +431,14 @@ class Env:
 		"""
 		# Convert the AST into a concrete string
 		toSend = pp_acl2(expr)
-		if config_files.print_acl2_interactions:
+		if self.config.print_acl2_interactions:
 			print("\n\n")
 			print(f'With brackets: {toSend}')
 
 		# Remove outer brackets if asked
 		if debracket:
 			toSend = toSend[1:-1]
-			if config_files.print_acl2_interactions:
+			if self.config.print_acl2_interactions:
 				print(f"Without brackets: {toSend}")
 
 		# Send to the server
@@ -450,7 +452,7 @@ class Env:
 		# Convert response from [bytes] -> [str] -> str -> [acl2ASTelem]
 		response = [b.decode("utf-8") for b in response]
 		response = ''.join(response)
-		if config_files.print_acl2_interactions:
+		if self.config.print_acl2_interactions:
 			print(f"\nString response:\n{response}")
 
 		# Lex and parse the response
@@ -478,6 +480,16 @@ class Env:
 		"""
 		self.s.close()
 
+
+class Config:
+	def __init__(self, config = dict()):
+		self.top_level_file = config.get('top_level_file', '../../acl2/books/projects/x86isa/machine/x86.lisp')
+		self.acl2_process = config.get('acl2_process', 'acl2')
+		self.acl2_port = config.get('acl2_port', 1159)
+		self.output_folder = config.get('output_folder', '../model')
+		self.unresolved_types_file = config.get('unresolved_types_file', '../model/unresolved_types.log')
+		self.mbe_branch = config.get('mbe_branch', ':logic')
+		self.print_acl2_interactions = config.get('print_acl2_interactions', False)
 
 def isStringList(ys):
 	"""
@@ -602,7 +614,7 @@ def transformACL2FiletoSail(file, env):
 
 	# Run the resolution algorithm and log results of each step to the log
 	# file.  Anecdotally running three times is sufficient at the minute.
-	f = open(config_files.unresolvedTypesFile, 'a')
+	f = open(env.config.unresolved_types_file, 'a')
 	f.write(f"{file}\n")
 	f.write(f"{'=' * len(file)}\n\n")
 	for i in range(3):
@@ -740,31 +752,31 @@ def transformACL2asttoSail(ACL2ast, env):
 	return SailAST, env, len(ACL2ast)
 
 
-def translate():
+def translate(config):
 	"""
 	Creates the environment and initiates translation of the file specified in
-	config_files.py  Saves resulting ASTs to Sail files - output folder
-	specified in config_files.py.  Copies handwritten support files to output
+	the configuration file.  Saves resulting ASTs to Sail files - output folder
+	specified in the config.  Copies handwritten support files to output
 	folder.
 	"""
-	env = Env()
+	env = Env(config)
 	try:
 		# Load, lex, parse and translate
-		thisPath, thisFile = os.path.split(config_files.translatePath)
+		thisPath, thisFile = os.path.split(config.top_level_file)
 		env.pushPath(thisPath)
 		env.pushFile(thisFile[:-5])
 		finalAST, _, _ = transformACL2FiletoSail(thisFile, env)
 
 		# Save translated output
-		saveSail(finalAST, config_files.outputFolder, 'out', env, includeHeaders=True)
-		saveSail(env.auxiliaryFns, config_files.outputFolder, 'auxiliary', env, includeHeaders=False)
+		saveSail(finalAST, config.output_folder, 'out', env, includeHeaders=True)
+		saveSail(env.auxiliaryFns, config.output_folder, 'auxiliary', env, includeHeaders=False)
 
 		# Copy handwritten support
 		for file in os.listdir('handwrittenSupport'):
 			if file.endswith('.sail'):
 				copyfile(
 					src=os.path.join('handwrittenSupport', file),
-					dst=os.path.join(config_files.outputFolder, file))
+					dst=os.path.join(config.output_folder, file))
 	except:
 		env.tidyUp()
 		raise
@@ -783,8 +795,16 @@ if __name__ == '__main__':
 	"""
 	Main entry point
 	"""
+	parser = argparse.ArgumentParser(description='Translate ACL2 files into Sail')
+	parser.add_argument('-c', '--config', default="config.toml")
+	args = parser.parse_args()
+
+	# Load config
+	with open(args.config, "rb") as f:
+		config = Config(tomli.load(f))
+
 	# Reset unresolved types file
-	with open(config_files.unresolvedTypesFile, 'w'):
+	with open(config.unresolved_types_file, 'w'):
 		pass
 	# Do main program
-	translate()
+	translate(config)

@@ -164,9 +164,9 @@ def specialTokens():
 		'zmmi',
 		'ctri',
 		'stri',
-                'app-view',
-                'marking-view',
-                'os-info'
+		'app-view',
+		'marking-view',
+		'os-info'
 	]
 	for r in register_accessors:
 		name_to_fn_map[r.upper()] = tr_register_read
