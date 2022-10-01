@@ -2634,7 +2634,7 @@ def tr_rb(ACL2ast, env):
 		innerType = Sail_t_bits(None)
 		outerType = Sail_t_bits(8 * max(nBytesSail[0].getType().members))
 	else:
-		sys.exit(f"Error: unsupported number of bytes {args[0].pp()} in rb")
+		sys.exit(f"Error: unsupported number of bytes {nBytesSail[0].pp()} in rb")
 
 	innerRetType = Sail_t_tuple([Sail_t_option(Sail_t_string()), innerType])
 	# virtual addresses are signed 48-bit values in the ACL2 model
@@ -2797,7 +2797,7 @@ def tr_trunc(ACL2ast, env):
 		nBytes = high
 		isConstant = (low == high)
 	else:
-		sys.exit(f"Error: Unexpected number of bytes for `trunc` in argument {args[0].pp()}")
+		sys.exit(f"Error: Unexpected number of bytes for `trunc` in argument {nBytesSail.pp()}")
 	# If the result bitvector type has variable length, coerce to the maximum possible length for now
 	# TODO: Handle variable length bitvectors properly
 	resultType = Sail_t_bits(8 * nBytes)
