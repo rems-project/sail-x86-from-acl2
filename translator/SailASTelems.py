@@ -1170,17 +1170,21 @@ class SailStructProject(SailASTelem):
 			fieldName: str
 		"""
 		super().__init__()
-		if type(sailASTelem.getType()) != Sail_t_struct:
+		if type(sailASTelem.getType()) not in [Sail_t_struct, Sail_t_bitfield]:
 			sys.exit("Error: type of Sail AST element to project from is not a struct")
 
 		self.sailASTelem = sailASTelem
 		self.fieldName = fieldName
 
-		self.struct = self.sailASTelem.getType().getStruct()
 
 	### Required methods ###
 	def getType(self):
-		return self.struct.getTypeOfName(self.fieldName)
+		if isinstance(self.sailASTelem.getType(), Sail_t_bitfield) and self.fieldName == 'bits':
+			return Sail_t_bits(self.sailASTelem.getType().getLength())
+		elif isinstance(self.sailASTelem.getType(), Sail_t_struct):
+			return self.sailASTelem.getType().getStruct().getTypeOfName(self.fieldName)
+		else:
+			raise ValueError()
 
 	def getEffects(self, ctx):
 		return set([])
@@ -1284,7 +1288,7 @@ class SailBitsSubrange(SailASTelem):
 	def __init__(self, bits, high, low, coerceIndices=True):
 		"""
 		Args:
-			vector: SailASTelem : Sail_t_bits
+			bits: SailASTelem : Sail_t_bits
 			high, low: int
 		"""
 		super().__init__()
@@ -1344,6 +1348,101 @@ class SailListLit(SailASTelem):
 
 	def pp(self):
 		return f"[|{', '.join([m.pp() for m in self.members])}|]"
+
+
+class SailBitfield(SailASTelem):
+	"""A Sail bitfield definition"""
+
+	def __init__(self, typeName, length, fields):
+		"""
+		Args:
+			typeName: string
+			nBits: int
+			fields: list[tuple[string, int, int]] - list of fields with name and high and low indices
+		"""
+		super().__init__()
+		self.name = typeName
+		self.length = length
+		self.fields = fields
+
+	### Required methods ###
+	def getType(self):
+		return Sail_t_bitfield(self.name, self.length, fields=self.fields)
+
+	def getEffects(self, ctx):
+		return set([])
+
+	def pp(self):
+		decl = f"bitfield {utils.sanitiseSymbol(self.name)} : bits({self.length})"
+		fields_pp = ',\n'.join([f"  {utils.sanitiseSymbol(f[0])} : {f[1]} .. {f[2]}" for f in self.fields])
+		return decl + " = {\n" + fields_pp + "\n}"
+
+
+class SailBitfieldAccess(SailASTelem):
+	"""A Sail bitfield definition"""
+
+	def __init__(self, exp, field):
+		"""
+		Args:
+			exp: SailASTelem - a bitfield expression
+			field: string - the field to be accessed
+		"""
+		super().__init__()
+		if isinstance(exp.getType(), Sail_t_bitfield):
+			self.exp = exp
+			self.field = field
+			self.length = exp.getType().getFieldType(field).getLength()
+		else:
+			raise ValueError()
+
+	### Required methods ###
+	def getType(self):
+		return Sail_t_bits(self.length)
+
+	def getEffects(self, ctx):
+		return self.exp.getEffects(ctx)
+
+	def getChildrenByPred(self, p):
+		expSet = self.exp.getChildrenByPred(p)
+		selfSet = super().getChildrenByPred(p)
+		return set.union(expSet, selfSet)
+
+	def pp(self):
+		return f"({self.exp.pp()})[{utils.sanitiseSymbol(self.field)}]"
+
+
+class SailBitfieldUpdate(SailASTelem):
+	"""A Sail bitfield definition"""
+
+	def __init__(self, exp, field, value):
+		"""
+		Args:
+			exp: SailASTelem - a bitfield expression
+			field: string - the field to be accessed
+		"""
+		super().__init__()
+		if isinstance(exp.getType(), Sail_t_bitfield):
+			self.exp = exp
+			self.field = field
+			self.value = value
+		else:
+			raise ValueError()
+
+	### Required methods ###
+	def getType(self):
+		return self.exp.getType()
+
+	def getEffects(self, ctx):
+		return set.union(self.exp.getEffects(ctx), self.value.getEffects(ctx))
+
+	def getChildrenByPred(self, p):
+		expSet = self.exp.getChildrenByPred(p)
+		valueSet = self.value.getChildrenByPred(p)
+		selfSet = super().getChildrenByPred(p)
+		return set.union(expSet, valueSet, selfSet)
+
+	def pp(self):
+		return f"[({self.exp.pp()}) with {utils.sanitiseSymbol(self.field)} = ({self.value.pp()})]"
 
 
 ################################################################################
@@ -1595,7 +1694,7 @@ def saveSail(SailAST, path, name, env, includeHeaders):
 
 		print(f"Successfully saved file path: {path}; name: {name}")
 
-def coerceExpr(expr, typ):
+def coerceExpr(expr, typ, exact=True):
 	try:
 		etyp = expr.getType()
 	except:
@@ -1637,7 +1736,7 @@ def coerceExpr(expr, typ):
 		fn = 'signed' if etyp.signed else 'unsigned'
 		innerTyp = typ if isSubType(castTyp, typ) else castTyp
 		innerExpr = SailApp(SailHandwrittenFn(fn, Sail_t_fn([etyp], innerTyp)), [expr])
-		return coerceExpr(innerExpr, typ)
+		return coerceExpr(innerExpr, typ, exact)
 	elif isinstance(etyp, Sail_t_bits) and isinstance(typ, Sail_t_bits) and typ.length is not None:
 		if etyp.getLength() is not None and typ.getLength() is not None:
 			if typ.getLength() < etyp.getLength():
@@ -1674,17 +1773,33 @@ def coerceExpr(expr, typ):
 		if not(typ.signed) and etyp.signed and fn != 'truncate':
 			print(f"coerceExpr: Sign-extending {expr.pp()} to unsigned {typ.pp()}")
 		return SailApp(SailHandwrittenFn(fn, fntyp), args)
+	elif isinstance(etyp, Sail_t_bitfield): # and isinstance(typ, Sail_t_bits):
+		merged = mergeTypes(etyp, typ)
+		retTyp = typ if exact or merged is None else merged
+		if retTyp == etyp:
+			return expr
+		else:
+			return coerceExpr(SailStructProject(expr, "bits"), retTyp, exact)
+	elif isinstance(typ, Sail_t_bitfield):
+		expr_bits = coerceExpr(expr, Sail_t_bits(typ.getLength()))
+		if expr_bits is None:
+			print(f"coerceExpr: Cannot coerce {expr.pp()} to bitfield type {typ.getName()}")
+			return None
+		else:
+			fname = f"Mk_{utils.sanitiseSymbol(typ.getName())}"
+			ftyp = Sail_t_fn([Sail_t_bits(typ.getLength())], typ)
+			return SailApp(SailHandwrittenFn(fname, ftyp), [expr_bits])
 	elif isinstance(expr, SailTuple) and isinstance(typ, Sail_t_tuple):
 		elems = []
 		for i in range(len(expr.getItems())):
-			elem = coerceExpr(expr.getItems()[i], typ.getSubTypes()[i])
+			elem = coerceExpr(expr.getItems()[i], typ.getSubTypes()[i], exact)
 			if elem is None:
 				return None
 			elems = elems + [elem]
 		return SailTuple(elems)
 	elif isinstance(etyp, Sail_t_tuple) and isinstance(typ, Sail_t_tuple):
 		elems = SailTuple([SailBoundVar("elem" + str(i), typ=etyp.getSubTypes()[i]) for i in range(len(etyp.getSubTypes()))])
-		body = coerceExpr(elems, typ)
+		body = coerceExpr(elems, typ, exact)
 		return SailLet(elems, [expr], [body]) if body is not None else None
 	elif isinstance(expr, SailPlaceholderNil) and isinstance(typ, Sail_t_bool):
 		return SailBoolLit(False)
@@ -1692,7 +1807,7 @@ def coerceExpr(expr, typ):
 		fntyp = Sail_t_fn([etyp], typ)
 		return SailApp(fn=SailHandwrittenFn(name='is_some', typ=fntyp), actuals=[expr])
 	elif isSome(expr) and isinstance(typ, Sail_t_option):
-		item = coerceExpr(expr.getActuals()[0], typ.getTyp())
+		item = coerceExpr(expr.getActuals()[0], typ.getTyp(), exact)
 		return someHelper(item) if item is not None else None
 	elif isNone(expr) and isinstance(typ, Sail_t_option):
 		return noneHelper(typ.getTyp())

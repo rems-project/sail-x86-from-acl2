@@ -59,7 +59,14 @@ forced_argument_types = {
 forced_variable_types = {
         'check-alignment?': Sail_t_bool(),
         'inst-ac?': Sail_t_bool(),
-        'undefined-flags': Sail_t_bits(32)
+        'input-rflags': Sail_t_bitfield("rflagsBits", 32),
+        'output-rflags': Sail_t_bitfield("rflagsBits", 32),
+        'undefined-flags': Sail_t_bitfield("rflagsBits", 32),
+        'prefixes': Sail_t_bitfield("prefixes", 52),
+        'vex-prefixes': Sail_t_bitfield("vex-prefixes", 24),
+        'evex-prefixes': Sail_t_bitfield("evex-prefixes", 32),
+        'modr/m': Sail_t_bitfield("modr/m", 8),
+        'sib': Sail_t_bitfield("sib", 8),
 }
 
 '''

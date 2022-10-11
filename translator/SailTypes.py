@@ -274,7 +274,8 @@ def isNonnegativeType(t):
 	return isinstance(t, Sail_t_nat) or \
 			(isinstance(t, Sail_t_range) and t.low >= 0 and t.high >= 0) or \
 			(isinstance(t, Sail_t_member) and t.subType == Sail_t_member.INT and all(m >= 0 for m in t.members)) or \
-			(isinstance(t, Sail_t_bits) and t.signed == False)
+			(isinstance(t, Sail_t_bits) and t.signed == False) or \
+			(isinstance(t, Sail_t_bitfield))
 
 def isSignedType(t):
 	return not(isNonnegativeType(t))
@@ -462,6 +463,42 @@ class Sail_t_bits(SailType):
 	def isPrintable(self):
 		return self.length is not None and self.length > 0
 
+class Sail_t_bitfield(SailType):
+	"""Represents a bitfield type"""
+	def __init__(self, name, length, fields=[]):
+		self.name = name
+		self.length = length
+		self.fields = fields
+
+	def __eq__(self, other):
+		return type(self) == type(other) and self.name == other.name and self.length == other.length and self.fields == other.fields
+	def __hash__(self):
+		return id(self)
+
+	def getName(self):
+		return self.name
+
+	def getLength(self):
+		return self.length if isinstance(self.length, int) else None
+
+	def getFields(self):
+		return self.fields
+
+	def getFieldType(self, field):
+		field = [f for f in self.fields if f[0].upper() == field.upper()]
+		if field:
+			high = field[0][1]
+			low = field[0][2]
+			return Sail_t_bits(high - low + 1)
+		else:
+			raise KeyError()
+
+	def generalise(self):
+		return Sail_t_bitfield(self.name, self.length)
+
+	def pp(self):
+		return utils.sanitiseSymbol(self.name)
+
 class Sail_t_nat(SailType):
 	"""Represents the nat type"""
 	def __init__(self):
@@ -509,7 +546,7 @@ class Sail_t_fn(SailType):
 	Represents a function type: 
 			lhs -> rhs
 	"""
-	def __init__(self, lhs : [SailType], rhs : SailType, effects=set()):
+	def __init__(self, lhs : list[SailType], rhs : SailType, effects=set()):
 		"""
 		Args:
 			- lhs : [SailType]
@@ -836,6 +873,8 @@ def getRangeOfType(typ):
 def getBitvectorSize(typ):
 	if isinstance(typ, Sail_t_bits):
 		return typ.getLength()
+	elif isinstance(typ, Sail_t_bitfield):
+		return typ.getLength()
 	elif isRangeType(typ):
 		# Determine number of bits required (and make sure that it is at least 1)
 		(low, high) = getRangeOfType(typ)
@@ -869,10 +908,15 @@ def mergeTypes(t1, t2):
 			print(f"mergeTypes: Adding a bit to {t2.pp()} when merging with {t1.pp()}")
 			length2 = length2 + 2
 		length = max(length1, length2)
-		return Sail_t_bits(length, signed=signed) if length > 0 else None
+		if length1 >= length2 and isinstance(t1, Sail_t_bitfield):
+			return t1
+		elif length1 <= length2 and isinstance(t2, Sail_t_bitfield):
+			return t2
+		else:
+			return Sail_t_bits(length, signed=signed) if length > 0 else None
 	elif (isNumeric(t1) and isNumeric(t2)) \
-	     or (isNumeric(t1) and isinstance(t2, Sail_t_bits)) \
-	     or (isinstance(t1, Sail_t_bits) and isNumeric(t2)):
+	     or (isNumeric(t1) and isBitvectorType(t2)) \
+	     or (isBitvectorType(t1) and isNumeric(t2)):
 		return Sail_t_int()
 	elif isinstance(t1, Sail_t_tuple) and isinstance(t2, Sail_t_tuple):
 		ts1 = t1.getSubTypes()

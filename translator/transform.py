@@ -67,6 +67,11 @@ class Env:
 		self.autoEnv = {}
 
 		'''
+		Bitfield types defined so far
+		'''
+		self.bitfieldTypes = {}
+
+		'''
 		The `bindStack` tracks the current bound variables.  It is a list
 		because order matters: more recent bindings are near the end.  It
 		maps Lisp tokens (str) to a Sail AST list (although most often just
@@ -252,6 +257,16 @@ class Env:
 		"""
 		self.auxiliaryInclude.add(utils.sanitiseSymbol(self.getFile()))
 		self.auxiliaryFns.extend(fn)
+
+	# === Bitfield types
+	def addBitfieldType(self, type):
+		if isinstance(type, Sail_t_bitfield) and type.getName().upper() not in self.bitfieldTypes:
+			self.bitfieldTypes[type.getName().upper()] = type
+		else:
+			sys.exit(f"Error: Failed to add {type.pp()} to bitfield types")
+
+	def lookupBitfieldType(self, name):
+		return self.bitfieldTypes.get(name.upper())
 
 	# === Bindings stack
 	def pushToBindings(self, tokens, types=None, customSail=None):
