@@ -9,6 +9,7 @@ import utils
 
 import sys
 import os
+from pathlib import Path
 from shutil import copyfile
 import socket
 import argparse
@@ -502,6 +503,7 @@ class Config:
 		self.acl2_process = config.get('acl2_process', 'acl2')
 		self.acl2_port = config.get('acl2_port', 1159)
 		self.output_folder = config.get('output_folder', '../model')
+		self.patch_folder = config.get('patch_folder', 'patches')
 		self.unresolved_types_file = config.get('unresolved_types_file', '../model/unresolved_types.log')
 		self.mbe_branch = config.get('mbe_branch', ':logic')
 		self.print_acl2_interactions = config.get('print_acl2_interactions', False)
@@ -766,6 +768,18 @@ def transformACL2asttoSail(ACL2ast, env):
 
 	return SailAST, env, len(ACL2ast)
 
+
+def getPatchPath(name, env, original=False):
+	dir = Path(env.config.patch_folder)
+	fileName = utils.sanitiseSymbol(name) + ('.osail' if original else '.sail')
+	return (dir / fileName)
+
+def hasPatch(name, env):
+	return getPatchPath(name, env).is_file()
+
+def loadPatch(name, sail, env):
+	body = getPatchPath(name, env).read_text()
+	return SailPatchedDefinition(name, getType(sail), body)
 
 def translate(config):
 	"""

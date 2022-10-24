@@ -209,6 +209,48 @@ class SailHandwrittenFn(SailASTelem):
 		sys.exit("Error: handwritten sail functions are already defined and so their pp() function should not be called")
 
 
+class SailPatchedDefinition(SailASTelem):
+	"""
+	Some functions we will write by hand because there is little
+	point in trying to translate them.  Basic and utility functions
+	fall in this category, e.g. common arithmetic ops like addition.
+
+	These handwritten functions are resident in another file, but objects
+	of this type represent which functions are available to us, and their
+	type.
+	"""
+	def __init__(self, name, typ, bodyText):
+		"""
+		Args:
+			- name : str
+			- typ : Sail_t_fn
+		"""
+		super().__init__()
+		self.name = utils.sanitiseSymbol(name)
+		self.typ = typ
+		self.bodyText = bodyText
+
+	### Custom methods ###
+	def getName(self):
+		return self.name
+
+	def getNumFormals(self):
+		return self.typ.getNumFormals()
+
+	def setType(self, t):
+		self.typ = t
+
+	### Required methods ###
+	def getType(self):
+		return self.typ
+
+	def getEffects(self, ctx):
+		return self.typ.getEffects()
+
+	def pp(self):
+		return self.bodyText
+
+
 class SailLet(SailASTelem):
 	"""Let expression in Sail"""
 	def __init__(self, varName, expr, body):
@@ -1449,6 +1491,9 @@ class SailBitfieldUpdate(SailASTelem):
 # Helper and utility functions
 ################################################################################
 
+
+def getType(sail):
+	return sail.getType() if isinstance(sail, SailASTelem) else Sail_t_unknown()
 
 def createStructWithDefault(name, fields):
 	"""

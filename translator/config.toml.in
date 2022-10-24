@@ -8,7 +8,10 @@ acl2_process = '../../acl2/saved_acl2'
 acl2_port = 1159
 
 # Output folder for translated files.
-output_older = '../model'
+output_folder = '../model'
+
+# Folder with patch files
+patch_folder = 'patches'
 
 # Output paths for file which log data about the type resolution algorithm
 unresolved_types_file = '../model/unresolvedTypes.txt'

@@ -673,8 +673,13 @@ def tr_define(ACL2ast, env):
 	# Evaluate the body - no events should take place but use the returned environment anyway
 	(SailItem, env, _) = transform.transformACL2asttoSail(fnBody, env)
 
-	# Amend the SailFn object to contain the body definition and add to the AST
+	# Amend the SailFn object to contain the body definition
 	thisSailFn.setBody(SailItem)
+
+	# Check for manual patches
+	thisSailFn = transform.loadPatch(fnName, thisSailFn, env) if transform.hasPatch(fnName, env) else thisSailFn
+
+	# Add to the AST
 	SailAST.append(thisSailFn)
 
 	# === Tidy up
