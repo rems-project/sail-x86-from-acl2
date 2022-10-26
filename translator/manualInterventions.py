@@ -435,6 +435,49 @@ def ext_opcode_hooks(ACL2ast, env):
 		# 	args += sail
 		# return True, [SailApp(fn, args)], env
 
+def ext_memory_hooks(ACL2ast, env):
+	memory_readers = ["rme08", "rme16", "rme32", "rme48", "rme64", "rme80", "rme128", "rme-size"]
+	memory_readers += [f.replace("rme", "rime") for f in memory_readers]
+	memory_writers = ["wme08", "wme16", "wme32", "wme48", "wme64", "wme80", "wme128", "wme-size"]
+	memory_writers += [f.replace("wme", "wime") for f in memory_writers]
+	operand_accessors = ["x86-operand-from-modr/m-and-sib-bytes", "x86-operand-to-reg/mem", "x86-operand-to-xmm/mem"]
+	targets = ["x86-effective-addr"] + operand_accessors + memory_readers + memory_writers
+	if isinstance(ACL2ast, list) and isinstance(ACL2ast[0], str) and ACL2ast[0].lower() in targets:
+		fnName = ACL2ast[0].lower()
+		(sail, env, _) = transform.transformFunCall(ACL2ast, env)
+		fnArgs = sail[0].getActuals()
+		fnArgNames = [a.getName().lower() if isinstance(a, SailBoundVar) else None for a in sail[0].getFn().getFormals()]
+
+		# Prepare some arguments for replacement
+		prefixesTyp = env.lookupBitfieldType("prefixes")
+		try:
+			prefixesAST, env, _ = env.lookup("prefixes")(["prefixes"], env)
+			prefixesVar = coerceExpr(prefixesAST[0], prefixesTyp)
+			havePrefixes = True
+		except KeyError:
+			prefixesVar = SailBoundVar("prefixes", prefixesTyp)
+			havePrefixes = False
+
+		# Perform patches
+		if fnName == "x86-operand-from-modr/m-and-sib-bytes":
+			fnArgs[6] = prefixesVar
+		elif fnName in ["x86-operand-to-reg/mem", "x86-operand-to-xmm/mem"]:
+			fnArgs.insert(fnArgNames.index("rex-byte"), prefixesVar)
+		elif fnName == "x86-effective-addr":
+			fnArgs[1] = prefixesVar
+		elif fnName in memory_readers + memory_writers:
+			# Prepare some more extra arguments
+			# Generate a call to `select-address-size` using the existing translation;
+			# the `p4?` argument in ACL2 will be translated to `Some(prefixes)`.
+			(addr_size, env, _) = transform.transformFunCall(["select-address-size", "proc-mode", "p4?" if havePrefixes else "nil"], env)
+			base_reg = noneHelper(Sail_t_synonym("base_reg_idx", Sail_t_range(0, 15))) # TODO
+			fnArgs.insert(fnArgNames.index("proc-mode") + 1, addr_size[0])
+			fnArgs.insert(fnArgNames.index("seg-reg") + 1, base_reg)
+			if fnName in ["rme32", "rime32", "rme-size", "rime-size", "wme32", "wime32", "wme-size", "wime-size"]:
+				fnArgs[-1] = fnArgs[-1].exprs[0][1]  # Extract mem_ptr? argument from struct
+		return True, sail, env
+	return None
+
 interventionsList = [
 	x86_token,
 	and_macro,
@@ -446,6 +489,7 @@ interventionsList = [
 	t_in_get_prefixes,
 	fault_var_int_dispatch_creator,
 	ext_opcode_hooks,
+	ext_memory_hooks,
 	x86_illegal_instruction,
 	x86_step_unimplemented,
 	push_and_pop_errors,

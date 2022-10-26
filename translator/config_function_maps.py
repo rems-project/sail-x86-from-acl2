@@ -101,8 +101,10 @@ def specialTokens():
 		'nil':				tr_nil,
 		'64-bit-compute-mandatory-prefix-for-two-byte-opcode': 	tr_pe,
 		'32-bit-compute-mandatory-prefix-for-two-byte-opcode': 	tr_pe,
-                'rb':                           tr_rb,
-                'wb':                           tr_wb,
+		'rb':                           tr_rb,
+		'wb':                           tr_wb,
+		'select-address-size':			tr_select_address_size,
+		'select-segment-register':		tr_select_segment_register,
 
 		# The following ACL2 tokens are ignored (we do not translate them).
 		#  -  `defthm` and `defthmd` relate to theorem proving in ACL2 and have

@@ -562,7 +562,7 @@ class SailApp(SailASTelem):
 		if not justPrint:
 			# Resolve unknown types of variables from the formals
 			# of the function, if we can
-			for i in range(len(self.actuals)):
+			for i in range(min(len(self.actuals), len(formalTypes))):
 				fType = formalTypes[i]
 				aType = actualTypes[i]
 				if isUnknownType(aType) and \
@@ -1743,6 +1743,7 @@ def saveSail(SailAST, path, name, env, includeHeaders):
 			f.write('$include "register_types.sail"\n')
 			f.write('$include "registers.sail"\n')
 			f.write('$include "register_accessors.sail"\n')
+			f.write('$include "memory_accessors.sail"\n')
 			f.write('$include "opcode_ext.sail"\n')
 
 		f.write(pp)

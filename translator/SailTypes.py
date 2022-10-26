@@ -275,13 +275,14 @@ def isNonnegativeType(t):
 			(isinstance(t, Sail_t_range) and t.low >= 0 and t.high >= 0) or \
 			(isinstance(t, Sail_t_member) and t.subType == Sail_t_member.INT and all(m >= 0 for m in t.members)) or \
 			(isinstance(t, Sail_t_bits) and t.signed == False) or \
-			(isinstance(t, Sail_t_bitfield))
+			(isinstance(t, Sail_t_bitfield)) or \
+			(isinstance(t, Sail_t_synonym) and isNonnegativeType(t.getTyp()))
 
 def isSignedType(t):
 	return not(isNonnegativeType(t))
 
 def isUnitType(t):
-	return isinstance(t, Sail_t_unit) or isinstance(t, Sail_t_error)
+	return isinstance(t.generalise(), Sail_t_unit) or isinstance(t, Sail_t_error)
 
 def isString(st):
 	"""
@@ -859,14 +860,54 @@ class Sail_t_list(SailType):
 		return f"list({self.subType.pp()})"
 
 
+class Sail_t_synonym(SailType):
+	"""
+	Represents a Sail type synonym
+	"""
+	def __init__(self, name, typ):
+		"""
+		Args:
+		    - name : str
+			- type : SailType - the inner type of the maybe
+		"""
+		super(Sail_t_synonym, self).__init__()
+		self.name = name
+		self.typ = typ
+
+	def __eq__(self, other):
+		return type(self) == type(other) and self.name == other.name and self.typ == other.typ
+
+	def __hash__(self):
+		return id(self)
+
+	def getName(self):
+		return self.name
+
+	def getTyp(self):
+		return self.typ
+
+	def generalise(self):
+		return self.typ.generalise()
+
+	def containsUnknown(self):
+		return self.typ.containsUnknown()
+
+	def pp(self):
+		return self.name
+
+
 def isRangeType(typ):
-	return (isinstance(typ, Sail_t_range) or (isinstance(typ, Sail_t_member) and typ.subType == Sail_t_member.INT))
+	return (isinstance(typ, Sail_t_range) \
+		or (isinstance(typ, Sail_t_member) and typ.subType == Sail_t_member.INT)) \
+		or (isinstance(typ, Sail_t_synonym) and isRangeType(typ.getTyp()))
 
 def getRangeOfType(typ):
 	if isinstance(typ, Sail_t_range):
 		return (typ.low, typ.high)
 	elif isinstance(typ, Sail_t_member) and typ.subType == Sail_t_member.INT:
 		return (min(typ.members), max(typ.members))
+	elif isinstance(typ, Sail_t_synonym):
+		return getRangeOfType(typ.getTyp())
 	else:
 		return None
 
@@ -875,6 +916,8 @@ def getBitvectorSize(typ):
 		return typ.getLength()
 	elif isinstance(typ, Sail_t_bitfield):
 		return typ.getLength()
+	elif isinstance(typ, Sail_t_synonym):
+		return getBitvectorSize(typ.getTyp())
 	elif isRangeType(typ):
 		# Determine number of bits required (and make sure that it is at least 1)
 		(low, high) = getRangeOfType(typ)
@@ -936,6 +979,10 @@ def mergeTypes(t1, t2):
 		return t2
 	elif isinstance(t1.generalise(), Sail_t_string) and isinstance(t2.generalise(), Sail_t_string):
 		return Sail_t_string()
+	elif isinstance(t1, Sail_t_synonym):
+		return mergeTypes(t1.getTyp(), t2)
+	elif isinstance(t2, Sail_t_synonym):
+		return mergeTypes(t1, t2.getTyp())
 	else:
 		return None
 
@@ -964,6 +1011,10 @@ def isSubType(t1, t2):
 		return isSubType(t1.getTyp(), t2.getTyp())
 	elif isinstance(t1, Sail_t_tuple) and isinstance(t2, Sail_t_tuple) and len(t1.getSubTypes()) == len(t2.getSubTypes()):
 		return all([isSubType(t1.getSubTypes()[i], t2.getSubTypes()[i]) for i in range(len(t1.getSubTypes()))])
+	elif isinstance(t1, Sail_t_synonym):
+		return isSubType(t1.getTyp(), t2)
+	elif isinstance(t2, Sail_t_synonym):
+		return isSubType(t1, t2.getTyp())
 	else:
 		return False
 
@@ -1011,5 +1062,9 @@ def intersectTypes(t1, t2):
 			else:
 				typs.append(t)
 		return Sail_t_tuple(typs)
+	elif isinstance(t1, Sail_t_synonym):
+		return intersectTypes(t1.getTyp(), t2)
+	elif isinstance(t2, Sail_t_synonym):
+		return intersectTypes(t1, t2.getTyp())
 	else:
 		return None

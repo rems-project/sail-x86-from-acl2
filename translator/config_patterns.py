@@ -53,7 +53,11 @@ forced_argument_types = {
         'wb-1': {'value': Sail_t_int()},
         'canonical-address-p': {'lin-addr': Sail_t_int()},
         'gpr-arith/logic-spec': {'operand-size': Sail_t_member([1, 2, 4, 8]), 'dst': Sail_t_bits(64), 'src': Sail_t_bits(64)},
-        'page-fault-exception': {'addr': Sail_t_bits(48, signed=True), 'err-no': Sail_t_int()}
+        'page-fault-exception': {'addr': Sail_t_bits(48, signed=True), 'err-no': Sail_t_int()},
+		'wme-size': {'val': Sail_t_bits(128)},
+		'wime-size': {'val': Sail_t_bits(128)},
+		'x86-operand-to-reg/mem': {'operand': Sail_t_bits(128)},
+		'x86-operand-to-xmm/mem': {'operand': Sail_t_bits(128)}
 }
 
 forced_variable_types = {
@@ -135,6 +139,8 @@ exclude_lisp = {
 		['defsection', 'error-objects'],
 		['define', 'rip-guard-okp'],
 		['defmacro', 'def-inst'],
+		['define', 'select-address-size'],
+		['define', 'select-segment-register']
 	],
 
         'dispatch-macros' : [

@@ -224,7 +224,7 @@ class Env:
 		print(f"File stack: {self.fileStack}")
 		print(f"Context stack: {self.contextStack}")
 		print()
-		sys.exit(-1)
+		raise KeyError(f"Token lookup failed: {token}")
 
 	# === Environment manipulation
 	def addToAuto(self, token, fn):
@@ -652,6 +652,14 @@ def transformACL2FiletoSail(file, env):
 	return SailAST, env, length
 
 
+def transformFunCall(ACL2ast, env):
+	firstItem = ACL2ast[0]
+	fn = env.lookup(firstItem, ignoreBindings=len(ACL2ast) > 1)
+	env.pushContext(firstItem)
+	(result, env, length) = fn(ACL2ast, env)
+	env.popContext()
+	return (result, env, length)
+
 def transformACL2asttoSail(ACL2ast, env):
 	"""
 	Translates a lexed/parsed ACL2 AST into Sail.  Switches on the type of
@@ -714,11 +722,7 @@ def transformACL2asttoSail(ACL2ast, env):
 		else:
 			# Perform the translation - lookup translation function and use to
 			# translate
-			firstItem = ACL2ast[0]
-			fn = env.lookup(firstItem, ignoreBindings=len(ACL2ast) > 1)
-			env.pushContext(firstItem)
-			(SailItem, env, _) = fn(ACL2ast, env)
-			env.popContext()
+			(SailItem, env, _) = transformFunCall(ACL2ast, env)
 			SailAST.extend(SailItem)
 	# NewLine (ignore - these should have been filtered out)
 	elif isinstance(ACL2ast, NewLine):

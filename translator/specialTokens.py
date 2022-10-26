@@ -650,7 +650,8 @@ def tr_define(ACL2ast, env):
 	keywordsToPop = []
 	if len(keyDefaults) != 0:
 		struct = createStructWithDefault(f"Struct_{fnName}", keyDefaults)
-		SailAST.append(struct)
+		if not transform.hasPatch(fnName, env):
+			SailAST.append(struct)
 
 		keywordType = Sail_t_struct(struct)
 		keywordBV = env.pushToBindings(tokens=['keywords'], types=[keywordType])
@@ -2509,6 +2510,39 @@ def tr_wb(ACL2ast, env):
 	sailExpr = SailApp(SailHandwrittenFn('wb', fnType), nBytesSail + addrSail + accessKindSail + [valueSail])
 
 	return [sailExpr], env, len(ACL2ast)
+
+def tr_select_address_size(ACL2ast, env):
+	prefixesTyp = env.lookupBitfieldType("prefixes")
+	retTyp = Sail_t_synonym("address_size", Sail_t_member([2, 4, 8]))
+	fnTyp = Sail_t_fn([Sail_t_range(0, 4), prefixesTyp], retTyp)
+	fn = SailHandwrittenFn('select-address-size', fnTyp)
+	# Translate arguments, replacing `p4?` with the full prefixes bitfield
+	proc_mode = SailBoundVar("proc-mode") # env.lookup("proc-mode")(["proc-mode"], env)[0]
+	if isinstance(ACL2ast[2], str) and ACL2ast[2].lower() == "p4?":
+		try:
+			prefixesAST, env, _ = env.lookup("prefixes")(["prefixes"], env)
+			prefixesVar = prefixesAST[0]
+		except KeyError:
+			prefixesVar = SailBoundVar("prefixes", prefixesTyp)
+		prefixes = someHelper(coerceExpr(prefixesVar, prefixesTyp))
+	else:
+		prefixes = noneHelper(prefixesTyp)
+	return [SailApp(fn, [proc_mode, prefixes])], env, len(ACL2ast)
+
+def tr_select_segment_register(ACL2ast, env):
+	prefixesTyp = env.lookupBitfieldType("prefixes")
+	sibTyp = env.lookupBitfieldType("sib")
+	argTyps = [Sail_t_range(0, 4), prefixesTyp, Sail_t_bits(2), Sail_t_bits(3), sibTyp]
+	retTyp = Sail_t_synonym("seg_reg_idx", Sail_t_range(0, 5))
+	fn = SailHandwrittenFn('select-segment-register', Sail_t_fn(argTyps, retTyp))
+	# Translate arguments, replacing the prefix parts with the full prefixes variable
+	proc_mode, env, _ = transform.transformACL2asttoSail(ACL2ast[1], env)
+	prefixes = SailBoundVar("prefixes", prefixesTyp) # env.lookup("prefixes")(["prefixes"], env)[0]
+	mod_var, env, _ = transform.transformACL2asttoSail(ACL2ast[4], env)
+	r_m, env, _ = transform.transformACL2asttoSail(ACL2ast[5], env)
+	sib, env, _ = transform.transformACL2asttoSail(ACL2ast[6], env)
+	args = [proc_mode[0], prefixes, mod_var[0], r_m[0], sib[0]]
+	return [SailApp(fn, coerceExprs(args, argTyps))], env, len(ACL2ast)
 
 def tr_pe(ACL2ast, env):
 	"""
