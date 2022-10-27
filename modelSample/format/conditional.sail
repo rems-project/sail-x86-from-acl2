@@ -52,7 +52,7 @@ function x86_one_byte_jcc (proc_mode, start_rip, temp_rip, prefixes, rex_byte, o
     if is_some(badlength?) then throw(Emsg("A fault occurred.  Original ACL2 AST: (!!FAULT-FRESH :GP 0 :INSTRUCTION-LENGTH BADLENGTH?)"));
     let branch_cond : bool = jcc_cmovcc_setcc_spec(opcode);
     if branch_cond then {
-        let (flg, rel8) : (option(string), sbits(64)) = rime_size(proc_mode, 1, sail_sign_extend(temp_rip, 64), 1, ":X", false, struct { mem_ptr? = false });
+        let (flg, rel8) : (option(string), sbits(64)) = rime_size(proc_mode, select_address_size(proc_mode, Some(prefixes)), 1, sail_sign_extend(temp_rip, 64), None(), 1, ":X", false, false);
         if is_some(flg) then throw(Emsg("Model state error: :RIME-SIZE-ERROR"));
         let (flg, next_rip) : (option(string), sbits(49)) = add_to_iptr(proc_mode, temp_rip, bits_of_int(1 + signed(rel8), 48));
         if is_some(flg) then throw(Emsg("Model state error: :RIP-INCREMENT-ERROR"));
@@ -73,7 +73,7 @@ function x86_two_byte_jcc (proc_mode, start_rip, temp_rip, prefixes, rex_byte, o
     if is_some(badlength?) then throw(Emsg("A fault occurred.  Original ACL2 AST: (!!FAULT-FRESH :GP 0 :INSTRUCTION-LENGTH BADLENGTH?)"));
     let branch_cond : bool = jcc_cmovcc_setcc_spec(opcode);
     if branch_cond then {
-        let (flg, offset) : (option(string), sbits(64)) = rime_size(proc_mode, offset_size, sail_sign_extend(temp_rip, 64), 1, ":X", false, struct { mem_ptr? = false });
+        let (flg, offset) : (option(string), sbits(64)) = rime_size(proc_mode, select_address_size(proc_mode, Some(prefixes)), offset_size, sail_sign_extend(temp_rip, 64), None(), 1, ":X", false, false);
         if is_some(flg) then throw(Emsg("Model state error: :RIME-SIZE-ERROR"));
         let (flg, next_rip) : (option(string), sbits(49)) = add_to_iptr(proc_mode, temp_rip, bits_of_int(offset_size + signed(offset), 48));
         if is_some(flg) then throw(Emsg("Model state error: :RIP-INCREMENT-ERROR"));
@@ -92,10 +92,10 @@ function x86_jrcxz (proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode, 
     let badlength? : option(int) = check_instruction_length(start_rip, temp_rip, 0b001);
     if is_some(badlength?) then throw(Emsg("A fault occurred.  Original ACL2 AST: (!!FAULT-FRESH :GP 0 :INSTRUCTION-LENGTH BADLENGTH?)"));
     let p4? : bool = 0x67 == prefixes[adr];
-    let register_size : {|2, 4, 8|} = select_address_size(proc_mode, p4?);
+    let register_size : address_size = select_address_size(proc_mode, Some(prefixes));
     let branch_cond : bool = rgfi_size(bits_of_int(register_size, 4), 0x1, rex_byte) == 0x0000000000000000;
     if branch_cond then {
-        let (flg, rel8) : (option(string), sbits(64)) = rime_size(proc_mode, 1, sail_sign_extend(temp_rip, 64), 1, ":X", false, struct { mem_ptr? = false });
+        let (flg, rel8) : (option(string), sbits(64)) = rime_size(proc_mode, select_address_size(proc_mode, Some(prefixes)), 1, sail_sign_extend(temp_rip, 64), None(), 1, ":X", false, false);
         if is_some(flg) then throw(Emsg("Model state error: :RIME-SIZE-ERROR"));
         let (flg, next_rip) : (option(string), sbits(49)) = add_to_iptr(proc_mode, temp_rip, bits_of_int(1 + signed(rel8), 48));
         if is_some(flg) then throw(Emsg("Model state error: :RIP-INCREMENT-ERROR"));
@@ -117,9 +117,9 @@ function x86_cmovcc (proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode,
     let p2 : bits(8) = prefixes[seg];
     let operand_size : {|1, 2, 4, 8|} = select_operand_size(proc_mode, false, rex_byte, false, prefixes, false, false, false);
     let p4? : bool = 0x67 == prefixes[adr];
-    let seg_reg : {|0, 1, 2, 3, 4, 5|} = select_segment_register(proc_mode, p2, p4?, mod_var, r_m, sib);
+    let seg_reg : seg_reg_idx = select_segment_register(proc_mode, prefixes, mod_var, r_m, sib);
     let inst_ac? : bool = true;
-    let (flg0, reg_mem, increment_rip_by, addr) : (option(string), bits(128), {|0, 1, 2, 4|}, sbits(64)) = x86_operand_from_modr_m_and_sib_bytes(proc_mode, 0b0, operand_size, inst_ac?, false, seg_reg, p4?, temp_rip, rex_byte, r_m, mod_var, sib, 0b000);
+    let (flg0, reg_mem, increment_rip_by, addr) : (option(string), bits(128), {|0, 1, 2, 4|}, sbits(64)) = x86_operand_from_modr_m_and_sib_bytes(proc_mode, 0b0, operand_size, inst_ac?, false, seg_reg, prefixes, temp_rip, rex_byte, r_m, mod_var, sib, 0b000);
     let increment_rip_by : bits(3) = bits_of_int(increment_rip_by, 3);
     if is_some(flg0) then throw(Emsg("Model state error: :X86-OPERAND-FROM-MODR/M-AND-SIB-BYTES"));
     let (flg, temp_rip) : (option(string), sbits(49)) = add_to_iptr(proc_mode, temp_rip, sail_zero_extend(increment_rip_by, 48));
@@ -147,7 +147,7 @@ function x86_setcc (proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode, 
         if mod_var == 0b11 then {
             (None() : option(string), 0x0000000000000000, 0)
         } else {
-            x86_effective_addr(proc_mode, p4?, temp_rip, rex_byte, r_m, mod_var, sib, 0b000)
+            x86_effective_addr(proc_mode, prefixes, temp_rip, rex_byte, r_m, mod_var, sib, 0b000)
         }
     };
     let increment_rip_by : bits(3) = bits_of_int(increment_rip_by, 3);
@@ -158,12 +158,12 @@ function x86_setcc (proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode, 
     let badlength? : option(int) = check_instruction_length(start_rip, temp_rip, 0b000);
     if is_some(badlength?) then throw(Emsg("A fault occurred.  Original ACL2 AST: (!!FAULT-FRESH :GP 0 :INSTRUCTION-LENGTH BADLENGTH?)"));
     let branch_cond : bool = jcc_cmovcc_setcc_spec(opcode);
-    let seg_reg : {|0, 1, 2, 3, 4, 5|} = select_segment_register(proc_mode, p2, p4?, mod_var, r_m, sib);
+    let seg_reg : seg_reg_idx = select_segment_register(proc_mode, prefixes, mod_var, r_m, sib);
     let inst_ac? : bool = true;
     let sailval : {|0, 1|} = {
         if branch_cond then 1 else 0
     };
-    let flg2 : option(string) = x86_operand_to_reg_mem(proc_mode, 1, inst_ac?, false, sailval, seg_reg, addr, rex_byte, r_m, mod_var);
+    let flg2 : option(string) = x86_operand_to_reg_mem(proc_mode, 1, inst_ac?, false, bits_of_int(sailval, 128), seg_reg, addr, prefixes, rex_byte, r_m, mod_var);
     if is_some(flg2) then throw(Emsg("Model state error: :X86-OPERAND-TO-REG/MEM"));
     write_iptr(proc_mode, temp_rip)
 }

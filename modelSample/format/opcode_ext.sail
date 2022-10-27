@@ -1,4 +1,3 @@
-$include "./structures.sail"
 
 val ext_one_byte_opcode_execute : (range(0, 4), sbits(48), sbits(48), prefixes, bits(8), bits(8), modr_m, sib) -> unit
 

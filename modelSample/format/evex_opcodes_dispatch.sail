@@ -30384,32 +30384,32 @@ function evex_decode_and_execute (proc_mode, start_rip, temp_rip, prefixes, rex_
     if not_bool(Mk_evex_byte1(evex_byte1)[res] == 0b00) then throw(Emsg("A fault occurred.  Original ACL2 AST: (!!fault-fresh :ud :evex-prefixes evex-prefixes :byte1-reserved-bits)"));
     let (evex_0f_map?, evex_0f38_map?, evex_0f3a_map?) : (bool, bool, bool) = (Mk_evex_byte1(evex_byte1)[mm] == 0b01, Mk_evex_byte1(evex_byte1)[mm] == 0b10, Mk_evex_byte1(evex_byte1)[mm] == 0b11);
     if not_bool(evex_0f_map? | evex_0f38_map? | evex_0f3a_map?) then throw(Emsg("A fault occurred.  Original ACL2 AST: (!!fault-fresh :ud :evex-prefixes evex-prefixes :mm evex-byte1)"));
-    let (flg0, evex_byte2) : (option(string), bits(8)) = rme08(proc_mode, sail_sign_extend(temp_rip, 64), 1, ":X");
+    let (flg0, evex_byte2) : (option(string), bits(8)) = rme08(proc_mode, select_address_size(proc_mode, Some(prefixes)), sail_sign_extend(temp_rip, 64), None(), 1, ":X");
     if is_some(flg0) then throw(Emsg("Model state error: :EVEX-BYTE2-READ-ERROR"));
     let (flg1, temp_rip) : (option(string), sbits(49)) = add_to_iptr(proc_mode, temp_rip, 0x000000000001);
     if is_some(flg1) then throw(Emsg("Model state error: :INCREMENT-ERROR"));
     let evex_prefixes : evex_prefixes = [evex_prefixes with byte2 = evex_byte2];
     if not_bool(Mk_evex_byte2(evex_byte2)[res] == 0b1) then throw(Emsg("A fault occurred.  Original ACL2 AST: (!!fault-fresh :ud :evex-prefixes evex-prefixes :byte2-reserved-bit)"));
-    let (flg2, evex_byte3) : (option(string), bits(8)) = rme08(proc_mode, sail_sign_extend(temp_rip, 64), 1, ":X");
+    let (flg2, evex_byte3) : (option(string), bits(8)) = rme08(proc_mode, select_address_size(proc_mode, Some(prefixes)), sail_sign_extend(temp_rip, 64), None(), 1, ":X");
     if is_some(flg2) then throw(Emsg("Model state error: :EVEX-BYTE3-READ-ERROR"));
     let (flg3, temp_rip) : (option(string), sbits(49)) = add_to_iptr(proc_mode, truncate(temp_rip, 48), 0x000000000001);
     if is_some(flg3) then throw(Emsg("Model state error: :INCREMENT-ERROR"));
-    let (flg4, opcode) : (option(string), bits(8)) = rme08(proc_mode, sail_sign_extend(temp_rip, 64), 1, ":X");
+    let (flg4, opcode) : (option(string), bits(8)) = rme08(proc_mode, select_address_size(proc_mode, Some(prefixes)), sail_sign_extend(temp_rip, 64), None(), 1, ":X");
     if is_some(flg4) then throw(Emsg("Model state error: :OPCODE-READ-ERROR"));
     let (flg5, temp_rip) : (option(string), sbits(49)) = add_to_iptr(proc_mode, truncate(temp_rip, 48), 0x000000000001);
     if is_some(flg5) then throw(Emsg("Model state error: :INCREMENT-ERROR"));
-    let (flg6, modr_m) : (option(string), bits(8)) = rme08(proc_mode, sail_sign_extend(temp_rip, 64), 1, ":X");
+    let (flg6, modr_m) : (option(string), bits(8)) = rme08(proc_mode, select_address_size(proc_mode, Some(prefixes)), sail_sign_extend(temp_rip, 64), None(), 1, ":X");
     if is_some(flg6) then throw(Emsg("Model state error: :MODR/M-BYTE-READ-ERROR"));
     let (flg7, temp_rip) : (option(string), sbits(49)) = add_to_iptr(proc_mode, truncate(temp_rip, 48), 0x000000000001);
     if is_some(flg7) then throw(Emsg("Model state error: :INCREMENT-ERROR"));
     let sib? : bool = {
         let p4? : bool = 0x67 == prefixes[adr];
-        let n16_bit_addressp : bool = 2 == select_address_size(proc_mode, p4?);
+        let n16_bit_addressp : bool = 2 == select_address_size(proc_mode, Some(prefixes));
         x86_decode_sib_p(Mk_modr_m(modr_m), n16_bit_addressp)
     };
     let (flg8, sib) : (option(string), bits(8)) = {
         if sib? then {
-            rme08(proc_mode, sail_sign_extend(temp_rip, 64), 1, ":X")
+            rme08(proc_mode, select_address_size(proc_mode, Some(prefixes)), sail_sign_extend(temp_rip, 64), None(), 1, ":X")
         } else {
             (None() : option(string), 0x00)
         }

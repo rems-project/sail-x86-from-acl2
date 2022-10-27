@@ -2,6 +2,7 @@ $include "./prelude.sail"
 $include "./register_types.sail"
 $include "./registers.sail"
 $include "./register_accessors.sail"
+$include "./memory_accessors.sail"
 $include "./opcode_ext.sail"
 $include "./top.sail"
 $include "./two_byte_opcodes_dispatch.sail"
@@ -15,7 +16,7 @@ function get_prefixes (proc_mode, start_rip, prefixes, rex_byte, cnt) = {
         (Some("This error was 't' in ACL2 but a Some(string) in Sail"), unsigned(prefixes.bits), unsigned(rex_byte))
     } else {
         let ctx : string = "get-prefixes";
-        let (flg, byte) : (option(string), bits(8)) = rme08(proc_mode, sail_sign_extend(start_rip, 64), 1, ":X");
+        let (flg, byte) : (option(string), bits(8)) = rme08(proc_mode, select_address_size(proc_mode, Some(prefixes)), sail_sign_extend(start_rip, 64), None(), 1, ":X");
         if is_some(flg) then {
             (Some(ctx), unsigned(byte), unsigned(rex_byte))
         } else {
@@ -6152,7 +6153,7 @@ function x86_fetch_decode_execute () = {
         let vex_byte0? : bool = opcode_vex_evex_byte == 0xc5 | opcode_vex_evex_byte == 0xc4;
         let (flg, les_lds_distinguishing_byte : bits(8)) : (option(string), bits(8)) = {
             if vex_byte0? then {
-                rme08(proc_mode, sail_sign_extend(temp_rip, 64), 1, ":X")
+                rme08(proc_mode, select_address_size(proc_mode, Some(Mk_prefixes(prefixes))), sail_sign_extend(temp_rip, 64), None(), 1, ":X")
             } else {
                 (None() : option(string), 0x00)
             }
@@ -6169,7 +6170,7 @@ function x86_fetch_decode_execute () = {
             let evex_byte0? : bool = opcode_evex_byte == 0x62;
             let (flg, bound_distinguishing_byte) : (option(string), bits(8)) = {
                 if evex_byte0? then {
-                    rme08(proc_mode, sail_sign_extend(temp_rip, 64), 1, ":X")
+                    rme08(proc_mode, select_address_size(proc_mode, Some(Mk_prefixes(prefixes))), sail_sign_extend(temp_rip, 64), None(), 1, ":X")
                 } else {
                     (None() : option(string), 0x00)
                 }
@@ -6189,7 +6190,7 @@ function x86_fetch_decode_execute () = {
                         if vex_byte0? | evex_byte0? then {
                             (None() : option(string), les_lds_distinguishing_byte : bits(8))
                         } else {
-                            rme08(proc_mode, sail_sign_extend(temp_rip, 64), 1, ":X")
+                            rme08(proc_mode, select_address_size(proc_mode, Some(Mk_prefixes(prefixes))), sail_sign_extend(temp_rip, 64), None(), 1, ":X")
                         }
                     } else {
                         (None() : option(string), 0x00)
@@ -6205,11 +6206,11 @@ function x86_fetch_decode_execute () = {
                 };
                 if is_some(flg) then throw(Emsg("Model state error: :INCREMENT-ERROR"));
                 let sib? : bool = modr_m? & (let p4? : bool = 0x67 == Mk_prefixes(prefixes)[adr] in
-                let n16_bit_addressp : bool = 2 == select_address_size(proc_mode, p4?) in
+                let n16_bit_addressp : bool = 2 == select_address_size(proc_mode, Some(Mk_prefixes(prefixes))) in
                   x86_decode_sib_p(Mk_modr_m(modr_m), n16_bit_addressp));
                 let (flg, sib) : (option(string), bits(8)) = {
                     if sib? then {
-                        rme08(proc_mode, sail_sign_extend(temp_rip, 64), 1, ":X")
+                        rme08(proc_mode, select_address_size(proc_mode, Some(Mk_prefixes(prefixes))), sail_sign_extend(temp_rip, 64), None(), 1, ":X")
                     } else {
                         (None() : option(string), 0x00)
                     }

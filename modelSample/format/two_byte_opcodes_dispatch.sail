@@ -3479,7 +3479,7 @@ val two_byte_opcode_decode_and_execute : (range(0, 4), sbits(48), sbits(48), pre
 
 function two_byte_opcode_decode_and_execute (proc_mode, start_rip, temp_rip, prefixes, rex_byte, escape_byte) = {
     let ctx : string = "two-byte-opcode-decode-and-execute";
-    let (flg0, opcode) : (option(string), bits(8)) = rme08(proc_mode, sail_sign_extend(temp_rip, 64), 1, ":X");
+    let (flg0, opcode) : (option(string), bits(8)) = rme08(proc_mode, select_address_size(proc_mode, Some(prefixes)), sail_sign_extend(temp_rip, 64), None(), 1, ":X");
     if is_some(flg0) then throw(Emsg("Model state error: :OPCODE-BYTE-ACCESS-ERROR"));
     let (flg, temp_rip) : (option(string), sbits(49)) = add_to_iptr(proc_mode, temp_rip, 0x000000000001);
     if is_some(flg) then throw(Emsg("Model state error: :INCREMENT-ERROR"));
@@ -3487,7 +3487,7 @@ function two_byte_opcode_decode_and_execute (proc_mode, start_rip, temp_rip, pre
     let modr_m? : bool = two_byte_opcode_modr_m_p(proc_mode, mandatory_prefix, opcode);
     let (flg1, modr_m) : (option(string), bits(8)) = {
         if modr_m? then {
-            rme08(proc_mode, sail_sign_extend(temp_rip, 64), 1, ":X")
+            rme08(proc_mode, select_address_size(proc_mode, Some(prefixes)), sail_sign_extend(temp_rip, 64), None(), 1, ":X")
         } else {
             (None() : option(string), 0x00)
         }
@@ -3502,11 +3502,11 @@ function two_byte_opcode_decode_and_execute (proc_mode, start_rip, temp_rip, pre
     };
     if is_some(flg) then throw(Emsg("Model state error: :INCREMENT-ERROR"));
     let sib? : bool = modr_m? & (let p4? : bool = 0x67 == prefixes[adr] in
-    let n16_bit_addressp : bool = 2 == select_address_size(proc_mode, p4?) in
+    let n16_bit_addressp : bool = 2 == select_address_size(proc_mode, Some(prefixes)) in
       x86_decode_sib_p(Mk_modr_m(modr_m), n16_bit_addressp));
     let (flg2, sib) : (option(string), bits(8)) = {
         if sib? then {
-            rme08(proc_mode, sail_sign_extend(temp_rip, 64), 1, ":X")
+            rme08(proc_mode, select_address_size(proc_mode, Some(prefixes)), sail_sign_extend(temp_rip, 64), None(), 1, ":X")
         } else {
             (None() : option(string), 0x00)
         }

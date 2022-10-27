@@ -151,23 +151,6 @@ function write_sptr (proc_mode, sptr) = {
     }) : unit
 }
 
-val select_address_size : (range(0, 4), bool) -> {|2, 4, 8|}
-
-function select_address_size (proc_mode, p4?) = {
-    (match proc_mode {
-      0 => {
-          if p4? then 4 else 8
-      },
-      _ => {
-          let cs_attr : bits(16) = seg_hidden_attrs[1];
-          let cs_d : bits(1) = Mk_code_segment_descriptor_attributesbits(cs_attr)[d];
-          if cs_d == 0b1 then {
-              if p4? then 2 else 4
-          } else if p4? then 4 else 2
-      }
-    }) : {|2, 4, 8|}
-}
-
 val x86_effective_addr_from_sib : (range(0, 4), sbits(48), bits(8), bits(2), sib) -> (option(string), int, sbits(64), {|0, 1, 4|})
 
 function x86_effective_addr_from_sib (proc_mode, temp_rip, rex_byte, mod_var, sib) = {
@@ -178,7 +161,7 @@ function x86_effective_addr_from_sib (proc_mode, temp_rip, rex_byte, mod_var, si
           0 => {
               if b == 0b101 then {
                   let (elem0, elem1, elem2, elem3) : (option(string), {|0|}, sbits(64), {|0, 4|}) = {
-                      let (flg0, dword) : (option(string), sbits(64)) = rime_size(proc_mode, 4, sail_sign_extend(temp_rip, 64), 1, ":X", check_alignment?, struct { mem_ptr? = false });
+                      let (flg0, dword) : (option(string), sbits(64)) = rime_size(proc_mode, select_address_size(proc_mode, None()), 4, sail_sign_extend(temp_rip, 64), None(), 1, ":X", check_alignment?, false);
                       if is_some(flg0) then {
                           (flg0, 0, 0x0000000000000000, 0)
                       } else {
@@ -195,7 +178,7 @@ function x86_effective_addr_from_sib (proc_mode, temp_rip, rex_byte, mod_var, si
               }
           },
           1 => {
-              let (flg1, byte) : (option(string), sbits(64)) = rime_size(proc_mode, 1, sail_sign_extend(temp_rip, 64), 1, ":X", check_alignment?, struct { mem_ptr? = false });
+              let (flg1, byte) : (option(string), sbits(64)) = rime_size(proc_mode, select_address_size(proc_mode, None()), 1, sail_sign_extend(temp_rip, 64), None(), 1, ":X", check_alignment?, false);
               if is_some(flg1) then {
                   (flg1, 0x0000000000000000, 0x0000000000000000, 0)
               } else {
@@ -207,7 +190,7 @@ function x86_effective_addr_from_sib (proc_mode, temp_rip, rex_byte, mod_var, si
               }
           },
           2 => {
-              let (flg2, dword) : (option(string), sbits(64)) = rime_size(proc_mode, 4, sail_sign_extend(temp_rip, 64), 1, ":X", check_alignment?, struct { mem_ptr? = false });
+              let (flg2, dword) : (option(string), sbits(64)) = rime_size(proc_mode, select_address_size(proc_mode, None()), 4, sail_sign_extend(temp_rip, 64), None(), 1, ":X", check_alignment?, false);
               if is_some(flg2) then {
                   (flg2, 0x0000000000000000, 0x0000000000000000, 0)
               } else {
@@ -246,7 +229,7 @@ function x86_effective_addr_16_disp (proc_mode, temp_rip, mod_var) = {
     (match mod_var {
       0 => (None() : option(string), 0x0000000000000000, 0),
       1 => {
-          let (flg, byte) : (option(string), sbits(64)) = rime_size(proc_mode, 1, sail_sign_extend(temp_rip, 64), 1, ":X", false, struct { mem_ptr? = false });
+          let (flg, byte) : (option(string), sbits(64)) = rime_size(proc_mode, select_address_size(proc_mode, None()), 1, sail_sign_extend(temp_rip, 64), None(), 1, ":X", false, false);
           if is_some(flg) then {
               (flg, 0x0000000000000000, 0)
           } else {
@@ -254,7 +237,7 @@ function x86_effective_addr_16_disp (proc_mode, temp_rip, mod_var) = {
           }
       },
       2 => {
-          let (flg, word) : (option(string), sbits(64)) = rime_size(proc_mode, 2, sail_sign_extend(temp_rip, 64), 1, ":X", false, struct { mem_ptr? = false });
+          let (flg, word) : (option(string), sbits(64)) = rime_size(proc_mode, select_address_size(proc_mode, None()), 2, sail_sign_extend(temp_rip, 64), None(), 1, ":X", false, false);
           if is_some(flg) then {
               (flg, 0x0000000000000000, 0)
           } else {
@@ -330,7 +313,7 @@ function x86_effective_addr_16 (proc_mode, temp_rip, r_m, mod_var) = {
       6 => {
           (match mod_var {
             0 => {
-                let (flg, disp) : (option(string), sbits(64)) = rime_size(proc_mode, 2, sail_sign_extend(temp_rip, 64), 1, ":X", false, struct { mem_ptr? = false });
+                let (flg, disp) : (option(string), sbits(64)) = rime_size(proc_mode, select_address_size(proc_mode, None()), 2, sail_sign_extend(temp_rip, 64), None(), 1, ":X", false, false);
                 if is_some(flg) then {
                     (flg, 0x0000, 0)
                 } else {
@@ -372,7 +355,7 @@ function x86_effective_addr_32_64 (proc_mode, p4, temp_rip, rex_byte, r_m, mod_v
                 5 => {
                     let (elem0, elem1, elem2, elem3) : (option(string), sbits(49), sbits(64), {|0, 4|}) = {
                         if proc_mode == 0 then {
-                            let (flg0, dword) : (option(string), sbits(64)) = rime_size(0, 4, sail_sign_extend(temp_rip, 64), 1, ":X", false, struct { mem_ptr? = false });
+                            let (flg0, dword) : (option(string), sbits(64)) = rime_size(0, select_address_size(proc_mode, None()), 4, sail_sign_extend(temp_rip, 64), None(), 1, ":X", false, false);
                             let (flg, next_rip) : (option(string), sbits(49)) = add_to_iptr(0, temp_rip, bits_of_int(4 + unsigned(num_imm_bytes), 48));
                             if is_some(flg) then {
                                 (flg, 0b0000000000000000000000000000000000000000000000000, 0x0000000000000000, 0)
@@ -381,7 +364,7 @@ function x86_effective_addr_32_64 (proc_mode, p4, temp_rip, rex_byte, r_m, mod_v
                             }
                         } else {
                             let (elem0, elem1, elem2, elem3) : (option(string), {|0|}, sbits(64), {|0, 4|}) = {
-                                let (flg, dword) : (option(string), sbits(64)) = rime_size(proc_mode, 4, sail_sign_extend(temp_rip, 64), 1, ":X", false, struct { mem_ptr? = false });
+                                let (flg, dword) : (option(string), sbits(64)) = rime_size(proc_mode, select_address_size(proc_mode, None()), 4, sail_sign_extend(temp_rip, 64), None(), 1, ":X", false, false);
                                 if is_some(flg) then {
                                     (flg, 0, 0x0000000000000000, 0)
                                 } else {
@@ -405,7 +388,7 @@ function x86_effective_addr_32_64 (proc_mode, p4, temp_rip, rex_byte, r_m, mod_v
                 4 => x86_effective_addr_from_sib(proc_mode, temp_rip, rex_byte, mod_var, sib),
                 _ => {
                     let (elem0, elem1, elem2, elem3) : (option(string), sbits(64), sbits(64), {|1|}) = {
-                        let (flg2, byte2) : (option(string), sbits(64)) = rime_size(proc_mode, 1, sail_sign_extend(temp_rip, 64), 1, ":X", false, struct { mem_ptr? = false });
+                        let (flg2, byte2) : (option(string), sbits(64)) = rime_size(proc_mode, select_address_size(proc_mode, None()), 1, sail_sign_extend(temp_rip, 64), None(), 1, ":X", false, false);
                         let reg : sbits(64) = {
                             if proc_mode == 0 then {
                                 rgfi(unsigned(reg_index(r_m, rex_byte, 0b00)))
@@ -424,7 +407,7 @@ function x86_effective_addr_32_64 (proc_mode, p4, temp_rip, rex_byte, r_m, mod_v
                 4 => x86_effective_addr_from_sib(proc_mode, temp_rip, rex_byte, mod_var, sib),
                 _ => {
                     let (elem0, elem1, elem2, elem3) : (option(string), sbits(64), sbits(64), {|4|}) = {
-                        let (flg1, dword) : (option(string), sbits(64)) = rime_size(proc_mode, 4, sail_sign_extend(temp_rip, 64), 1, ":X", false, struct { mem_ptr? = false });
+                        let (flg1, dword) : (option(string), sbits(64)) = rime_size(proc_mode, select_address_size(proc_mode, None()), 4, sail_sign_extend(temp_rip, 64), None(), 1, ":X", false, false);
                         let reg : sbits(64) = {
                             if proc_mode == 0 then {
                                 rgfi(unsigned(reg_index(r_m, rex_byte, 0b00)))
@@ -456,10 +439,11 @@ function x86_effective_addr_32_64 (proc_mode, p4, temp_rip, rex_byte, r_m, mod_v
     (flg, dst_base, increment_rip_by)
 }
 
-val x86_effective_addr : (range(0, 4), bool, sbits(48), bits(8), bits(3), bits(2), sib, bits(3)) -> (option(string), sbits(64), {|0, 1, 2, 4|})
+val x86_effective_addr : (range(0, 4), prefixes, sbits(48), bits(8), bits(3), bits(2), sib, bits(3)) -> (option(string), sbits(64), {|0, 1, 2, 4|})
 
-function x86_effective_addr (proc_mode, p4, temp_rip, rex_byte, r_m, mod_var, sib, num_imm_bytes) = {
-    if 2 == select_address_size(proc_mode, if p4 then true else false) then {
+function x86_effective_addr (proc_mode, prefixes, temp_rip, rex_byte, r_m, mod_var, sib, num_imm_bytes) = {
+    let p4 = 0x67 == prefixes[adr];
+    if 2 == select_address_size(proc_mode, Some(prefixes)) then {
         let (elem0, elem1, elem2) : (option(string), bits(16), {|0, 1, 2|}) = x86_effective_addr_16(proc_mode, temp_rip, r_m, mod_var);
         (elem0, sail_zero_extend(elem1, 64), elem2)
     } else {
@@ -485,14 +469,14 @@ function alignment_checking_enabled_p () = {
     am == 0b1 & ac == 0b01 & cpl == 0b11
 }
 
-val x86_operand_from_modr_m_and_sib_bytes : (range(0, 4), bits(1), {|1, 2, 4, 6, 8, 10, 16|}, bool, bool, range(0, 5), bool, sbits(48), bits(8), bits(3), bits(2), sib, bits(3)) -> (option(string), bits(128), {|0, 1, 2, 4|}, sbits(64))
+val x86_operand_from_modr_m_and_sib_bytes : (range(0, 4), bits(1), {|1, 2, 4, 6, 8, 10, 16|}, bool, bool, range(0, 5), prefixes, sbits(48), bits(8), bits(3), bits(2), sib, bits(3)) -> (option(string), bits(128), {|0, 1, 2, 4|}, sbits(64))
 
-function x86_operand_from_modr_m_and_sib_bytes (proc_mode, reg_type, operand_size, inst_ac?, memory_ptr?, seg_reg, p4?, temp_rip, rex_byte, r_m, mod_var, sib, num_imm_bytes) = {
+function x86_operand_from_modr_m_and_sib_bytes (proc_mode, reg_type, operand_size, inst_ac?, memory_ptr?, seg_reg, prefixes, temp_rip, rex_byte, r_m, mod_var, sib, num_imm_bytes) = {
     let (flg0, addr, increment_rip_by) : (option(string), sbits(64), {|0, 1, 2, 4|}) = {
         if mod_var == 0b11 then {
             (None() : option(string), 0x0000000000000000, 0)
         } else {
-            x86_effective_addr(proc_mode, p4?, temp_rip, rex_byte, r_m, mod_var, sib, num_imm_bytes)
+            x86_effective_addr(proc_mode, prefixes, temp_rip, rex_byte, r_m, mod_var, sib, num_imm_bytes)
         }
     };
     if is_some(flg0) then {
@@ -507,7 +491,9 @@ function x86_operand_from_modr_m_and_sib_bytes (proc_mode, reg_type, operand_siz
                 }
             } else {
                 let check_alignment? : bool = inst_ac? & alignment_checking_enabled_p();
-                rme_size(proc_mode, operand_size, addr, seg_reg, ":R", check_alignment?, struct { mem_ptr? = memory_ptr? })
+                let addr_size = select_address_size(proc_mode, Some(prefixes));
+                let base_reg = select_base_register(proc_mode, rex_byte, r_m, mod_var, sib);
+                rme_size(proc_mode, addr_size, operand_size, addr, base_reg, seg_reg, ":R", check_alignment?, memory_ptr?)
             }
         };
         if is_some(flg2) then {
@@ -518,29 +504,31 @@ function x86_operand_from_modr_m_and_sib_bytes (proc_mode, reg_type, operand_siz
     }
 }
 
-val x86_operand_to_reg_mem : (range(0, 4), {|1, 2, 4, 6, 8, 10, 16|}, bool, bool, nat, range(0, 5), sbits(64), bits(8), bits(3), bits(2)) -> option(string)
+val x86_operand_to_reg_mem : (proc_mode, {|1, 2, 4, 6, 8, 10, 16|}, bool, bool, bits(128), seg_reg_idx, sbits(64), prefixes, bits(8), bits(3), bits(2)) -> option(string)
 
-function x86_operand_to_reg_mem (proc_mode, operand_size, inst_ac?, memory_ptr?, operand, seg_reg, addr, rex_byte, r_m, mod_var) = {
+function x86_operand_to_reg_mem (proc_mode, operand_size, inst_ac?, memory_ptr?, operand, seg_reg, addr, prefixes, rex_byte, r_m, mod_var) = {
     if mod_var == 0b11 then {
-        write_rgfi_size(bits_of_int(operand_size, 4), reg_index(r_m, rex_byte, 0b00), operand, rex_byte);
+        write_rgfi_size(bits_of_int(operand_size, 4), reg_index(r_m, rex_byte, 0b00), unsigned(operand), rex_byte);
         None() : option(string)
     } else {
         let check_alignment? : bool = inst_ac? & alignment_checking_enabled_p();
-        let flg : option(string) = wme_size(proc_mode, operand_size, addr, seg_reg, operand, check_alignment?, struct { mem_ptr? = memory_ptr? });
-        flg
+        let addr_size = select_address_size(proc_mode, Some(prefixes));
+        let base_reg : option(base_reg_idx) = None();
+        wme_size(proc_mode, addr_size, operand_size, addr, base_reg, seg_reg, operand, check_alignment?, memory_ptr?)
     }
 }
 
-val x86_operand_to_xmm_mem : (range(0, 4), {|4, 8, 16|}, bool, nat, range(0, 5), sbits(64), bits(8), bits(3), bits(2)) -> option(string)
+val x86_operand_to_xmm_mem : (proc_mode, {|4, 8, 16|}, bool, bits(128), seg_reg_idx, sbits(64), prefixes, bits(8), bits(3), bits(2)) -> option(string)
 
-function x86_operand_to_xmm_mem (proc_mode, operand_size, inst_ac?, operand, seg_reg, addr, rex_byte, r_m, mod_var) = {
+function x86_operand_to_xmm_mem (proc_mode, operand_size, inst_ac?, operand, seg_reg, addr, prefixes, rex_byte, r_m, mod_var) = {
     if mod_var == 0b11 then {
-        write_xmmi_size(bits_of_int(operand_size, 5), reg_index(r_m, rex_byte, 0b00), operand);
+        write_xmmi_size(bits_of_int(operand_size, 5), reg_index(r_m, rex_byte, 0b00), unsigned(operand));
         None() : option(string)
     } else {
         let check_alignment? : bool = inst_ac? & alignment_checking_enabled_p();
-        let flg : option(string) = wme_size(proc_mode, operand_size, addr, seg_reg, operand, check_alignment?, struct { mem_ptr? = false });
-        flg
+        let addr_size = select_address_size(proc_mode, Some(prefixes));
+        let base_reg : option(base_reg_idx) = None();
+        wme_size(proc_mode, addr_size, operand_size, addr, base_reg, seg_reg, operand, check_alignment?, false)
     }
 }
 
@@ -559,25 +547,6 @@ function select_operand_size (proc_mode, byte_operand?, rex_byte, imm?, prefixes
             if p3? then 2 else 4
         } else if p3? then 4 else 2
     }
-}
-
-val select_segment_register : (range(0, 4), bits(8), bool, bits(2), bits(3), sib) -> {|0, 1, 2, 3, 4, 5|}
-
-function select_segment_register (proc_mode, p2, p4?, mod_var, r_m, sib) = {
-    (match p2 {
-      46 => 1,
-      54 => 2,
-      62 => 3,
-      38 => 0,
-      100 => 4,
-      101 => 5,
-      _ => {
-          let addr_size : {|2, 4, 8|} = select_address_size(proc_mode, p4?);
-          if addr_size == 2 then {
-              if not_bool(mod_var == 0b11) & (r_m == 0b010 | r_m == 0b011) then 2 else 3
-          } else if (mod_var == 0b01 | mod_var == 0b10) & r_m == 0b101 | not_bool(mod_var == 0b11) & r_m == 0b100 & sib[base] == 0b100 then 2 else 3
-      }
-    }) : {|0, 1, 2, 3, 4, 5|}
 }
 
 val check_instruction_length : (sbits(48), sbits(48), bits(3)) -> option(int)

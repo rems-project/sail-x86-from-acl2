@@ -1,5 +1,3 @@
-$include "./segmentation_structures.sail"
-$include "./linear_memory.sail"
 
 val segment_base_and_bounds : (range(0, 4), range(0, 5)) -> (bits(64), int, int)
 

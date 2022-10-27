@@ -17149,7 +17149,7 @@ function vex_decode_and_execute (proc_mode, start_rip, temp_rip, prefixes, rex_b
         }
     };
     if vex3_prefix? & not_bool(vex3_0f_map? | vex3_0f38_map? | vex3_0f3a_map?) then throw(Emsg("A fault occurred.  Original ACL2 AST: (!!fault-fresh :ud :vex-prefixes vex-prefixes :m-mmmm vex-byte1)"));
-    let (flg0, byte2_next_byte) : (option(string), bits(8)) = rme08(proc_mode, sail_sign_extend(temp_rip, 64), 1, ":X");
+    let (flg0, byte2_next_byte) : (option(string), bits(8)) = rme08(proc_mode, select_address_size(proc_mode, Some(prefixes)), sail_sign_extend(temp_rip, 64), None(), 1, ":X");
     if is_some(flg0) then throw(Emsg("Model state error: :VEX-BYTE2/NEXT-BYTE-READ-ERROR"));
     let (flg1, temp_rip) : (option(string), sbits(49)) = add_to_iptr(proc_mode, temp_rip, 0x000000000001);
     if is_some(flg1) then throw(Emsg("Model state error: :INCREMENT-ERROR"));
@@ -17162,7 +17162,7 @@ function vex_decode_and_execute (proc_mode, start_rip, temp_rip, prefixes, rex_b
     };
     let (flg2, next_byte) : (option(string), bits(8)) = {
         if vex3_prefix? then {
-            rme08(proc_mode, sail_sign_extend(temp_rip, 64), 1, ":X")
+            rme08(proc_mode, select_address_size(proc_mode, Some(prefixes)), sail_sign_extend(temp_rip, 64), None(), 1, ":X")
         } else {
             (None() : option(string), 0x00)
         }
@@ -17186,7 +17186,7 @@ function vex_decode_and_execute (proc_mode, start_rip, temp_rip, prefixes, rex_b
     let modr_m? : bool = vex_opcode_modr_m_p(vex_prefixes, opcode);
     let (flg4, modr_m) : (option(string), bits(8)) = {
         if modr_m? then {
-            rme08(proc_mode, sail_sign_extend(temp_rip, 64), 1, ":X")
+            rme08(proc_mode, select_address_size(proc_mode, Some(prefixes)), sail_sign_extend(temp_rip, 64), None(), 1, ":X")
         } else {
             (None() : option(string), 0x00)
         }
@@ -17201,11 +17201,11 @@ function vex_decode_and_execute (proc_mode, start_rip, temp_rip, prefixes, rex_b
     };
     if is_some(flg5) then throw(Emsg("Model state error: :INCREMENT-ERROR"));
     let sib? : bool = modr_m? & (let p4? : bool = 0x67 == prefixes[adr] in
-    let n16_bit_addressp : bool = 2 == select_address_size(proc_mode, p4?) in
+    let n16_bit_addressp : bool = 2 == select_address_size(proc_mode, Some(prefixes)) in
       x86_decode_sib_p(Mk_modr_m(modr_m), n16_bit_addressp));
     let (flg6, sib) : (option(string), bits(8)) = {
         if sib? then {
-            rme08(proc_mode, sail_sign_extend(temp_rip, 64), 1, ":X")
+            rme08(proc_mode, select_address_size(proc_mode, Some(prefixes)), sail_sign_extend(temp_rip, 64), None(), 1, ":X")
         } else {
             (None() : option(string), 0x00)
         }
