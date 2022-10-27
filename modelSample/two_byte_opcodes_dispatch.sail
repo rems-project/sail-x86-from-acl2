@@ -2518,7 +2518,7 @@ _ => ext_two_byte_opcode_execute(proc_mode, start_rip, temp_rip, prefixes, manda
 val two_byte_opcode_decode_and_execute : (range(0, 4), sbits(48), sbits(48), prefixes, bits(8), bits(8)) -> unit effect {eamem, escape, rmem, rreg, undef, wmv, wreg}
 function two_byte_opcode_decode_and_execute (proc_mode, start_rip, temp_rip, prefixes, rex_byte, escape_byte) =
 let ctx : string = ("two-byte-opcode-decode-and-execute") in
-let (flg0, opcode) : (option(string), bits(8)) = (rme08(proc_mode, sail_sign_extend(temp_rip, 64), 1, ":X")) in
+let (flg0, opcode) : (option(string), bits(8)) = (rme08(proc_mode, select_address_size(proc_mode, Some(prefixes)), sail_sign_extend(temp_rip, 64), None(), 1, ":X")) in
 { if is_some(flg0)
 then throw(Emsg("Model state error: :OPCODE-BYTE-ACCESS-ERROR"))
 else ();
@@ -2529,7 +2529,7 @@ else ();
 let mandatory_prefix : bits(8) = (compute_mandatory_prefix_for_two_byte_opcode(proc_mode, opcode, prefixes)) in
 let modr_m? : bool = (two_byte_opcode_modr_m_p(proc_mode, mandatory_prefix, opcode)) in
 let (flg1, modr_m) : (option(string), bits(8)) = { (if modr_m?
-then rme08(proc_mode, sail_sign_extend(temp_rip, 64), 1, ":X")
+then rme08(proc_mode, select_address_size(proc_mode, Some(prefixes)), sail_sign_extend(temp_rip, 64), None(), 1, ":X")
 else (None() : option(string), 0x00)) } in
 { if is_some(flg1)
 then throw(Emsg("Model state error: :MODR/M-BYTE-READ-ERROR"))
@@ -2541,10 +2541,10 @@ else (None() : option(string), temp_rip)) } in
 then throw(Emsg("Model state error: :INCREMENT-ERROR"))
 else ();
 let sib? : bool = ((modr_m?) & (let p4? : bool = ((0x67) == ((prefixes)[adr])) in
-let n16_bit_addressp : bool = ((2) == (select_address_size(proc_mode, p4?))) in
+let n16_bit_addressp : bool = ((2) == (select_address_size(proc_mode, Some(prefixes)))) in
 x86_decode_sib_p(Mk_modr_m(modr_m), n16_bit_addressp))) in
 let (flg2, sib) : (option(string), bits(8)) = { (if sib?
-then rme08(proc_mode, sail_sign_extend(temp_rip, 64), 1, ":X")
+then rme08(proc_mode, select_address_size(proc_mode, Some(prefixes)), sail_sign_extend(temp_rip, 64), None(), 1, ":X")
 else (None() : option(string), 0x00)) } in
 { if is_some(flg2)
 then throw(Emsg("Model state error: :SIB-BYTE-READ-ERROR"))

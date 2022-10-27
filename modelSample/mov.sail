@@ -19,9 +19,9 @@ else 4) } in
 let xmm_index : bits(4) = (reg_index(reg, rex_byte, 0b10)) in
 let p2 : bits(8) = ((prefixes)[seg]) in
 let p4? : bool = ((0x67) == ((prefixes)[adr])) in
-let seg_reg : {|0, 1, 2, 3, 4, 5|} = (select_segment_register(proc_mode, p2, p4?, mod_var, r_m, sib)) in
+let seg_reg : seg_reg_idx = (select_segment_register(proc_mode, prefixes, mod_var, r_m, sib)) in
 let inst_ac? : bool = (true) in
-let (flg0, xmm_mem, increment_rip_by, addr) : (option(string), bits(128), {|0, 1, 2, 4|}, sbits(64)) = (x86_operand_from_modr_m_and_sib_bytes(proc_mode, 0b1, operand_size, inst_ac?, false, seg_reg, p4?, temp_rip, rex_byte, r_m, mod_var, sib, 0b000)) in
+let (flg0, xmm_mem, increment_rip_by, addr) : (option(string), bits(128), {|0, 1, 2, 4|}, sbits(64)) = (x86_operand_from_modr_m_and_sib_bytes(proc_mode, 0b1, operand_size, inst_ac?, false, seg_reg, prefixes, temp_rip, rex_byte, r_m, mod_var, sib, 0b000)) in
 { if is_some(flg0)
 then throw(Emsg("Model state error: :X86-OPERAND-FROM-MODR/M-AND-SIB-BYTES"))
 else ();
@@ -61,10 +61,10 @@ let xmm_index : bits(4) = (reg_index(reg, rex_byte, 0b10)) in
 let xmm : bits(128) = (xmmi_size(bits_of_int(operand_size, 5), xmm_index)) in
 let p2 : bits(8) = ((prefixes)[seg]) in
 let p4? : bool = ((0x67) == ((prefixes)[adr])) in
-let seg_reg : {|0, 1, 2, 3, 4, 5|} = (select_segment_register(proc_mode, p2, p4?, mod_var, r_m, sib)) in
+let seg_reg : seg_reg_idx = (select_segment_register(proc_mode, prefixes, mod_var, r_m, sib)) in
 let (flg0, addr, increment_rip_by) : (option(string), sbits(64), {|0, 1, 2, 4|}) = { (if (mod_var) == (0b11)
 then (None() : option(string), 0x0000_0000_0000_0000, 0)
-else x86_effective_addr(proc_mode, p4?, temp_rip, rex_byte, r_m, mod_var, sib, 0b000)) } in
+else x86_effective_addr(proc_mode, prefixes, temp_rip, rex_byte, r_m, mod_var, sib, 0b000)) } in
 let increment_rip_by : bits(3) = (bits_of_int(increment_rip_by, 3)) in
 { if is_some(flg0)
 then throw(Emsg("Model state error: :X86-EFFECTIVE-ADDR-ERROR"))
@@ -79,7 +79,7 @@ let badlength? : option(int) = (check_instruction_length(start_rip, temp_rip, 0b
 then throw(Emsg("A fault occurred.  Original ACL2 AST: (!!FAULT-FRESH :GP 0 :INSTRUCTION-LENGTH BADLENGTH?)"))
 else ();
 let inst_ac? : bool = (true) in
-let flg1 : option(string) = (x86_operand_to_xmm_mem(proc_mode, operand_size, inst_ac?, unsigned(xmm), seg_reg, addr, rex_byte, r_m, mod_var)) in
+let flg1 : option(string) = (x86_operand_to_xmm_mem(proc_mode, operand_size, inst_ac?, xmm, seg_reg, addr, prefixes, rex_byte, r_m, mod_var)) in
 { if is_some(flg1)
 then throw(Emsg("Model state error: :X86-OPERAND-TO-XMM/MEM"))
 else ();
@@ -102,9 +102,9 @@ let reg : bits(3) = ((modr_m)[reg]) in
 let xmm_index : bits(4) = (reg_index(reg, rex_byte, 0b10)) in
 let p2 : bits(8) = ((prefixes)[seg]) in
 let p4? : bool = ((0x67) == ((prefixes)[adr])) in
-let seg_reg : {|0, 1, 2, 3, 4, 5|} = (select_segment_register(proc_mode, p2, p4?, mod_var, r_m, sib)) in
+let seg_reg : seg_reg_idx = (select_segment_register(proc_mode, prefixes, mod_var, r_m, sib)) in
 let inst_ac? : bool = (true) in
-let (flg0, xmm_mem, increment_rip_by, addr) : (option(string), bits(128), {|0, 1, 2, 4|}, sbits(64)) = (x86_operand_from_modr_m_and_sib_bytes(proc_mode, 0b1, 16, inst_ac?, false, seg_reg, p4?, temp_rip, rex_byte, r_m, mod_var, sib, 0b000)) in
+let (flg0, xmm_mem, increment_rip_by, addr) : (option(string), bits(128), {|0, 1, 2, 4|}, sbits(64)) = (x86_operand_from_modr_m_and_sib_bytes(proc_mode, 0b1, 16, inst_ac?, false, seg_reg, prefixes, temp_rip, rex_byte, r_m, mod_var, sib, 0b000)) in
 { if is_some(flg0)
 then throw(Emsg("Model state error: :X86-OPERAND-FROM-MODR/M-AND-SIB-BYTES"))
 else ();
@@ -137,10 +137,10 @@ let xmm_index : bits(4) = (reg_index(reg, rex_byte, 0b10)) in
 let xmm : bits(128) = (xmmi_size(0b1_0000, xmm_index)) in
 let p2 : bits(8) = ((prefixes)[seg]) in
 let p4? : bool = ((0x67) == ((prefixes)[adr])) in
-let seg_reg : {|0, 1, 2, 3, 4, 5|} = (select_segment_register(proc_mode, p2, p4?, mod_var, r_m, sib)) in
+let seg_reg : seg_reg_idx = (select_segment_register(proc_mode, prefixes, mod_var, r_m, sib)) in
 let (flg0, addr, increment_rip_by) : (option(string), sbits(64), {|0, 1, 2, 4|}) = { (if (mod_var) == (0b11)
 then (None() : option(string), 0x0000_0000_0000_0000, 0)
-else x86_effective_addr(proc_mode, p4?, temp_rip, rex_byte, r_m, mod_var, sib, 0b000)) } in
+else x86_effective_addr(proc_mode, prefixes, temp_rip, rex_byte, r_m, mod_var, sib, 0b000)) } in
 let increment_rip_by : bits(3) = (bits_of_int(increment_rip_by, 3)) in
 { if is_some(flg0)
 then throw(Emsg("Model state error: :X86-EFFECTIVE-ADDR-ERROR"))
@@ -155,7 +155,7 @@ let badlength? : option(int) = (check_instruction_length(start_rip, temp_rip, 0b
 then throw(Emsg("A fault occurred.  Original ACL2 AST: (!!FAULT-FRESH :GP 0 :INSTRUCTION-LENGTH BADLENGTH?)"))
 else ();
 let inst_ac? : bool = (true) in
-let flg1 : option(string) = (x86_operand_to_xmm_mem(proc_mode, 16, inst_ac?, unsigned(xmm), seg_reg, addr, rex_byte, r_m, mod_var)) in
+let flg1 : option(string) = (x86_operand_to_xmm_mem(proc_mode, 16, inst_ac?, xmm, seg_reg, addr, prefixes, rex_byte, r_m, mod_var)) in
 { if is_some(flg1)
 then throw(Emsg("Model state error: :X86-OPERAND-TO-XMM/MEM"))
 else ();
@@ -186,9 +186,9 @@ let reg : bits(3) = ((modr_m)[reg]) in
 let xmm_index : bits(4) = (reg_index(reg, rex_byte, 0b10)) in
 let p2 : bits(8) = ((prefixes)[seg]) in
 let p4? : bool = ((0x67) == ((prefixes)[adr])) in
-let seg_reg : {|0, 1, 2, 3, 4, 5|} = (select_segment_register(proc_mode, p2, p4?, mod_var, r_m, sib)) in
+let seg_reg : seg_reg_idx = (select_segment_register(proc_mode, prefixes, mod_var, r_m, sib)) in
 let inst_ac? : bool = (true) in
-let (flg0, xmm_mem, increment_rip_by, addr) : (option(string), bits(128), {|0, 1, 2, 4|}, sbits(64)) = (x86_operand_from_modr_m_and_sib_bytes(proc_mode, 0b1, 16, inst_ac?, false, seg_reg, p4?, temp_rip, rex_byte, r_m, mod_var, sib, 0b000)) in
+let (flg0, xmm_mem, increment_rip_by, addr) : (option(string), bits(128), {|0, 1, 2, 4|}, sbits(64)) = (x86_operand_from_modr_m_and_sib_bytes(proc_mode, 0b1, 16, inst_ac?, false, seg_reg, prefixes, temp_rip, rex_byte, r_m, mod_var, sib, 0b000)) in
 { if is_some(flg0)
 then throw(Emsg("Model state error: :X86-OPERAND-FROM-MODR/M-AND-SIB-BYTES"))
 else ();
@@ -221,10 +221,10 @@ let xmm_index : bits(4) = (reg_index(reg, rex_byte, 0b10)) in
 let xmm : bits(128) = (xmmi_size(0b1_0000, xmm_index)) in
 let p2 : bits(8) = ((prefixes)[seg]) in
 let p4? : bool = ((0x67) == ((prefixes)[adr])) in
-let seg_reg : {|0, 1, 2, 3, 4, 5|} = (select_segment_register(proc_mode, p2, p4?, mod_var, r_m, sib)) in
+let seg_reg : seg_reg_idx = (select_segment_register(proc_mode, prefixes, mod_var, r_m, sib)) in
 let (flg0, addr, increment_rip_by) : (option(string), sbits(64), {|0, 1, 2, 4|}) = { (if (mod_var) == (0b11)
 then (None() : option(string), 0x0000_0000_0000_0000, 0)
-else x86_effective_addr(proc_mode, p4?, temp_rip, rex_byte, r_m, mod_var, sib, 0b000)) } in
+else x86_effective_addr(proc_mode, prefixes, temp_rip, rex_byte, r_m, mod_var, sib, 0b000)) } in
 let increment_rip_by : bits(3) = (bits_of_int(increment_rip_by, 3)) in
 { if is_some(flg0)
 then throw(Emsg("Model state error: :X86-EFFECTIVE-ADDR-ERROR"))
@@ -239,7 +239,7 @@ let badlength? : option(int) = (check_instruction_length(start_rip, temp_rip, 0b
 then throw(Emsg("A fault occurred.  Original ACL2 AST: (!!FAULT-FRESH :GP 0 :INSTRUCTION-LENGTH BADLENGTH?)"))
 else ();
 let inst_ac? : bool = (true) in
-let flg1 : option(string) = (x86_operand_to_xmm_mem(proc_mode, 16, inst_ac?, unsigned(xmm), seg_reg, addr, rex_byte, r_m, mod_var)) in
+let flg1 : option(string) = (x86_operand_to_xmm_mem(proc_mode, 16, inst_ac?, xmm, seg_reg, addr, prefixes, rex_byte, r_m, mod_var)) in
 { if is_some(flg1)
 then throw(Emsg("Model state error: :X86-OPERAND-TO-XMM/MEM"))
 else ();
@@ -262,9 +262,9 @@ let reg : bits(3) = ((modr_m)[reg]) in
 let xmm_index : bits(4) = (reg_index(reg, rex_byte, 0b10)) in
 let p2 : bits(8) = ((prefixes)[seg]) in
 let p4? : bool = ((0x67) == ((prefixes)[adr])) in
-let seg_reg : {|0, 1, 2, 3, 4, 5|} = (select_segment_register(proc_mode, p2, p4?, mod_var, r_m, sib)) in
+let seg_reg : seg_reg_idx = (select_segment_register(proc_mode, prefixes, mod_var, r_m, sib)) in
 let inst_ac? : bool = (true) in
-let (flg0, mem, increment_rip_by, addr) : (option(string), bits(128), {|0, 1, 2, 4|}, sbits(64)) = (x86_operand_from_modr_m_and_sib_bytes(proc_mode, 0b1, 8, inst_ac?, false, seg_reg, p4?, temp_rip, rex_byte, r_m, mod_var, sib, 0b000)) in
+let (flg0, mem, increment_rip_by, addr) : (option(string), bits(128), {|0, 1, 2, 4|}, sbits(64)) = (x86_operand_from_modr_m_and_sib_bytes(proc_mode, 0b1, 8, inst_ac?, false, seg_reg, prefixes, temp_rip, rex_byte, r_m, mod_var, sib, 0b000)) in
 let mem : bits(64) = (truncate(mem, 64)) in
 { if is_some(flg0)
 then throw(Emsg("Model state error: :X86-OPERAND-FROM-MODR/M-AND-SIB-BYTES"))
@@ -298,8 +298,8 @@ let xmm_index : bits(4) = (reg_index(reg, rex_byte, 0b10)) in
 let xmm : bits(64) = (truncate(xmmi_size(0b0_1000, xmm_index), 64)) in
 let p2 : bits(8) = ((prefixes)[seg]) in
 let p4? : bool = ((0x67) == ((prefixes)[adr])) in
-let seg_reg : {|0, 1, 2, 3, 4, 5|} = (select_segment_register(proc_mode, p2, p4?, mod_var, r_m, sib)) in
-let (flg0, addr, increment_rip_by) : (option(string), sbits(64), {|0, 1, 2, 4|}) = (x86_effective_addr(proc_mode, p4?, temp_rip, rex_byte, r_m, mod_var, sib, 0b000)) in
+let seg_reg : seg_reg_idx = (select_segment_register(proc_mode, prefixes, mod_var, r_m, sib)) in
+let (flg0, addr, increment_rip_by) : (option(string), sbits(64), {|0, 1, 2, 4|}) = (x86_effective_addr(proc_mode, prefixes, temp_rip, rex_byte, r_m, mod_var, sib, 0b000)) in
 let increment_rip_by : bits(3) = (bits_of_int(increment_rip_by, 3)) in
 { if is_some(flg0)
 then throw(Emsg("Model state error: :X86-EFFECTIVE-ADDR-ERROR"))
@@ -314,7 +314,7 @@ let badlength? : option(int) = (check_instruction_length(start_rip, temp_rip, 0b
 then throw(Emsg("A fault occurred.  Original ACL2 AST: (!!FAULT-FRESH :GP 0 :INSTRUCTION-LENGTH BADLENGTH?)"))
 else ();
 let inst_ac? : bool = (true) in
-let flg1 : option(string) = (x86_operand_to_xmm_mem(proc_mode, 8, inst_ac?, unsigned(xmm), seg_reg, addr, rex_byte, r_m, mod_var)) in
+let flg1 : option(string) = (x86_operand_to_xmm_mem(proc_mode, 8, inst_ac?, sail_zero_extend(xmm, 128), seg_reg, addr, prefixes, rex_byte, r_m, mod_var)) in
 { if is_some(flg1)
 then throw(Emsg("Model state error: :X86-OPERAND-TO-XMM/MEM"))
 else ();
@@ -337,9 +337,9 @@ let reg : bits(3) = ((modr_m)[reg]) in
 let xmm_index : bits(4) = (reg_index(reg, rex_byte, 0b10)) in
 let p2 : bits(8) = ((prefixes)[seg]) in
 let p4? : bool = ((0x67) == ((prefixes)[adr])) in
-let seg_reg : {|0, 1, 2, 3, 4, 5|} = (select_segment_register(proc_mode, p2, p4?, mod_var, r_m, sib)) in
+let seg_reg : seg_reg_idx = (select_segment_register(proc_mode, prefixes, mod_var, r_m, sib)) in
 let inst_ac? : bool = (true) in
-let (flg0, mem, increment_rip_by, v_addr) : (option(string), bits(128), {|0, 1, 2, 4|}, sbits(64)) = (x86_operand_from_modr_m_and_sib_bytes(proc_mode, 0b1, 8, inst_ac?, false, seg_reg, p4?, temp_rip, rex_byte, r_m, mod_var, sib, 0b000)) in
+let (flg0, mem, increment_rip_by, v_addr) : (option(string), bits(128), {|0, 1, 2, 4|}, sbits(64)) = (x86_operand_from_modr_m_and_sib_bytes(proc_mode, 0b1, 8, inst_ac?, false, seg_reg, prefixes, temp_rip, rex_byte, r_m, mod_var, sib, 0b000)) in
 let mem : bits(64) = (truncate(mem, 64)) in
 { if is_some(flg0)
 then throw(Emsg("Model state error: :X86-OPERAND-FROM-MODR/M-AND-SIB-BYTES"))
@@ -377,8 +377,8 @@ let xmm : bits(128) = (xmmi_size(0b1_0000, xmm_index)) in
 let high_qword : bits(64) = (xmm[127 .. 64]) in
 let p2 : bits(8) = ((prefixes)[seg]) in
 let p4? : bool = ((0x67) == ((prefixes)[adr])) in
-let seg_reg : {|0, 1, 2, 3, 4, 5|} = (select_segment_register(proc_mode, p2, p4?, mod_var, r_m, sib)) in
-let (flg0, addr, increment_rip_by) : (option(string), sbits(64), {|0, 1, 2, 4|}) = (x86_effective_addr(proc_mode, p4?, temp_rip, rex_byte, r_m, mod_var, sib, 0b000)) in
+let seg_reg : seg_reg_idx = (select_segment_register(proc_mode, prefixes, mod_var, r_m, sib)) in
+let (flg0, addr, increment_rip_by) : (option(string), sbits(64), {|0, 1, 2, 4|}) = (x86_effective_addr(proc_mode, prefixes, temp_rip, rex_byte, r_m, mod_var, sib, 0b000)) in
 let increment_rip_by : bits(3) = (bits_of_int(increment_rip_by, 3)) in
 { if is_some(flg0)
 then throw(Emsg("Model state error: :X86-EFFECTIVE-ADDR-ERROR"))
@@ -393,7 +393,7 @@ let badlength? : option(int) = (check_instruction_length(start_rip, temp_rip, 0b
 then throw(Emsg("A fault occurred.  Original ACL2 AST: (!!FAULT-FRESH :GP 0 :INSTRUCTION-LENGTH BADLENGTH?)"))
 else ();
 let inst_ac? : bool = (true) in
-let flg1 : option(string) = (x86_operand_to_xmm_mem(proc_mode, 8, inst_ac?, unsigned(high_qword), seg_reg, addr, rex_byte, r_m, mod_var)) in
+let flg1 : option(string) = (x86_operand_to_xmm_mem(proc_mode, 8, inst_ac?, sail_zero_extend(high_qword, 128), seg_reg, addr, prefixes, rex_byte, r_m, mod_var)) in
 { if is_some(flg1)
 then throw(Emsg("Model state error: :X86-OPERAND-TO-XMM/MEM"))
 else ();

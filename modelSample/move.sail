@@ -16,12 +16,12 @@ let operand_size : {|1, 2, 4, 8|} = (select_operand_size(proc_mode, byte_operand
 let register_var : bits(64) = (rgfi_size(bits_of_int(operand_size, 4), reg_index(reg, rex_byte, 0b10), rex_byte)) in
 let (flg0, addr, increment_rip_by) : (option(string), sbits(64), {|0, 1, 2, 4|}) = { (if (mod_var) == (0b11)
 then (None() : option(string), 0x0000_0000_0000_0000, 0)
-else x86_effective_addr(proc_mode, p4?, temp_rip, rex_byte, r_m, mod_var, sib, 0b000)) } in
+else x86_effective_addr(proc_mode, prefixes, temp_rip, rex_byte, r_m, mod_var, sib, 0b000)) } in
 let increment_rip_by : bits(3) = (bits_of_int(increment_rip_by, 3)) in
 { if is_some(flg0)
 then throw(Emsg("Model state error: :X86-EFFECTIVE-ADDR-ERROR"))
 else ();
-let seg_reg : {|0, 1, 2, 3, 4, 5|} = (select_segment_register(proc_mode, p2, p4?, mod_var, r_m, sib)) in
+let seg_reg : seg_reg_idx = (select_segment_register(proc_mode, prefixes, mod_var, r_m, sib)) in
 let (flg, temp_rip) : (option(string), sbits(49)) = (add_to_iptr(proc_mode, temp_rip, sail_zero_extend(increment_rip_by, 48))) in
 { if is_some(flg)
 then throw(Emsg("Model state error: :RIP-INCREMENT-ERROR"))
@@ -31,7 +31,7 @@ let badlength? : option(int) = (check_instruction_length(start_rip, truncate(tem
 then throw(Emsg("A fault occurred.  Original ACL2 AST: (!!FAULT-FRESH :GP 0 :INSTRUCTION-LENGTH BADLENGTH?)"))
 else ();
 let inst_ac? : bool = (true) in
-let flg2 : option(string) = (x86_operand_to_reg_mem(proc_mode, operand_size, inst_ac?, false, unsigned(register_var), seg_reg, addr, rex_byte, r_m, mod_var)) in
+let flg2 : option(string) = (x86_operand_to_reg_mem(proc_mode, operand_size, inst_ac?, false, sail_zero_extend(register_var, 128), seg_reg, addr, prefixes, rex_byte, r_m, mod_var)) in
 { if is_some(flg2)
 then throw(Emsg("Model state error: :X86-OPERAND-TO-REG/MEM"))
 else ();
@@ -51,9 +51,9 @@ let p2 : bits(8) = ((prefixes)[seg]) in
 let p4? : bool = ((0x67) == ((prefixes)[adr])) in
 let byte_operand? : bool = ((opcode) == (0x8a)) in
 let operand_size : {|1, 2, 4, 8|} = (select_operand_size(proc_mode, byte_operand?, rex_byte, false, prefixes, false, false, false)) in
-let seg_reg : {|0, 1, 2, 3, 4, 5|} = (select_segment_register(proc_mode, p2, p4?, mod_var, r_m, sib)) in
+let seg_reg : seg_reg_idx = (select_segment_register(proc_mode, prefixes, mod_var, r_m, sib)) in
 let inst_ac? : bool = (true) in
-let (flg0, reg_mem, increment_rip_by, addr) : (option(string), bits(128), {|0, 1, 2, 4|}, sbits(64)) = (x86_operand_from_modr_m_and_sib_bytes(proc_mode, 0b0, operand_size, inst_ac?, false, seg_reg, p4?, temp_rip, rex_byte, r_m, mod_var, sib, 0b000)) in
+let (flg0, reg_mem, increment_rip_by, addr) : (option(string), bits(128), {|0, 1, 2, 4|}, sbits(64)) = (x86_operand_from_modr_m_and_sib_bytes(proc_mode, 0b0, operand_size, inst_ac?, false, seg_reg, prefixes, temp_rip, rex_byte, r_m, mod_var, sib, 0b000)) in
 let increment_rip_by : bits(3) = (bits_of_int(increment_rip_by, 3)) in
 { if is_some(flg0)
 then throw(Emsg("Model state error: :X86-OPERAND-FROM-MODR/M-AND-SIB-BYTES"))
@@ -79,8 +79,8 @@ let p2 : bits(8) = ((prefixes)[seg]) in
 let p4? : bool = ((0x67) == ((prefixes)[adr])) in
 let byte_operand? : bool = ((opcode) == (0xa0)) in
 let operand_size : {|1, 2, 4, 8|} = (select_operand_size(proc_mode, byte_operand?, rex_byte, false, prefixes, false, false, false)) in
-let offset_size : {|2, 4, 8|} = (select_address_size(proc_mode, p4?)) in
-let (flg, offset) : (option(string), sbits(64)) = (rime_size(proc_mode, offset_size, sail_sign_extend(temp_rip, 64), 1, ":X", false, struct {mem_ptr? = false})) in
+let offset_size : address_size = (select_address_size(proc_mode, Some(prefixes))) in
+let (flg, offset) : (option(string), sbits(64)) = (rime_size(proc_mode, select_address_size(proc_mode, Some(prefixes)), offset_size, sail_sign_extend(temp_rip, 64), None(), 1, ":X", false, false)) in
 { if is_some(flg)
 then throw(Emsg("Model state error: :RIME-SIZE-ERROR"))
 else ();
@@ -93,9 +93,9 @@ let badlength? : option(int) = (check_instruction_length(start_rip, temp_rip, 0b
 { if is_some(badlength?)
 then throw(Emsg("A fault occurred.  Original ACL2 AST: (!!FAULT-FRESH :GP 0 :INSTRUCTION-LENGTH BADLENGTH?)"))
 else ();
-let seg_reg : {|0, 1, 2, 3, 4, 5|} = (select_segment_register(proc_mode, p2, p4?, 0b00, 0b000, sib)) in
+let seg_reg : seg_reg_idx = (select_segment_register(proc_mode, prefixes, 0b00, 0b000, sib)) in
 let inst_ac? : bool = (alignment_checking_enabled_p()) in
-let (flg, data) : (option(string), bits(128)) = (rme_size(proc_mode, operand_size, offset, seg_reg, ":R", inst_ac?, struct {mem_ptr? = false})) in
+let (flg, data) : (option(string), bits(128)) = (rme_size(proc_mode, select_address_size(proc_mode, Some(prefixes)), operand_size, offset, None(), seg_reg, ":R", inst_ac?, false)) in
 { if is_some(flg)
 then throw(Emsg("Model state error: :RME-SIZE-ERROR"))
 else ();
@@ -113,8 +113,8 @@ let p2 : bits(8) = ((prefixes)[seg]) in
 let p4? : bool = ((0x67) == ((prefixes)[adr])) in
 let byte_operand? : bool = ((opcode) == (0xa2)) in
 let operand_size : {|1, 2, 4, 8|} = (select_operand_size(proc_mode, byte_operand?, rex_byte, false, prefixes, false, false, false)) in
-let offset_size : {|2, 4, 8|} = (select_address_size(proc_mode, p4?)) in
-let (flg, offset) : (option(string), sbits(64)) = (rime_size(proc_mode, offset_size, sail_sign_extend(temp_rip, 64), 1, ":X", false, struct {mem_ptr? = false})) in
+let offset_size : address_size = (select_address_size(proc_mode, Some(prefixes))) in
+let (flg, offset) : (option(string), sbits(64)) = (rime_size(proc_mode, select_address_size(proc_mode, Some(prefixes)), offset_size, sail_sign_extend(temp_rip, 64), None(), 1, ":X", false, false)) in
 { if is_some(flg)
 then throw(Emsg("Model state error: :RIME-SIZE-ERROR"))
 else ();
@@ -127,10 +127,10 @@ let badlength? : option(int) = (check_instruction_length(start_rip, temp_rip, 0b
 { if is_some(badlength?)
 then throw(Emsg("A fault occurred.  Original ACL2 AST: (!!FAULT-FRESH :GP 0 :INSTRUCTION-LENGTH BADLENGTH?)"))
 else ();
-let seg_reg : {|0, 1, 2, 3, 4, 5|} = (select_segment_register(proc_mode, p2, p4?, 0b00, 0b000, sib)) in
+let seg_reg : seg_reg_idx = (select_segment_register(proc_mode, prefixes, 0b00, 0b000, sib)) in
 let data : bits(64) = (rgfi_size(bits_of_int(operand_size, 4), 0x0, rex_byte)) in
 let inst_ac? : bool = (true) in
-let flg : option(string) = (x86_operand_to_reg_mem(proc_mode, operand_size, inst_ac?, false, unsigned(data), seg_reg, offset, rex_byte, 0b000, 0b00)) in
+let flg : option(string) = (x86_operand_to_reg_mem(proc_mode, operand_size, inst_ac?, false, sail_zero_extend(data, 128), seg_reg, offset, prefixes, rex_byte, 0b000, 0b00)) in
 { if is_some(flg)
 then throw(Emsg("Model state error: :X86-OPERAND-TO-REG/MEM"))
 else ();
@@ -145,7 +145,7 @@ function x86_mov_op_en_oi (proc_mode, start_rip, temp_rip, prefixes, rex_byte, o
 let ctx : string = ("X86-MOV-OP/EN-OI") in
 let byte_operand? : bool = (((176) <= (unsigned(opcode))) & ((unsigned(opcode)) <= (183))) in
 let operand_size : {|1, 2, 4, 8|} = (select_operand_size(proc_mode, byte_operand?, rex_byte, false, prefixes, false, false, false)) in
-let (flg0, imm) : (option(string), bits(128)) = (rme_size(proc_mode, operand_size, sail_sign_extend(temp_rip, 64), 1, ":X", false, struct {mem_ptr? = false})) in
+let (flg0, imm) : (option(string), bits(128)) = (rme_size(proc_mode, select_address_size(proc_mode, Some(prefixes)), operand_size, sail_sign_extend(temp_rip, 64), None(), 1, ":X", false, false)) in
 { if is_some(flg0)
 then throw(Emsg("Model state error: :IMM-RME-SIZE-ERROR"))
 else ();
@@ -180,18 +180,18 @@ then 8
 else imm_size) } in
 let (flg0, addr, increment_rip_by) : (option(string), sbits(64), {|0, 1, 2, 4|}) = { (if (mod_var) == (0b11)
 then (None() : option(string), 0x0000_0000_0000_0000, 0)
-else x86_effective_addr(proc_mode, p4?, temp_rip, rex_byte, r_m, mod_var, sib, bits_of_int(imm_size, 3))) } in
+else x86_effective_addr(proc_mode, prefixes, temp_rip, rex_byte, r_m, mod_var, sib, bits_of_int(imm_size, 3))) } in
 let increment_rip_by : bits(3) = (bits_of_int(increment_rip_by, 3)) in
 { if is_some(flg0)
 then throw(Emsg("Model state error: :X86-EFFECTIVE-ADDR-ERROR"))
 else ();
-let seg_reg : {|0, 1, 2, 3, 4, 5|} = (select_segment_register(proc_mode, p2, p4?, mod_var, r_m, sib)) in
+let seg_reg : seg_reg_idx = (select_segment_register(proc_mode, prefixes, mod_var, r_m, sib)) in
 let (flg, temp_rip) : (option(string), sbits(49)) = (add_to_iptr(proc_mode, temp_rip, sail_zero_extend(increment_rip_by, 48))) in
 let temp_rip : sbits(48) = (truncate(temp_rip, 48)) in
 { if is_some(flg)
 then throw(Emsg("Model state error: :RIP-INCREMENT-ERROR"))
 else ();
-let (flg2, imm) : (option(string), bits(128)) = (rme_size(proc_mode, imm_size, sail_sign_extend(temp_rip, 64), 1, ":X", false, struct {mem_ptr? = false})) in
+let (flg2, imm) : (option(string), bits(128)) = (rme_size(proc_mode, select_address_size(proc_mode, Some(prefixes)), imm_size, sail_sign_extend(temp_rip, 64), None(), 1, ":X", false, false)) in
 { if is_some(flg2)
 then throw(Emsg("Model state error: :IMM-RME-SIZE-ERROR"))
 else ();
@@ -208,7 +208,7 @@ let imm : bits(128) = { (if (reg_mem_size) == (8)
 then sail_zero_extend(sail_sign_extend(truncate(imm, 32), 64), 128)
 else imm) } in
 let inst_ac? : bool = (true) in
-let flg3 : option(string) = (x86_operand_to_reg_mem(proc_mode, reg_mem_size, inst_ac?, false, unsigned(imm), seg_reg, addr, rex_byte, r_m, mod_var)) in
+let flg3 : option(string) = (x86_operand_to_reg_mem(proc_mode, reg_mem_size, inst_ac?, false, imm, seg_reg, addr, prefixes, rex_byte, r_m, mod_var)) in
 { if is_some(flg3)
 then throw(Emsg("Model state error: :X86-OPERAND-TO-REG/MEM"))
 else ();
@@ -228,7 +228,7 @@ let mod_var : bits(2) = ((modr_m)[mod]) in
 let reg : bits(3) = ((modr_m)[reg]) in
 let p4? : bool = ((0x67) == ((prefixes)[adr])) in
 let register_size : {|2, 4, 8|} = (check_range(2, 8, select_operand_size(proc_mode, false, rex_byte, false, prefixes, false, false, false))) in
-let (flg0, m, increment_rip_by) : (option(string), sbits(64), {|0, 1, 2, 4|}) = (x86_effective_addr(proc_mode, p4?, temp_rip, rex_byte, r_m, mod_var, sib, 0b000)) in
+let (flg0, m, increment_rip_by) : (option(string), sbits(64), {|0, 1, 2, 4|}) = (x86_effective_addr(proc_mode, prefixes, temp_rip, rex_byte, r_m, mod_var, sib, 0b000)) in
 let increment_rip_by : bits(3) = (bits_of_int(increment_rip_by, 3)) in
 { if is_some(flg0)
 then throw(Emsg("Model state error: :X86-EFFECTIVE-ADDR-ERROR"))
@@ -258,9 +258,9 @@ let reg : bits(3) = ((modr_m)[reg]) in
 let p2 : bits(8) = ((prefixes)[seg]) in
 let p4? : bool = ((0x67) == ((prefixes)[adr])) in
 let reg_mem_size : {|1, 2, 4, 8|} = (select_operand_size(proc_mode, false, rex_byte, true, prefixes, false, false, false)) in
-let seg_reg : {|0, 1, 2, 3, 4, 5|} = (select_segment_register(proc_mode, p2, p4?, mod_var, r_m, sib)) in
+let seg_reg : seg_reg_idx = (select_segment_register(proc_mode, prefixes, mod_var, r_m, sib)) in
 let inst_ac? : bool = (true) in
-let (flg0, reg_mem, increment_rip_by, addr) : (option(string), bits(128), {|0, 1, 2, 4|}, sbits(64)) = (x86_operand_from_modr_m_and_sib_bytes(proc_mode, 0b0, reg_mem_size, inst_ac?, false, seg_reg, p4?, temp_rip, rex_byte, r_m, mod_var, sib, 0b000)) in
+let (flg0, reg_mem, increment_rip_by, addr) : (option(string), bits(128), {|0, 1, 2, 4|}, sbits(64)) = (x86_operand_from_modr_m_and_sib_bytes(proc_mode, 0b0, reg_mem_size, inst_ac?, false, seg_reg, prefixes, temp_rip, rex_byte, r_m, mod_var, sib, 0b000)) in
 let increment_rip_by : bits(3) = (bits_of_int(increment_rip_by, 3)) in
 { if is_some(flg0)
 then throw(Emsg("Model state error: :X86-OPERAND-FROM-MODR/M-AND-SIB-BYTES"))
@@ -295,12 +295,12 @@ let mod_var : bits(2) = ((modr_m)[mod]) in
 let reg : bits(3) = ((modr_m)[reg]) in
 let p2 : bits(8) = ((prefixes)[seg]) in
 let p4? : bool = ((0x67) == ((prefixes)[adr])) in
-let seg_reg : {|0, 1, 2, 3, 4, 5|} = (select_segment_register(proc_mode, p2, p4?, mod_var, r_m, sib)) in
+let seg_reg : seg_reg_idx = (select_segment_register(proc_mode, prefixes, mod_var, r_m, sib)) in
 let reg_mem_size : {|1, 2|} = { (if (opcode) == (0xbe)
 then 1
 else 2) } in
 let inst_ac? : bool = (true) in
-let (flg0, reg_mem, increment_rip_by, addr) : (option(string), bits(128), {|0, 1, 2, 4|}, sbits(64)) = (x86_operand_from_modr_m_and_sib_bytes(proc_mode, 0b0, reg_mem_size, inst_ac?, false, seg_reg, p4?, temp_rip, rex_byte, r_m, mod_var, sib, 0b000)) in
+let (flg0, reg_mem, increment_rip_by, addr) : (option(string), bits(128), {|0, 1, 2, 4|}, sbits(64)) = (x86_operand_from_modr_m_and_sib_bytes(proc_mode, 0b0, reg_mem_size, inst_ac?, false, seg_reg, prefixes, temp_rip, rex_byte, r_m, mod_var, sib, 0b000)) in
 let increment_rip_by : bits(3) = (bits_of_int(increment_rip_by, 3)) in
 { if is_some(flg0)
 then throw(Emsg("Model state error: :X86-OPERAND-FROM-MODR/M-AND-SIB-BYTES"))
@@ -337,12 +337,12 @@ let mod_var : bits(2) = ((modr_m)[mod]) in
 let reg : bits(3) = ((modr_m)[reg]) in
 let p2 : bits(8) = ((prefixes)[seg]) in
 let p4? : bool = ((0x67) == ((prefixes)[adr])) in
-let seg_reg : {|0, 1, 2, 3, 4, 5|} = (select_segment_register(proc_mode, p2, p4?, mod_var, r_m, sib)) in
+let seg_reg : seg_reg_idx = (select_segment_register(proc_mode, prefixes, mod_var, r_m, sib)) in
 let reg_mem_size : {|1, 2|} = { (if (opcode) == (0xb6)
 then 1
 else 2) } in
 let inst_ac? : bool = (true) in
-let (flg0, reg_mem, increment_rip_by, addr) : (option(string), bits(128), {|0, 1, 2, 4|}, sbits(64)) = (x86_operand_from_modr_m_and_sib_bytes(proc_mode, 0b0, reg_mem_size, inst_ac?, false, seg_reg, p4?, temp_rip, rex_byte, r_m, mod_var, sib, 0b000)) in
+let (flg0, reg_mem, increment_rip_by, addr) : (option(string), bits(128), {|0, 1, 2, 4|}, sbits(64)) = (x86_operand_from_modr_m_and_sib_bytes(proc_mode, 0b0, reg_mem_size, inst_ac?, false, seg_reg, prefixes, temp_rip, rex_byte, r_m, mod_var, sib, 0b000)) in
 let increment_rip_by : bits(3) = (bits_of_int(increment_rip_by, 3)) in
 { if is_some(flg0)
 then throw(Emsg("Model state error: :X86-OPERAND-FROM-MODR/M-AND-SIB-BYTES"))
@@ -419,9 +419,9 @@ let p4? : bool = ((0x67) == ((prefixes)[adr])) in
 let operand_size : {|4, 8|} = { (if logbitp(3, rex_byte)
 then 8
 else 4) } in
-let seg_reg : {|0, 1, 2, 3, 4, 5|} = (select_segment_register(proc_mode, p2, p4?, mod_var, r_m, sib)) in
+let seg_reg : seg_reg_idx = (select_segment_register(proc_mode, prefixes, mod_var, r_m, sib)) in
 let inst_ac? : bool = (true) in
-let (flg0, reg_mem, increment_rip_by, addr) : (option(string), bits(128), {|0, 1, 2, 4|}, sbits(64)) = (x86_operand_from_modr_m_and_sib_bytes(proc_mode, 0b0, operand_size, inst_ac?, false, seg_reg, p4?, temp_rip, rex_byte, r_m, mod_var, sib, 0b000)) in
+let (flg0, reg_mem, increment_rip_by, addr) : (option(string), bits(128), {|0, 1, 2, 4|}, sbits(64)) = (x86_operand_from_modr_m_and_sib_bytes(proc_mode, 0b0, operand_size, inst_ac?, false, seg_reg, prefixes, temp_rip, rex_byte, r_m, mod_var, sib, 0b000)) in
 let increment_rip_by : bits(3) = (bits_of_int(increment_rip_by, 3)) in
 { if is_some(flg0)
 then throw(Emsg("Model state error: :X86-OPERAND-FROM-MODR/M-AND-SIB-BYTES"))
@@ -454,12 +454,12 @@ else 4) } in
 let register_var : bits(128) = (xmmi_size(bits_of_int(operand_size, 5), reg_index(reg, rex_byte, 0b10))) in
 let (flg0, addr, increment_rip_by) : (option(string), sbits(64), {|0, 1, 2, 4|}) = { (if (mod_var) == (0b11)
 then (None() : option(string), 0x0000_0000_0000_0000, 0)
-else x86_effective_addr(proc_mode, p4?, temp_rip, rex_byte, r_m, mod_var, sib, 0b000)) } in
+else x86_effective_addr(proc_mode, prefixes, temp_rip, rex_byte, r_m, mod_var, sib, 0b000)) } in
 let increment_rip_by : bits(3) = (bits_of_int(increment_rip_by, 3)) in
 { if is_some(flg0)
 then throw(Emsg("Model state error: :X86-EFFECTIVE-ADDR-ERROR"))
 else ();
-let seg_reg : {|0, 1, 2, 3, 4, 5|} = (select_segment_register(proc_mode, p2, p4?, mod_var, r_m, sib)) in
+let seg_reg : seg_reg_idx = (select_segment_register(proc_mode, prefixes, mod_var, r_m, sib)) in
 let (flg, temp_rip) : (option(string), sbits(49)) = (add_to_iptr(proc_mode, temp_rip, sail_zero_extend(increment_rip_by, 48))) in
 { if is_some(flg)
 then throw(Emsg("Model state error: :RIP-INCREMENT-ERROR"))
@@ -469,7 +469,7 @@ let badlength? : option(int) = (check_instruction_length(start_rip, truncate(tem
 then throw(Emsg("A fault occurred.  Original ACL2 AST: (!!FAULT-FRESH :GP 0 :INSTRUCTION-LENGTH BADLENGTH?)"))
 else ();
 let inst_ac? : bool = (true) in
-let flg2 : option(string) = (x86_operand_to_reg_mem(proc_mode, operand_size, inst_ac?, false, unsigned(register_var), seg_reg, addr, rex_byte, r_m, mod_var)) in
+let flg2 : option(string) = (x86_operand_to_reg_mem(proc_mode, operand_size, inst_ac?, false, register_var, seg_reg, addr, prefixes, rex_byte, r_m, mod_var)) in
 { if is_some(flg2)
 then throw(Emsg("Model state error: :X86-OPERAND-TO-REG/MEM"))
 else ();

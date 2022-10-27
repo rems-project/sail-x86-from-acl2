@@ -8,7 +8,7 @@ function x86_near_jmp_op_en_d (proc_mode, start_rip, temp_rip, prefixes, rex_byt
 let ctx : string = ("X86-NEAR-JMP-OP/EN-D") in
 let byte_operand? : bool = ((opcode) == (0xeb)) in
 let offset_size : {|1, 2, 4|} = (check_range(0, 4, select_operand_size(proc_mode, byte_operand?, rex_byte, false, prefixes, false, true, true))) in
-let (flg, offset) : (option(string), sbits(64)) = (rime_size(proc_mode, offset_size, sail_sign_extend(temp_rip, 64), 1, ":X", false, struct {mem_ptr? = false})) in
+let (flg, offset) : (option(string), sbits(64)) = (rime_size(proc_mode, select_address_size(proc_mode, Some(prefixes)), offset_size, sail_sign_extend(temp_rip, 64), None(), 1, ":X", false, false)) in
 let offset : sbits(32) = (truncate(offset, 32)) in
 { if is_some(flg)
 then throw(Emsg("Model state error: :RIME-SIZE-ERROR"))
@@ -43,9 +43,9 @@ let reg : bits(3) = ((modr_m)[reg]) in
 let p2 : bits(8) = ((prefixes)[seg]) in
 let p4? : bool = ((0x67) == ((prefixes)[adr])) in
 let operand_size : {|2, 4, 8|} = (check_range(2, 8, select_operand_size(proc_mode, false, rex_byte, false, prefixes, true, true, true))) in
-let seg_reg : {|0, 1, 2, 3, 4, 5|} = (select_segment_register(proc_mode, p2, p4?, mod_var, r_m, sib)) in
+let seg_reg : seg_reg_idx = (select_segment_register(proc_mode, prefixes, mod_var, r_m, sib)) in
 let inst_ac? : bool = (true) in
-let (flg, jmp_addr, increment_rip_by, addr) : (option(string), bits(128), {|0, 1, 2, 4|}, sbits(64)) = (x86_operand_from_modr_m_and_sib_bytes(proc_mode, 0b0, operand_size, inst_ac?, false, seg_reg, p4?, temp_rip, rex_byte, r_m, mod_var, sib, 0b000)) in
+let (flg, jmp_addr, increment_rip_by, addr) : (option(string), bits(128), {|0, 1, 2, 4|}, sbits(64)) = (x86_operand_from_modr_m_and_sib_bytes(proc_mode, 0b0, operand_size, inst_ac?, false, seg_reg, prefixes, temp_rip, rex_byte, r_m, mod_var, sib, 0b000)) in
 let increment_rip_by : bits(3) = (bits_of_int(increment_rip_by, 3)) in
 { if is_some(flg)
 then throw(Emsg("Model state error: :X86-OPERAND-FROM-MODR/M-AND-SIB-BYTES-ERROR"))
@@ -120,9 +120,9 @@ else ();
 let p2 : bits(8) = ((prefixes)[seg]) in
 let p4? : bool = ((0x67) == ((prefixes)[adr])) in
 let offset_size : {|2, 4, 8|} = (check_range(2, 8, select_operand_size(proc_mode, false, rex_byte, false, prefixes, false, false, false))) in
-let seg_reg : {|0, 1, 2, 3, 4, 5|} = (select_segment_register(proc_mode, p2, p4?, mod_var, r_m, sib)) in
+let seg_reg : seg_reg_idx = (select_segment_register(proc_mode, prefixes, mod_var, r_m, sib)) in
 let inst_ac? : bool = (true) in
-let (flg, mem, increment_rip_by, addr) : (option(string), bits(128), {|0, 1, 2, 4|}, sbits(64)) = (x86_operand_from_modr_m_and_sib_bytes(proc_mode, 0b0, (2) + (offset_size), inst_ac?, true, seg_reg, p4?, temp_rip, rex_byte, r_m, mod_var, sib, 0b000)) in
+let (flg, mem, increment_rip_by, addr) : (option(string), bits(128), {|0, 1, 2, 4|}, sbits(64)) = (x86_operand_from_modr_m_and_sib_bytes(proc_mode, 0b0, (2) + (offset_size), inst_ac?, true, seg_reg, prefixes, temp_rip, rex_byte, r_m, mod_var, sib, 0b000)) in
 let increment_rip_by : bits(3) = (bits_of_int(increment_rip_by, 3)) in
 { if is_some(flg)
 then throw(Emsg("Model state error: :X86-OPERAND-FROM-MODR/M-AND-SIB-BYTES-ERROR"))
@@ -333,7 +333,7 @@ let badlength? : option(int) = (check_instruction_length(start_rip, temp_rip, 0b
 then throw(Emsg("A fault occurred.  Original ACL2 AST: (!!FAULT-FRESH :GP 0 :INSTRUCTION-LENGTH BADLENGTH?)"))
 else ();
 let p4? : bool = ((0x67) == ((prefixes)[adr])) in
-let counter_size : {|2, 4, 8|} = (select_address_size(proc_mode, p4?)) in
+let counter_size : address_size = (select_address_size(proc_mode, Some(prefixes))) in
 let counter : bits(64) = (rgfi_size(bits_of_int(counter_size, 4), 0x1, rex_byte)) in
 let counter : bits(64) = (sail_mask(64, trunc(counter_size, bits_of_int((unsigned(counter)) - (1), 64)))) in
 let zf : bits(1) = (truncate(let rflags_var : bits(32) = (rflags) in
@@ -344,7 +344,7 @@ else if (opcode) == (0xe1)
 then ((zf) == (0b1)) & (not_bool((counter) == (0x0000_0000_0000_0000)))
 else ((zf) == (0b0)) & (not_bool((counter) == (0x0000_0000_0000_0000)))) } in
 if branch_cond
-then { let (flg, rel8) : (option(string), sbits(64)) = (rime_size(proc_mode, 1, sail_sign_extend(temp_rip, 64), 1, ":X", false, struct {mem_ptr? = false})) in
+then { let (flg, rel8) : (option(string), sbits(64)) = (rime_size(proc_mode, select_address_size(proc_mode, Some(prefixes)), 1, sail_sign_extend(temp_rip, 64), None(), 1, ":X", false, false)) in
 { if is_some(flg)
 then throw(Emsg("Model state error: :RIME-SIZE-ERROR"))
 else ();
