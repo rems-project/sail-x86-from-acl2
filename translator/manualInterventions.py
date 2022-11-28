@@ -423,17 +423,11 @@ def ext_opcode_hooks(ACL2ast, env):
 			isinstance(ACL2ast[0], str) and ACL2ast[0].lower() == 'x86-step-unimplemented':
 		sail, env = gen_ext_opcode_execute_call(env)
 		return True, sail, env
-		# if env.getDefineSlot().lower() == 'one-byte-opcode-execute':
-		# 	fn = handwritten_tokens.ext_one_byte_opcode_execute_fn
-		# 	arg_names = ["proc-mode", "start-rip", "temp-rip", "prefixes", "rex-byte", "opcode", "modr/m", "sib"]
-		# else:
-		# 	fn = handwritten_tokens.ext_two_byte_opcode_execute_fn
-		# 	arg_names = ["proc-mode", "start-rip", "temp-rip", "prefixes", "mandatory-prefix", "rex-byte", "opcode", "modr/m", "sib"]
-		# args = []
-		# for n in arg_names:
-		# 	sail, env, _ = env.lookup(n)(n, env)
-		# 	args += sail
-		# return True, [SailApp(fn, args)], env
+	elif isinstance(ACL2ast, list) and len(ACL2ast) > 2 and ACL2ast[0].lower() == 'defbitstruct' and ACL2ast[1].lower() == 'prefixes':
+		_, env, _ = specialTokens.tr_defbitstruct(ACL2ast, env)
+		return True, [], env
+	else:
+		return None
 
 def ext_memory_hooks(ACL2ast, env):
 	memory_readers = ["rme08", "rme16", "rme32", "rme48", "rme64", "rme80", "rme128", "rme-size"]

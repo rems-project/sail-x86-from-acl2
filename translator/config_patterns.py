@@ -40,12 +40,12 @@ forced_return_types = {
 
 	#'wb-1': Sail_t_option(Sail_t_string()),
 
-	'get-prefixes' : Sail_t_tuple([	Sail_t_option(Sail_t_string()), # Error list
-									Sail_t_int(),					# Number of prefixes
-									Sail_t_int()					# Rex byte
-									]),
-        # TODO: Replace with a handwritten function
-        'bitcount8': Sail_t_nat()
+	'get-prefixes' : Sail_t_tuple([Sail_t_option(Sail_t_string()),	# Error list
+								   Sail_t_bitfield("prefixes", 52),	# Number of prefixes
+								   Sail_t_bits(8)					# Rex byte
+								   ]),
+	# TODO: Replace with a handwritten function
+	'bitcount8': Sail_t_nat()
 }
 
 

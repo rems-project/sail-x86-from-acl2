@@ -1,12 +1,13 @@
-$ifndef __X86_MEMORY_EXT
-$define __X86_MEMORY_EXT
+$ifndef __X86_MEMORY_ACCESSORS
+$define __X86_MEMORY_ACCESSORS
 
 $include "structures.sail"
 $include "segmentation_structures.sail"
 $include "linear_memory.sail"
 $include "segmentation.sail"
+// For prefixes bitfield definition:
+$include "opcode_ext.sail"
 
-type proc_mode = range(0, 4)
 type address_size = {|2, 4, 8|}
 type base_reg_idx = range(0, 15)
 type seg_reg_idx = range(0, 5)
@@ -82,7 +83,7 @@ function load_bytes_from_ea (proc_mode, addr_size, nbytes, eff_addr, base_reg, s
         if is_some(flg) then {
             (flg, sail_zeros(8 * nbytes))
         } else {
-            match check_linear_memory_access(proc_mode, addr_size, nbytes, eff_addr, base_reg, seg_reg, r_x, check_alignment?, mem_ptr?) {
+            match check_linear_memory_access(proc_mode, addr_size, nbytes, lin_addr, base_reg, seg_reg, r_x, check_alignment?, mem_ptr?) {
                 Some(error) => (Some(error), sail_zeros(8 * nbytes)),
                 None() => {
                     // Use rb directly instead of rml_size;  it returns a
@@ -107,7 +108,7 @@ function store_bytes_to_ea (proc_mode, addr_size, nbytes, eff_addr, base_reg, se
         if is_some(flg) then {
             flg
         } else {
-            match check_linear_memory_access(proc_mode, addr_size, nbytes, eff_addr, base_reg, seg_reg, ":W", check_alignment?, mem_ptr?) {
+            match check_linear_memory_access(proc_mode, addr_size, nbytes, lin_addr, base_reg, seg_reg, ":W", check_alignment?, mem_ptr?) {
                 Some(error) => Some(error),
                 None() => {
                     wb(nbytes, lin_addr, ":W", data)
