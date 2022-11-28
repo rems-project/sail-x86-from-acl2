@@ -144,34 +144,17 @@ def implemented_opcode(ACL2ast, env):
 	# 			in the ACL2 model: 214
 	# Note #2:	pusha (96) and popa (97) are not valid in 64 bit mode and so
 	# 			could be removed.
-	casesToIncludeOneByte =\
-						[0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25,
-						26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49,
-						50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61, 62, 63, 64, 65, 66, 67, 68, 69, 70, 71, 72,
-						73, 74, 75, 76, 77, 78, 79, 80, 81, 82, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95,
-						96, 97, 98, 99, 100, 101, 102, 103, 104, 105, 106, 107, 108, 109, 110, 111, 112, 113, 114, 115,
-						116, 117, 118, 119, 120, 121, 122, 123, 124, 125, 126, 127, 128, 129, 130, 131, 132, 133, 134,
-						135, 136, 137, 138, 139, 140, 141, 142, 143, 144, 145, 146, 147, 148, 149, 150, 151, 152, 153,
-						154, 155, 156, 157, 158, 159, 160, 161, 162, 163, 164, 165, 166, 167, 168, 169, 170, 171, 172,
-						173, 174, 175, 176, 177, 178, 179, 180, 181, 182, 183, 184, 185, 186, 187, 188, 189, 190, 191,
-						192, 193, 194, 195, 196, 197, 198, 199, 200, 201, 202, 203, 204, 205, 206, 207, 208, 209, 210,
-						211, 212, 213, 215, 216, 217, 218, 219, 220, 221, 222, 223, 224, 225, 226, 227, 228, 229, 230,
-						231, 232, 233, 234, 235, 236, 237, 238, 239, 240, 241, 242, 243, 244, 245, 246, 247, 248, 249,
-						250, 251, 252, 253, 254, 255]
+	casesToExcludeOneByte = []
 
 	# Note #1:	These opcodes are missing from the ACL2 two byte dispatch
-	# 			table: 4, 10, 12, 14, 15, 36-9, 54, 57, 59-63, 122, 123, 166,
-	# 			167, 255
-	#			That gives 21 non-existent instruction and thus 235 overall.
+	#           table: 4, 10, 12, 14, 15, 36-9, 54, 57, 59-63, 122, 123, 166,
+	#           167, 255
+	#           That gives 21 non-existent instruction and thus 235 overall.
 	# Note #2:	Opcodes 5, 7 are related to syscalls.
-	# Note #3:	Floating point opcodes implemented: 16, 17, 18, 19, 20, 21,
-	# 			22, 23, 40, 41, 111, 127, 198
-	casesToIncludeTwoByte = \
-						[0, 1, 2, 3, 5, 6, 7, 8, 9, 11, 13, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31,
-						32, 33, 34, 35, 40, 41, 64, 65, 66, 67, 68, 69, 70, 71, 72, 73, 74, 75, 76, 77, 78, 79, 110,
-						111, 127, 128, 129, 130, 131, 132, 133, 134, 135, 136, 137, 138, 139, 140, 141, 142, 143,
-						144, 145, 146, 147, 148, 149, 150, 151, 152, 153, 154, 155, 156, 157, 158, 159, 160, 163,
-						164, 165, 168, 172, 173, 175, 176, 177, 182, 183, 184, 186, 189, 190, 191, 192, 198]
+	# Note #3:	Floating point opcodes we implement: 16, 17, 18, 19, 20, 21,
+	#           22, 23, 40, 41, 111, 127, 198
+	# Note #4:  56 and 58 are the three-byte opcode escape codes
+	casesToExcludeTwoByte = [42, 44, 45, 46, 47, 56, 58, 81, 84, 85, 86, 87, 88, 89, 90, 92, 93, 94, 95, 116, 174, 188, 194, 199, 215, 219, 223, 235, 239]
 
 	if env.getDefineSlot().lower() in ['one-byte-opcode-execute', 'two-byte-opcode-execute'] and \
 			isinstance(ACL2ast, list) and \
@@ -181,25 +164,21 @@ def implemented_opcode(ACL2ast, env):
 			ACL2ast[1].lower() == 'opcode':
 		# First two elements are 'case opcode' so include them
 		if env.getDefineSlot().lower() == 'one-byte-opcode-execute':
-			casesToInclude = casesToIncludeOneByte
-			msg = 'one'
+			casesToExclude = casesToExcludeOneByte
 		else:
-			casesToInclude = casesToIncludeTwoByte
-			msg = 'two'
+			casesToExclude = casesToExcludeTwoByte
 
 		# Exclude the final case which has a 'T' condition
-		newACL2ast = ACL2ast[:2] + [case for case in ACL2ast[2:-1] if int(case[0]) in casesToInclude]
+		newACL2ast = ACL2ast[:2] + [case for case in ACL2ast[2:-1] if int(case[0]) not in casesToExclude]
 		sailAST, env, _ = specialTokens.tr_case(newACL2ast, env)
 
 		# Forward the missing opcodes to the extension hook
 		matchesList = sailAST[0].getMatches()
 		ext_call, env = gen_ext_opcode_execute_call(env)
 		for i in range(256):
-			if i not in casesToInclude:
+			if i in casesToExclude:
 				matchesList.append((SailNumLit(i), ext_call[0]))
-					# (SailNumLit(i), specialTokens.errorHelper(f"Translation error: {msg}-byte opcode {i} not translated")))
 		matchesList.append((SailUnderScoreLit(), ext_call[0]))
-			# (SailUnderScoreLit(), specialTokens.errorHelper(f"Translation error: invalid {msg}-byte opcode")))
 
 		return True, sailAST, env
 
