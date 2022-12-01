@@ -502,9 +502,9 @@ class Config:
 		self.top_level_file = config.get('top_level_file', '../../acl2/books/projects/x86isa/machine/x86.lisp')
 		self.acl2_process = config.get('acl2_process', 'acl2')
 		self.acl2_port = config.get('acl2_port', 1159)
-		self.output_folder = config.get('output_folder', '../model')
+		self.output_folder = config.get('output_folder', '../output')
 		self.patch_folder = config.get('patch_folder', 'patches')
-		self.unresolved_types_file = config.get('unresolved_types_file', '../model/unresolved_types.log')
+		self.unresolved_types_file = config.get('unresolved_types_file', '../output/unresolved_types.log')
 		self.mbe_branch = config.get('mbe_branch', ':logic')
 		self.print_acl2_interactions = config.get('print_acl2_interactions', False)
 

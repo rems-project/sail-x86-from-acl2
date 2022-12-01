@@ -76,7 +76,7 @@ class ACL2Comment:
 		ast, but, for now, it is, hence this function is necessary when pretty
 		printing a Sail ast.
 		"""
-		return f"/*{self.comment}*/"
+		return f"/*! {self.comment} */"
 
 
 class ACL2String:

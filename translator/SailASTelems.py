@@ -1720,6 +1720,14 @@ def saveSail(SailAST, path, name, env, includeHeaders):
 		- includeHeaders : bool - whether to include various `$include`s
 	"""
 	print(f"Pretty printing and saving to path: {path}; name: {name}")
+	# Merge adjacent comments
+	idx = 0
+	while idx < len(SailAST) - 1:
+		if isinstance(SailAST[idx], ACL2Comment) and isinstance(SailAST[idx + 1], ACL2Comment):
+			c2 = SailAST[idx + 1]
+			c1 = SailAST.pop(idx)
+			SailAST[idx] = ACL2Comment(c1.getComment() + "\n" + c2.getComment())
+		idx = idx + 1
 	# Get the pretty printed version
 	pp = "\n".join([elem.pp() for elem in SailAST])
 
@@ -1746,11 +1754,6 @@ def saveSail(SailAST, path, name, env, includeHeaders):
 
 		if includeHeaders:
 			f.write('$include "prelude.sail"\n')
-			f.write('$include "register_types.sail"\n')
-			f.write('$include "registers.sail"\n')
-			f.write('$include "register_accessors.sail"\n')
-			f.write('$include "memory_accessors.sail"\n')
-			f.write('$include "opcode_ext.sail"\n')
 
 		f.write(pp)
 

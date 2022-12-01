@@ -1,6 +1,8 @@
 __pycache__
-/model
-/unresolvedTypes.txt
+z3_problems
+/output
+/model/x86_emulator
+/model/x86_emulator.c
 /translator/config.toml
-/translator/validation/emulator/emulator
-/translator/validation/emulator/emulator.c
+/translator/validation/emulator/x86_emulator
+/translator/validation/emulator/x86_emulator.c

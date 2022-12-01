@@ -13,26 +13,17 @@ Many of scripts require various environment variables to be set.  Some of these 
 * `SAIL_DIR` - directory to the Sail installation
 * `X86EMU` - the executable emulator of the translated model
 * `X86EMU_DIR` - the directory containing the executable emulator
-* `x86SAIL_DIR` - the output directory of the translator where the Sail files can be found.
+* `X86SAIL_DIR` - the output directory of the translator where the Sail files can be found.
 * `KFSIT` - directory of the K Framework Single Instruction Tests suite.
 * `ACL2` - the ACL2 executable (normally called `saved_acl2`).
 
 ## Compiling the Model
 
-0. Install [Sail](https://github.com/rems-project/sail), if necessary, as described [here](https://github.com/rems-project/sail/blob/sail2/INSTALL.md).  These instructions were last tested with Sail git revision `4f8532ae`, built from source.
+Install [Sail](https://github.com/rems-project/sail), if necessary, as described [here](https://github.com/rems-project/sail/blob/sail2/INSTALL.md).  These instructions were last tested with Sail git revision `4f8532ae`, built from source.
 
-1. Set the environment variables `SAIL_DIR` and `x86SAIL_DIR` then.
+Run `make x86_emulator` in the `model/` directory of this repository to build an emulator from the model snapshot, or if you want to build from a different version of the Sail sources, point the `X86SAIL_DIR` variable to it and run `make` in the `emulator` directory.
 
-2. Connect to `emulator/`
-
-3. Run `./build.sh` which runs Sail to produce the C code for the emulator before compiling it into an executable.  This will likely take a few minutes.  The top level function is actually contained in `instrument.sail`, which was copied to the output folder when translation finished.  This file, and `instrumentFns.sail`, instrument the model with functions similar to those available in the ACL2 model.
-
-4. Set `X86EMU` and `X86EMU_DIR` environment variables:
-
-   ```
-   export X86EMU=${PWD}/emulator
-   export X86EMU_DIR=${PWD}
-   ```
+Set the `X86EMU` environment variable to the path of the generated emulator, e.g. `$THIS_REPO/model/x86_emulator`.
 
 ## Running an Example
 
