@@ -596,7 +596,10 @@ def tr_define(ACL2ast, env):
 
 	# Set the type if we've specified it manually
 	if fnName.lower() in config_patterns.forced_return_types:
+		forced_return_type = config_patterns.forced_return_types[fnName.lower()]
 		thisSailFn.setForceRHSType(config_patterns.forced_return_types[fnName.lower()])
+	else:
+		forced_return_type = None
 
 	# Check for forced argument types
 	if fnName.lower() in config_patterns.forced_argument_types:
@@ -633,7 +636,10 @@ def tr_define(ACL2ast, env):
 	fnFormalsBVs = []
 	for f in fnFormalsFiltered:
 		if f.lower() in fnFormalsForced:
-			bv = env.pushToBindings([f], [fnFormalsForced[f.lower()]])
+			fTyp = fnFormalsForced[f.lower()]
+			if isinstance(fTyp, Sail_t_bitfield):
+				fTyp = env.lookupBitfieldType(fTyp.getName())
+			bv = env.pushToBindings([f], [fTyp])
 		elif hasForcedVariableType(env, f):
 			bv = env.pushToBindings([f], [getForcedVariableType(env, f)])
 		elif f in fnFormalsTyped:
@@ -673,6 +679,11 @@ def tr_define(ACL2ast, env):
 	# === Translate the body
 	# Evaluate the body - no events should take place but use the returned environment anyway
 	(SailItem, env, _) = transform.transformACL2asttoSail(fnBody, env)
+
+	# Coerce to forced return type, if any
+	if forced_return_type:
+		coercedBody = coerceExpr(SailItem[0], forced_return_type)
+		SailItem = [coercedBody] if coercedBody else SailItem
 
 	# Amend the SailFn object to contain the body definition
 	thisSailFn.setBody(SailItem)
@@ -1718,7 +1729,7 @@ def get_register_info(env, name):
 	register_types = {
 		# Name		        (            Width, signed,		number of elements)
 		'rip':		        (Sail_t_bits(48,    signed=True),	None),
-		'rflags':	        (Sail_t_bits(32,    signed=False),	None),
+		'rflags':	        (Sail_t_bitfield("rflagsBits", 32),	None),
 		'rgfi':		        (Sail_t_bits(64,    signed=True),	16),
 		'msr':		        (Sail_t_bits(64,    signed=False),	7),
 		'seg-visible':	        (Sail_t_bits(16,    signed=False),	6),

@@ -12,7 +12,7 @@ $include <regfp.sail>
 $include <real.sail>
 $include <string.sail>
 
-overload operator ^ = {concat_str, and_bool}
+overload operator + = {concat_str, and_bool}
 
 // Type synonym for signed bitvectors, which are distinguished from unsigned
 // bitvectors by ACL2 (but not by Sail)
@@ -348,7 +348,7 @@ val floor2 : (int, int) -> int
 function floor2 (i, j) = {
 	tdiv = tdiv_int(i,j);
 	tmod = tmod_int(i,j);
-	if ((j > 0) ^ (tmod >= 0)) | ((j < 0) ^ (tmod <= 0))
+	if ((j > 0) & (tmod >= 0)) | ((j < 0) & (tmod <= 0))
 	then tdiv
 	else tdiv - 1
 }
@@ -540,6 +540,9 @@ function merge_4_u32s (a3, a2, a1, a0) = a3 @ a2 @ a1 @ a0
 
 infix 7 <<
 overload operator << = {sail_shiftleft}
+
+infix 7 >>
+overload operator >> = {sail_shiftright}
 
 // Used in part-install.  See: http://www.cs.utexas.edu/users/moore/acl2/manuals/current/manual/index.html?topic=ACL2____PART-INSTALL
 // TODO: this is almost identical to genericBitstructUpdater below - maybe merge them

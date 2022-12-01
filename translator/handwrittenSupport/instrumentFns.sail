@@ -19,17 +19,17 @@ function printState () = {
 	print_bits("r14 = ", rgfi(14));
 	print_bits("r15 = ", rgfi(15));
 
-	print_bits("rflags = ", rflags);
+	print_bits("rflags = ", rflags.bits);
 
 	print_bits("rip = ", rip);
 }
 
 function log_memory_read(addr, value) = {
-	print_endline(bits_str(rip) ^ ": R " ^ bits_str(addr) ^ " " ^ dec_str(1) ^ " " ^ bits_str(value))
+	print_endline(bits_str(rip) + ": R " + bits_str(addr) + " " + dec_str(1) + " " + bits_str(value))
 }
 
 function log_memory_write(addr, value) = {
-	print_endline(bits_str(rip) ^ ": W " ^ bits_str(addr) ^ " " ^ dec_str(1) ^ " " ^ bits_str(value))
+	print_endline(bits_str(rip) + ": W " + bits_str(addr) + " " + dec_str(1) + " " + bits_str(value))
 }
 
 val x86_step_print_halt : (sbits(48), bool, bool, int) -> bool effect {eamem, escape, rmem, rreg, undef, wmv, wreg}

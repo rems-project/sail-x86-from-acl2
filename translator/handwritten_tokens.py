@@ -46,6 +46,19 @@ loghead_fn = SailHandwrittenFn(
 				'loghead',
 				Sail_t_fn([Sail_t_int(), Sail_t_int()], Sail_t_int()))
 
+def loghead_fn(args, _):
+	if isinstance(args[1], SailApp) and args[1].getFn().getName() == 'unsigned':
+		arg = args[1].getActuals()[0]
+	else:
+		arg = args[1]
+	if isinstance(args[0], SailNumLit) and isinstance(getType(arg), Sail_t_bits):
+		argType = getType(arg)
+		retType = Sail_t_bits(args[0].getNum())
+	else:
+		argType = Sail_t_int()
+		retType = Sail_t_int()
+	return SailHandwrittenFn('loghead', Sail_t_fn([getType(args[0]), argType], retType))
+
 logtail_fn = SailHandwrittenFn(
 				'logtail',
 				Sail_t_fn([Sail_t_int(), Sail_t_int()], Sail_t_int()))
@@ -61,11 +74,9 @@ def logbit_fn(args, env):
 	argType = args[1].getType() if isNonnegativeType(args[1].getType()) else Sail_t_int()
 	return SailHandwrittenFn('logbit', Sail_t_fn([Sail_t_int(), argType], Sail_t_bits(1)))
 
-
-lognot_fn = SailHandwrittenFn(
-	'lognot',
-	Sail_t_fn([Sail_t_int()], Sail_t_int())
-)
+def lognot_fn(args, _):
+	argType = args[0].getType()
+	return SailHandwrittenFn('lognot', Sail_t_fn([argType], argType))
 
 logcount_fn = SailHandwrittenFn(
 				'logcount',

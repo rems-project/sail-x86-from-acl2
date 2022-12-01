@@ -1,6 +1,11 @@
+$ifndef __X86_REGISTERS
+$define __X86_REGISTERS
+
+$include "structures.sail"
+
 // Although one would expect rflags to be 64 bits, the ACL2 models
 // it as 32 bits
-register rflags : bits(32)
+register rflags : rflagsbits
 
 register rip : sbits(48)
 
@@ -144,3 +149,5 @@ register ssr_hidden_bases : vector(2, dec, bits(64))
 register ssr_hidden_limits : vector(2, dec, bits(32))
 
 register ssr_hidden_attrs : vector(2, dec, bits(16))
+
+$endif

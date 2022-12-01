@@ -192,9 +192,7 @@ def handwritten():
 		'unsigned-byte-p'		: unsigned_byte_p,
 		'signed-byte-p'			: signed_byte_p,
 		'not'					: not_fn,
-		'loghead'				: loghead_fn,
 		'logtail'				: logtail_fn,
-		'lognot'				: lognot_fn,
 		'logcount'				: logcount_fn,
 		'logext'				: binary_logext_fn,
 		'rgfi'					: rgfi_fn,
@@ -226,8 +224,10 @@ def handwritten():
 		return {'func': func, 'numOfArgs': numOfArgs, 'coerceActuals': coerceActuals}
 
 	dependentHandwrittenDefs = {
+		'loghead'	: dependent_fn(loghead_fn, 2, coerceActuals=True),
 		'logbitp'	: dependent_fn(logbitp_fn, 2, coerceActuals=True),
-		'logbit'	: dependent_fn(logbit_fn, 2, coerceActuals=True)
+		'logbit'	: dependent_fn(logbit_fn, 2, coerceActuals=True),
+		'lognot'	: dependent_fn(lognot_fn, 1, coerceActuals=False),
 	}
 	for (name, fn) in dependentHandwrittenDefs.items():
 		name = name.upper()

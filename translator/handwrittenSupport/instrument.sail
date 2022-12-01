@@ -28,7 +28,7 @@ function initialiseState () = {
 	write_rgfi(4, sail_shiftleft(sail_zero_extend(0b1, 64), 45));
 
 	// rflags = 2
-	rflags = sail_zero_extend(0x2, 32);
+	rflags = Mk_rflagsbits(sail_zero_extend(0x2, 32));
 
 	// Set 64 bit mode
 	initialise_64_bit_mode();
@@ -50,7 +50,7 @@ function initialiseState2 () = {
 	write_rgfi(4, sail_shiftleft(sail_zero_extend(0b1, 64), 45));
 
 	// rflags = 2
-	rflags = sail_zero_extend(0x2, 32);
+	rflags = Mk_rflagsbits(sail_zero_extend(0x2, 32));
 
 	// Set 64 bit mode
 	initialise_64_bit_mode()
@@ -63,7 +63,7 @@ function __SetConfig (arg, value) =
 		"rip" => { rip = get_slice_int(48, value, 0) },
 		"rdi" => { write_rgfi(7, get_slice_int(64, value, 0)) },
 		"rsp" => { write_rgfi(4, get_slice_int(64, value, 0)) },
-		"rflags" => { rflags = get_slice_int(32, value, 0) },
+		"rflags" => { rflags = Mk_rflagsbits(get_slice_int(32, value, 0)) },
 		"cr4" => { ctrs[4] = get_slice_int(64, value, 0) },
 		"ha" => { haltAddrReg = get_slice_int(48, value, 0) },
 		"set64bit" => {

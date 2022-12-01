@@ -1220,6 +1220,12 @@ class SailStructProject(SailASTelem):
 		self.fieldName = fieldName
 
 
+	def getStruct(self):
+		return self.sailASTelem
+
+	def getFieldName(self):
+		return self.fieldName
+
 	### Required methods ###
 	def getType(self):
 		if isinstance(self.sailASTelem.getType(), Sail_t_bitfield) and self.fieldName == 'bits':
@@ -1765,6 +1771,11 @@ def coerceExpr(expr, typ, exact=True):
 		return None
 	elif isSubType(etyp, typ):
 		return expr
+	elif isinstance(expr, SailIf) or isinstance(expr, SailMatch):
+		expr.setType(typ)
+		return expr
+	elif isinstance(expr, SailLet) and coerceExpr(expr.getBody()[0], typ, exact):
+		return SailLet(expr.getVarName(), expr.getExpr(), [coerceExpr(expr.getBody()[0], typ, exact)])
 	elif isNumeric(etyp) and not isNonnegativeType(etyp) and isinstance(typ, Sail_t_nat):
 		fntyp = Sail_t_fn([Sail_t_int()], typ)
 		return SailApp(SailHandwrittenFn("nat_of_int", fntyp), [expr])
@@ -1781,6 +1792,9 @@ def coerceExpr(expr, typ, exact=True):
 	elif isinstance(expr, SailBitsLit) and isinstance(typ, Sail_t_bits) and typ.getLength() is not None:
 		return SailBitsLit(typ.getLength(), expr.getValue(), typ.signed)
 	elif isNumeric(etyp) and isinstance(typ, Sail_t_bits) and typ.length is not None:
+		if isinstance(expr, SailApp) and expr.getFn().getName() == 'unsigned':
+			# Avoid redundant back-and-forth conversions
+			return coerceExpr(expr.getActuals()[0], typ, exact)
 		fntyp = Sail_t_fn([Sail_t_int(), Sail_t_int()], typ)
 		lengthArg = typ.length if isinstance(typ.length, SailASTelem) else SailNumLit(typ.getLength())
 		args = [expr, lengthArg]
@@ -1800,6 +1814,13 @@ def coerceExpr(expr, typ, exact=True):
 	elif isinstance(etyp, Sail_t_bits) and isinstance(typ, Sail_t_bits) and typ.length is not None:
 		if etyp.getLength() is not None and typ.getLength() is not None:
 			if typ.getLength() < etyp.getLength():
+				# Avoid redundant truncation after extension
+				if isinstance(expr, SailApp) and expr.getFn().getName() == 'sail_zero_extend'  and \
+						isinstance(getType(expr.getActuals()[0]), Sail_t_bits) and \
+						getType(expr.getActuals()[0]).getLength() and \
+						getType(expr.getActuals()[0]).getLength() >= typ.getLength():
+					return coerceExpr(expr.getActuals()[0], typ)
+				# Otherwise, truncate
 				fn = 'truncate'
 			elif typ.getLength() == etyp.getLength() and isinstance(expr, SailBoundVar):
 				# If we have a variable with the right
@@ -1841,14 +1862,19 @@ def coerceExpr(expr, typ, exact=True):
 		else:
 			return coerceExpr(SailStructProject(expr, "bits"), retTyp, exact)
 	elif isinstance(typ, Sail_t_bitfield):
-		expr_bits = coerceExpr(expr, Sail_t_bits(typ.getLength()))
-		if expr_bits is None:
-			print(f"coerceExpr: Cannot coerce {expr.pp()} to bitfield type {typ.getName()}")
-			return None
+		if isinstance(expr, SailStructProject) and expr.getFieldName() == "bits" and expr.getStruct().getType() == typ:
+			# Avoid redundant back-and-forth conversion
+			return expr.getStruct()
 		else:
-			fname = f"Mk_{utils.sanitiseSymbol(typ.getName())}"
-			ftyp = Sail_t_fn([Sail_t_bits(typ.getLength())], typ)
-			return SailApp(SailHandwrittenFn(fname, ftyp), [expr_bits])
+			# Construct bitfield from bitvector
+			expr_bits = coerceExpr(expr, Sail_t_bits(typ.getLength()))
+			if expr_bits is None:
+				print(f"coerceExpr: Cannot coerce {expr.pp()} to bitfield type {typ.getName()}")
+				return None
+			else:
+				fname = f"Mk_{utils.sanitiseSymbol(typ.getName())}"
+				ftyp = Sail_t_fn([Sail_t_bits(typ.getLength())], typ)
+				return SailApp(SailHandwrittenFn(fname, ftyp), [expr_bits])
 	elif isinstance(expr, SailTuple) and isinstance(typ, Sail_t_tuple):
 		elems = []
 		for i in range(len(expr.getItems())):
@@ -1871,9 +1897,6 @@ def coerceExpr(expr, typ, exact=True):
 		return someHelper(item) if item is not None else None
 	elif isNone(expr) and isinstance(typ, Sail_t_option):
 		return noneHelper(typ.getTyp())
-	elif isinstance(expr, SailIf) or isinstance(expr, SailMatch):
-		expr.setType(typ)
-		return expr
 	elif isinstance(expr, SailApp) and expr.getFn().getName().lower() == 'throw':
 		return expr
 	else:

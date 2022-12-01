@@ -45,7 +45,8 @@ forced_return_types = {
 								   Sail_t_bits(8)					# Rex byte
 								   ]),
 	# TODO: Replace with a handwritten function
-	'bitcount8': Sail_t_nat()
+	'bitcount8': Sail_t_nat(),
+	'zf-spec': Sail_t_bits(1)
 }
 
 
@@ -56,13 +57,17 @@ forced_argument_types = {
         'page-fault-exception': {'addr': Sail_t_bits(48, signed=True), 'err-no': Sail_t_int()},
 		'wme-size': {'val': Sail_t_bits(128)},
 		'wime-size': {'val': Sail_t_bits(128)},
+		'!rgfi-size': {'val': Sail_t_bits(64)},
 		'x86-operand-to-reg/mem': {'operand': Sail_t_bits(128)},
-		'x86-operand-to-xmm/mem': {'operand': Sail_t_bits(128)}
+		'x86-operand-to-xmm/mem': {'operand': Sail_t_bits(128)},
+		'write-user-rflags': {'user-flags-vector': Sail_t_bitfield("rflagsBits", 32), 'undefined-mask': Sail_t_bitfield("rflagsBits", 32)}
 }
 
 forced_variable_types = {
         'check-alignment?': Sail_t_bool(),
         'inst-ac?': Sail_t_bool(),
+        'rflags': Sail_t_bitfield("rflagsBits", 32),
+        'new-rflags': Sail_t_bitfield("rflagsBits", 32),
         'input-rflags': Sail_t_bitfield("rflagsBits", 32),
         'output-rflags': Sail_t_bitfield("rflagsBits", 32),
         'undefined-flags': Sail_t_bitfield("rflagsBits", 32),
