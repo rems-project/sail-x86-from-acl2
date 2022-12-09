@@ -14,11 +14,11 @@ function write_rgfi (regNum, regval_to_write) = {
 }
 
 val read_rip : unit -> sbits(48)
-function read_rip() = rip
+function read_rip() = truncate(regval_from_reg(rip), 48)
 
 val write_rip : sbits(48) -> unit
 function write_rip(value) = {
-    rip = value
+    rip = regval_into_reg(sail_zero_extend(value, 64))
 }
 
 $endif

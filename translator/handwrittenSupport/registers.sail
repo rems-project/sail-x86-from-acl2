@@ -7,7 +7,7 @@ $include "structures.sail"
 // it as 32 bits
 register rflags : rflagsbits
 
-register rip : sbits(48)
+register rip : regtype
 
 // In ACL2 rgfi() is often called with a `defconst` argument.  E.g.
 //      ` (rgfi *rax*) `

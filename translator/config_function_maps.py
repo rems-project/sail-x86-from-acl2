@@ -152,7 +152,6 @@ def specialTokens():
 		name_to_fn_map[n_pred.upper()] = gen_bits_check(i, signed=True)
 
 	register_accessors = [
-		'rip',
 		'rflags',
 		'msri',
 		'seg-visiblei',

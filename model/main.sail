@@ -13,7 +13,7 @@ function initialise_64_bit_mode () = {
 val initialiseState : unit -> unit effect {escape, wreg, rreg}
 function initialiseState () = {
 	// Set rip
-	rip = sail_zero_extend(0x40065D, 48);
+	write_rip(sail_zero_extend(0x40065D, 48));
 
 	// rdi = 1
 	write_rgfi(7, sail_zero_extend(0b1, 64));
@@ -35,7 +35,7 @@ function initialiseState () = {
 val initialiseState2 : unit -> unit effect {escape, wreg, rreg}
 function initialiseState2 () = {
 	// Set rip
-	rip = bits_of_int(4194867, 48); // Original start to this file: 4194867; the instruction which fails in the interpreter: 4196698
+	write_rip(bits_of_int(4194867, 48)); // Original start to this file: 4194867; the instruction which fails in the interpreter: 4196698
 
 	// rdi = 1
 	//x = write_rgfi(7, 1, 0);
@@ -54,7 +54,7 @@ function initialiseState2 () = {
 val __SetConfig : (string, int) -> unit effect {escape, rreg, wreg}
 function __SetConfig (arg, value) =
 	match arg {
-		"rip" => { rip = get_slice_int(48, value, 0) },
+		"rip" => { write_rip(get_slice_int(48, value, 0)) },
 		"rdi" => { write_rgfi(7, get_slice_int(64, value, 0)) },
 		"rsp" => { write_rgfi(4, get_slice_int(64, value, 0)) },
 		"rflags" => { rflags = Mk_rflagsbits(get_slice_int(32, value, 0)) },

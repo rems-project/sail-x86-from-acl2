@@ -1728,7 +1728,6 @@ def tr_def_inst(ACL2ast, env):
 def get_register_info(env, name):
 	register_types = {
 		# Name		        (            Width, signed,		number of elements)
-		'rip':		        (Sail_t_bits(48,    signed=True),	None),
 		'rflags':	        (Sail_t_bitfield("rflagsBits", 32),	None),
 		'rgfi':		        (Sail_t_bits(64,    signed=True),	16),
 		'msr':		        (Sail_t_bits(64,    signed=False),	7),
