@@ -25,7 +25,7 @@ undef_read_logic_fn = SailHandwrittenFn(
 )
 
 boolToBit = SailHandwrittenFn(
-				'bool_to_bit',
+				'bool_to_bits',
 				Sail_t_fn([Sail_t_bool()], Sail_t_bits(1)))
 
 unsigned_byte_p = SailHandwrittenFn(

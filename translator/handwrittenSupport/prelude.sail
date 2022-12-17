@@ -95,14 +95,14 @@ val pow2 = "pow2" : forall 'n. int('n) -> int(2 ^ 'n)
 TODO: is there a utility function for this
 TODO: make bool_to_bit and bit_to_bool a mapping?
 */
-val bool_to_bit : bool -> bits(1)
-function bool_to_bit (b) = match b {
+val bool_to_bits : bool -> bits(1)
+function bool_to_bits (b) = match b {
     true  => 0b1,
     false => 0b0
 }
 
-val bit_to_bool : bits(1) -> bool
-function bit_to_bool (b) = match b {
+val bits_to_bool : bits(1) -> bool
+function bits_to_bool (b) = match b {
     0b1 => true,
     0b0 => false
 }
@@ -279,7 +279,7 @@ See: http://www.cs.utexas.edu/users/moore/acl2/manuals/current/manual/index-seo.
 val logbitp_int : (int, int) -> bool effect {escape}
 function logbitp_int (i, j) = {
 	assert(i >= 0);
-    bit_to_bool(
+    bits_to_bool(
         get_slice_int(1, j, i)
     )
 }

@@ -11,31 +11,31 @@ $include "./application_level_memory.sail"
 val general_cf_spec_fn : (nat, nat) -> bits(1)
 
 function general_cf_spec_fn (result_nbits, raw_result) = {
-    bool_to_bit(not_bool(unsigned_byte_p(result_nbits, raw_result)))
+    bool_to_bits(not_bool(unsigned_byte_p(result_nbits, raw_result)))
 }
 
 val cf_spec8 : bits(9) -> bits(1)
 
 function cf_spec8 raw_result = {
-    bool_to_bit(not_bool(unsigned_byte_p(8, unsigned(raw_result))))
+    bool_to_bits(not_bool(unsigned_byte_p(8, unsigned(raw_result))))
 }
 
 val cf_spec16 : bits(17) -> bits(1)
 
 function cf_spec16 raw_result = {
-    bool_to_bit(not_bool(unsigned_byte_p(16, unsigned(raw_result))))
+    bool_to_bits(not_bool(unsigned_byte_p(16, unsigned(raw_result))))
 }
 
 val cf_spec32 : bits(33) -> bits(1)
 
 function cf_spec32 raw_result = {
-    bool_to_bit(not_bool(unsigned_byte_p(32, unsigned(raw_result))))
+    bool_to_bits(not_bool(unsigned_byte_p(32, unsigned(raw_result))))
 }
 
 val cf_spec64 : bits(65) -> bits(1)
 
 function cf_spec64 raw_result = {
-    bool_to_bit(not_bool(unsigned_byte_p(64, unsigned(raw_result))))
+    bool_to_bits(not_bool(unsigned_byte_p(64, unsigned(raw_result))))
 }
 
 /*! <p>General @ ( ' OF ' ) Specification ( Source: Intel Manuals, 
@@ -49,31 +49,31 @@ function cf_spec64 raw_result = {
 val general_of_spec_fn : (nat, int) -> bits(1)
 
 function general_of_spec_fn (result_nbits, signed_raw_result) = {
-    bool_to_bit(not_bool(signed_byte_p(result_nbits, signed_raw_result)))
+    bool_to_bits(not_bool(signed_byte_p(result_nbits, signed_raw_result)))
 }
 
 val of_spec8 : sbits(9) -> bits(1)
 
 function of_spec8 signed_raw_result = {
-    bool_to_bit(not_bool(signed_byte_p(8, signed(signed_raw_result))))
+    bool_to_bits(not_bool(signed_byte_p(8, signed(signed_raw_result))))
 }
 
 val of_spec16 : sbits(17) -> bits(1)
 
 function of_spec16 signed_raw_result = {
-    bool_to_bit(not_bool(signed_byte_p(16, signed(signed_raw_result))))
+    bool_to_bits(not_bool(signed_byte_p(16, signed(signed_raw_result))))
 }
 
 val of_spec32 : sbits(33) -> bits(1)
 
 function of_spec32 signed_raw_result = {
-    bool_to_bit(not_bool(signed_byte_p(32, signed(signed_raw_result))))
+    bool_to_bits(not_bool(signed_byte_p(32, signed(signed_raw_result))))
 }
 
 val of_spec64 : sbits(65) -> bits(1)
 
 function of_spec64 signed_raw_result = {
-    bool_to_bit(not_bool(signed_byte_p(64, signed(signed_raw_result))))
+    bool_to_bits(not_bool(signed_byte_p(64, signed(signed_raw_result))))
 }
 
 /*! <p>General @ ( ' ZF ' ) Specification ( Source: Intel Manuals, 
@@ -98,25 +98,25 @@ function bitcount8 x = {
 val pf_spec8 : bits(8) -> bits(1)
 
 function pf_spec8 result = {
-    bool_to_bit(not_bool(logbitp(0, logcount(unsigned(result)))))
+    bool_to_bits(not_bool(logbitp(0, logcount(unsigned(result)))))
 }
 
 val pf_spec16 : bits(16) -> bits(1)
 
 function pf_spec16 result = {
-    bool_to_bit(not_bool(logbitp(0, logcount(unsigned(loghead(8, result))))))
+    bool_to_bits(not_bool(logbitp(0, logcount(unsigned(loghead(8, result))))))
 }
 
 val pf_spec32 : bits(32) -> bits(1)
 
 function pf_spec32 result = {
-    bool_to_bit(not_bool(logbitp(0, logcount(unsigned(loghead(8, result))))))
+    bool_to_bits(not_bool(logbitp(0, logcount(unsigned(loghead(8, result))))))
 }
 
 val pf_spec64 : bits(64) -> bits(1)
 
 function pf_spec64 result = {
-    bool_to_bit(not_bool(logbitp(0, logcount(unsigned(loghead(8, result))))))
+    bool_to_bits(not_bool(logbitp(0, logcount(unsigned(loghead(8, result))))))
 }
 
 /*! <p>General @ ( ' PF ' ) Specification ( Source: Intel Manuals, 
@@ -127,7 +127,7 @@ function pf_spec64 result = {
 val general_pf_spec_fn : ({|8, 16, 32, 64|}, nat) -> bits(1)
 
 function general_pf_spec_fn (result_nbits, result) = {
-    bool_to_bit(not_bool(logbitp(0, logcount(loghead(8, result)))))
+    bool_to_bits(not_bool(logbitp(0, logcount(loghead(8, result)))))
 }
 
 val sf_spec8 : bits(8) -> bits(1)
@@ -172,7 +172,7 @@ function add_af_spec8 (dst, src) = {
     let dst_3_0 : bits(4) = dst[3 .. 0];
     let src_3_0 : bits(4) = src[3 .. 0];
     let add : bits(5) = bits_of_int(unsigned(dst_3_0) + unsigned(src_3_0), 5);
-    let af : bits(1) = bool_to_bit(15 < unsigned(add));
+    let af : bits(1) = bool_to_bits(15 < unsigned(add));
     af
 }
 
@@ -182,7 +182,7 @@ function add_af_spec16 (dst, src) = {
     let dst_3_0 : bits(4) = dst[3 .. 0];
     let src_3_0 : bits(4) = src[3 .. 0];
     let add : bits(5) = bits_of_int(unsigned(dst_3_0) + unsigned(src_3_0), 5);
-    let af : bits(1) = bool_to_bit(15 < unsigned(add));
+    let af : bits(1) = bool_to_bits(15 < unsigned(add));
     af
 }
 
@@ -192,7 +192,7 @@ function add_af_spec32 (dst, src) = {
     let dst_3_0 : bits(4) = dst[3 .. 0];
     let src_3_0 : bits(4) = src[3 .. 0];
     let add : bits(5) = bits_of_int(unsigned(dst_3_0) + unsigned(src_3_0), 5);
-    let af : bits(1) = bool_to_bit(15 < unsigned(add));
+    let af : bits(1) = bool_to_bits(15 < unsigned(add));
     af
 }
 
@@ -202,7 +202,7 @@ function add_af_spec64 (dst, src) = {
     let dst_3_0 : bits(4) = dst[3 .. 0];
     let src_3_0 : bits(4) = src[3 .. 0];
     let add : bits(5) = bits_of_int(unsigned(dst_3_0) + unsigned(src_3_0), 5);
-    let af : bits(1) = bool_to_bit(15 < unsigned(add));
+    let af : bits(1) = bool_to_bits(15 < unsigned(add));
     af
 }
 
@@ -212,7 +212,7 @@ function sub_af_spec8 (dst, src) = {
     let dst_3_0 : bits(4) = dst[3 .. 0];
     let src_3_0 : bits(4) = src[3 .. 0];
     let sub : sbits(5) = bits_of_int(unsigned(dst_3_0) - unsigned(src_3_0), 5);
-    let af : bits(1) = bool_to_bit(signed(sub) < 0);
+    let af : bits(1) = bool_to_bits(signed(sub) < 0);
     af
 }
 
@@ -222,7 +222,7 @@ function sub_af_spec16 (dst, src) = {
     let dst_3_0 : bits(4) = dst[3 .. 0];
     let src_3_0 : bits(4) = src[3 .. 0];
     let sub : sbits(5) = bits_of_int(unsigned(dst_3_0) - unsigned(src_3_0), 5);
-    let af : bits(1) = bool_to_bit(signed(sub) < 0);
+    let af : bits(1) = bool_to_bits(signed(sub) < 0);
     af
 }
 
@@ -232,7 +232,7 @@ function sub_af_spec32 (dst, src) = {
     let dst_3_0 : bits(4) = dst[3 .. 0];
     let src_3_0 : bits(4) = src[3 .. 0];
     let sub : sbits(5) = bits_of_int(unsigned(dst_3_0) - unsigned(src_3_0), 5);
-    let af : bits(1) = bool_to_bit(signed(sub) < 0);
+    let af : bits(1) = bool_to_bits(signed(sub) < 0);
     af
 }
 
@@ -242,7 +242,7 @@ function sub_af_spec64 (dst, src) = {
     let dst_3_0 : bits(4) = dst[3 .. 0];
     let src_3_0 : bits(4) = src[3 .. 0];
     let sub : sbits(5) = bits_of_int(unsigned(dst_3_0) - unsigned(src_3_0), 5);
-    let af : bits(1) = bool_to_bit(signed(sub) < 0);
+    let af : bits(1) = bool_to_bits(signed(sub) < 0);
     af
 }
 
@@ -252,7 +252,7 @@ function adc_af_spec8 (dst, src, cf) = {
     let dst_3_0 : bits(4) = dst[3 .. 0];
     let src_3_0 : bits(4) = src[3 .. 0];
     let adc : bits(6) = bits_of_int(unsigned(dst_3_0) + (unsigned(src_3_0) + unsigned(cf)), 6);
-    let af : bits(1) = bool_to_bit(15 < unsigned(adc));
+    let af : bits(1) = bool_to_bits(15 < unsigned(adc));
     af
 }
 
@@ -262,7 +262,7 @@ function adc_af_spec16 (dst, src, cf) = {
     let dst_3_0 : bits(4) = dst[3 .. 0];
     let src_3_0 : bits(4) = src[3 .. 0];
     let adc : bits(6) = bits_of_int(unsigned(dst_3_0) + (unsigned(src_3_0) + unsigned(cf)), 6);
-    let af : bits(1) = bool_to_bit(15 < unsigned(adc));
+    let af : bits(1) = bool_to_bits(15 < unsigned(adc));
     af
 }
 
@@ -272,7 +272,7 @@ function adc_af_spec32 (dst, src, cf) = {
     let dst_3_0 : bits(4) = dst[3 .. 0];
     let src_3_0 : bits(4) = src[3 .. 0];
     let adc : bits(6) = bits_of_int(unsigned(dst_3_0) + (unsigned(src_3_0) + unsigned(cf)), 6);
-    let af : bits(1) = bool_to_bit(15 < unsigned(adc));
+    let af : bits(1) = bool_to_bits(15 < unsigned(adc));
     af
 }
 
@@ -282,7 +282,7 @@ function adc_af_spec64 (dst, src, cf) = {
     let dst_3_0 : bits(4) = dst[3 .. 0];
     let src_3_0 : bits(4) = src[3 .. 0];
     let adc : bits(6) = bits_of_int(unsigned(dst_3_0) + (unsigned(src_3_0) + unsigned(cf)), 6);
-    let af : bits(1) = bool_to_bit(15 < unsigned(adc));
+    let af : bits(1) = bool_to_bits(15 < unsigned(adc));
     af
 }
 
@@ -292,7 +292,7 @@ function sbb_af_spec8 (dst, src, cf) = {
     let dst_3_0 : bits(4) = dst[3 .. 0];
     let src_3_0 : bits(4) = src[3 .. 0];
     let sbb : int = unsigned(dst_3_0) - (unsigned(src_3_0) + unsigned(sail_zero_extend(cf, 4)));
-    let af : bits(1) = bool_to_bit(sbb < 0);
+    let af : bits(1) = bool_to_bits(sbb < 0);
     af
 }
 
@@ -302,7 +302,7 @@ function sbb_af_spec16 (dst, src, cf) = {
     let dst_3_0 : bits(4) = dst[3 .. 0];
     let src_3_0 : bits(4) = src[3 .. 0];
     let sbb : int = unsigned(dst_3_0) - (unsigned(src_3_0) + unsigned(sail_zero_extend(cf, 4)));
-    let af : bits(1) = bool_to_bit(sbb < 0);
+    let af : bits(1) = bool_to_bits(sbb < 0);
     af
 }
 
@@ -312,7 +312,7 @@ function sbb_af_spec32 (dst, src, cf) = {
     let dst_3_0 : bits(4) = dst[3 .. 0];
     let src_3_0 : bits(4) = src[3 .. 0];
     let sbb : int = unsigned(dst_3_0) - (unsigned(src_3_0) + unsigned(sail_zero_extend(cf, 4)));
-    let af : bits(1) = bool_to_bit(sbb < 0);
+    let af : bits(1) = bool_to_bits(sbb < 0);
     af
 }
 
@@ -322,6 +322,6 @@ function sbb_af_spec64 (dst, src, cf) = {
     let dst_3_0 : bits(4) = dst[3 .. 0];
     let src_3_0 : bits(4) = src[3 .. 0];
     let sbb : int = unsigned(dst_3_0) - (unsigned(src_3_0) + unsigned(sail_zero_extend(cf, 4)));
-    let af : bits(1) = bool_to_bit(sbb < 0);
+    let af : bits(1) = bool_to_bits(sbb < 0);
     af
 }

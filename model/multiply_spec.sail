@@ -67,7 +67,7 @@ function imul_spec_8 (dst, src) = {
     let product_high : bits(8) = product[15 .. 8];
     let product_low : bits(8) = product[7 .. 0];
     let product_low_int : sbits(8) = product_low;
-    let cf_and_of : bits(1) = bool_to_bit(not_bool(sail_sign_extend(product_low_int, 16) == product_int));
+    let cf_and_of : bits(1) = bool_to_bits(not_bool(sail_sign_extend(product_low_int, 16) == product_int));
     (product_high, product_low, product, cf_and_of)
 }
 
@@ -81,7 +81,7 @@ function imul_spec_16 (dst, src) = {
     let product_high : bits(16) = product[31 .. 16];
     let product_low : bits(16) = product[15 .. 0];
     let product_low_int : sbits(16) = product_low;
-    let cf_and_of : bits(1) = bool_to_bit(not_bool(sail_sign_extend(product_low_int, 32) == product_int));
+    let cf_and_of : bits(1) = bool_to_bits(not_bool(sail_sign_extend(product_low_int, 32) == product_int));
     (product_high, product_low, product, cf_and_of)
 }
 
@@ -95,7 +95,7 @@ function imul_spec_32 (dst, src) = {
     let product_high : bits(32) = product[63 .. 32];
     let product_low : bits(32) = product[31 .. 0];
     let product_low_int : sbits(32) = product_low;
-    let cf_and_of : bits(1) = bool_to_bit(not_bool(sail_sign_extend(product_low_int, 64) == product_int));
+    let cf_and_of : bits(1) = bool_to_bits(not_bool(sail_sign_extend(product_low_int, 64) == product_int));
     (product_high, product_low, product, cf_and_of)
 }
 
@@ -109,7 +109,7 @@ function imul_spec_64 (dst, src) = {
     let product_high : bits(64) = product[127 .. 64];
     let product_low : bits(64) = product[63 .. 0];
     let product_low_int : sbits(64) = product_low;
-    let cf_and_of : bits(1) = bool_to_bit(not_bool(sail_sign_extend(product_low_int, 128) == product_int));
+    let cf_and_of : bits(1) = bool_to_bits(not_bool(sail_sign_extend(product_low_int, 128) == product_int));
     (product_high, product_low, product, cf_and_of)
 }
 
