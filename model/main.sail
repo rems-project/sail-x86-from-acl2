@@ -3,14 +3,14 @@ $include "instrumentFns.sail"
 register haltAddrReg : sbits(48)
 
 // Set 64 bit mode
-val initialise_64_bit_mode : unit -> unit effect {escape, rreg, wreg}
+val initialise_64_bit_mode : unit -> unit
 function initialise_64_bit_mode () = {
 	msrs[0][11 .. 0] = [Mk_ia32_eferbits(msrs[0][11 ..0]) with lma = 0b1].bits;
 	seg_hidden_attrs[1][15 .. 0] = [Mk_code_segment_descriptor_attributesbits(seg_hidden_attrs[1][15 .. 0]) with l = 0b1].bits;
 }
 
 // Initialise state for the add1 example
-val initialiseState : unit -> unit effect {escape, wreg, rreg}
+val initialiseState : unit -> unit
 function initialiseState () = {
 	// Set rip
 	write_rip(sail_zero_extend(0x40065D, 48));
@@ -32,7 +32,7 @@ function initialiseState () = {
 }
 
 // Initialise state for the K-framework example
-val initialiseState2 : unit -> unit effect {escape, wreg, rreg}
+val initialiseState2 : unit -> unit
 function initialiseState2 () = {
 	// Set rip
 	write_rip(bits_of_int(4194867, 48)); // Original start to this file: 4194867; the instruction which fails in the interpreter: 4196698
@@ -51,7 +51,7 @@ function initialiseState2 () = {
 }
 
 // Using the __SetConfig method.  See aarch32 example for example.
-val __SetConfig : (string, int) -> unit effect {escape, rreg, wreg}
+val __SetConfig : (string, int) -> unit
 function __SetConfig (arg, value) =
 	match arg {
 		"rip" => { write_rip(get_slice_int(48, value, 0)) },
@@ -73,7 +73,7 @@ val __ListConfig : unit -> unit
 function __ListConfig () = ()
 
 // This function is so we can compile to a C emulator which does pretty does everything
-val doEverything : unit -> unit effect {eamem, escape, rmem, rreg, undef, wmv, wreg}
+val doEverything : unit -> unit
 function doEverything () = {
 	//initialiseState();
 	//steps = x86_run_halt(4195938, 10000, 0, true, false, 0); // 4195938 for original example; 4197494 for test.s; 4194880 for debug.s
@@ -82,7 +82,7 @@ function doEverything () = {
 }
 
 // A main function for C compilation
-val main : unit -> unit effect {eamem, escape, rmem, rreg, undef, wmv, wreg}
+val main : unit -> unit
 function main () =
 	doEverything()
 	//x86_step_print_halt(haltAddrReg, true, false, 0)

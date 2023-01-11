@@ -73,7 +73,7 @@ union exception = {
 // actually does the same.
 /*-----------------------------------------------------------------*/
 
-val undef_read_logic : unit -> nat effect {undef}
+val undef_read_logic : unit -> nat
 function undef_read_logic () = undefined
 
 /*-----------------------------------------------------------------*/
@@ -145,7 +145,7 @@ function signed_bitslice (x, low, width) = {
 	}
 }
 
-val nat_of_int : (int) -> nat effect {escape}
+val nat_of_int : (int) -> nat
 function nat_of_int i = {
 	assert (i >= 0);
 	i
@@ -154,7 +154,7 @@ function nat_of_int i = {
 val nfix : int -> nat
 function nfix i = if i >= 0 then i else 0
 
-val check_range : forall 'n 'm 'i, 'n <= 'm. (int('n), int('m), int('i)) -> {'j, 'n <= 'j & 'j <= 'm & 'i == 'j. int('j)} effect {escape}
+val check_range : forall 'n 'm 'i, 'n <= 'm. (int('n), int('m), int('i)) -> {'j, 'n <= 'j & 'j <= 'm & 'i == 'j. int('j)}
 function check_range(n, m, i) = {
 	assert(n <= i & i <= m);
 	i
@@ -178,7 +178,7 @@ function isEven x =
        if get_slice_int(1, x, 0) == 0b0 then true else false
 
 // b-xor: http://www.cs.utexas.edu/users/moore/acl2/manuals/current/manual/?topic=ACL2____B-XOR
-val b_xor : (int, int) -> int effect {escape}
+val b_xor : (int, int) -> int
 function b_xor (i, j) = {
 	assert(0 <= i & i <= 1 & 0 <= j & j <= 1);
 	if i == 0
@@ -199,7 +199,7 @@ function in_list (x, xs) = match xs {
 /*
 http://www.cs.utexas.edu/users/moore/acl2/manuals/current/manual/index-seo.php/ACL2____UNSIGNED-BYTE-P
 */
-val unsigned_byte_p_int : (int, int) -> bool effect {escape}
+val unsigned_byte_p_int : (int, int) -> bool
 function unsigned_byte_p_int (bits, x) = {
 	assert(bits >= 0);
 	0 <= x & x < pow2(bits)
@@ -213,7 +213,7 @@ overload unsigned_byte_p = {unsigned_byte_p_int, unsigned_byte_p_bits}
 /*
 http://www.cs.utexas.edu/users/moore/acl2/manuals/current/manual/index-seo.php/ACL2____SIGNED-BYTE-P
 */
-val signed_byte_p_int : (int, int) -> bool effect {escape}
+val signed_byte_p_int : (int, int) -> bool
 function signed_byte_p_int (bits, x) = {
 	assert(bits >= 0);
 	negate(pow2(bits - 1)) <= x & x < pow2(bits - 1)
@@ -276,7 +276,7 @@ an integer."
 
 See: http://www.cs.utexas.edu/users/moore/acl2/manuals/current/manual/index-seo.php/COMMON-LISP____LOGBITP
 */
-val logbitp_int : (int, int) -> bool effect {escape}
+val logbitp_int : (int, int) -> bool
 function logbitp_int (i, j) = {
 	assert(i >= 0);
     bits_to_bool(
@@ -296,7 +296,7 @@ nil)."
 
 See: http://www.cs.utexas.edu/users/moore/acl2/manuals/current/manual/?topic=ACL2____LOGBIT
 */
-val logbit_int : (int, int) -> bits(1) effect {escape}
+val logbit_int : (int, int) -> bits(1)
 function logbit_int (pos, j) = {
 	assert(pos >= 0);
 	get_slice_int(1, j, pos)
@@ -325,7 +325,7 @@ function lognot_int x = negate(x) - 1
 
 overload lognot = {not_vec, lognot_int}
 
-val logcount_int : (int) -> int effect {escape}
+val logcount_int : (int) -> int
 function logcount_int(x) =
 	if x == 0 then 0 else
 	if x < 0  then logcount_int(lognot(x)) else
@@ -427,7 +427,7 @@ val binary_logapp : (int, int, int) -> int
 function binary_logapp (size, i, j) =
 	(loghead (size, i)) + (j * pow2(size))
 
-val binary_logext : (int, int) -> int effect {escape}
+val binary_logext : (int, int) -> int
 function binary_logext (size, i) = {
 	assert(0 < size);
 	binary_logapp (size - 1,
@@ -498,7 +498,7 @@ Based loosely on:
 	* http://www.cs.utexas.edu/users/moore/acl2/manuals/current/manual/?topic=ACL2____ROTATE-LEFT
 	* http://www.cs.utexas.edu/users/moore/acl2/manuals/current/manual/?topic=ACL2____ROTATE-RIGHT
 */
-val rotate_left : (int, int, int) -> int effect {escape}
+val rotate_left : (int, int, int) -> int
 function rotate_left (x, width, places) = {
 	assert(0 <= places);
 	placesMod = mod(places, width);
@@ -508,7 +508,7 @@ function rotate_left (x, width, places) = {
 	unsigned(xl @ xh)
 }
 
-val rotate_right : (int, int, int) -> int effect {escape}
+val rotate_right : (int, int, int) -> int
 function rotate_right (x, width, places) = {
 	assert(0 <= places);
 	placesMod = mod(places, width);
@@ -577,7 +577,7 @@ Reading from and writing to memory
 val log_memory_read : forall 'addr_width, 'addr_width >= 0. (bits('addr_width), bits(8)) -> unit
 
 // TODO: Rename these
-val memi : forall 'addr_width, 'addr_width >= 0. (bits('addr_width)) -> bits(8) effect {rmem, rreg}
+val memi : forall 'addr_width, 'addr_width >= 0. (bits('addr_width)) -> bits(8)
 function memi (addr) = {
 	result = __read_mem( Read_plain,					// Read type
 					64,							// Address size
@@ -590,7 +590,7 @@ function memi (addr) = {
 
 val log_memory_write : forall 'addr_width, 'addr_width >= 0. (bits('addr_width), bits(8)) -> unit
 
-val bang_memi : forall 'addr_width, 'addr_width >= 0. (bits('addr_width), bits(8)) -> unit effect {eamem, wmv, rreg}
+val bang_memi : forall 'addr_width, 'addr_width >= 0. (bits('addr_width), bits(8)) -> unit
 function bang_memi (addr, valToWrite) = {
 	dummy = 
 		__write_mem_ea(	Write_plain,				// Write type
@@ -620,13 +620,13 @@ register marking_view : bool
 // Model state.
 register ms_reg : bool
 
-val ms : unit -> bool effect {rreg}
+val ms : unit -> bool
 function ms () = ms_reg
 
 // Fault.
 register fault_reg : bool
 
-val fault : unit -> bool effect {rreg}
+val fault : unit -> bool
 function fault () = fault_reg
 
 /* Handwritten implementations of `rb` and `wb` in a more idiomatic style,

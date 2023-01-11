@@ -1,6 +1,6 @@
 $include "out.sail"
 
-val printState : unit -> unit effect {rreg, escape}
+val printState : unit -> unit
 function printState () = {
 	print_bits("rax = ", rgfi(0));
 	print_bits("rbx = ", rgfi(3));
@@ -32,7 +32,7 @@ function log_memory_write(addr, value) = {
 	print_endline(bits_str(read_rip()) + ": W " + bits_str(addr) + " " + dec_str(1) + " " + bits_str(value))
 }
 
-val x86_step_print_halt : (sbits(48), bool, bool, int) -> bool effect {eamem, escape, rmem, rreg, undef, wmv, wreg}
+val x86_step_print_halt : (sbits(48), bool, bool, int) -> bool
 function x86_step_print_halt(haltAddr, printEachStep, printCount, count) = {
 	if read_rip() == haltAddr then {
 		return true
@@ -45,7 +45,7 @@ function x86_step_print_halt(haltAddr, printEachStep, printCount, count) = {
 }
 
 // Simulates the same ACL2 function
-val x86_run_halt : (sbits(48), int, bool, bool, int) -> int effect {eamem, escape, rmem, rreg, undef, wmv, wreg}
+val x86_run_halt : (sbits(48), int, bool, bool, int) -> int
 function x86_run_halt (haltAddr, maxSteps, printEachStep, printCount, count) = {
 	if maxSteps == 0 then {
 		return count

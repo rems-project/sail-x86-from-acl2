@@ -154,16 +154,7 @@ class SailFn(SailASTelem):
 	def pp(self):
 		sanitisedName = utils.sanitiseSymbol(self.name)
 
-		# Only construct an effects string if there are any effects
-		# Print effects in order to help with version control
-		if len(self.getEffects([])) != 0:
-			effectsInner = ", ".join(sorted(self.getEffects([])))
-			effectsString = f" effect {{{effectsInner}}}"
-		else:
-			effectsString = ""
-
-		# Combine
-		typeSig = f"val {sanitisedName} : {self.getType().pp()}{effectsString}"
+		typeSig = f"val {sanitisedName} : {self.getType().pp()}"
 		header = f"function {sanitisedName} ({', '.join([utils.sanitiseSymbol(item.getName(), includeFnNames=True) for item in self.formals])}) ="
 		body = "\n".join([elem.pp() for elem in self.body])
 
