@@ -1,4 +1,4 @@
-val x86_operand_from_modr_m_and_sib_bytes : (proc_mode, bits(1), {|1, 2, 4, 6, 8, 10, 16|}, bool, bool, range(0, 5), prefixes, sbits(48), bits(8), bits(3), bits(2), sib, bits(3)) -> (bits(128), {|0, 1, 2, 4|}, sbits(64))
+val x86_operand_from_modr_m_and_sib_bytes : (proc_mode, bits(1), {|1, 2, 4, 6, 8, 10, 16|}, bool, bool, range(0, 5), prefixes, sbits(64), bits(8), bits(3), bits(2), sib, bits(3)) -> (bits(128), {|0, 1, 2, 4|}, sbits(64))
 
 function x86_operand_from_modr_m_and_sib_bytes (proc_mode, reg_type, operand_size, inst_ac?, memory_ptr?, seg_reg, prefixes, temp_rip, rex_byte, r_m, mod_var, sib, num_imm_bytes) = {
     let (addr, increment_rip_by) : (sbits(64), {|0, 1, 2, 4|}) = {

@@ -1,5 +1,5 @@
 
-val x86_syscall : (proc_mode, sbits(48), sbits(48), prefixes, bits(8), bits(8), modr_m, sib) -> unit
+val x86_syscall : (proc_mode, sbits(64), sbits(64), prefixes, bits(8), bits(8), modr_m, sib) -> unit
 
 function x86_syscall (proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode, modr_m, sib) = {
     let ctx : string = "X86-SYSCALL";
@@ -7,11 +7,11 @@ function x86_syscall (proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode
     let ia32_efer_sce : bits(1) = Mk_ia32_eferbits(ia32_efer)[sce];
     if ia32_efer_sce == 0 then x86_fault("(!!FAULT-FRESH :UD NIL :IA32-EFER-SCE=0 (CONS 'IA32_EFER IA32-EFER))");
     let cs_attr : bits(16) = seg_hidden_attrs[1];
-    write_rgfi(1, sail_sign_extend(temp_rip, 64));
+    write_rgfi(1, temp_rip);
     let lstar : bits(64) = read_msr(5);
     let lstar_addr : sbits(64) = lstar;
     if not_bool(canonical_address_p(signed(lstar_addr))) then x86_model_error(":LSTAR-NOT-CANONICAL");
-    write_rip(truncate(lstar_addr, 48));
+    write_rip(lstar_addr);
     let eflags : rflagsbits = rflags;
     wr64(0xb, sail_zero_extend(eflags.bits, 64));
     let fmask : bits(64) = read_msr(6);
@@ -39,7 +39,7 @@ function x86_syscall (proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode
     seg_hidden_attrs[2] = ss_attr.bits
 }
 
-val x86_syscall_both_views : (proc_mode, sbits(48), sbits(48), prefixes, bits(8), bits(8), modr_m, sib) -> unit
+val x86_syscall_both_views : (proc_mode, sbits(64), sbits(64), prefixes, bits(8), bits(8), modr_m, sib) -> unit
 
 function x86_syscall_both_views (proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode, modr_m, sib) = {
     let ctx : string = "X86-SYSCALL-BOTH-VIEWS";
@@ -59,7 +59,7 @@ function x86_syscall_both_views (proc_mode, start_rip, temp_rip, prefixes, rex_b
  <p>SYSRET when REX.W is not set is not supported yet because 0F 07 
  ( as opposed to REX.W + 0F 07 ) switches the machine to 
  compatibility mode, not 64-bit mode.</p> */
-val x86_sysret : (proc_mode, sbits(48), sbits(48), prefixes, bits(8), bits(8), modr_m, sib) -> unit
+val x86_sysret : (proc_mode, sbits(64), sbits(64), prefixes, bits(8), bits(8), modr_m, sib) -> unit
 
 function x86_sysret (proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode, modr_m, sib) = {
     let ctx : string = "X86-SYSRET";
@@ -72,7 +72,7 @@ function x86_sysret (proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode,
     if not_bool(0b00 == cpl) then x86_fault("(!!FAULT-FRESH :GP 0 :CPL!=0 (CONS 'CS-REGISTER CURRENT-CS-REGISTER))");
     let rcx_var : sbits(64) = rgfi(1);
     if not_bool(canonical_address_p(signed(rcx_var))) then x86_model_error(":RCX-NON-CANONICAL");
-    write_rip(truncate(rcx_var, 48));
+    write_rip(rcx_var);
     let r11_var : bits(32) = truncate(rgfi(11), 32);
     rflags = Mk_rflagsbits(logior(logand(r11_var, 0x003c7fd7), 0x00000002));
     let star : bits(64) = read_msr(4);

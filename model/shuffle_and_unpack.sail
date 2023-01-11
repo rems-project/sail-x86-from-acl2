@@ -22,7 +22,7 @@ function extract_64_bits (x, n) = {
 /*! Shuffle packed single-precision floating-point values
 <h3>Op/En = RMI: [OP XMM, XMM/M, IMM]</h3> 
  0F C6: SHUFPS xmm1, xmm2/m128, imm8<br/> */
-val x86_shufps_op_en_rmi : (proc_mode, sbits(48), sbits(48), prefixes, bits(8), bits(8), modr_m, sib) -> unit
+val x86_shufps_op_en_rmi : (proc_mode, sbits(64), sbits(64), prefixes, bits(8), bits(8), modr_m, sib) -> unit
 
 function x86_shufps_op_en_rmi (proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode, modr_m, sib) = {
     let ctx : string = "X86-SHUFPS-OP/EN-RMI";
@@ -36,9 +36,9 @@ function x86_shufps_op_en_rmi (proc_mode, start_rip, temp_rip, prefixes, rex_byt
     let seg_reg : seg_reg_idx = select_segment_register(proc_mode, prefixes, mod_var, r_m, sib);
     let inst_ac? : bool = true;
     let (xmm_mem, increment_rip_by, addr) : (bits(128), {|0, 1, 2, 4|}, sbits(64)) = x86_operand_from_modr_m_and_sib_bytes(proc_mode, 0b1, 16, inst_ac?, false, seg_reg, prefixes, temp_rip, rex_byte, r_m, mod_var, sib, 0b001);
-    let temp_rip : sbits(48) = add_to_iptr(proc_mode, temp_rip, bits_of_int(increment_rip_by, 48));
-    let imm : bits(8) = truncate(rme_size(proc_mode, select_address_size(proc_mode, Some(prefixes)), 1, sail_sign_extend(temp_rip, 64), None(), 1, ":X", false, false), 8);
-    let temp_rip : sbits(48) = add_to_iptr(proc_mode, temp_rip, 0x000000000001);
+    let temp_rip : sbits(64) = add_to_iptr(proc_mode, temp_rip, bits_of_int(increment_rip_by, 64));
+    let imm : bits(8) = truncate(rme_size(proc_mode, select_address_size(proc_mode, Some(prefixes)), 1, sail_sign_extend(truncate(temp_rip, 48), 64), None(), 1, ":X", false, false), 8);
+    let temp_rip : sbits(64) = add_to_iptr(proc_mode, temp_rip, 0x0000000000000001);
     let badlength? : option(int) = check_instruction_length(start_rip, temp_rip, 0b000);
     if is_some(badlength?) then x86_fault("(!!FAULT-FRESH :GP 0 :INSTRUCTION-LENGTH BADLENGTH?)");
     let imm0 : bits(2) = imm[1 .. 0];
@@ -57,7 +57,7 @@ function x86_shufps_op_en_rmi (proc_mode, start_rip, temp_rip, prefixes, rex_byt
 /*! Shuffle packed double-precision floating-point values
 <h3>Op/En = RMI: [OP XMM, XMM/M, IMM]</h3> 
  66 0F C6: SHUFPD xmm1, xmm2/m128, imm8<br/> */
-val x86_shufpd_op_en_rmi : (proc_mode, sbits(48), sbits(48), prefixes, bits(8), bits(8), modr_m, sib) -> unit
+val x86_shufpd_op_en_rmi : (proc_mode, sbits(64), sbits(64), prefixes, bits(8), bits(8), modr_m, sib) -> unit
 
 function x86_shufpd_op_en_rmi (proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode, modr_m, sib) = {
     let ctx : string = "X86-SHUFPD-OP/EN-RMI";
@@ -71,9 +71,9 @@ function x86_shufpd_op_en_rmi (proc_mode, start_rip, temp_rip, prefixes, rex_byt
     let seg_reg : seg_reg_idx = select_segment_register(proc_mode, prefixes, mod_var, r_m, sib);
     let inst_ac? : bool = true;
     let (xmm_mem, increment_rip_by, addr) : (bits(128), {|0, 1, 2, 4|}, sbits(64)) = x86_operand_from_modr_m_and_sib_bytes(proc_mode, 0b1, 16, inst_ac?, false, seg_reg, prefixes, temp_rip, rex_byte, r_m, mod_var, sib, 0b001);
-    let temp_rip : sbits(48) = add_to_iptr(proc_mode, temp_rip, bits_of_int(increment_rip_by, 48));
-    let imm : bits(8) = truncate(rme_size(proc_mode, select_address_size(proc_mode, Some(prefixes)), 1, sail_sign_extend(temp_rip, 64), None(), 1, ":X", false, false), 8);
-    let temp_rip : sbits(48) = add_to_iptr(proc_mode, temp_rip, 0x000000000001);
+    let temp_rip : sbits(64) = add_to_iptr(proc_mode, temp_rip, bits_of_int(increment_rip_by, 64));
+    let imm : bits(8) = truncate(rme_size(proc_mode, select_address_size(proc_mode, Some(prefixes)), 1, sail_sign_extend(truncate(temp_rip, 48), 64), None(), 1, ":X", false, false), 8);
+    let temp_rip : sbits(64) = add_to_iptr(proc_mode, temp_rip, 0x0000000000000001);
     let badlength? : option(int) = check_instruction_length(start_rip, temp_rip, 0b000);
     if is_some(badlength?) then x86_fault("(!!FAULT-FRESH :GP 0 :INSTRUCTION-LENGTH BADLENGTH?)");
     let imm0 : bits(1) = logbit(0, imm);
@@ -90,7 +90,7 @@ function x86_shufpd_op_en_rmi (proc_mode, start_rip, temp_rip, prefixes, rex_byt
 <h3>Op/En = RM: [OP XMM, XMM/M]</h3> 
  0F 14: UNPCKLPS xmm1, xmm2/m128<br/> 
  0F 15: UNPCKHPS xmm1, xmm2/m128<br/> */
-val x86_unpck?ps_op_en_rm : (range(0, 1), proc_mode, sbits(48), sbits(48), prefixes, bits(8), bits(8), modr_m, sib) -> unit
+val x86_unpck?ps_op_en_rm : (range(0, 1), proc_mode, sbits(64), sbits(64), prefixes, bits(8), bits(8), modr_m, sib) -> unit
 
 function x86_unpck?ps_op_en_rm (high_low, proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode, modr_m, sib) = {
     let ctx : string = "X86-UNPCK?PS-OP/EN-RM";
@@ -104,7 +104,7 @@ function x86_unpck?ps_op_en_rm (high_low, proc_mode, start_rip, temp_rip, prefix
     let seg_reg : seg_reg_idx = select_segment_register(proc_mode, prefixes, mod_var, r_m, sib);
     let inst_ac? : bool = true;
     let (xmm_mem, increment_rip_by, addr) : (bits(128), {|0, 1, 2, 4|}, sbits(64)) = x86_operand_from_modr_m_and_sib_bytes(proc_mode, 0b1, 16, inst_ac?, false, seg_reg, prefixes, temp_rip, rex_byte, r_m, mod_var, sib, 0b000);
-    let temp_rip : sbits(48) = add_to_iptr(proc_mode, temp_rip, bits_of_int(increment_rip_by, 48));
+    let temp_rip : sbits(64) = add_to_iptr(proc_mode, temp_rip, bits_of_int(increment_rip_by, 64));
     let badlength? : option(int) = check_instruction_length(start_rip, temp_rip, 0b000);
     if is_some(badlength?) then x86_fault("(!!FAULT-FRESH :GP 0 :INSTRUCTION-LENGTH BADLENGTH?)");
     let dword0 : bits(32) = {
@@ -145,7 +145,7 @@ function x86_unpck?ps_op_en_rm (high_low, proc_mode, start_rip, temp_rip, prefix
 <h3>Op/En = RM: [OP XMM, XMM/M]</h3> 
  66 0F 14: UNPCKLPD xmm1, xmm2/m128<br/> 
  66 0F 15: UNPCKHPD xmm1, xmm2/m128<br/> */
-val x86_unpck?pd_op_en_rm : (range(0, 1), proc_mode, sbits(48), sbits(48), prefixes, bits(8), bits(8), modr_m, sib) -> unit
+val x86_unpck?pd_op_en_rm : (range(0, 1), proc_mode, sbits(64), sbits(64), prefixes, bits(8), bits(8), modr_m, sib) -> unit
 
 function x86_unpck?pd_op_en_rm (high_low, proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode, modr_m, sib) = {
     let ctx : string = "X86-UNPCK?PD-OP/EN-RM";
@@ -159,7 +159,7 @@ function x86_unpck?pd_op_en_rm (high_low, proc_mode, start_rip, temp_rip, prefix
     let seg_reg : seg_reg_idx = select_segment_register(proc_mode, prefixes, mod_var, r_m, sib);
     let inst_ac? : bool = true;
     let (xmm_mem, increment_rip_by, addr) : (bits(128), {|0, 1, 2, 4|}, sbits(64)) = x86_operand_from_modr_m_and_sib_bytes(proc_mode, 0b1, 16, inst_ac?, false, seg_reg, prefixes, temp_rip, rex_byte, r_m, mod_var, sib, 0b000);
-    let temp_rip : sbits(48) = add_to_iptr(proc_mode, temp_rip, bits_of_int(increment_rip_by, 48));
+    let temp_rip : sbits(64) = add_to_iptr(proc_mode, temp_rip, bits_of_int(increment_rip_by, 64));
     let badlength? : option(int) = check_instruction_length(start_rip, temp_rip, 0b000);
     if is_some(badlength?) then x86_fault("(!!FAULT-FRESH :GP 0 :INSTRUCTION-LENGTH BADLENGTH?)");
     let qword0 : bits(64) = {

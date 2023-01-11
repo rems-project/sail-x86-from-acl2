@@ -1,6 +1,6 @@
 
 /*! Dispatch function for EVEX-encoded instructions in the two-byte opcode map */
-val evex_0f_execute : (proc_mode, sbits(48), sbits(48), prefixes, bits(8), evex_prefixes, bits(8), modr_m, sib) -> unit
+val evex_0f_execute : (proc_mode, sbits(64), sbits(64), prefixes, bits(8), evex_prefixes, bits(8), modr_m, sib) -> unit
 
 function evex_0f_execute (proc_mode, start_rip, temp_rip, prefixes, rex_byte, evex_prefixes, opcode, modr_m, sib) = {
     if ext_evex_0f_execute(proc_mode, start_rip, temp_rip, prefixes, rex_byte, evex_prefixes, opcode, modr_m, sib) then {
@@ -3912,7 +3912,7 @@ function evex_0f_execute (proc_mode, start_rip, temp_rip, prefixes, rex_byte, ev
 
 /*! Dispatch function for EVEX-encoded instructions in the first 
  three-byte opcode map */
-val evex_0f38_execute : (proc_mode, sbits(48), sbits(48), prefixes, bits(8), evex_prefixes, bits(8), modr_m, sib) -> unit
+val evex_0f38_execute : (proc_mode, sbits(64), sbits(64), prefixes, bits(8), evex_prefixes, bits(8), modr_m, sib) -> unit
 
 function evex_0f38_execute (proc_mode, start_rip, temp_rip, prefixes, rex_byte, evex_prefixes, opcode, modr_m, sib) = {
     if ext_evex_0f38_execute(proc_mode, start_rip, temp_rip, prefixes, rex_byte, evex_prefixes, opcode, modr_m, sib) then {
@@ -8666,7 +8666,7 @@ function evex_0f38_execute (proc_mode, start_rip, temp_rip, prefixes, rex_byte, 
 
 /*! Dispatch function for EVEX-encoded instructions in the second 
  three-byte opcode map */
-val evex_0f3a_execute : (proc_mode, sbits(48), sbits(48), prefixes, bits(8), evex_prefixes, bits(8), modr_m, sib) -> unit
+val evex_0f3a_execute : (proc_mode, sbits(64), sbits(64), prefixes, bits(8), evex_prefixes, bits(8), modr_m, sib) -> unit
 
 function evex_0f3a_execute (proc_mode, start_rip, temp_rip, prefixes, rex_byte, evex_prefixes, opcode, modr_m, sib) = {
     if ext_evex_0f3a_execute(proc_mode, start_rip, temp_rip, prefixes, rex_byte, evex_prefixes, opcode, modr_m, sib) then {
@@ -9783,7 +9783,7 @@ function evex_0f3a_execute (proc_mode, start_rip, temp_rip, prefixes, rex_byte, 
  
  <p><i>Reference: Intel Vol. 2A, Section 2.6: Intel ( R ) AVX-512 
  Encoding</i></p> */
-val evex_decode_and_execute : (proc_mode, sbits(48), sbits(48), prefixes, bits(8), evex_prefixes) -> unit
+val evex_decode_and_execute : (proc_mode, sbits(64), sbits(64), prefixes, bits(8), evex_prefixes) -> unit
 
 function evex_decode_and_execute (proc_mode, start_rip, temp_rip, prefixes, rex_byte, evex_prefixes) = {
     let ctx : string = "evex-decode-and-execute";
@@ -9796,16 +9796,16 @@ function evex_decode_and_execute (proc_mode, start_rip, temp_rip, prefixes, rex_
     if not_bool(Mk_evex_byte1(evex_byte1)[res] == 0b00) then x86_fault("(!!fault-fresh :ud :evex-prefixes evex-prefixes :byte1-reserved-bits)");
     let (evex_0f_map?, evex_0f38_map?, evex_0f3a_map?) : (bool, bool, bool) = (Mk_evex_byte1(evex_byte1)[mm] == 0b01, Mk_evex_byte1(evex_byte1)[mm] == 0b10, Mk_evex_byte1(evex_byte1)[mm] == 0b11);
     if not_bool(evex_0f_map? | evex_0f38_map? | evex_0f3a_map?) then x86_fault("(!!fault-fresh :ud :evex-prefixes evex-prefixes :mm evex-byte1)");
-    let evex_byte2 : bits(8) = rme08(proc_mode, select_address_size(proc_mode, Some(prefixes)), sail_sign_extend(temp_rip, 64), None(), 1, ":X");
-    let temp_rip : sbits(48) = add_to_iptr(proc_mode, temp_rip, 0x000000000001);
+    let evex_byte2 : bits(8) = rme08(proc_mode, select_address_size(proc_mode, Some(prefixes)), temp_rip, None(), 1, ":X");
+    let temp_rip : sbits(64) = add_to_iptr(proc_mode, temp_rip, 0x0000000000000001);
     let evex_prefixes : evex_prefixes = [evex_prefixes with byte2 = evex_byte2];
     if not_bool(Mk_evex_byte2(evex_byte2)[res] == 0b1) then x86_fault("(!!fault-fresh :ud :evex-prefixes evex-prefixes :byte2-reserved-bit)");
-    let evex_byte3 : bits(8) = rme08(proc_mode, select_address_size(proc_mode, Some(prefixes)), sail_sign_extend(temp_rip, 64), None(), 1, ":X");
-    let temp_rip : sbits(48) = add_to_iptr(proc_mode, temp_rip, 0x000000000001);
-    let opcode : bits(8) = rme08(proc_mode, select_address_size(proc_mode, Some(prefixes)), sail_sign_extend(temp_rip, 64), None(), 1, ":X");
-    let temp_rip : sbits(48) = add_to_iptr(proc_mode, temp_rip, 0x000000000001);
-    let modr_m : modr_m = Mk_modr_m(rme08(proc_mode, select_address_size(proc_mode, Some(prefixes)), sail_sign_extend(temp_rip, 64), None(), 1, ":X"));
-    let temp_rip : sbits(48) = add_to_iptr(proc_mode, temp_rip, 0x000000000001);
+    let evex_byte3 : bits(8) = rme08(proc_mode, select_address_size(proc_mode, Some(prefixes)), temp_rip, None(), 1, ":X");
+    let temp_rip : sbits(64) = add_to_iptr(proc_mode, temp_rip, 0x0000000000000001);
+    let opcode : bits(8) = rme08(proc_mode, select_address_size(proc_mode, Some(prefixes)), temp_rip, None(), 1, ":X");
+    let temp_rip : sbits(64) = add_to_iptr(proc_mode, temp_rip, 0x0000000000000001);
+    let modr_m : modr_m = Mk_modr_m(rme08(proc_mode, select_address_size(proc_mode, Some(prefixes)), temp_rip, None(), 1, ":X"));
+    let temp_rip : sbits(64) = add_to_iptr(proc_mode, temp_rip, 0x0000000000000001);
     let sib? : bool = {
         let p4? : bool = 0x67 == prefixes[adr];
         let n16_bit_addressp : bool = 2 == select_address_size(proc_mode, Some(prefixes));
@@ -9813,14 +9813,14 @@ function evex_decode_and_execute (proc_mode, start_rip, temp_rip, prefixes, rex_
     };
     let sib : sib = {
         if sib? then {
-            Mk_sib(rme08(proc_mode, select_address_size(proc_mode, Some(prefixes)), sail_sign_extend(temp_rip, 64), None(), 1, ":X"))
+            Mk_sib(rme08(proc_mode, select_address_size(proc_mode, Some(prefixes)), temp_rip, None(), 1, ":X"))
         } else {
             Mk_sib(0x00)
         }
     };
-    let temp_rip : sbits(48) = {
+    let temp_rip : sbits(64) = {
         if sib? then {
-            add_to_iptr(proc_mode, temp_rip, 0x000000000001)
+            add_to_iptr(proc_mode, temp_rip, 0x0000000000000001)
         } else {
             temp_rip
         }

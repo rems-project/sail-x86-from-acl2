@@ -4,7 +4,7 @@ $include "./three_byte_opcodes_dispatch.sail"
 <p>@ ( ' two-byte-opcode-execute ' ) is the doorway to the two-byte 
  opcode map, and will lead to the three-byte opcode map if @ ( ' opcode ' ) is 
  either @ ( ' #x38 ' ) or @ ( ' #x3A ' ) .</p> */
-val two_byte_opcode_execute : (proc_mode, sbits(48), sbits(48), prefixes, bits(8), bits(8), bits(8), modr_m, sib) -> unit
+val two_byte_opcode_execute : (proc_mode, sbits(64), sbits(64), prefixes, bits(8), bits(8), bits(8), modr_m, sib) -> unit
 
 function two_byte_opcode_execute (proc_mode, start_rip, temp_rip, prefixes, mandatory_prefix, rex_byte, opcode, modr_m, sib) = {
     if ext_two_byte_opcode_execute(proc_mode, start_rip, temp_rip, prefixes, mandatory_prefix, rex_byte, opcode, modr_m, sib) then {
@@ -2762,24 +2762,24 @@ function two_byte_opcode_execute (proc_mode, start_rip, temp_rip, prefixes, mand
 
 /*! Decoder and dispatch function for two-byte opcodes
 <p>Source: Intel Manual, Volume 2, Appendix A-2</p> */
-val two_byte_opcode_decode_and_execute : (proc_mode, sbits(48), sbits(48), prefixes, bits(8), bits(8)) -> unit
+val two_byte_opcode_decode_and_execute : (proc_mode, sbits(64), sbits(64), prefixes, bits(8), bits(8)) -> unit
 
 function two_byte_opcode_decode_and_execute (proc_mode, start_rip, temp_rip, prefixes, rex_byte, escape_byte) = {
     let ctx : string = "two-byte-opcode-decode-and-execute";
-    let opcode : bits(8) = rme08(proc_mode, select_address_size(proc_mode, Some(prefixes)), sail_sign_extend(temp_rip, 64), None(), 1, ":X");
-    let temp_rip : sbits(48) = add_to_iptr(proc_mode, temp_rip, 0x000000000001);
+    let opcode : bits(8) = rme08(proc_mode, select_address_size(proc_mode, Some(prefixes)), temp_rip, None(), 1, ":X");
+    let temp_rip : sbits(64) = add_to_iptr(proc_mode, temp_rip, 0x0000000000000001);
     let mandatory_prefix : bits(8) = compute_mandatory_prefix_for_two_byte_opcode(proc_mode, opcode, prefixes);
     let modr_m? : bool = two_byte_opcode_modr_m_p(proc_mode, mandatory_prefix, opcode);
     let modr_m : modr_m = {
         if modr_m? then {
-            Mk_modr_m(rme08(proc_mode, select_address_size(proc_mode, Some(prefixes)), sail_sign_extend(temp_rip, 64), None(), 1, ":X"))
+            Mk_modr_m(rme08(proc_mode, select_address_size(proc_mode, Some(prefixes)), temp_rip, None(), 1, ":X"))
         } else {
             Mk_modr_m(0x00)
         }
     };
-    let temp_rip : sbits(48) = {
+    let temp_rip : sbits(64) = {
         if modr_m? then {
-            add_to_iptr(proc_mode, temp_rip, 0x000000000001)
+            add_to_iptr(proc_mode, temp_rip, 0x0000000000000001)
         } else {
             temp_rip
         }
@@ -2789,14 +2789,14 @@ function two_byte_opcode_decode_and_execute (proc_mode, start_rip, temp_rip, pre
       x86_decode_sib_p(modr_m, n16_bit_addressp));
     let sib : sib = {
         if sib? then {
-            Mk_sib(rme08(proc_mode, select_address_size(proc_mode, Some(prefixes)), sail_sign_extend(temp_rip, 64), None(), 1, ":X"))
+            Mk_sib(rme08(proc_mode, select_address_size(proc_mode, Some(prefixes)), temp_rip, None(), 1, ":X"))
         } else {
             Mk_sib(0x00)
         }
     };
-    let temp_rip : sbits(48) = {
+    let temp_rip : sbits(64) = {
         if sib? then {
-            add_to_iptr(proc_mode, temp_rip, 0x000000000001)
+            add_to_iptr(proc_mode, temp_rip, 0x0000000000000001)
         } else {
             temp_rip
         }

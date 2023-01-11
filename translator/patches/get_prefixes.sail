@@ -1,4 +1,4 @@
-val get_prefixes : (proc_mode, sbits(48), prefixes, bits(8), range(0, 15)) -> (prefixes, bits(8))
+val get_prefixes : (proc_mode, sbits(64), prefixes, bits(8), range(0, 15)) -> (prefixes, bits(8))
 
 function get_prefixes (proc_mode, start_rip, prefixes, rex_byte, cnt) = {
     if cnt == 0 then {
@@ -10,7 +10,7 @@ function get_prefixes (proc_mode, start_rip, prefixes, rex_byte, cnt) = {
             if not_bool(continue?) then {
                 (prefixes, rex_byte)
             } else {
-                let next_rip : sbits(48) = add_to_iptr(proc_mode, start_rip, 0x000000000001);
+                let next_rip : sbits(64) = add_to_iptr(proc_mode, start_rip, 0x0000000000000001);
                 get_prefixes(proc_mode, next_rip, prefixes, rex_byte, check_range(0, 15, cnt - 1))
             }
         } else {
@@ -19,7 +19,7 @@ function get_prefixes (proc_mode, start_rip, prefixes, rex_byte, cnt) = {
               0 => {
                   let rex? : bool = in_64bit_mode(proc_mode) & bits_of_int(ash(unsigned(byte), -4), 4) == 0x4;
                   if rex? then {
-                      let next_rip : sbits(48) = add_to_iptr(proc_mode, start_rip, 0x000000000001);
+                      let next_rip : sbits(64) = add_to_iptr(proc_mode, start_rip, 0x0000000000000001);
                       get_prefixes(proc_mode, next_rip, prefixes, byte, check_range(0, 15, cnt - 1))
                   } else {
                       let prefixes : prefixes = [prefixes with nxt = byte];
@@ -27,7 +27,7 @@ function get_prefixes (proc_mode, start_rip, prefixes, rex_byte, cnt) = {
                   }
               },
               1 => {
-                  let next_rip : sbits(48) = add_to_iptr(proc_mode, start_rip, 0x000000000001);
+                  let next_rip : sbits(64) = add_to_iptr(proc_mode, start_rip, 0x0000000000000001);
                   let prefixes : prefixes = {
                       if byte == 0xf0 then {
                           [prefixes with lck = byte]
@@ -38,7 +38,7 @@ function get_prefixes (proc_mode, start_rip, prefixes, rex_byte, cnt) = {
                   get_prefixes(proc_mode, next_rip, prefixes, 0x00, check_range(0, 15, cnt - 1))
               },
               2 => {
-                  let next_rip : sbits(48) = add_to_iptr(proc_mode, start_rip, 0x000000000001);
+                  let next_rip : sbits(64) = add_to_iptr(proc_mode, start_rip, 0x0000000000000001);
                   if in_64bit_mode(proc_mode) & (byte == 0x64 | byte == 0x65) | not_bool(in_64bit_mode(proc_mode)) then {
                       get_prefixes(proc_mode, next_rip, [prefixes with seg = byte], 0x00, check_range(0, 15, cnt - 1))
                   } else {
@@ -46,11 +46,11 @@ function get_prefixes (proc_mode, start_rip, prefixes, rex_byte, cnt) = {
                   }
               },
               3 => {
-                  let next_rip : sbits(48) = add_to_iptr(proc_mode, start_rip, 0x000000000001);
+                  let next_rip : sbits(64) = add_to_iptr(proc_mode, start_rip, 0x0000000000000001);
                   get_prefixes(proc_mode, next_rip, [prefixes with opr = byte], 0x00, check_range(0, 15, cnt - 1))
               },
               4 => {
-                  let next_rip : sbits(48) = add_to_iptr(proc_mode, start_rip, 0x000000000001);
+                  let next_rip : sbits(64) = add_to_iptr(proc_mode, start_rip, 0x0000000000000001);
                   get_prefixes(proc_mode, next_rip, [prefixes with adr = byte], 0x00, check_range(0, 15, cnt - 1))
               },
               _ => (prefixes, rex_byte)

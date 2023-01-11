@@ -665,11 +665,15 @@ function fault () = fault_reg
  * the ACL2 implementations.
  */
 
+type max_linear_address_size : Int = 48
+let max_linear_address_size = sizeof(max_linear_address_size)
+type lin_addr = sbits(max_linear_address_size)
+
 /* Address translation function and another helper function used by `rb`/`wb` */
-val ia32e_la_to_pa : (sbits(48), string) -> bits(52)
+val ia32e_la_to_pa : (lin_addr, string) -> bits(52)
 val canonical_address_p : int -> bool
 val n64_bit_modep : unit -> bool
-val observe_mem_write : (sbits(48), int) -> unit
+val observe_mem_write : (lin_addr, int) -> unit
 
 val rb : forall 'addr_width 'n, 'addr_width > 0 & 'n > 0. (int('n), bits('addr_width), string) -> bits(8 * 'n)
 
@@ -677,7 +681,7 @@ function rb (n, addr, access_kind) = {
   result : bits(8 * 'n) = sail_zeros(8 * n);
   foreach (offset from 0 to (n - 1)) {
     if not_bool(canonical_address_p(signed(addr) + offset)) then x86_model_error("rb: non-canonical address");
-    let lin_addr : bits(48) = add_bits_int(sail_mask_signed(48, addr), offset);
+    let lin_addr : lin_addr = add_bits_int(sail_mask_signed(max_linear_address_size, addr), offset);
     let phys_addr : bits(52) =
       if app_view then sail_mask_signed(52, lin_addr) else ia32e_la_to_pa(lin_addr, access_kind)
     in
@@ -691,17 +695,17 @@ val wb : forall 'addr_width 'n, 'addr_width > 0 & 'n > 0. (int('n), bits('addr_w
 function wb (n, addr, access_kind, value) = {
   foreach (offset from 0 to (n - 1)) {
     if not_bool(canonical_address_p(signed(addr) + offset)) then {
-        if offset != 0 then observe_mem_write(sail_mask_signed(48, addr), offset - 1);
+        if offset != 0 then observe_mem_write(sail_mask_signed(max_linear_address_size, addr), offset - 1);
         x86_model_error("wb: non-canonical address")
     };
-    let lin_addr : bits(48) = add_bits_int(sail_mask_signed(48, addr), offset);
+    let lin_addr : lin_addr = add_bits_int(sail_mask_signed(max_linear_address_size, addr), offset);
     let phys_addr : bits(52) =
       if app_view then sail_mask_signed(52, lin_addr) else ia32e_la_to_pa(lin_addr, access_kind)
     in
     bang_memi(phys_addr, value[((8 * offset) + 7) .. (8 * offset)])
   };
 
-  let dummy = observe_mem_write(sail_mask_signed(48, addr), n);
+  let dummy = observe_mem_write(sail_mask_signed(max_linear_address_size, addr), n);
   return ()
 }
 

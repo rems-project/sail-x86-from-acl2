@@ -25,21 +25,21 @@ $include "./other_non_det.sail"
  It does not seem to make sense 
  to change the instruction pointer size on a per-instruction basis. 
  </p> */
-val read_iptr : proc_mode -> sbits(48)
+val read_iptr : proc_mode -> sbits(64)
 
 function read_iptr proc_mode = {
-    let iptr : sbits(48) = read_rip();
+    let iptr : sbits(64) = read_rip();
     if in_64bit_mode(proc_mode) then {
         iptr
     } else if in_compatibility_mode(proc_mode) then {
         let cs_attr : bits(16) = seg_hidden_attrs[1];
         let cs_d : bits(1) = Mk_code_segment_descriptor_attributesbits(cs_attr)[d];
         if cs_d == 0b1 then {
-            sail_zero_extend(truncate(iptr, 32), 48)
+            sail_zero_extend(truncate(iptr, 32), 64)
         } else {
-            sail_zero_extend(sail_zero_extend(truncate(iptr, 16), 32), 48)
+            sail_zero_extend(sail_zero_extend(truncate(iptr, 16), 32), 64)
         }
-    } else 0x000000000000
+    } else 0x0000000000000000
 }
 
 /*! Add a specified amount to an instruction pointer.
@@ -70,20 +70,20 @@ function read_iptr proc_mode = {
  so the valid effective addresses are always between 0 and the segment limit 
  ( cf. @ ( tsee segment-base-and-bounds ) ) . 
  </p> */
-val add_to_iptr : (proc_mode, sbits(48), sbits(48)) -> sbits(48)
+val add_to_iptr : (proc_mode, sbits(64), sbits(64)) -> sbits(64)
 
 function add_to_iptr (proc_mode, iptr, delta) = {
-    let iptr_plus_delta : sbits(49) = bits_of_int(signed(iptr) + signed(delta), 49);
+    let iptr_plus_delta : sbits(65) = bits_of_int(signed(iptr) + signed(delta), 65);
     if in_64bit_mode(proc_mode) then {
         if canonical_address_p(signed(iptr_plus_delta)) then {
-            truncate(iptr_plus_delta, 48)
+            truncate(iptr_plus_delta, 64)
         } else {
             x86_model_error(":NON-CANONICAL-INSTRUCTION-POINTER")
         }
     } else if in_compatibility_mode(proc_mode) then {
         let cs_limit : bits(32) = loghead(32, seg_hidden_limits[1]);
         if 0 <= signed(iptr_plus_delta) & signed(iptr_plus_delta) <= unsigned(cs_limit) then {
-            truncate(sail_zero_extend(truncate(iptr_plus_delta, 32), 49), 48)
+            truncate(sail_zero_extend(truncate(iptr_plus_delta, 32), 65), 64)
         } else {
             x86_model_error(":OUT-OF-SEGMENT-INSTRUCTION-POINTER")
         }
@@ -167,7 +167,7 @@ function add_to_iptr (proc_mode, iptr, delta) = {
  these coercions are expected not to change 
  the argument instruction pointer. 
  </p> */
-val write_iptr : (proc_mode, sbits(48)) -> unit
+val write_iptr : (proc_mode, sbits(64)) -> unit
 
 function write_iptr (proc_mode, iptr) = {
     if in_64bit_mode(proc_mode) then {
@@ -176,10 +176,10 @@ function write_iptr (proc_mode, iptr) = {
         let cs_attr : bits(16) = seg_hidden_attrs[1];
         let cs_d : bits(1) = Mk_code_segment_descriptor_attributesbits(cs_attr)[d];
         if cs_d == 0b1 then {
-            write_rip(sail_zero_extend(truncate(iptr, 32), 48))
+            write_rip(sail_zero_extend(truncate(iptr, 32), 64))
         } else {
-            let rip_var : sbits(48) = read_rip();
-            let rip_new : sbits(48) = changeSlice(rip_var, 0, 16, truncate(iptr, 16));
+            let rip_var : sbits(64) = read_rip();
+            let rip_new : sbits(64) = changeSlice(rip_var, 0, 16, truncate(iptr, 16));
             write_rip(rip_new)
         }
     } else ()
@@ -393,7 +393,7 @@ function write_sptr (proc_mode, sptr) = {
  See Intel Vol. 2 Table 2-1.</p> 
  <p>The displacement is read as a signed values: 
  see AMD manual, Dec ' 17, Volume 3, Section 1.5.</p> */
-val x86_effective_addr_from_sib : (proc_mode, sbits(48), bits(8), bits(2), sib) -> (int, sbits(64), {|0, 1, 4|})
+val x86_effective_addr_from_sib : (proc_mode, sbits(64), bits(8), bits(2), sib) -> (int, sbits(64), {|0, 1, 4|})
 
 function x86_effective_addr_from_sib (proc_mode, temp_rip, rex_byte, mod_var, sib) = {
     let b : bits(3) = sib[base];
@@ -402,7 +402,7 @@ function x86_effective_addr_from_sib (proc_mode, temp_rip, rex_byte, mod_var, si
         match mod_var {
           0 => {
               if b == 0b101 then {
-                  let dword : sbits(64) = rime_size(proc_mode, select_address_size(proc_mode, None()), 4, sail_sign_extend(temp_rip, 64), None(), 1, ":X", check_alignment?, false);
+                  let dword : sbits(64) = rime_size(proc_mode, select_address_size(proc_mode, None()), 4, temp_rip, None(), 1, ":X", check_alignment?, false);
                   (0x0000000000000000, dword, 4)
               } else {
                   (if in_64bit_mode(proc_mode) then {
@@ -413,7 +413,7 @@ function x86_effective_addr_from_sib (proc_mode, temp_rip, rex_byte, mod_var, si
               }
           },
           1 => {
-              let byte : sbits(64) = rime_size(proc_mode, select_address_size(proc_mode, None()), 1, sail_sign_extend(temp_rip, 64), None(), 1, ":X", check_alignment?, false);
+              let byte : sbits(64) = rime_size(proc_mode, select_address_size(proc_mode, None()), 1, temp_rip, None(), 1, ":X", check_alignment?, false);
               (if in_64bit_mode(proc_mode) then {
                   rgfi(unsigned(reg_index(b, rex_byte, 0b00)))
               } else {
@@ -421,7 +421,7 @@ function x86_effective_addr_from_sib (proc_mode, temp_rip, rex_byte, mod_var, si
               }, byte, 1)
           },
           2 => {
-              let dword : sbits(64) = rime_size(proc_mode, select_address_size(proc_mode, None()), 4, sail_sign_extend(temp_rip, 64), None(), 1, ":X", check_alignment?, false);
+              let dword : sbits(64) = rime_size(proc_mode, select_address_size(proc_mode, None()), 4, temp_rip, None(), 1, ":X", check_alignment?, false);
               (if in_64bit_mode(proc_mode) then {
                   rgfi(unsigned(reg_index(b, rex_byte, 0b00)))
               } else {
@@ -476,17 +476,17 @@ function x86_effective_addr_from_sib (proc_mode, temp_rip, rex_byte, mod_var, si
  <p> 
  This function is called only when the address size is 16 bits. 
  </p> */
-val x86_effective_addr_16_disp : (proc_mode, sbits(48), bits(2)) -> (sbits(64), {|0, 1, 2|})
+val x86_effective_addr_16_disp : (proc_mode, sbits(64), bits(2)) -> (sbits(64), {|0, 1, 2|})
 
 function x86_effective_addr_16_disp (proc_mode, temp_rip, mod_var) = {
     (match mod_var {
       0 => (0x0000000000000000, 0),
       1 => {
-          let byte : sbits(64) = rime_size(proc_mode, select_address_size(proc_mode, None()), 1, sail_sign_extend(temp_rip, 64), None(), 1, ":X", false, false);
+          let byte : sbits(64) = rime_size(proc_mode, select_address_size(proc_mode, None()), 1, temp_rip, None(), 1, ":X", false, false);
           (byte, 1)
       },
       2 => {
-          let word : sbits(64) = rime_size(proc_mode, select_address_size(proc_mode, None()), 2, sail_sign_extend(temp_rip, 64), None(), 1, ":X", false, false);
+          let word : sbits(64) = rime_size(proc_mode, select_address_size(proc_mode, None()), 2, temp_rip, None(), 1, ":X", false, false);
           (word, 2)
       },
       _ => x86_model_error("mod-value-wrong")
@@ -506,7 +506,7 @@ function x86_effective_addr_16_disp (proc_mode, temp_rip, mod_var) = {
  when there is an address size override prefix: 
  see @ ( tsee x86-effective-addr-32/64 ) . 
  </p> */
-val x86_effective_addr_16 : (proc_mode, sbits(48), bits(3), bits(2)) -> (bits(16), {|0, 1, 2|})
+val x86_effective_addr_16 : (proc_mode, sbits(64), bits(3), bits(2)) -> (bits(16), {|0, 1, 2|})
 
 function x86_effective_addr_16 (proc_mode, temp_rip, r_m, mod_var) = {
     (match r_m {
@@ -547,7 +547,7 @@ function x86_effective_addr_16 (proc_mode, temp_rip, r_m, mod_var) = {
       6 => {
           (match mod_var {
             0 => {
-                let disp : sbits(64) = rime_size(proc_mode, select_address_size(proc_mode, None()), 2, sail_sign_extend(temp_rip, 64), None(), 1, ":X", false, false);
+                let disp : sbits(64) = rime_size(proc_mode, select_address_size(proc_mode, None()), 2, temp_rip, None(), 1, ":X", false, false);
                 (truncate(disp, 16), 2)
             },
             _ => {
@@ -612,7 +612,7 @@ function x86_effective_addr_16 (proc_mode, temp_rip, r_m, mod_var) = {
  which are also effective addresses in 64-bit mode. 
  In 32-bit mode, 
  we use @ ( ' rr32 ' ) to read bases as unsigned effective addresses.</p> */
-val x86_effective_addr_32_64 : (proc_mode, bool, sbits(48), bits(8), bits(3), bits(2), sib, bits(3)) -> (sbits(64), {|0, 1, 4|})
+val x86_effective_addr_32_64 : (proc_mode, bool, sbits(64), bits(8), bits(3), bits(2), sib, bits(3)) -> (sbits(64), {|0, 1, 4|})
 
 function x86_effective_addr_32_64 (proc_mode, p4, temp_rip, rex_byte, r_m, mod_var, sib, num_imm_bytes) = {
     let (addr, displacement, increment_rip_by) : (int, sbits(64), {|0, 1, 4|}) = {
@@ -622,12 +622,12 @@ function x86_effective_addr_32_64 (proc_mode, p4, temp_rip, rex_byte, r_m, mod_v
                 4 => x86_effective_addr_from_sib(proc_mode, temp_rip, rex_byte, mod_var, sib),
                 5 => {
                     if in_64bit_mode(proc_mode) then {
-                        let dword : sbits(64) = rime_size(Mode_64bit, select_address_size(proc_mode, None()), 4, sail_sign_extend(temp_rip, 64), None(), 1, ":X", false, false);
-                        let next_rip : sbits(48) = add_to_iptr(Mode_64bit, temp_rip, bits_of_int(4 + unsigned(num_imm_bytes), 48));
+                        let dword : sbits(64) = rime_size(Mode_64bit, select_address_size(proc_mode, None()), 4, temp_rip, None(), 1, ":X", false, false);
+                        let next_rip : sbits(64) = add_to_iptr(Mode_64bit, temp_rip, bits_of_int(4 + unsigned(num_imm_bytes), 64));
                         (signed(next_rip), dword, 4)
                     } else {
-                        let dword : sbits(64) = rime_size(proc_mode, select_address_size(proc_mode, None()), 4, sail_sign_extend(temp_rip, 64), None(), 1, ":X", false, false);
-                        (signed(0x000000000000), dword, 4)
+                        let dword : sbits(64) = rime_size(proc_mode, select_address_size(proc_mode, None()), 4, temp_rip, None(), 1, ":X", false, false);
+                        (signed(0x0000000000000000), dword, 4)
                     }
                 },
                 _ => (if in_64bit_mode(proc_mode) then {
@@ -641,7 +641,7 @@ function x86_effective_addr_32_64 (proc_mode, p4, temp_rip, rex_byte, r_m, mod_v
               (match r_m {
                 4 => x86_effective_addr_from_sib(proc_mode, temp_rip, rex_byte, mod_var, sib),
                 _ => {
-                    let byte2 : sbits(64) = rime_size(proc_mode, select_address_size(proc_mode, None()), 1, sail_sign_extend(temp_rip, 64), None(), 1, ":X", false, false);
+                    let byte2 : sbits(64) = rime_size(proc_mode, select_address_size(proc_mode, None()), 1, temp_rip, None(), 1, ":X", false, false);
                     let reg : sbits(64) = {
                         if in_64bit_mode(proc_mode) then {
                             rgfi(unsigned(reg_index(r_m, rex_byte, 0b00)))
@@ -657,7 +657,7 @@ function x86_effective_addr_32_64 (proc_mode, p4, temp_rip, rex_byte, r_m, mod_v
               (match r_m {
                 4 => x86_effective_addr_from_sib(proc_mode, temp_rip, rex_byte, mod_var, sib),
                 _ => {
-                    let dword : sbits(64) = rime_size(proc_mode, select_address_size(proc_mode, None()), 4, sail_sign_extend(temp_rip, 64), None(), 1, ":X", false, false);
+                    let dword : sbits(64) = rime_size(proc_mode, select_address_size(proc_mode, None()), 4, temp_rip, None(), 1, ":X", false, false);
                     let reg : sbits(64) = {
                         if in_64bit_mode(proc_mode) then {
                             rgfi(unsigned(reg_index(r_m, rex_byte, 0b00)))
@@ -693,7 +693,7 @@ function x86_effective_addr_32_64 (proc_mode, p4, temp_rip, rex_byte, r_m, mod_v
  @ ( tsee x86-effective-addr-16 ) or @ ( tsee x86-effective-addr-32/64 ) 
  based on the address size. 
  </p> */
-val x86_effective_addr : (proc_mode, prefixes, sbits(48), bits(8), bits(3), bits(2), sib, bits(3)) -> (sbits(64), {|0, 1, 2, 4|})
+val x86_effective_addr : (proc_mode, prefixes, sbits(64), bits(8), bits(3), bits(2), sib, bits(3)) -> (sbits(64), {|0, 1, 2, 4|})
 
 function x86_effective_addr (proc_mode, prefixes, temp_rip, rex_byte, r_m, mod_var, sib, num_imm_bytes) = {
     let p4 = 0x67 == prefixes[adr];
@@ -765,7 +765,7 @@ function alignment_checking_enabled_p () = {
  which pass the effective address calculated by this function 
  to @ ( tsee x86-operand-to-reg/mem ) ( which writes the result to memory ) . 
  </p> */
-val x86_operand_from_modr_m_and_sib_bytes : (proc_mode, bits(1), {|1, 2, 4, 6, 8, 10, 16|}, bool, bool, range(0, 5), prefixes, sbits(48), bits(8), bits(3), bits(2), sib, bits(3)) -> (bits(128), {|0, 1, 2, 4|}, sbits(64))
+val x86_operand_from_modr_m_and_sib_bytes : (proc_mode, bits(1), {|1, 2, 4, 6, 8, 10, 16|}, bool, bool, range(0, 5), prefixes, sbits(64), bits(8), bits(3), bits(2), sib, bits(3)) -> (bits(128), {|0, 1, 2, 4|}, sbits(64))
 
 function x86_operand_from_modr_m_and_sib_bytes (proc_mode, reg_type, operand_size, inst_ac?, memory_ptr?, seg_reg, prefixes, temp_rip, rex_byte, r_m, mod_var, sib, num_imm_bytes) = {
     let (addr, increment_rip_by) : (sbits(64), {|0, 1, 2, 4|}) = {
@@ -936,17 +936,14 @@ function select_operand_size (proc_mode, byte_operand?, rex_byte, imm?, prefixes
  Otherwise, this function returns the offending length ( a number above 15 ) , 
  which is useful for error reporting in the model. 
  </p> */
-val check_instruction_length : (sbits(48), sbits(48), bits(3)) -> option(int)
+val check_instruction_length : (sbits(64), sbits(64), bits(3)) -> option(int)
 
 function check_instruction_length (start_rip, temp_rip, delta_rip) = {
-    let start_rip : int = signed(start_rip);
-    let temp_rip : int = signed(temp_rip);
-    let delta_rip : nat = unsigned(delta_rip);
-    let end_rip : sbits(49) = bits_of_int(signed(bits_of_int(temp_rip, 48)) + unsigned(bits_of_int(delta_rip, 3)), 49);
-    let length : sbits(50) = bits_of_int(signed(end_rip) - signed(bits_of_int(start_rip, 48)), 50);
-    if 15 < signed(length) then {
-        Some(signed(length))
-    } else {
+    let end_rip : sbits(65) = sail_sign_extend(temp_rip, 65) + sail_zero_extend(delta_rip, 65);
+    let length : int = signed(end_rip) - signed(start_rip);
+    if length <= 15 & canonical_address_p(signed(start_rip)) & canonical_address_p(signed(temp_rip)) then {
         None()
+    } else {
+        Some(length)
     }
 }

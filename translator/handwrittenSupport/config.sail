@@ -1,7 +1,7 @@
 $ifndef __X86_CONFIG
 $define __X86_CONFIG
 
-function clause __SetConfig("rip", value) = write_rip(get_slice_int(48, value, 0))
+function clause __SetConfig("rip", value) = write_rip(get_slice_int(64, value, 0))
 function clause __SetConfig("rax", value) = write_rgfi(0, get_slice_int(64, value, 0))
 function clause __SetConfig("rbx", value) = write_rgfi(3, get_slice_int(64, value, 0))
 function clause __SetConfig("rcx", value) = write_rgfi(1, get_slice_int(64, value, 0))

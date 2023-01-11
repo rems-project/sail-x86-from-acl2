@@ -51,31 +51,31 @@ function is_ext_prefix_byte(proc_mode, prefixes, rex_byte, cnt, byte) = false
 val process_ext_prefix_byte : (proc_mode, prefixes, bits(8), range(0, 15), bits(8)) -> (prefixes, bits(8), bool)
 function process_ext_prefix_byte(proc_mode, prefixes, rex_byte, cnt, byte) = (prefixes, rex_byte, false)
 
-val ext_one_byte_opcode_execute : (proc_mode, sbits(48), sbits(48), prefixes, bits(8), bits(8), modr_m, sib) -> bool
+val ext_one_byte_opcode_execute : (proc_mode, sbits(64), sbits(64), prefixes, bits(8), bits(8), modr_m, sib) -> bool
 function ext_one_byte_opcode_execute(proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode, modr_m, sib) = false
 
-val ext_two_byte_opcode_execute : (proc_mode, sbits(48), sbits(48), prefixes, bits(8), bits(8), bits(8), modr_m, sib) -> bool
+val ext_two_byte_opcode_execute : (proc_mode, sbits(64), sbits(64), prefixes, bits(8), bits(8), bits(8), modr_m, sib) -> bool
 function ext_two_byte_opcode_execute(proc_mode, start_rip, temp_rip, prefixes, mandatory_prefix, rex_byte, opcode, modr_m, sib) = false
 
-val ext_vex_0f_execute : (proc_mode, sbits(48), sbits(48), prefixes, bits(8), vex_prefixes, bits(8), modr_m, sib) -> bool
+val ext_vex_0f_execute : (proc_mode, sbits(64), sbits(64), prefixes, bits(8), vex_prefixes, bits(8), modr_m, sib) -> bool
 function ext_vex_0f_execute(proc_mode, start_rip, temp_rip, prefixes, rex_byte, vex_prefixes, opcode, modr_m, sib) = false
 
-val ext_vex_0f38_execute : (proc_mode, sbits(48), sbits(48), prefixes, bits(8), vex_prefixes, bits(8), modr_m, sib) -> bool
+val ext_vex_0f38_execute : (proc_mode, sbits(64), sbits(64), prefixes, bits(8), vex_prefixes, bits(8), modr_m, sib) -> bool
 function ext_vex_0f38_execute(proc_mode, start_rip, temp_rip, prefixes, rex_byte, vex_prefixes, opcode, modr_m, sib) = false
 
-val ext_vex_0f3a_execute : (proc_mode, sbits(48), sbits(48), prefixes, bits(8), vex_prefixes, bits(8), modr_m, sib) -> bool
+val ext_vex_0f3a_execute : (proc_mode, sbits(64), sbits(64), prefixes, bits(8), vex_prefixes, bits(8), modr_m, sib) -> bool
 function ext_vex_0f3a_execute(proc_mode, start_rip, temp_rip, prefixes, rex_byte, vex_prefixes, opcode, modr_m, sib) = false
 
-val ext_evex_0f_execute : (proc_mode, sbits(48), sbits(48), prefixes, bits(8), evex_prefixes, bits(8), modr_m, sib) -> bool
+val ext_evex_0f_execute : (proc_mode, sbits(64), sbits(64), prefixes, bits(8), evex_prefixes, bits(8), modr_m, sib) -> bool
 function ext_evex_0f_execute(proc_mode, start_rip, temp_rip, prefixes, rex_byte, evex_prefixes, opcode, modr_m, sib) = false
 
-val ext_evex_0f38_execute : (proc_mode, sbits(48), sbits(48), prefixes, bits(8), evex_prefixes, bits(8), modr_m, sib) -> bool
+val ext_evex_0f38_execute : (proc_mode, sbits(64), sbits(64), prefixes, bits(8), evex_prefixes, bits(8), modr_m, sib) -> bool
 function ext_evex_0f38_execute(proc_mode, start_rip, temp_rip, prefixes, rex_byte, evex_prefixes, opcode, modr_m, sib) = false
 
-val ext_evex_0f3a_execute : (proc_mode, sbits(48), sbits(48), prefixes, bits(8), evex_prefixes, bits(8), modr_m, sib) -> bool
+val ext_evex_0f3a_execute : (proc_mode, sbits(64), sbits(64), prefixes, bits(8), evex_prefixes, bits(8), modr_m, sib) -> bool
 function ext_evex_0f3a_execute(proc_mode, start_rip, temp_rip, prefixes, rex_byte, evex_prefixes, opcode, modr_m, sib) = false
 
-val unimplemented_x86_syscall_app_view : (proc_mode, sbits(48), sbits(48), bits(52), bits(8), bits(8), bits(8), bits(8)) -> unit
+val unimplemented_x86_syscall_app_view : (proc_mode, sbits(64), sbits(64), bits(52), bits(8), bits(8), bits(8), bits(8)) -> unit
 function unimplemented_x86_syscall_app_view (_, _, _, _, _, _, _, _) = throw(Syscall())
 
 $endif

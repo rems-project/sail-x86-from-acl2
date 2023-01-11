@@ -49,13 +49,15 @@ forced_return_types = {
 	'bitcount8': Sail_t_nat(),
 	'zf-spec': Sail_t_bits(1),
 	'chk-exc-fn' : Sail_t_unit(),
-	'add-to-*ip': Sail_t_bits(48, signed=True)
+	'add-to-*ip': Sail_t_bits(64, signed=True),
+	'read-*ip': Sail_t_bits(64, signed=True)
 }
 
 
 forced_argument_types = {
         'wb-1': {'value': Sail_t_int()},
         'canonical-address-p': {'lin-addr': Sail_t_int()},
+        'address-aligned-p': {'addr': Sail_t_bits(64, signed=True)},
         'gpr-arith/logic-spec': {'operand-size': Sail_t_member([1, 2, 4, 8]), 'dst': Sail_t_bits(64), 'src': Sail_t_bits(64)},
         'page-fault-exception': {'addr': Sail_t_bits(48, signed=True), 'err-no': Sail_t_int()},
 		'wme-size': {'val': Sail_t_bits(128)},
@@ -63,7 +65,9 @@ forced_argument_types = {
 		'!rgfi-size': {'val': Sail_t_bits(64)},
 		'x86-operand-to-reg/mem': {'operand': Sail_t_bits(128)},
 		'x86-operand-to-xmm/mem': {'operand': Sail_t_bits(128)},
-		'write-user-rflags': {'user-flags-vector': Sail_t_bitfield("rflagsBits", 32), 'undefined-mask': Sail_t_bitfield("rflagsBits", 32)}
+		'write-user-rflags': {'user-flags-vector': Sail_t_bitfield("rflagsBits", 32), 'undefined-mask': Sail_t_bitfield("rflagsBits", 32)},
+		'add-to-*ip': {'*ip': Sail_t_bits(64, signed=True), 'delta': Sail_t_bits(64, signed=True)},
+		'write-*ip': {'*ip': Sail_t_bits(64, signed=True)},
 }
 
 forced_variable_types = {
@@ -80,9 +84,17 @@ forced_variable_types = {
         'modr/m': Sail_t_bitfield("modr/m", 8),
         'sib': Sail_t_bitfield("sib", 8),
         'proc-mode': handwritten_tokens.proc_mode_typ,
-        'call-rip': { 'x86-call-ff/2-op/en-m': Sail_t_bits(64, signed=True) },
+        'tos': { 'x86-ret': Sail_t_bits(64, signed=True) },
+        '*ip': Sail_t_bits(64, signed=True),
+        '*ip+delta': Sail_t_bits(65, signed=True),
+        'rip': Sail_t_bits(64, signed=True),
+        'start-rip': Sail_t_bits(64, signed=True),
+        'temp-rip': Sail_t_bits(64, signed=True),
+        'new-rip': Sail_t_bits(64, signed=True),
+        'rip-new': Sail_t_bits(64, signed=True),
         'jmp-addr': Sail_t_bits(64, signed=True),
-        'tos': { 'x86-ret': Sail_t_bits(64, signed=True) }
+        'call-rip': Sail_t_bits(64, signed=True),
+        'end-rip': { 'check-instruction-length': Sail_t_bits(65, signed=True) }
 }
 
 forward_declarations = [

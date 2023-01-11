@@ -1,6 +1,6 @@
-register haltAddrReg : sbits(48)
+register haltAddrReg : sbits(64)
 
-function clause __SetConfig("ha", value) = { haltAddrReg = get_slice_int(48, value, 0) }
+function clause __SetConfig("ha", value) = { haltAddrReg = get_slice_int(64, value, 0) }
 
 // Set 64 bit mode
 val initialise_64_bit_mode : unit -> unit
@@ -19,7 +19,7 @@ function clause __SetConfig("set64bit", value) = {
 function clause __SetConfig(c, _) = throw(Emsg("Unrecognised config " + c))
 end __SetConfig
 
-val x86_step_print_halt : (sbits(48), bool, bool, int) -> bool
+val x86_step_print_halt : (sbits(64), bool, bool, int) -> bool
 function x86_step_print_halt(haltAddr, printEachStep, printCount, count) = {
 	if read_rip() == haltAddr then {
 		return true
@@ -32,7 +32,7 @@ function x86_step_print_halt(haltAddr, printEachStep, printCount, count) = {
 }
 
 // Simulates the same ACL2 function
-val x86_run_halt : (sbits(48), int, bool, bool, int) -> int
+val x86_run_halt : (sbits(64), int, bool, bool, int) -> int
 function x86_run_halt (haltAddr, maxSteps, printEachStep, printCount, count) = {
 	if maxSteps == 0 then {
 		return count

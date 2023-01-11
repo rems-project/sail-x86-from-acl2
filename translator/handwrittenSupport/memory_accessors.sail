@@ -13,12 +13,12 @@ type moffset_size = {|2, 4, 8|}
 type base_reg_idx = range(0, 15)
 type seg_reg_idx = range(0, 5)
 
-val address_aligned_p : (sbits(48), {|1, 2, 4, 6, 8, 10, 16, 32, 64|}, bool) -> bool
+val address_aligned_p : (sbits(64), {|1, 2, 4, 6, 8, 10, 16, 32, 64|}, bool) -> bool
 
 val check_linear_memory_access : (proc_mode, address_size, {|1, 2, 4, 6, 8, 10, 16|}, sbits(64), option(base_reg_idx), seg_reg_idx, string, bool, bool) -> unit
 
 function check_linear_memory_access (proc_mode, addr_size, nbytes, lin_addr, base_reg, seg_reg, access_kind, check_alignment?, mem_ptr?) = {
-    if not_bool(not_bool(check_alignment?) | address_aligned_p(truncate(lin_addr, 48), nbytes, mem_ptr?)) then {
+    if not_bool(not_bool(check_alignment?) | address_aligned_p(lin_addr, nbytes, mem_ptr?)) then {
         x86_fault(":UNALIGNED-LINEAR-ADDRESS")
     } else {
         return ()

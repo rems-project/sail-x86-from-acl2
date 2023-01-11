@@ -1,5 +1,5 @@
 
-val x86_movs : (proc_mode, sbits(48), sbits(48), prefixes, bits(8), bits(8), modr_m, sib) -> unit
+val x86_movs : (proc_mode, sbits(64), sbits(64), prefixes, bits(8), bits(8), modr_m, sib) -> unit
 
 function x86_movs (proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode, modr_m, sib) = {
     let ctx : string = "X86-MOVS";
@@ -113,7 +113,7 @@ function x86_movs (proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode, m
     }) : unit
 }
 
-val x86_cmps : (proc_mode, sbits(48), sbits(48), prefixes, bits(8), bits(8), modr_m, sib) -> unit
+val x86_cmps : (proc_mode, sbits(64), sbits(64), prefixes, bits(8), bits(8), modr_m, sib) -> unit
 
 function x86_cmps (proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode, modr_m, sib) = {
     let ctx : string = "X86-CMPS";
@@ -229,7 +229,7 @@ function x86_cmps (proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode, m
     }) : unit
 }
 
-val x86_stos : (proc_mode, sbits(48), sbits(48), prefixes, bits(8), bits(8), modr_m, sib) -> unit
+val x86_stos : (proc_mode, sbits(64), sbits(64), prefixes, bits(8), bits(8), modr_m, sib) -> unit
 
 function x86_stos (proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode, modr_m, sib) = {
     let ctx : string = "X86-STOS";

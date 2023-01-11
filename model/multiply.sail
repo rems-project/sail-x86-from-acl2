@@ -9,7 +9,7 @@ $include "./multiply_spec.sail"
  MUL r/m16: DX:AX := AX * r/m16<br/> 
  MUL r/m32: EDX:EAX := EAX * r/m32<br/> 
  MUL r/m64: RDX:RAX := RAX * r/m64<br/></p> */
-val x86_mul : (proc_mode, sbits(48), sbits(48), prefixes, bits(8), bits(8), modr_m, sib) -> unit
+val x86_mul : (proc_mode, sbits(64), sbits(64), prefixes, bits(8), bits(8), modr_m, sib) -> unit
 
 function x86_mul (proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode, modr_m, sib) = {
     let ctx : string = "X86-MUL";
@@ -24,7 +24,7 @@ function x86_mul (proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode, mo
     let inst_ac? : bool = true;
     let (reg_mem, increment_rip_by, addr) : (bits(128), {|0, 1, 2, 4|}, sbits(64)) = x86_operand_from_modr_m_and_sib_bytes(proc_mode, 0b0, reg_mem_size, inst_ac?, false, seg_reg, prefixes, temp_rip, rex_byte, r_m, mod_var, sib, 0b000);
     let increment_rip_by : bits(3) = bits_of_int(increment_rip_by, 3);
-    let temp_rip : sbits(48) = add_to_iptr(proc_mode, temp_rip, sail_zero_extend(increment_rip_by, 48));
+    let temp_rip : sbits(64) = add_to_iptr(proc_mode, temp_rip, sail_zero_extend(increment_rip_by, 64));
     let badlength? : option(int) = check_instruction_length(start_rip, temp_rip, 0b000);
     if is_some(badlength?) then x86_fault("(!!FAULT-FRESH :GP 0 :INSTRUCTION-LENGTH BADLENGTH?)");
     let rax_var : bits(64) = rgfi_size(bits_of_int(reg_mem_size, 4), 0x0, rex_byte);
@@ -89,7 +89,7 @@ function x86_mul (proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode, mo
  IMUL r/m16: DX:AX := AX * r/m16<br/> 
  IMUL r/m32: EDX:EAX := EAX * r/m32<br/> 
  IMUL r/m64: RDX:RAX := RAX * r/m64<br/></p> */
-val x86_imul_op_en_m : (proc_mode, sbits(48), sbits(48), prefixes, bits(8), bits(8), modr_m, sib) -> unit
+val x86_imul_op_en_m : (proc_mode, sbits(64), sbits(64), prefixes, bits(8), bits(8), modr_m, sib) -> unit
 
 function x86_imul_op_en_m (proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode, modr_m, sib) = {
     let ctx : string = "X86-IMUL-OP/EN-M";
@@ -104,7 +104,7 @@ function x86_imul_op_en_m (proc_mode, start_rip, temp_rip, prefixes, rex_byte, o
     let inst_ac? : bool = true;
     let (reg_mem, increment_rip_by, addr) : (bits(128), {|0, 1, 2, 4|}, sbits(64)) = x86_operand_from_modr_m_and_sib_bytes(proc_mode, 0b0, reg_mem_size, inst_ac?, false, seg_reg, prefixes, temp_rip, rex_byte, r_m, mod_var, sib, 0b000);
     let increment_rip_by : bits(3) = bits_of_int(increment_rip_by, 3);
-    let temp_rip : sbits(48) = add_to_iptr(proc_mode, temp_rip, sail_zero_extend(increment_rip_by, 48));
+    let temp_rip : sbits(64) = add_to_iptr(proc_mode, temp_rip, sail_zero_extend(increment_rip_by, 64));
     let badlength? : option(int) = check_instruction_length(start_rip, temp_rip, 0b000);
     if is_some(badlength?) then x86_fault("(!!FAULT-FRESH :GP 0 :INSTRUCTION-LENGTH BADLENGTH?)");
     let rax_var : bits(64) = rgfi_size(bits_of_int(reg_mem_size, 4), 0x0, rex_byte);
@@ -141,7 +141,7 @@ function x86_imul_op_en_m (proc_mode, start_rip, temp_rip, prefixes, rex_byte, o
  IMUL r16, r/m16: r16 := r16 * r/m16 <br/> 
  IMUL r32, r/m32: r32 := r32 * r/m32 <br/> 
  IMUL r64, r/m64: r64 := r64 * r/m64 <br/> </p> */
-val x86_imul_op_en_rm : (proc_mode, sbits(48), sbits(48), prefixes, bits(8), bits(8), modr_m, sib) -> unit
+val x86_imul_op_en_rm : (proc_mode, sbits(64), sbits(64), prefixes, bits(8), bits(8), modr_m, sib) -> unit
 
 function x86_imul_op_en_rm (proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode, modr_m, sib) = {
     let ctx : string = "X86-IMUL-OP/EN-RM";
@@ -155,7 +155,7 @@ function x86_imul_op_en_rm (proc_mode, start_rip, temp_rip, prefixes, rex_byte, 
     let inst_ac? : bool = true;
     let (reg_mem, increment_rip_by, addr) : (bits(128), {|0, 1, 2, 4|}, sbits(64)) = x86_operand_from_modr_m_and_sib_bytes(proc_mode, 0b0, reg_mem_size, inst_ac?, false, seg_reg, prefixes, temp_rip, rex_byte, r_m, mod_var, sib, 0b000);
     let increment_rip_by : bits(3) = bits_of_int(increment_rip_by, 3);
-    let temp_rip : sbits(48) = add_to_iptr(proc_mode, temp_rip, sail_zero_extend(increment_rip_by, 48));
+    let temp_rip : sbits(64) = add_to_iptr(proc_mode, temp_rip, sail_zero_extend(increment_rip_by, 64));
     let badlength? : option(int) = check_instruction_length(start_rip, temp_rip, 0b000);
     if is_some(badlength?) then x86_fault("(!!FAULT-FRESH :GP 0 :INSTRUCTION-LENGTH BADLENGTH?)");
     let register_var : bits(64) = rgfi_size(bits_of_int(reg_mem_size, 4), reg_index(reg, rex_byte, 0b10), rex_byte);
@@ -191,7 +191,7 @@ function x86_imul_op_en_rm (proc_mode, start_rip, temp_rip, prefixes, rex_byte, 
  IMUL r16, r/m16, imm16 <br/> 
  IMUL r32, r/m32, imm32 <br/> 
  IMUL r64, r/m64, imm32 <br/> </p> */
-val x86_imul_op_en_rmi : (proc_mode, sbits(48), sbits(48), prefixes, bits(8), bits(8), modr_m, sib) -> unit
+val x86_imul_op_en_rmi : (proc_mode, sbits(64), sbits(64), prefixes, bits(8), bits(8), modr_m, sib) -> unit
 
 function x86_imul_op_en_rmi (proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode, modr_m, sib) = {
     let ctx : string = "X86-IMUL-OP/EN-RMI";
@@ -208,9 +208,9 @@ function x86_imul_op_en_rmi (proc_mode, start_rip, temp_rip, prefixes, rex_byte,
     let inst_ac? : bool = true;
     let (reg_mem, increment_rip_by, addr) : (bits(128), {|0, 1, 2, 4|}, sbits(64)) = x86_operand_from_modr_m_and_sib_bytes(proc_mode, 0b0, reg_mem_size, inst_ac?, false, seg_reg, prefixes, temp_rip, rex_byte, r_m, mod_var, sib, bits_of_int(imm_size, 3));
     let increment_rip_by : bits(3) = bits_of_int(increment_rip_by, 3);
-    let temp_rip : sbits(48) = add_to_iptr(proc_mode, temp_rip, sail_zero_extend(increment_rip_by, 48));
-    let imm : bits(32) = truncate(rme_size(proc_mode, select_address_size(proc_mode, Some(prefixes)), imm_size, sail_sign_extend(temp_rip, 64), None(), 1, ":X", false, false), 32);
-    let temp_rip : sbits(48) = add_to_iptr(proc_mode, temp_rip, bits_of_int(imm_size, 48));
+    let temp_rip : sbits(64) = add_to_iptr(proc_mode, temp_rip, sail_zero_extend(increment_rip_by, 64));
+    let imm : bits(32) = truncate(rme_size(proc_mode, select_address_size(proc_mode, Some(prefixes)), imm_size, temp_rip, None(), 1, ":X", false, false), 32);
+    let temp_rip : sbits(64) = add_to_iptr(proc_mode, temp_rip, bits_of_int(imm_size, 64));
     let badlength? : option(int) = check_instruction_length(start_rip, temp_rip, 0b000);
     if is_some(badlength?) then x86_fault("(!!FAULT-FRESH :GP 0 :INSTRUCTION-LENGTH BADLENGTH?)");
     let (product_high, product_low, product, cf_and_of) : (bits(64), bits(64), bits(128), bits(1)) = imul_spec(reg_mem_size, truncate(reg_mem, 64), sail_zero_extend(imm, 64));

@@ -13,12 +13,16 @@ function write_rgfi (regNum, regval_to_write) = {
     write_gpr(regNum, regval_into_reg(regval_to_write))
 }
 
-val read_rip : unit -> sbits(48)
-function read_rip() = truncate(regval_from_reg(rip), 48)
+val read_rip : unit -> sbits(64)
+function read_rip() = regval_from_reg(rip)
 
-val write_rip : sbits(48) -> unit
+val write_rip : sbits(64) -> unit
 function write_rip(value) = {
-    rip = regval_into_reg(sail_sign_extend(value, 64));
+    if canonical_address_p(signed(value)) then {
+        rip = regval_into_reg(value)
+    } else {
+        x86_fault("write_rip: Non-canonical address " + bits_str(value))
+    };
     if log_register_writes then log_rip_write()
 }
 

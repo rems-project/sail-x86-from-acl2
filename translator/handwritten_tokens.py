@@ -135,12 +135,12 @@ write_rflags_fn = SailHandwrittenFn(
 
 read_rip_fn = SailHandwrittenFn(
 	'read_rip',
-	Sail_t_fn([], Sail_t_bits(48, signed=True))
+	Sail_t_fn([], Sail_t_bits(64, signed=True))
 )
 
 write_rip_fn = SailHandwrittenFn(
 	'write_rip',
-	Sail_t_fn([Sail_t_bits(48, signed=True)], Sail_t_unit())
+	Sail_t_fn([Sail_t_bits(64, signed=True)], Sail_t_unit())
 )
 
 rgfi_fn = SailHandwrittenFn(
@@ -371,17 +371,17 @@ def bits_list(bits):
 
 x86_one_byte_nop_fn = SailHandwrittenFn(
 	'x86_one_byte_nop',
-	Sail_t_fn([proc_mode_typ] + [Sail_t_bits(48, signed=True)] * 2 + [Sail_t_bitfield("prefixes", 52)] + bits_list([8, 8]) + [Sail_t_bitfield("modr_m", 8), Sail_t_bitfield("sib", 8)], Sail_t_unit())
+	Sail_t_fn([proc_mode_typ] + [Sail_t_bits(64, signed=True)] * 2 + [Sail_t_bitfield("prefixes", 52)] + bits_list([8, 8]) + [Sail_t_bitfield("modr_m", 8), Sail_t_bitfield("sib", 8)], Sail_t_unit())
 )
 
 ext_one_byte_opcode_execute_fn = SailHandwrittenFn(
 	'ext_one_byte_opcode_execute',
-	Sail_t_fn([proc_mode_typ] + [Sail_t_bits(48, signed=True)] * 2 + bits_list([52, 8, 8, 8, 8]), Sail_t_bool())
+	Sail_t_fn([proc_mode_typ] + [Sail_t_bits(64, signed=True)] * 2 + bits_list([52, 8, 8, 8, 8]), Sail_t_bool())
 )
 
 ext_two_byte_opcode_execute_fn = SailHandwrittenFn(
 	'ext_two_byte_opcode_execute',
-	Sail_t_fn([proc_mode_typ] + [Sail_t_bits(48, signed=True)] * 2 + bits_list([52, 8, 8, 8, 8, 8]), Sail_t_bool())
+	Sail_t_fn([proc_mode_typ] + [Sail_t_bits(64, signed=True)] * 2 + bits_list([52, 8, 8, 8, 8, 8]), Sail_t_bool())
 )
 
 def ext_vex_execute_fn(name):

@@ -1,18 +1,18 @@
 
-val x86_near_jmp_op_en_d : (proc_mode, sbits(48), sbits(48), prefixes, bits(8), bits(8), modr_m, sib) -> unit
+val x86_near_jmp_op_en_d : (proc_mode, sbits(64), sbits(64), prefixes, bits(8), bits(8), modr_m, sib) -> unit
 
 function x86_near_jmp_op_en_d (proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode, modr_m, sib) = {
     let ctx : string = "X86-NEAR-JMP-OP/EN-D";
     let byte_operand? : bool = opcode == 0xeb;
     let offset_size : {|1, 2, 4|} = check_range(0, 4, select_operand_size(proc_mode, byte_operand?, rex_byte, false, prefixes, false, true, true));
-    let offset : sbits(32) = truncate(rime_size(proc_mode, select_address_size(proc_mode, Some(prefixes)), offset_size, sail_sign_extend(temp_rip, 64), None(), 1, ":X", false, false), 32);
-    let next_rip : sbits(48) = add_to_iptr(proc_mode, temp_rip, bits_of_int(offset_size, 48));
+    let offset : sbits(32) = truncate(rime_size(proc_mode, select_address_size(proc_mode, Some(prefixes)), offset_size, temp_rip, None(), 1, ":X", false, false), 32);
+    let next_rip : sbits(64) = add_to_iptr(proc_mode, temp_rip, bits_of_int(offset_size, 64));
     let badlength? : option(int) = check_instruction_length(start_rip, next_rip, 0b000);
     if is_some(badlength?) then x86_fault("(!!FAULT-FRESH :GP 0 :INSTRUCTION-LENGTH BADLENGTH?)");
-    let temp_rip : sbits(48) = add_to_iptr(proc_mode, next_rip, sail_sign_extend(offset, 48));
-    let temp_rip : sbits(48) = {
+    let temp_rip : sbits(64) = add_to_iptr(proc_mode, next_rip, sail_sign_extend(offset, 64));
+    let temp_rip : sbits(64) = {
         if offset_size == 2 then {
-            logand(0x00000000ffff, temp_rip)
+            logand(0x000000000000ffff, temp_rip)
         } else {
             temp_rip
         }
@@ -20,7 +20,7 @@ function x86_near_jmp_op_en_d (proc_mode, start_rip, temp_rip, prefixes, rex_byt
     write_iptr(proc_mode, temp_rip)
 }
 
-val x86_near_jmp_op_en_m : (proc_mode, sbits(48), sbits(48), prefixes, bits(8), bits(8), modr_m, sib) -> unit
+val x86_near_jmp_op_en_m : (proc_mode, sbits(64), sbits(64), prefixes, bits(8), bits(8), modr_m, sib) -> unit
 
 function x86_near_jmp_op_en_m (proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode, modr_m, sib) = {
     let ctx : string = "X86-NEAR-JMP-OP/EN-M";
@@ -35,7 +35,7 @@ function x86_near_jmp_op_en_m (proc_mode, start_rip, temp_rip, prefixes, rex_byt
     let (jmp_addr, increment_rip_by, addr) : (bits(128), {|0, 1, 2, 4|}, sbits(64)) = x86_operand_from_modr_m_and_sib_bytes(proc_mode, 0b0, operand_size, inst_ac?, false, seg_reg, prefixes, temp_rip, rex_byte, r_m, mod_var, sib, 0b000);
     let jmp_addr : sbits(64) = truncate(jmp_addr, 64);
     let increment_rip_by : bits(3) = bits_of_int(increment_rip_by, 3);
-    let temp_rip : sbits(48) = add_to_iptr(proc_mode, temp_rip, sail_zero_extend(increment_rip_by, 48));
+    let temp_rip : sbits(64) = add_to_iptr(proc_mode, temp_rip, sail_zero_extend(increment_rip_by, 64));
     let badlength? : option(int) = check_instruction_length(start_rip, temp_rip, 0b000);
     if is_some(badlength?) then x86_fault("(!!FAULT-FRESH :GP 0 :INSTRUCTION-LENGTH BADLENGTH?)");
     let jmp_addr : sbits(64) = {
@@ -51,7 +51,7 @@ function x86_near_jmp_op_en_m (proc_mode, start_rip, temp_rip, prefixes, rex_byt
         let cs_limit : bits(32) = seg_hidden_limits[1];
         0 <= signed(jmp_addr) & signed(jmp_addr) <= unsigned(cs_limit)
     }) then x86_fault("(!!FAULT-FRESH :GP 0 :BAD-RETURN-ADDRESS JMP-ADDR)");
-    write_iptr(proc_mode, truncate(jmp_addr, 48))
+    write_iptr(proc_mode, jmp_addr)
 }
 
 /*! Absolute Indirect Jump: Far
@@ -88,7 +88,7 @@ function x86_near_jmp_op_en_m (proc_mode, start_rip, temp_rip, prefixes, rex_byt
  instruction at the offset specified in the call gate. No stack switch 
  occurs. The target operand specifies the far address of the call gate 
  indirectly with a memory location ( m16:16 or m16:32 or m16:64 ) .</p> */
-val x86_far_jmp_op_en_d : (proc_mode, sbits(48), sbits(48), prefixes, bits(8), bits(8), modr_m, sib) -> unit
+val x86_far_jmp_op_en_d : (proc_mode, sbits(64), sbits(64), prefixes, bits(8), bits(8), modr_m, sib) -> unit
 
 function x86_far_jmp_op_en_d (proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode, modr_m, sib) = {
     let ctx : string = "X86-FAR-JMP-OP/EN-D";
@@ -191,7 +191,7 @@ function x86_far_jmp_op_en_d (proc_mode, start_rip, temp_rip, prefixes, rex_byte
         seg_hidden_bases[1] = dt_base_addr;
         seg_hidden_limits[1] = dt_limit;
         seg_hidden_attrs[1] = make_code_segment_attr_field(descriptor).bits;
-        write_iptr(proc_mode, truncate(jmp_addr, 48))
+        write_iptr(proc_mode, jmp_addr)
     } else {
         if not_bool(in_64bit_mode(proc_mode)) then x86_model_error(":FAR-JMP-SYSTEM-UNIMPLEMENTED-IN-32-BIT-MODE");
         let largest_address : int = ash(unsigned(sel_index), 3) + 15;
@@ -261,14 +261,14 @@ function x86_far_jmp_op_en_d (proc_mode, start_rip, temp_rip, prefixes, rex_byte
             seg_hidden_bases[1] = cs_dt_base_addr;
             seg_hidden_limits[1] = cs_dt_limit;
             seg_hidden_attrs[1] = make_code_segment_attr_field(cs_descriptor).bits;
-            write_iptr(proc_mode, truncate(jmp_addr, 48))
+            write_iptr(proc_mode, jmp_addr)
         } else {
             x86_fault("(!!FAULT-FRESH :GP SEL-INDEX :EITHER-BOTH-CODE-SEGMENT-OR-CALL-GATE-ARE-ABSENT-OR-SOME-OTHER-DESCRIPTOR-IS-PRESENT (CONS REASON2 DESCRIPTOR))")
         }
     }
 }
 
-val x86_loop : (proc_mode, sbits(48), sbits(48), prefixes, bits(8), bits(8), modr_m, sib) -> unit
+val x86_loop : (proc_mode, sbits(64), sbits(64), prefixes, bits(8), bits(8), modr_m, sib) -> unit
 
 function x86_loop (proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode, modr_m, sib) = {
     let ctx : string = "X86-LOOP";
@@ -292,12 +292,12 @@ function x86_loop (proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode, m
         }
     };
     if branch_cond then {
-        let rel8 : sbits(64) = rime_size(proc_mode, select_address_size(proc_mode, Some(prefixes)), 1, sail_sign_extend(temp_rip, 64), None(), 1, ":X", false, false);
-        let next_rip : sbits(48) = add_to_iptr(proc_mode, temp_rip, bits_of_int(1 + signed(rel8), 48));
+        let rel8 : sbits(64) = rime_size(proc_mode, select_address_size(proc_mode, Some(prefixes)), 1, temp_rip, None(), 1, ":X", false, false);
+        let next_rip : sbits(64) = add_to_iptr(proc_mode, temp_rip, bits_of_int(1 + signed(rel8), 64));
         write_rgfi_size(bits_of_int(counter_size, 4), 0x1, counter, rex_byte);
         write_iptr(proc_mode, next_rip)
     } else {
-        let next_rip : sbits(48) = add_to_iptr(proc_mode, temp_rip, 0x000000000001);
+        let next_rip : sbits(64) = add_to_iptr(proc_mode, temp_rip, 0x0000000000000001);
         write_rgfi_size(bits_of_int(counter_size, 4), 0x1, counter, rex_byte);
         write_iptr(proc_mode, next_rip)
     }

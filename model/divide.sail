@@ -8,7 +8,7 @@ $include "./divide_spec.sail"
  DIV r/m16: ( DX:AX div r/m16 ) , DX := Remainder, AX := Quotient<br/> 
  DIV r/m32: ( EDX:EAX div r/m8 ) , EDX := Remainder, EAX := Quotient<br/> 
  DIV r/m64: ( RDX:RAX div r/m8 ) , RDX := Remainder, RAX := Quotient<br/></p> */
-val x86_div : (proc_mode, sbits(48), sbits(48), prefixes, bits(8), bits(8), modr_m, sib) -> unit
+val x86_div : (proc_mode, sbits(64), sbits(64), prefixes, bits(8), bits(8), modr_m, sib) -> unit
 
 function x86_div (proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode, modr_m, sib) = {
     let ctx : string = "X86-DIV";
@@ -24,7 +24,7 @@ function x86_div (proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode, mo
     let (reg_mem, increment_rip_by, addr) : (bits(128), {|0, 1, 2, 4|}, sbits(64)) = x86_operand_from_modr_m_and_sib_bytes(proc_mode, 0b0, reg_mem_size, inst_ac?, false, seg_reg, prefixes, temp_rip, rex_byte, r_m, mod_var, sib, 0b000);
     let increment_rip_by : bits(3) = bits_of_int(increment_rip_by, 3);
     if reg_mem == 0x00000000000000000000000000000000 then x86_fault("(!!FAULT-FRESH :DE NIL :DE-EXCEPTION-SOURCE-OPERAND-ZERO REG/MEM)");
-    let temp_rip : sbits(48) = add_to_iptr(proc_mode, temp_rip, sail_zero_extend(increment_rip_by, 48));
+    let temp_rip : sbits(64) = add_to_iptr(proc_mode, temp_rip, sail_zero_extend(increment_rip_by, 64));
     let badlength? : option(int) = check_instruction_length(start_rip, temp_rip, 0b000);
     if is_some(badlength?) then x86_fault("(!!FAULT-FRESH :GP 0 :INSTRUCTION-LENGTH BADLENGTH?)");
     let rax_var : bits(64) = rgfi_size(if select_byte_operand then 0x2 else {
@@ -84,7 +84,7 @@ function x86_div (proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode, mo
  IDIV r/m16: ( DX:AX div r/m16 ) , DX := Remainder, AX := Quotient <br/> 
  IDIV r/m32: ( EDX:EAX div r/m8 ) , EDX := Remainder, EAX := Quotient <br/> 
  IDIV r/m64: ( RDX:RAX div r/m8 ) , RDX := Remainder, RAX := Quotient</p> */
-val x86_idiv : (proc_mode, sbits(48), sbits(48), prefixes, bits(8), bits(8), modr_m, sib) -> unit
+val x86_idiv : (proc_mode, sbits(64), sbits(64), prefixes, bits(8), bits(8), modr_m, sib) -> unit
 
 function x86_idiv (proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode, modr_m, sib) = {
     let ctx : string = "X86-IDIV";
@@ -100,8 +100,8 @@ function x86_idiv (proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode, m
     let (reg_mem, increment_rip_by, addr) : (bits(128), {|0, 1, 2, 4|}, sbits(64)) = x86_operand_from_modr_m_and_sib_bytes(proc_mode, 0b0, reg_mem_size, inst_ac?, false, seg_reg, prefixes, temp_rip, rex_byte, r_m, mod_var, sib, 0b000);
     let increment_rip_by : bits(3) = bits_of_int(increment_rip_by, 3);
     if reg_mem == 0x00000000000000000000000000000000 then x86_fault("(!!FAULT-FRESH :DE NIL :DE-EXCEPTION-SOURCE-OPERAND-ZERO REG/MEM)");
-    let temp_rip : sbits(49) = sail_sign_extend(add_to_iptr(proc_mode, temp_rip, sail_zero_extend(increment_rip_by, 48)), 49);
-    let badlength? : option(int) = check_instruction_length(start_rip, truncate(temp_rip, 48), 0b000);
+    let temp_rip : sbits(64) = add_to_iptr(proc_mode, temp_rip, sail_zero_extend(increment_rip_by, 64));
+    let badlength? : option(int) = check_instruction_length(start_rip, temp_rip, 0b000);
     if is_some(badlength?) then x86_fault("(!!FAULT-FRESH :GP 0 :INSTRUCTION-LENGTH BADLENGTH?)");
     let rax_var : bits(64) = rgfi_size(if select_byte_operand then 0x2 else {
         bits_of_int(reg_mem_size, 4)
@@ -148,5 +148,5 @@ function x86_idiv (proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode, m
     let rflags_var : rflagsbits = rflags in
     let sailval : bits(1) = undef_flg() in
     let new_rflags : rflagsbits = [rflags_var with of = sailval] in rflags = new_rflags;
-    write_iptr(proc_mode, truncate(temp_rip, 48))
+    write_iptr(proc_mode, temp_rip)
 }

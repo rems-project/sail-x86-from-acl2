@@ -272,7 +272,7 @@ def unimplemented():
 		#	Name					numOfArgs	Type
 		# ('vex-decode-and-execute', 6, Sail_t_fn([Sail_t_int()] * 6, Sail_t_unit(), {'escape'})),
 		# ('evex-decode-and-execute', 6, Sail_t_fn([Sail_t_int()] * 6, Sail_t_unit(), {'escape'})),
-		('x86-syscall-app-view', 8, Sail_t_fn([Sail_t_int()] + ([Sail_t_bits(48, True)] * 2) + [Sail_t_bits(52)] + ([Sail_t_bits(8)] * 4), Sail_t_unit(), {'escape'})),
+		('x86-syscall-app-view', 8, Sail_t_fn([Sail_t_int()] + ([Sail_t_bits(64, True)] * 2) + [Sail_t_bits(52)] + ([Sail_t_bits(8)] * 4), Sail_t_unit(), {'escape'})),
 	]
 
 	# And these have not yet been implemented

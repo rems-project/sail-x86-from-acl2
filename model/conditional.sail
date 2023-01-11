@@ -37,7 +37,7 @@ function jcc_cmovcc_setcc_spec opcode = {
     }) : bool
 }
 
-val x86_one_byte_jcc : (proc_mode, sbits(48), sbits(48), prefixes, bits(8), bits(8), modr_m, sib) -> unit
+val x86_one_byte_jcc : (proc_mode, sbits(64), sbits(64), prefixes, bits(8), bits(8), modr_m, sib) -> unit
 
 function x86_one_byte_jcc (proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode, modr_m, sib) = {
     let ctx : string = "X86-ONE-BYTE-JCC";
@@ -45,16 +45,16 @@ function x86_one_byte_jcc (proc_mode, start_rip, temp_rip, prefixes, rex_byte, o
     if is_some(badlength?) then x86_fault("(!!FAULT-FRESH :GP 0 :INSTRUCTION-LENGTH BADLENGTH?)");
     let branch_cond : bool = jcc_cmovcc_setcc_spec(opcode);
     if branch_cond then {
-        let rel8 : sbits(64) = rime_size(proc_mode, select_address_size(proc_mode, Some(prefixes)), 1, sail_sign_extend(temp_rip, 64), None(), 1, ":X", false, false);
-        let next_rip : sbits(48) = add_to_iptr(proc_mode, temp_rip, bits_of_int(1 + signed(rel8), 48));
+        let rel8 : sbits(64) = rime_size(proc_mode, select_address_size(proc_mode, Some(prefixes)), 1, temp_rip, None(), 1, ":X", false, false);
+        let next_rip : sbits(64) = add_to_iptr(proc_mode, temp_rip, bits_of_int(1 + signed(rel8), 64));
         write_iptr(proc_mode, next_rip)
     } else {
-        let next_rip : sbits(48) = add_to_iptr(proc_mode, temp_rip, 0x000000000001);
+        let next_rip : sbits(64) = add_to_iptr(proc_mode, temp_rip, 0x0000000000000001);
         write_iptr(proc_mode, next_rip)
     }
 }
 
-val x86_two_byte_jcc : (proc_mode, sbits(48), sbits(48), prefixes, bits(8), bits(8), modr_m, sib) -> unit
+val x86_two_byte_jcc : (proc_mode, sbits(64), sbits(64), prefixes, bits(8), bits(8), modr_m, sib) -> unit
 
 function x86_two_byte_jcc (proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode, modr_m, sib) = {
     let ctx : string = "X86-TWO-BYTE-JCC";
@@ -63,16 +63,16 @@ function x86_two_byte_jcc (proc_mode, start_rip, temp_rip, prefixes, rex_byte, o
     if is_some(badlength?) then x86_fault("(!!FAULT-FRESH :GP 0 :INSTRUCTION-LENGTH BADLENGTH?)");
     let branch_cond : bool = jcc_cmovcc_setcc_spec(opcode);
     if branch_cond then {
-        let offset : sbits(64) = rime_size(proc_mode, select_address_size(proc_mode, Some(prefixes)), offset_size, sail_sign_extend(temp_rip, 64), None(), 1, ":X", false, false);
-        let next_rip : sbits(48) = add_to_iptr(proc_mode, temp_rip, bits_of_int(offset_size + signed(offset), 48));
+        let offset : sbits(64) = rime_size(proc_mode, select_address_size(proc_mode, Some(prefixes)), offset_size, temp_rip, None(), 1, ":X", false, false);
+        let next_rip : sbits(64) = add_to_iptr(proc_mode, temp_rip, bits_of_int(offset_size + signed(offset), 64));
         write_iptr(proc_mode, next_rip)
     } else {
-        let next_rip : sbits(48) = add_to_iptr(proc_mode, temp_rip, bits_of_int(offset_size, 48));
+        let next_rip : sbits(64) = add_to_iptr(proc_mode, temp_rip, bits_of_int(offset_size, 64));
         write_iptr(proc_mode, next_rip)
     }
 }
 
-val x86_jrcxz : (proc_mode, sbits(48), sbits(48), prefixes, bits(8), bits(8), modr_m, sib) -> unit
+val x86_jrcxz : (proc_mode, sbits(64), sbits(64), prefixes, bits(8), bits(8), modr_m, sib) -> unit
 
 function x86_jrcxz (proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode, modr_m, sib) = {
     let ctx : string = "X86-JRCXZ";
@@ -82,16 +82,16 @@ function x86_jrcxz (proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode, 
     let register_size : address_size = select_address_size(proc_mode, Some(prefixes));
     let branch_cond : bool = rgfi_size(bits_of_int(register_size, 4), 0x1, rex_byte) == 0x0000000000000000;
     if branch_cond then {
-        let rel8 : sbits(64) = rime_size(proc_mode, select_address_size(proc_mode, Some(prefixes)), 1, sail_sign_extend(temp_rip, 64), None(), 1, ":X", false, false);
-        let next_rip : sbits(48) = add_to_iptr(proc_mode, temp_rip, bits_of_int(1 + signed(rel8), 48));
+        let rel8 : sbits(64) = rime_size(proc_mode, select_address_size(proc_mode, Some(prefixes)), 1, temp_rip, None(), 1, ":X", false, false);
+        let next_rip : sbits(64) = add_to_iptr(proc_mode, temp_rip, bits_of_int(1 + signed(rel8), 64));
         write_iptr(proc_mode, next_rip)
     } else {
-        let next_rip : sbits(48) = add_to_iptr(proc_mode, temp_rip, 0x000000000001);
+        let next_rip : sbits(64) = add_to_iptr(proc_mode, temp_rip, 0x0000000000000001);
         write_iptr(proc_mode, next_rip)
     }
 }
 
-val x86_cmovcc : (proc_mode, sbits(48), sbits(48), prefixes, bits(8), bits(8), modr_m, sib) -> unit
+val x86_cmovcc : (proc_mode, sbits(64), sbits(64), prefixes, bits(8), bits(8), modr_m, sib) -> unit
 
 function x86_cmovcc (proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode, modr_m, sib) = {
     let ctx : string = "X86-CMOVCC";
@@ -105,7 +105,7 @@ function x86_cmovcc (proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode,
     let inst_ac? : bool = true;
     let (reg_mem, increment_rip_by, addr) : (bits(128), {|0, 1, 2, 4|}, sbits(64)) = x86_operand_from_modr_m_and_sib_bytes(proc_mode, 0b0, operand_size, inst_ac?, false, seg_reg, prefixes, temp_rip, rex_byte, r_m, mod_var, sib, 0b000);
     let increment_rip_by : bits(3) = bits_of_int(increment_rip_by, 3);
-    let temp_rip : sbits(48) = add_to_iptr(proc_mode, temp_rip, sail_zero_extend(increment_rip_by, 48));
+    let temp_rip : sbits(64) = add_to_iptr(proc_mode, temp_rip, sail_zero_extend(increment_rip_by, 64));
     let badlength? : option(int) = check_instruction_length(start_rip, temp_rip, 0b000);
     if is_some(badlength?) then x86_fault("(!!FAULT-FRESH :GP 0 :INSTRUCTION-LENGTH BADLENGTH?)");
     let branch_cond : bool = jcc_cmovcc_setcc_spec(opcode);
@@ -115,7 +115,7 @@ function x86_cmovcc (proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode,
     write_iptr(proc_mode, temp_rip)
 }
 
-val x86_setcc : (proc_mode, sbits(48), sbits(48), prefixes, bits(8), bits(8), modr_m, sib) -> unit
+val x86_setcc : (proc_mode, sbits(64), sbits(64), prefixes, bits(8), bits(8), modr_m, sib) -> unit
 
 function x86_setcc (proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode, modr_m, sib) = {
     let ctx : string = "X86-SETCC";
@@ -132,7 +132,7 @@ function x86_setcc (proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode, 
         }
     };
     let increment_rip_by : bits(3) = bits_of_int(increment_rip_by, 3);
-    let temp_rip : sbits(48) = add_to_iptr(proc_mode, temp_rip, sail_zero_extend(increment_rip_by, 48));
+    let temp_rip : sbits(64) = add_to_iptr(proc_mode, temp_rip, sail_zero_extend(increment_rip_by, 64));
     let badlength? : option(int) = check_instruction_length(start_rip, temp_rip, 0b000);
     if is_some(badlength?) then x86_fault("(!!FAULT-FRESH :GP 0 :INSTRUCTION-LENGTH BADLENGTH?)");
     let branch_cond : bool = jcc_cmovcc_setcc_spec(opcode);

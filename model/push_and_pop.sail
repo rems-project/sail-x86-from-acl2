@@ -8,7 +8,7 @@
  <p>PUSH does not have a separate instruction semantic function, unlike other 
  opcodes like ADD, SUB, etc. The decoding is coupled with the execution in 
  this case.</p> */
-val x86_push_general_register : (proc_mode, sbits(48), sbits(48), prefixes, bits(8), bits(8), modr_m, sib) -> unit
+val x86_push_general_register : (proc_mode, sbits(64), sbits(64), prefixes, bits(8), bits(8), modr_m, sib) -> unit
 
 function x86_push_general_register (proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode, modr_m, sib) = {
     let ctx : string = "X86-PUSH-GENERAL-REGISTER";
@@ -36,7 +36,7 @@ function x86_push_general_register (proc_mode, start_rip, temp_rip, prefixes, re
  
  <p>This opcode belongs to Group 5, and it has an opcode 
  extension ( ModR/m.reg = 6 ) .</p> */
-val x86_push_ev : (proc_mode, sbits(48), sbits(48), prefixes, bits(8), bits(8), modr_m, sib) -> unit
+val x86_push_ev : (proc_mode, sbits(64), sbits(64), prefixes, bits(8), bits(8), modr_m, sib) -> unit
 
 function x86_push_ev (proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode, modr_m, sib) = {
     let ctx : string = "X86-PUSH-EV";
@@ -51,7 +51,7 @@ function x86_push_ev (proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode
     let seg_reg : seg_reg_idx = select_segment_register(proc_mode, prefixes, mod_var, r_m, sib);
     let (e, increment_rip_by, e_addr) : (bits(128), {|0, 1, 2, 4|}, sbits(64)) = x86_operand_from_modr_m_and_sib_bytes(proc_mode, 0b0, operand_size, true, false, seg_reg, prefixes, temp_rip, rex_byte, r_m, mod_var, sib, 0b000);
     let increment_rip_by : bits(3) = bits_of_int(increment_rip_by, 3);
-    let temp_rip : sbits(48) = add_to_iptr(proc_mode, temp_rip, sail_zero_extend(increment_rip_by, 48));
+    let temp_rip : sbits(64) = add_to_iptr(proc_mode, temp_rip, sail_zero_extend(increment_rip_by, 64));
     let badlength? : option(int) = check_instruction_length(start_rip, temp_rip, 0b000);
     if is_some(badlength?) then x86_fault("(!!FAULT-FRESH :GP 0 :INSTRUCTION-LENGTH BADLENGTH?)");
     wme_size(proc_mode, select_address_size(proc_mode, Some(prefixes)), operand_size, sail_sign_extend(truncate(new_rsp, 48), 64), None(), 2, e, alignment_checking_enabled_p(), false);
@@ -74,7 +74,7 @@ function x86_push_ev (proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode
  <p>PUSH doesn ' t have a separate instruction semantic function, unlike other 
  opcodes like ADD, SUB, etc. The decoding is coupled the decoding with the 
  execution in this case.</p> */
-val x86_push_i : (proc_mode, sbits(48), sbits(48), prefixes, bits(8), bits(8), modr_m, sib) -> unit
+val x86_push_i : (proc_mode, sbits(64), sbits(64), prefixes, bits(8), bits(8), modr_m, sib) -> unit
 
 function x86_push_i (proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode, modr_m, sib) = {
     let ctx : string = "X86-PUSH-I";
@@ -83,8 +83,8 @@ function x86_push_i (proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode,
     let operand_size : {|1, 2, 4, 8|} = select_operand_size(proc_mode, false, rex_byte, false, prefixes, true, true, false);
     let rsp_var : sbits(64) = read_sptr(proc_mode);
     let new_rsp : sbits(64) = add_to_sptr(proc_mode, rsp_var, bits_of_int(negate(operand_size), 64));
-    let imm : sbits(32) = truncate(rime_size(proc_mode, select_address_size(proc_mode, Some(prefixes)), imm_size, sail_sign_extend(temp_rip, 64), None(), 1, ":X", false, false), 32);
-    let temp_rip : sbits(48) = add_to_iptr(proc_mode, temp_rip, bits_of_int(imm_size, 48));
+    let imm : sbits(32) = truncate(rime_size(proc_mode, select_address_size(proc_mode, Some(prefixes)), imm_size, temp_rip, None(), 1, ":X", false, false), 32);
+    let temp_rip : sbits(64) = add_to_iptr(proc_mode, temp_rip, bits_of_int(imm_size, 64));
     let badlength? : option(int) = check_instruction_length(start_rip, temp_rip, 0b000);
     if is_some(badlength?) then x86_fault("(!!FAULT-FRESH :GP 0 :INSTRUCTION-LENGTH BADLENGTH?)");
     wme_size(proc_mode, select_address_size(proc_mode, Some(prefixes)), operand_size, new_rsp, None(), 2, bits_of_int(loghead(ash(operand_size, 3), signed(imm)), 128), alignment_checking_enabled_p(), false);
@@ -118,7 +118,7 @@ function x86_push_i (proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode,
  <p>PUSH doesn ' t have a separate instruction semantic function, unlike other 
  opcodes like ADD, SUB, etc. The decoding is coupled with the execution in 
  this case.</p> */
-val x86_push_segment_register : (proc_mode, sbits(48), sbits(48), prefixes, bits(8), bits(8), modr_m, sib) -> unit
+val x86_push_segment_register : (proc_mode, sbits(64), sbits(64), prefixes, bits(8), bits(8), modr_m, sib) -> unit
 
 function x86_push_segment_register (proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode, modr_m, sib) = {
     let ctx : string = "X86-PUSH-SEGMENT-REGISTER";
@@ -149,7 +149,7 @@ function x86_push_segment_register (proc_mode, start_rip, temp_rip, prefixes, re
  <p>POP does not have a separate instruction semantic function, unlike other 
  opcodes like ADD, SUB, etc. The decoding is coupled with the execution in 
  this case.</p> */
-val x86_pop_general_register : (proc_mode, sbits(48), sbits(48), prefixes, bits(8), bits(8), modr_m, sib) -> unit
+val x86_pop_general_register : (proc_mode, sbits(64), sbits(64), prefixes, bits(8), bits(8), modr_m, sib) -> unit
 
 function x86_pop_general_register (proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode, modr_m, sib) = {
     let ctx : string = "X86-POP-GENERAL-REGISTER";
@@ -177,7 +177,7 @@ function x86_pop_general_register (proc_mode, start_rip, temp_rip, prefixes, rex
  
  <p>This opcode belongs to Group 1A, and it has an opcode 
  extension ( ModR/m.reg = 0 ) .</p> */
-val x86_pop_ev : (proc_mode, sbits(48), sbits(48), prefixes, bits(8), bits(8), modr_m, sib) -> unit
+val x86_pop_ev : (proc_mode, sbits(64), sbits(64), prefixes, bits(8), bits(8), modr_m, sib) -> unit
 
 function x86_pop_ev (proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode, modr_m, sib) = {
     let ctx : string = "X86-POP-EV";
@@ -200,7 +200,7 @@ function x86_pop_ev (proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode,
     };
     let increment_rip_by : bits(3) = bits_of_int(increment_rip_by, 3);
     let seg_reg : seg_reg_idx = select_segment_register(proc_mode, prefixes, mod_var, r_m, sib);
-    let temp_rip : sbits(48) = add_to_iptr(proc_mode, temp_rip, sail_zero_extend(increment_rip_by, 48));
+    let temp_rip : sbits(64) = add_to_iptr(proc_mode, temp_rip, sail_zero_extend(increment_rip_by, 64));
     let badlength? : option(int) = check_instruction_length(start_rip, temp_rip, 0b000);
     if is_some(badlength?) then x86_fault("(!!FAULT-FRESH :GP 0 :INSTRUCTION-LENGTH BADLENGTH?)");
     write_sptr(proc_mode, new_rsp);
@@ -208,7 +208,7 @@ function x86_pop_ev (proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode,
     write_iptr(proc_mode, temp_rip)
 }
 
-val x86_pushf : (proc_mode, sbits(48), sbits(48), prefixes, bits(8), bits(8), modr_m, sib) -> unit
+val x86_pushf : (proc_mode, sbits(64), sbits(64), prefixes, bits(8), bits(8), modr_m, sib) -> unit
 
 function x86_pushf (proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode, modr_m, sib) = {
     let ctx : string = "X86-PUSHF";
@@ -227,7 +227,7 @@ function x86_pushf (proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode, 
     write_iptr(proc_mode, temp_rip)
 }
 
-val x86_popf : (proc_mode, sbits(48), sbits(48), prefixes, bits(8), bits(8), modr_m, sib) -> unit
+val x86_popf : (proc_mode, sbits(64), sbits(64), prefixes, bits(8), bits(8), modr_m, sib) -> unit
 
 function x86_popf (proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode, modr_m, sib) = {
     let ctx : string = "X86-POPF";
@@ -282,7 +282,7 @@ function x86_popf (proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode, m
  We use some simple and repetitive code to write the registers into the stack. 
  It may be possible to optimize it by pushing all the registers in one shot. 
  </p> */
-val x86_pusha : (proc_mode, sbits(48), sbits(48), prefixes, bits(8), bits(8), modr_m, sib) -> unit
+val x86_pusha : (proc_mode, sbits(64), sbits(64), prefixes, bits(8), bits(8), modr_m, sib) -> unit
 
 function x86_pusha (proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode, modr_m, sib) = {
     let ctx : string = "X86-PUSHA";
@@ -326,7 +326,7 @@ function x86_pusha (proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode, 
  We use some simple and repetitive code to read the registers from the stack. 
  It may be possible to optimize it by popping all the registers in one shot. 
  </p> */
-val x86_popa : (proc_mode, sbits(48), sbits(48), prefixes, bits(8), bits(8), modr_m, sib) -> unit
+val x86_popa : (proc_mode, sbits(64), sbits(64), prefixes, bits(8), bits(8), modr_m, sib) -> unit
 
 function x86_popa (proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode, modr_m, sib) = {
     let ctx : string = "X86-POPA";

@@ -208,14 +208,20 @@ def filterAST(ACL2ast, comments=False):
 	else:
 		return [item for item in ACL2ast if type(item) not in [NewLine]]
 
+def resolveBitfieldTypes(env, typ):
+	if isinstance(typ, Sail_t_bitfield):
+		return env.lookupBitfieldType(typ.getName())
+	elif isinstance(typ, Sail_t_tuple):
+		return Sail_t_tuple([resolveBitfieldTypes(env, t) for t in typ.getSubTypes()])
+	else:
+		return typ
+
 def getForcedVariableType(env, var):
 	typ = config_patterns.forced_variable_types.get(var.lower())
 	if isinstance(typ, dict):
 		# Check whether type is forced for current function
 		typ = typ.get(env.getDefineSlot().lower())
-	if isinstance(typ, Sail_t_bitfield):
-		typ = env.lookupBitfieldType(typ.getName())
-	return typ
+	return resolveBitfieldTypes(env, typ)
 
 def hasForcedVariableType(env, var):
 	return getForcedVariableType(env, var) is not None
@@ -604,8 +610,8 @@ def tr_define(ACL2ast, env):
 
 	# Set the type if we've specified it manually
 	if fnName.lower() in config_patterns.forced_return_types:
-		forced_return_type = config_patterns.forced_return_types[fnName.lower()]
-		thisSailFn.setForceRHSType(config_patterns.forced_return_types[fnName.lower()])
+		forced_return_type = resolveBitfieldTypes(env, config_patterns.forced_return_types[fnName.lower()])
+		thisSailFn.setForceRHSType(forced_return_type)
 	else:
 		forced_return_type = None
 
@@ -644,9 +650,7 @@ def tr_define(ACL2ast, env):
 	fnFormalsBVs = []
 	for f in fnFormalsFiltered:
 		if f.lower() in fnFormalsForced:
-			fTyp = fnFormalsForced[f.lower()]
-			if isinstance(fTyp, Sail_t_bitfield):
-				fTyp = env.lookupBitfieldType(fTyp.getName())
+			fTyp = resolveBitfieldTypes(env, fnFormalsForced[f.lower()])
 			bv = env.pushToBindings([f], [fTyp])
 		elif hasForcedVariableType(env, f):
 			bv = env.pushToBindings([f], [getForcedVariableType(env, f)])
@@ -1073,7 +1077,7 @@ def _the_helper(theType, sailTerm):
 	return [retTerm]
 
 
-def tr_the(ACL2ast, env):
+def tr_the(ACL2ast, env, forcedType=None):
 	"""
 	In ACL2, `(the <type-spec> <form>)` indicates that `form` has type
 	`type-spec`.  In ACL2 this is proved statically, it is translated as a
@@ -1085,7 +1089,7 @@ def tr_the(ACL2ast, env):
 	(typeSpec, rest) = _filterExtract(ACL2ast, 3, [[list], [list, str]], [None, None], "`the`")
 
 	# Decode typespec
-	theType = translateType(env, typeSpec[0], typeSpec[1:])
+	theType = translateType(env, typeSpec[0], typeSpec[1:]) if forcedType is None else forcedType
 
 	# Decode the rest
 	(sailTerm, env, _) = transform.transformACL2asttoSail(rest, env)
@@ -1095,6 +1099,9 @@ def tr_the(ACL2ast, env):
 
 	# Encapsulate and return	
 	return retTerm, env, len(ACL2ast)
+
+def is_the(ACL2ast):
+	return isinstance(ACL2ast, list) and len(ACL2ast) == 3 and isinstance(ACL2ast[0], str) and ACL2ast[0].lower() == 'the'
 
 def _parts_helper(lowAST, hiAST, widAST, env):
 	"""
@@ -1349,7 +1356,10 @@ def _bstar_helper(bindersRemaining, results, env):
 		forcedType = getForcedVariableType(env, b)
 		if isinstance(forcedType, Sail_t_bool):
 			env.setCurrentType(SailPlaceholderNil.BOOL)
-		(exprSail, env, _) = transform.transformACL2asttoSail(binding[1], env)
+		if forcedType and is_the(binding[1]):
+			(exprSail, env, _) = tr_the(binding[1], env, forcedType=forcedType)
+		else:
+			(exprSail, env, _) = transform.transformACL2asttoSail(binding[1], env)
 		env.clearCurrentType()
 		if len(exprSail) != 1: sys.exit(f"Error: body length not 1 in `let*` in `b*` - {exprSail}")
 		if forcedType is None:
@@ -1434,15 +1444,12 @@ def _bstar_helper(bindersRemaining, results, env):
 					# This is a bit of a hack as we can have more general patterns in an mv b* binder
 					name = sanitiseBindingName(ident[2])
 					ident[2] = name # tr_the needs to be able to look up the sanitised symbol
+					forcedType = getForcedVariableType(env, name)
 					typ = [bodyTypes[j]] if j < len(bodyTypes) else None
 					bv = env.pushToBindings([name], typ)
 					boundVars.extend(bv)
 					boundNames.append(name)
-					(sailThe, env, _) = tr_the(ident, env)
-					if hasForcedVariableType(env, ident[2]) and (typ is None or not(isSubType(getForcedVariableType(env, ident[2]), typ[0]))):
-						forcedType = getForcedVariableType(env, ident[2])
-						coercedBinding = coerceExpr(bv[0], forcedType)
-						sailThe = [coercedBinding] if coercedBinding else sailThe
+					(sailThe, env, _) = tr_the(ident, env, forcedType=forcedType)
 					sailTyp = sailThe[0].getType()
 					if typ is not None and isSubType(sailTyp, typ[0]): # and typ[0] == sailTyp:
 						print(f"Debug: Skipping coercion {sailThe[0].pp()} : {sailTyp.pp()} from type {typ[0].pp()}")
@@ -1544,7 +1551,10 @@ def _bstar_helper(bindersRemaining, results, env):
 			(bodySail, env, _) = transform.transformACL2asttoSail(body, env)
 
 			# Encapsulate in correct `the`
-			theType = translateType(env, typeSpec[0], typeSpec[1:])
+			if hasForcedVariableType(env, name):
+				theType = getForcedVariableType(env, name)
+			else:
+				theType = translateType(env, typeSpec[0], typeSpec[1:])
 			bodySail = _the_helper(theType, bodySail)
 
 			# Determine the actual type (which, in particular in
@@ -1822,8 +1832,7 @@ def get_register_info(env, name):
 
 	try:
 		(elemType, nElems) = register_types[name.lower()]
-		if isinstance(elemType, Sail_t_bitfield):
-			elemType = env.lookupBitfieldType(elemType.getName())
+		elemType = resolveBitfieldTypes(env, elemType)
 	except:
 		sys.exit(f"Error: Register {name} unknown")
 
@@ -2886,9 +2895,7 @@ def apply_dependent_fn_gen(funcToApply_gen, numOfArgs, keywordStruct=None, coerc
 			# Try to coerce actuals to the expected type
 			for (i, arg) in enumerate(SailActuals):
 				try:
-					typ = funcToApply.getType().getLHS()[i]
-					if isinstance(typ, Sail_t_bitfield):
-						typ = env.lookupBitfieldType(typ.getName())
+					typ = resolveBitfieldTypes(env, funcToApply.getType().getLHS()[i])
 					new = coerceExpr(arg, typ)
 					if new is not None:
 						SailActuals[i] = new
