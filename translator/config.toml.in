@@ -10,6 +10,9 @@ acl2_port = 1159
 # Output folder for translated files.
 output_folder = '../output'
 
+# Name for the generated top level file (without '.sail' extension)
+output_filename = 'step'
+
 # Folder with patch files
 patch_folder = 'patches'
 

@@ -1,88 +1,57 @@
-$include "instrumentFns.sail"
-
 register haltAddrReg : sbits(48)
+
+function clause __SetConfig("ha", value) = { haltAddrReg = get_slice_int(48, value, 0) }
 
 // Set 64 bit mode
 val initialise_64_bit_mode : unit -> unit
 function initialise_64_bit_mode () = {
 	msrs[0][11 .. 0] = [Mk_ia32_eferbits(msrs[0][11 ..0]) with lma = 0b1].bits;
-	seg_hidden_attrs[1][15 .. 0] = [Mk_code_segment_descriptor_attributesbits(seg_hidden_attrs[1][15 .. 0]) with l = 0b1].bits;
+	seg_hidden_attrs[1] = [Mk_code_segment_descriptor_attributesbits(seg_hidden_attrs[1]) with l = 0b1].bits;
 }
 
-// Initialise state for the add1 example
-val initialiseState : unit -> unit
-function initialiseState () = {
-	// Set rip
-	write_rip(sail_zero_extend(0x40065D, 48));
-
-	// rdi = 1
-	write_rgfi(7, sail_zero_extend(0b1, 64));
-
-	// rsp = 2 ^ 45
-	write_rgfi(4, sail_shiftleft(sail_zero_extend(0b1, 64), 45));
-
-	// rflags = 2
-	rflags = Mk_rflagsbits(sail_zero_extend(0x2, 32));
-
-	// Set 64 bit mode
-	initialise_64_bit_mode();
-
-	// Set halt address
-	haltAddrReg = sail_zero_extend(0x400662, 48)
+function clause __SetConfig("set64bit", value) = {
+  // Ignore the value
+  initialise_64_bit_mode()
 }
+function clause __SetConfig(_, _) = throw(Emsg("Unrecognised Config"))
+end __SetConfig
 
-// Initialise state for the K-framework example
-val initialiseState2 : unit -> unit
-function initialiseState2 () = {
-	// Set rip
-	write_rip(bits_of_int(4194867, 48)); // Original start to this file: 4194867; the instruction which fails in the interpreter: 4196698
-
-	// rdi = 1
-	//x = write_rgfi(7, 1, 0);
-
-	// rsp = 2 ^ 45
-	write_rgfi(4, sail_shiftleft(sail_zero_extend(0b1, 64), 45));
-
-	// rflags = 2
-	rflags = Mk_rflagsbits(sail_zero_extend(0x2, 32));
-
-	// Set 64 bit mode
-	initialise_64_bit_mode()
-}
-
-// Using the __SetConfig method.  See aarch32 example for example.
-val __SetConfig : (string, int) -> unit
-function __SetConfig (arg, value) =
-	match arg {
-		"rip" => { write_rip(get_slice_int(48, value, 0)) },
-		"rdi" => { write_rgfi(7, get_slice_int(64, value, 0)) },
-		"rsp" => { write_rgfi(4, get_slice_int(64, value, 0)) },
-		"rflags" => { rflags = Mk_rflagsbits(get_slice_int(32, value, 0)) },
-		"cr4" => { ctrs[4] = get_slice_int(64, value, 0) },
-		"ha" => { haltAddrReg = get_slice_int(48, value, 0) },
-		"set64bit" => {
-			// Ignore the value
-			initialise_64_bit_mode()
-		},
-		"app_view" => { app_view = (value != 0) },
-		_ => throw(Emsg("Unrecognised Config"))
+val x86_step_print_halt : (sbits(48), bool, bool, int) -> bool
+function x86_step_print_halt(haltAddr, printEachStep, printCount, count) = {
+	if read_rip() == haltAddr then {
+		return true
+	} else {
+		x86_fetch_decode_execute();
+		if printEachStep then printState();
+		if printCount then print_int("Steps = ", count + 1);
+		return false
 	}
+}
 
-// This should print information about __SetConfig to stderr.
-val __ListConfig : unit -> unit
-function __ListConfig () = ()
-
-// This function is so we can compile to a C emulator which does pretty does everything
-val doEverything : unit -> unit
-function doEverything () = {
-	//initialiseState();
-	//steps = x86_run_halt(4195938, 10000, 0, true, false, 0); // 4195938 for original example; 4197494 for test.s; 4194880 for debug.s
-	steps = x86_run_halt(haltAddrReg, 10000, true, false, 0);
-	print_int("Steps = ", steps);
+// Simulates the same ACL2 function
+val x86_run_halt : (sbits(48), int, bool, bool, int) -> int
+function x86_run_halt (haltAddr, maxSteps, printEachStep, printCount, count) = {
+	if maxSteps == 0 then {
+		return count
+	} else {
+		try {
+			let halt? : bool = x86_step_print_halt(haltAddr, printEachStep, printCount, count + 1);
+			if halt?  then {
+				return count
+			} else {
+				return x86_run_halt(haltAddr, maxSteps - 1, printEachStep, printCount, count + 1)
+			}
+		}
+		catch {
+			Emsg(msg) => { print_endline(msg); return count }
+		}
+	}
 }
 
 // A main function for C compilation
 val main : unit -> unit
-function main () =
-	doEverything()
-	//x86_step_print_halt(haltAddrReg, true, false, 0)
+function main () = {
+	initialize_model();
+	steps = x86_run_halt(haltAddrReg, 10000, true, false, 0);
+	print_int("Steps = ", steps);
+}

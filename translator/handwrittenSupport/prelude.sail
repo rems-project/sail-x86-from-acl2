@@ -611,6 +611,9 @@ function bang_memi (addr, valToWrite) = {
 // Config
 /*-----------------------------------------------------------------*/
 
+val __SetConfig : (string, int) -> unit
+scattered function __SetConfig
+
 // app-view is part of the x86 model state.  See thesis section 5.1
 // and conrete-memory.lisp
 
