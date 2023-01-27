@@ -5,8 +5,6 @@
  bit by the microarchitecture ( represented by the constant 
  @ ( ' *max-linear-address-size* ' ) in these books ) are set to either all ones or 
  all zeros.</p> */
-val canonical_address_p : int -> bool
-
 function canonical_address_p lin_addr = {
     signed_byte_p(48, lin_addr)
 }

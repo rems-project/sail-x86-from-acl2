@@ -386,8 +386,6 @@ function ia32e_la_to_pa_pml4_table (lin_addr, base_addr, wp, smep, smap, ac, nxe
     }
 }
 
-val ia32e_la_to_pa : (sbits(48), string) -> (option(string), bits(52))
-
 function ia32e_la_to_pa (lin_addr, r_w_x) = {
     assert(not_bool(app_view));
     let lin_addr : int = binary_logext(48, unsigned(loghead(48, lin_addr)));

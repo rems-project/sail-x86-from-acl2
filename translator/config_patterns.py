@@ -78,6 +78,12 @@ forced_variable_types = {
         'sib': Sail_t_bitfield("sib", 8),
 }
 
+forward_declarations = [
+	'canonical-address-p',
+	'address-aligned-p',
+	'ia32e-la-to-pa'
+]
+
 '''
 By default we expand macro applications inline at their call sites, but we
 support translating selected macros as regular functions

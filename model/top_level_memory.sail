@@ -29,8 +29,6 @@
  If the operand size is 1, 2, 8, or 16, 
  it cannot be a memory pointer of the form m16:xx. 
  </p> */
-val address_aligned_p : (sbits(48), {|1, 2, 4, 6, 8, 10, 16, 32, 64|}, bool) -> bool
-
 function address_aligned_p (addr, operand_size, memory_ptr?) = {
     (match operand_size {
       1 => true,

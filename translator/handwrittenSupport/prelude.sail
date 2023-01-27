@@ -12,7 +12,6 @@ $endif
 
 $include <prelude.sail>
 $include <regfp.sail>
-$include <real.sail>
 $include <string.sail>
 
 overload operator + = {concat_str, and_bool}
@@ -89,7 +88,7 @@ overload operator == = {eq_bits_nat}
 pow2 taken from sail-riscv/model/prelude.sail
 */
 
-val pow2 = "pow2" : forall 'n. int('n) -> int(2 ^ 'n)
+val pow2 = pure "pow2" : forall 'n. int('n) -> int(2 ^ 'n)
 
 /*
 TODO: is there a utility function for this

@@ -72,7 +72,7 @@ class SailASTelem():
 
 class SailFn(SailASTelem):
 	"""Sail function definition"""
-	def __init__(self, name=None, formals=None, body=None):
+	def __init__(self, name=None, formals=None, body=None, already_declared=False):
 		"""
 		It is not necessary to set any value at initialisation.  This is
 		because we want to create this object before the body is translated in
@@ -87,6 +87,7 @@ class SailFn(SailASTelem):
 		self.setName(name)
 		self.formals = formals
 		self.setBody(body)
+		self.already_declared = already_declared
 
 		self.forceRHSType = None
 
@@ -116,6 +117,12 @@ class SailFn(SailASTelem):
 
 	def getBody(self):
 		return self.body
+
+	def getAlreadyDeclared(self):
+		return self.already_declared
+
+	def setAlreadyDeclared(self, already_declared):
+		self.already_declared = already_declared
 
 	def setForceRHSType(self, typ):
 		self.forceRHSType = typ
@@ -154,11 +161,11 @@ class SailFn(SailASTelem):
 	def pp(self):
 		sanitisedName = utils.sanitiseSymbol(self.name)
 
-		typeSig = f"val {sanitisedName} : {self.getType().pp()}"
+		typeSig = [f"val {sanitisedName} : {self.getType().pp()}"] if not self.already_declared else []
 		header = f"function {sanitisedName} ({', '.join([utils.sanitiseSymbol(item.getName(), includeFnNames=True) for item in self.formals])}) ="
 		body = "\n".join([elem.pp() for elem in self.body])
 
-		return "\n".join([typeSig, header, body]) + "\n"
+		return "\n".join(typeSig + [header, body]) + "\n"
 
 class SailHandwrittenFn(SailASTelem):
 	"""

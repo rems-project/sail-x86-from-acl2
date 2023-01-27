@@ -594,6 +594,10 @@ def tr_define(ACL2ast, env):
 		env.setDefineSlot("")
 		return [None], env, len(ACL2ast)
 
+	# Check if we already have a forward declaration of this function
+	if fnName.lower() in config_patterns.forward_declarations:
+		thisSailFn.setAlreadyDeclared(True)
+
 	# Set the type if we've specified it manually
 	if fnName.lower() in config_patterns.forced_return_types:
 		forced_return_type = config_patterns.forced_return_types[fnName.lower()]
