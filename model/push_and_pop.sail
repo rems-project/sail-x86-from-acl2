@@ -8,7 +8,7 @@
  <p>PUSH does not have a separate instruction semantic function, unlike other 
  opcodes like ADD, SUB, etc. The decoding is coupled with the execution in 
  this case.</p> */
-val x86_push_general_register : (range(0, 4), sbits(48), sbits(48), prefixes, bits(8), bits(8), modr_m, sib) -> unit
+val x86_push_general_register : (proc_mode, sbits(48), sbits(48), prefixes, bits(8), bits(8), modr_m, sib) -> unit
 
 function x86_push_general_register (proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode, modr_m, sib) = {
     let ctx : string = "X86-PUSH-GENERAL-REGISTER";
@@ -38,7 +38,7 @@ function x86_push_general_register (proc_mode, start_rip, temp_rip, prefixes, re
  
  <p>This opcode belongs to Group 5, and it has an opcode 
  extension ( ModR/m.reg = 6 ) .</p> */
-val x86_push_ev : (range(0, 4), sbits(48), sbits(48), prefixes, bits(8), bits(8), modr_m, sib) -> unit
+val x86_push_ev : (proc_mode, sbits(48), sbits(48), prefixes, bits(8), bits(8), modr_m, sib) -> unit
 
 function x86_push_ev (proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode, modr_m, sib) = {
     let ctx : string = "X86-PUSH-EV";
@@ -80,7 +80,7 @@ function x86_push_ev (proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode
  <p>PUSH doesn ' t have a separate instruction semantic function, unlike other 
  opcodes like ADD, SUB, etc. The decoding is coupled the decoding with the 
  execution in this case.</p> */
-val x86_push_i : (range(0, 4), sbits(48), sbits(48), prefixes, bits(8), bits(8), modr_m, sib) -> unit
+val x86_push_i : (proc_mode, sbits(48), sbits(48), prefixes, bits(8), bits(8), modr_m, sib) -> unit
 
 function x86_push_i (proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode, modr_m, sib) = {
     let ctx : string = "X86-PUSH-I";
@@ -130,7 +130,7 @@ function x86_push_i (proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode,
  <p>PUSH doesn ' t have a separate instruction semantic function, unlike other 
  opcodes like ADD, SUB, etc. The decoding is coupled with the execution in 
  this case.</p> */
-val x86_push_segment_register : (range(0, 4), sbits(48), sbits(48), prefixes, bits(8), bits(8), modr_m, sib) -> unit
+val x86_push_segment_register : (proc_mode, sbits(48), sbits(48), prefixes, bits(8), bits(8), modr_m, sib) -> unit
 
 function x86_push_segment_register (proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode, modr_m, sib) = {
     let ctx : string = "X86-PUSH-SEGMENT-REGISTER";
@@ -163,7 +163,7 @@ function x86_push_segment_register (proc_mode, start_rip, temp_rip, prefixes, re
  <p>POP does not have a separate instruction semantic function, unlike other 
  opcodes like ADD, SUB, etc. The decoding is coupled with the execution in 
  this case.</p> */
-val x86_pop_general_register : (range(0, 4), sbits(48), sbits(48), prefixes, bits(8), bits(8), modr_m, sib) -> unit
+val x86_pop_general_register : (proc_mode, sbits(48), sbits(48), prefixes, bits(8), bits(8), modr_m, sib) -> unit
 
 function x86_pop_general_register (proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode, modr_m, sib) = {
     let ctx : string = "X86-POP-GENERAL-REGISTER";
@@ -193,7 +193,7 @@ function x86_pop_general_register (proc_mode, start_rip, temp_rip, prefixes, rex
  
  <p>This opcode belongs to Group 1A, and it has an opcode 
  extension ( ModR/m.reg = 0 ) .</p> */
-val x86_pop_ev : (range(0, 4), sbits(48), sbits(48), prefixes, bits(8), bits(8), modr_m, sib) -> unit
+val x86_pop_ev : (proc_mode, sbits(48), sbits(48), prefixes, bits(8), bits(8), modr_m, sib) -> unit
 
 function x86_pop_ev (proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode, modr_m, sib) = {
     let ctx : string = "X86-POP-EV";
@@ -229,7 +229,7 @@ function x86_pop_ev (proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode,
     write_iptr(proc_mode, truncate(temp_rip, 48))
 }
 
-val x86_pushf : (range(0, 4), sbits(48), sbits(48), prefixes, bits(8), bits(8), modr_m, sib) -> unit
+val x86_pushf : (proc_mode, sbits(48), sbits(48), prefixes, bits(8), bits(8), modr_m, sib) -> unit
 
 function x86_pushf (proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode, modr_m, sib) = {
     let ctx : string = "X86-PUSHF";
@@ -250,7 +250,7 @@ function x86_pushf (proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode, 
     write_iptr(proc_mode, temp_rip)
 }
 
-val x86_popf : (range(0, 4), sbits(48), sbits(48), prefixes, bits(8), bits(8), modr_m, sib) -> unit
+val x86_popf : (proc_mode, sbits(48), sbits(48), prefixes, bits(8), bits(8), modr_m, sib) -> unit
 
 function x86_popf (proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode, modr_m, sib) = {
     let ctx : string = "X86-POPF";
@@ -307,7 +307,7 @@ function x86_popf (proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode, m
  We use some simple and repetitive code to write the registers into the stack. 
  It may be possible to optimize it by pushing all the registers in one shot. 
  </p> */
-val x86_pusha : (range(0, 4), sbits(48), sbits(48), prefixes, bits(8), bits(8), modr_m, sib) -> unit
+val x86_pusha : (proc_mode, sbits(48), sbits(48), prefixes, bits(8), bits(8), modr_m, sib) -> unit
 
 function x86_pusha (proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode, modr_m, sib) = {
     let ctx : string = "X86-PUSHA";
@@ -367,7 +367,7 @@ function x86_pusha (proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode, 
  We use some simple and repetitive code to read the registers from the stack. 
  It may be possible to optimize it by popping all the registers in one shot. 
  </p> */
-val x86_popa : (range(0, 4), sbits(48), sbits(48), prefixes, bits(8), bits(8), modr_m, sib) -> unit
+val x86_popa : (proc_mode, sbits(48), sbits(48), prefixes, bits(8), bits(8), modr_m, sib) -> unit
 
 function x86_popa (proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode, modr_m, sib) = {
     let ctx : string = "X86-POPA";

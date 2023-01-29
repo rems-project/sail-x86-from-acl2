@@ -1,5 +1,5 @@
 
-val x86_xchg : (range(0, 4), sbits(48), sbits(48), prefixes, bits(8), bits(8), modr_m, sib) -> unit
+val x86_xchg : (proc_mode, sbits(48), sbits(48), prefixes, bits(8), bits(8), modr_m, sib) -> unit
 
 function x86_xchg (proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode, modr_m, sib) = {
     let ctx : string = "X86-XCHG";
@@ -51,7 +51,7 @@ function x86_xchg (proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode, m
     write_iptr(proc_mode, temp_rip)
 }
 
-val x86_cmpxchg : (range(0, 4), sbits(48), sbits(48), prefixes, bits(8), bits(8), modr_m, sib) -> unit
+val x86_cmpxchg : (proc_mode, sbits(48), sbits(48), prefixes, bits(8), bits(8), modr_m, sib) -> unit
 
 function x86_cmpxchg (proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode, modr_m, sib) = {
     let ctx : string = "X86-CMPXCHG";
@@ -89,7 +89,7 @@ function x86_cmpxchg (proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode
     write_iptr(proc_mode, temp_rip)
 }
 
-val x86_two_byte_nop : (range(0, 4), sbits(48), sbits(48), prefixes, bits(8), bits(8), modr_m, sib) -> unit
+val x86_two_byte_nop : (proc_mode, sbits(48), sbits(48), prefixes, bits(8), bits(8), modr_m, sib) -> unit
 
 function x86_two_byte_nop (proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode, modr_m, sib) = {
     let ctx : string = "X86-TWO-BYTE-NOP";

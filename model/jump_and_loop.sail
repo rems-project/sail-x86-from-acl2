@@ -1,5 +1,5 @@
 
-val x86_near_jmp_op_en_d : (range(0, 4), sbits(48), sbits(48), prefixes, bits(8), bits(8), modr_m, sib) -> unit
+val x86_near_jmp_op_en_d : (proc_mode, sbits(48), sbits(48), prefixes, bits(8), bits(8), modr_m, sib) -> unit
 
 function x86_near_jmp_op_en_d (proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode, modr_m, sib) = {
     let ctx : string = "X86-NEAR-JMP-OP/EN-D";
@@ -24,7 +24,7 @@ function x86_near_jmp_op_en_d (proc_mode, start_rip, temp_rip, prefixes, rex_byt
     write_iptr(proc_mode, truncate(temp_rip, 48))
 }
 
-val x86_near_jmp_op_en_m : (range(0, 4), sbits(48), sbits(48), prefixes, bits(8), bits(8), modr_m, sib) -> unit
+val x86_near_jmp_op_en_m : (proc_mode, sbits(48), sbits(48), prefixes, bits(8), bits(8), modr_m, sib) -> unit
 
 function x86_near_jmp_op_en_m (proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode, modr_m, sib) = {
     let ctx : string = "X86-NEAR-JMP-OP/EN-M";
@@ -45,13 +45,13 @@ function x86_near_jmp_op_en_m (proc_mode, start_rip, temp_rip, prefixes, rex_byt
     let badlength? : option(int) = check_instruction_length(start_rip, temp_rip, 0b000);
     if is_some(badlength?) then throw(Emsg("A fault occurred.  Original ACL2 AST: (!!FAULT-FRESH :GP 0 :INSTRUCTION-LENGTH BADLENGTH?)"));
     let jmp_addr : sbits(130) = {
-        if proc_mode == 0 then {
+        if in_64bit_mode(proc_mode) then {
             sail_sign_extend(truncate(jmp_addr, 64), 130)
         } else {
             sail_zero_extend(jmp_addr, 130)
         }
     };
-    if not_bool(if proc_mode == 0 then {
+    if not_bool(if in_64bit_mode(proc_mode) then {
         canonical_address_p(signed(jmp_addr))
     } else {
         let cs_limit : bits(32) = seg_hidden_limits[1];
@@ -94,7 +94,7 @@ function x86_near_jmp_op_en_m (proc_mode, start_rip, temp_rip, prefixes, rex_byt
  instruction at the offset specified in the call gate. No stack switch 
  occurs. The target operand specifies the far address of the call gate 
  indirectly with a memory location ( m16:16 or m16:32 or m16:64 ) .</p> */
-val x86_far_jmp_op_en_d : (range(0, 4), sbits(48), sbits(48), prefixes, bits(8), bits(8), modr_m, sib) -> unit
+val x86_far_jmp_op_en_d : (proc_mode, sbits(48), sbits(48), prefixes, bits(8), bits(8), modr_m, sib) -> unit
 
 function x86_far_jmp_op_en_d (proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode, modr_m, sib) = {
     let ctx : string = "X86-FAR-JMP-OP/EN-D";
@@ -122,7 +122,7 @@ function x86_far_jmp_op_en_d (proc_mode, start_rip, temp_rip, prefixes, rex_byte
         if sel_ti == 0b0 then {
             let gdtr : bits(80) = strs[0];
             let gdtr_base : bits(64) = {
-                if proc_mode == 0 then {
+                if in_64bit_mode(proc_mode) then {
                     Mk_gdtr_idtrbits(gdtr)[base_addr]
                 } else {
                     sail_zero_extend(truncate(Mk_gdtr_idtrbits(gdtr)[base_addr], 32), 64)
@@ -133,7 +133,7 @@ function x86_far_jmp_op_en_d (proc_mode, start_rip, temp_rip, prefixes, rex_byte
         } else {
             let ldtr_base : bits(64) = ssr_hidden_bases[0];
             let ldtr_base : bits(64) = {
-                if proc_mode == 0 then {
+                if in_64bit_mode(proc_mode) then {
                     ldtr_base
                 } else {
                     sail_zero_extend(truncate(ldtr_base, 32), 64)
@@ -155,7 +155,7 @@ function x86_far_jmp_op_en_d (proc_mode, start_rip, temp_rip, prefixes, rex_byte
         let msb_of_type : bits(1) = Mk_code_segment_descriptorbits(descriptor)[msb_of_type];
         if not_bool(msb_of_type == 0b1) then throw(Emsg("A fault occurred.  Original ACL2 AST: (!!FAULT-FRESH :GP SEL-INDEX :JMP-FAR-DATA-SEGMENT SEL-INDEX)"));
         let d : bits(1) = Mk_code_segment_descriptorbits(descriptor)[d];
-        if proc_mode == 0 & d == 0b1 then throw(Emsg("A fault occurred.  Original ACL2 AST: (!!FAULT-FRESH :GP SEL-INDEX :CS.D=1-IN-64-BIT-MODE SEL-INDEX)"));
+        if in_64bit_mode(proc_mode) & d == 0b1 then throw(Emsg("A fault occurred.  Original ACL2 AST: (!!FAULT-FRESH :GP SEL-INDEX :CS.D=1-IN-64-BIT-MODE SEL-INDEX)"));
         let cpl : bits(2) = {
             {
                 ();
@@ -182,7 +182,7 @@ function x86_far_jmp_op_en_d (proc_mode, start_rip, temp_rip, prefixes, rex_byte
             }
         };
         let jmp_addr_ok : bool = {
-            if proc_mode == 0 then {
+            if in_64bit_mode(proc_mode) then {
                 canonical_address_p(signed(jmp_addr))
             } else {
                 let limit15_0 : bits(16) = Mk_code_segment_descriptorbits(descriptor)[limit15_0];
@@ -207,7 +207,7 @@ function x86_far_jmp_op_en_d (proc_mode, start_rip, temp_rip, prefixes, rex_byte
         seg_hidden_attrs[1] = make_code_segment_attr_field(descriptor).bits;
         write_iptr(proc_mode, truncate(jmp_addr, 48))
     } else {
-        if not_bool(proc_mode == 0) then throw(Emsg("Model state error: :FAR-JMP-SYSTEM-UNIMPLEMENTED-IN-32-BIT-MODE"));
+        if not_bool(in_64bit_mode(proc_mode)) then throw(Emsg("Model state error: :FAR-JMP-SYSTEM-UNIMPLEMENTED-IN-32-BIT-MODE"));
         let largest_address : int = ash(unsigned(sel_index), 3) + 15;
         if unsigned(dt_limit) < largest_address then throw(Emsg("A fault occurred.  Original ACL2 AST: (!!FAULT-FRESH :GP SEL-INDEX :GP-SELECTOR-LIMIT-CHECK-FAILED (LIST SELECTOR DT-BASE-ADDR DT-LIMIT))"));
         let (flg, descriptor) : (option(string), bits(128)) = rml_size(16, bits_of_int(descriptor_addr, 48), ":X");
@@ -232,7 +232,7 @@ function x86_far_jmp_op_en_d (proc_mode, start_rip, temp_rip, prefixes, rex_byte
                     let gdtr : bits(80) = strs[0];
                     let gdtr_base : bits(64) = Mk_gdtr_idtrbits(gdtr)[base_addr];
                     let gdtr_base : bits(64) = {
-                        if proc_mode == 0 then {
+                        if in_64bit_mode(proc_mode) then {
                             gdtr_base
                         } else {
                             sail_zero_extend(truncate(gdtr_base, 32), 64)
@@ -243,7 +243,7 @@ function x86_far_jmp_op_en_d (proc_mode, start_rip, temp_rip, prefixes, rex_byte
                 } else {
                     let ldtr_base : bits(64) = ssr_hidden_bases[0];
                     let ldtr_base : bits(64) = {
-                        if proc_mode == 0 then {
+                        if in_64bit_mode(proc_mode) then {
                             ldtr_base
                         } else {
                             sail_zero_extend(truncate(ldtr_base, 32), 64)
@@ -290,7 +290,7 @@ function x86_far_jmp_op_en_d (proc_mode, start_rip, temp_rip, prefixes, rex_byte
     }
 }
 
-val x86_loop : (range(0, 4), sbits(48), sbits(48), prefixes, bits(8), bits(8), modr_m, sib) -> unit
+val x86_loop : (proc_mode, sbits(48), sbits(48), prefixes, bits(8), bits(8), modr_m, sib) -> unit
 
 function x86_loop (proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode, modr_m, sib) = {
     let ctx : string = "X86-LOOP";

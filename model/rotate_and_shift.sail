@@ -54,7 +54,7 @@ $include "./rotates_spec.sail"
  D3/5: SHR r/m16/32/64, CL<br/> 
  D3/7: SAR r/m16/32/64, CL<br/> 
  </p> */
-val x86_sal_sar_shl_shr_rcl_rcr_rol_ror : (range(0, 4), sbits(48), sbits(48), prefixes, bits(8), bits(8), modr_m, sib) -> unit
+val x86_sal_sar_shl_shr_rcl_rcr_rol_ror : (proc_mode, sbits(48), sbits(48), prefixes, bits(8), bits(8), modr_m, sib) -> unit
 
 function x86_sal_sar_shl_shr_rcl_rcr_rol_ror (proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode, modr_m, sib) = {
     let ctx : string = "X86-SAL/SAR/SHL/SHR/RCL/RCR/ROL/ROR";
@@ -146,7 +146,7 @@ function x86_sal_sar_shl_shr_rcl_rcr_rol_ror (proc_mode, start_rip, temp_rip, pr
  0F AD: SHRD r/m32, r32, CL<br/> 
  0F AD: SHRD r/m64, r64, CL<br/> 
  </p> */
-val x86_shld_shrd : (range(0, 4), sbits(48), sbits(48), prefixes, bits(8), bits(8), modr_m, sib) -> unit
+val x86_shld_shrd : (proc_mode, sbits(48), sbits(48), prefixes, bits(8), bits(8), modr_m, sib) -> unit
 
 function x86_shld_shrd (proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode, modr_m, sib) = {
     let ctx : string = "X86-SHLD/SHRD";

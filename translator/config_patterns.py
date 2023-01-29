@@ -1,5 +1,6 @@
 from lex_parse import ACL2String
 from SailTypes import *
+import handwritten_tokens
 
 '''
 This file configures File names or Lisp patterns to either include or exclude.
@@ -76,12 +77,14 @@ forced_variable_types = {
         'evex-prefixes': Sail_t_bitfield("evex-prefixes", 32),
         'modr/m': Sail_t_bitfield("modr/m", 8),
         'sib': Sail_t_bitfield("sib", 8),
+		'proc-mode': handwritten_tokens.proc_mode_typ
 }
 
 forward_declarations = [
 	'canonical-address-p',
 	'address-aligned-p',
-	'ia32e-la-to-pa'
+	'ia32e-la-to-pa',
+	'64-bit-modep'
 ]
 
 '''
@@ -314,7 +317,6 @@ only_translate = {
 	'modes': [
 		['include-book', ACL2String('register-readers-and-writers')],
 		['define', '64-bit-modep'],
-		['define', 'x86-operation-mode'],
 	],
 
 	# We call it this to avoid collision with the other segmentation file

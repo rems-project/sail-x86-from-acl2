@@ -1,5 +1,5 @@
 
-val x86_syscall : (range(0, 4), sbits(48), sbits(48), prefixes, bits(8), bits(8), modr_m, sib) -> unit
+val x86_syscall : (proc_mode, sbits(48), sbits(48), prefixes, bits(8), bits(8), modr_m, sib) -> unit
 
 function x86_syscall (proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode, modr_m, sib) = {
     let ctx : string = "X86-SYSCALL";
@@ -39,7 +39,7 @@ function x86_syscall (proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode
     seg_hidden_attrs[2] = ss_attr.bits
 }
 
-val x86_syscall_both_views : (range(0, 4), sbits(48), sbits(48), prefixes, bits(8), bits(8), modr_m, sib) -> unit
+val x86_syscall_both_views : (proc_mode, sbits(48), sbits(48), prefixes, bits(8), bits(8), modr_m, sib) -> unit
 
 function x86_syscall_both_views (proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode, modr_m, sib) = {
     let ctx : string = "X86-SYSCALL-BOTH-VIEWS";
@@ -59,7 +59,7 @@ function x86_syscall_both_views (proc_mode, start_rip, temp_rip, prefixes, rex_b
  <p>SYSRET when REX.W is not set is not supported yet because 0F 07 
  ( as opposed to REX.W + 0F 07 ) switches the machine to 
  compatibility mode, not 64-bit mode.</p> */
-val x86_sysret : (range(0, 4), sbits(48), sbits(48), prefixes, bits(8), bits(8), modr_m, sib) -> unit
+val x86_sysret : (proc_mode, sbits(48), sbits(48), prefixes, bits(8), bits(8), modr_m, sib) -> unit
 
 function x86_sysret (proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode, modr_m, sib) = {
     let ctx : string = "X86-SYSRET";

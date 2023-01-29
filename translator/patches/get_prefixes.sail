@@ -1,4 +1,4 @@
-val get_prefixes : (range(0, 4), sbits(48), prefixes, bits(8), range(0, 15)) -> (option(string), prefixes, bits(8))
+val get_prefixes : (proc_mode, sbits(48), prefixes, bits(8), range(0, 15)) -> (option(string), prefixes, bits(8))
 
 function get_prefixes (proc_mode, start_rip, prefixes, rex_byte, cnt) = {
     if cnt == 0 then {
@@ -23,7 +23,7 @@ function get_prefixes (proc_mode, start_rip, prefixes, rex_byte, cnt) = {
             let prefix_byte_group_code : {|0, 1, 2, 3, 4|} = get_one_byte_prefix_array_code(byte);
             match prefix_byte_group_code {
               0 => {
-                  let rex? : bool = proc_mode == 0 & bits_of_int(ash(unsigned(byte), -4), 4) == 0x4;
+                  let rex? : bool = in_64bit_mode(proc_mode) & bits_of_int(ash(unsigned(byte), -4), 4) == 0x4;
                   if rex? then {
                       let (flg, next_rip) : (option(string), sbits(49)) = add_to_iptr(proc_mode, start_rip, 0x000000000001);
                       if is_some(flg) then {
@@ -55,7 +55,7 @@ function get_prefixes (proc_mode, start_rip, prefixes, rex_byte, cnt) = {
                   let (flg, next_rip) : (option(string), sbits(49)) = add_to_iptr(proc_mode, start_rip, 0x000000000001);
                   if is_some(flg) then {
                       (flg, prefixes, rex_byte)
-                  } else if proc_mode == 0 & (byte == 0x64 | byte == 0x65) | not_bool(proc_mode == 0) then {
+                  } else if in_64bit_mode(proc_mode) & (byte == 0x64 | byte == 0x65) | not_bool(in_64bit_mode(proc_mode)) then {
                       get_prefixes(proc_mode, truncate(next_rip, 48), [prefixes with seg = byte], 0x00, check_range(0, 15, cnt - 1))
                   } else {
                       get_prefixes(proc_mode, truncate(next_rip, 48), prefixes, 0x00, check_range(0, 15, cnt - 1))

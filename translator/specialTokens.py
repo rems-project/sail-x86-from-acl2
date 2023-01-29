@@ -3,6 +3,7 @@ from lex_parse import ACL2String, ACL2quote, ACL2qq, CodeTopLevel, pp_acl2, lexL
 from SailASTelems import *
 from SailTypes import parseGuard, Sail_t_fn, translateType, eqSet
 import config_patterns
+import handwritten_tokens
 
 import os
 import sys
@@ -2528,7 +2529,7 @@ def tr_wb(ACL2ast, env):
 def tr_select_address_size(ACL2ast, env):
 	prefixesTyp = env.lookupBitfieldType("prefixes")
 	retTyp = Sail_t_synonym("address_size", Sail_t_member([2, 4, 8]))
-	fnTyp = Sail_t_fn([Sail_t_range(0, 4), prefixesTyp], retTyp)
+	fnTyp = Sail_t_fn([handwritten_tokens.proc_mode_typ, prefixesTyp], retTyp)
 	fn = SailHandwrittenFn('select-address-size', fnTyp)
 	# Translate arguments, replacing `p4?` with the full prefixes bitfield
 	proc_mode = SailBoundVar("proc-mode") # env.lookup("proc-mode")(["proc-mode"], env)[0]
@@ -2546,7 +2547,7 @@ def tr_select_address_size(ACL2ast, env):
 def tr_select_segment_register(ACL2ast, env):
 	prefixesTyp = env.lookupBitfieldType("prefixes")
 	sibTyp = env.lookupBitfieldType("sib")
-	argTyps = [Sail_t_range(0, 4), prefixesTyp, Sail_t_bits(2), Sail_t_bits(3), sibTyp]
+	argTyps = [handwritten_tokens.proc_mode_typ, prefixesTyp, Sail_t_bits(2), Sail_t_bits(3), sibTyp]
 	retTyp = Sail_t_synonym("seg_reg_idx", Sail_t_range(0, 5))
 	fn = SailHandwrittenFn('select-segment-register', Sail_t_fn(argTyps, retTyp))
 	# Translate arguments, replacing the prefix parts with the full prefixes variable

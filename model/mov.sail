@@ -3,7 +3,7 @@
 <h3>Op/En = RM: [OP XMM, XMM/M]</h3> 
  F3 0F 10: MOVSS xmm1, xmm2/m32<br/> 
  F2 0F 10: MOVSD xmm1, xmm2/m64<br/> */
-val x86_movss_movsd_op_en_rm : (range(0, 1), range(0, 4), sbits(48), sbits(48), prefixes, bits(8), bits(8), modr_m, sib) -> unit
+val x86_movss_movsd_op_en_rm : (range(0, 1), proc_mode, sbits(48), sbits(48), prefixes, bits(8), bits(8), modr_m, sib) -> unit
 
 function x86_movss_movsd_op_en_rm (sp_dp, proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode, modr_m, sib) = {
     let ctx : string = "X86-MOVSS/MOVSD-OP/EN-RM";
@@ -38,7 +38,7 @@ function x86_movss_movsd_op_en_rm (sp_dp, proc_mode, start_rip, temp_rip, prefix
 <h3>Op/En = MR: [OP XMM/M, XMM]</h3> 
  F3 0F 11: MOVSS xmm2/m32, xmm1<br/> 
  F2 0F 11: MOVSD xmm2/m64, xmm1<br/> */
-val x86_movss_movsd_op_en_mr : (range(0, 1), range(0, 4), sbits(48), sbits(48), prefixes, bits(8), bits(8), modr_m, sib) -> unit
+val x86_movss_movsd_op_en_mr : (range(0, 1), proc_mode, sbits(48), sbits(48), prefixes, bits(8), bits(8), modr_m, sib) -> unit
 
 function x86_movss_movsd_op_en_mr (sp_dp, proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode, modr_m, sib) = {
     let ctx : string = "X86-MOVSS/MOVSD-OP/EN-MR";
@@ -77,7 +77,7 @@ function x86_movss_movsd_op_en_mr (sp_dp, proc_mode, start_rip, temp_rip, prefix
 <h3>Op/En = RM: [OP XMM, XMM/M]</h3> 
  0F 28: MOVAPS xmm1, xmm2/m128<br/> 
  66 0F 28: MOVAPD xmm1, xmm2/m128<br/> */
-val x86_movaps_movapd_op_en_rm : (range(0, 4), sbits(48), sbits(48), prefixes, bits(8), bits(8), modr_m, sib) -> unit
+val x86_movaps_movapd_op_en_rm : (proc_mode, sbits(48), sbits(48), prefixes, bits(8), bits(8), modr_m, sib) -> unit
 
 function x86_movaps_movapd_op_en_rm (proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode, modr_m, sib) = {
     let ctx : string = "X86-MOVAPS/MOVAPD-OP/EN-RM";
@@ -104,7 +104,7 @@ function x86_movaps_movapd_op_en_rm (proc_mode, start_rip, temp_rip, prefixes, r
 <h3>Op/En = MR: [OP XMM/M, XMM]</h3> 
  0F 29: MOVAPS xmm2/m128, xmm1<br/> 
  66 0F 29: MOVAPD xmm2/m128, xmm1<br/> */
-val x86_movaps_movapd_op_en_mr : (range(0, 4), sbits(48), sbits(48), prefixes, bits(8), bits(8), modr_m, sib) -> unit
+val x86_movaps_movapd_op_en_mr : (proc_mode, sbits(48), sbits(48), prefixes, bits(8), bits(8), modr_m, sib) -> unit
 
 function x86_movaps_movapd_op_en_mr (proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode, modr_m, sib) = {
     let ctx : string = "X86-MOVAPS/MOVAPD-OP/EN-MR";
@@ -148,7 +148,7 @@ function x86_movaps_movapd_op_en_mr (proc_mode, start_rip, temp_rip, prefixes, r
  exceptions ( #AC ) may or may not be generated depending on processor 
  implementation when data addresses are not aligned on an 8-byte 
  boundary.</p> */
-val x86_movups_movupd_movdqu_op_en_rm : (range(0, 4), sbits(48), sbits(48), prefixes, bits(8), bits(8), modr_m, sib) -> unit
+val x86_movups_movupd_movdqu_op_en_rm : (proc_mode, sbits(48), sbits(48), prefixes, bits(8), bits(8), modr_m, sib) -> unit
 
 function x86_movups_movupd_movdqu_op_en_rm (proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode, modr_m, sib) = {
     let ctx : string = "X86-MOVUPS/MOVUPD/MOVDQU-OP/EN-RM";
@@ -175,7 +175,7 @@ function x86_movups_movupd_movdqu_op_en_rm (proc_mode, start_rip, temp_rip, pref
  0F 11: MOVUPS xmm2/m128, xmm1<br/> 
  66 0F 11: MOVUPD xmm2/m128, xmm1<br/> 
  F3 0F 7F: MOVDQU xmm2/m128, xmm1<br/> */
-val x86_movups_movupd_movdqu_op_en_mr : (range(0, 4), sbits(48), sbits(48), prefixes, bits(8), bits(8), modr_m, sib) -> unit
+val x86_movups_movupd_movdqu_op_en_mr : (proc_mode, sbits(48), sbits(48), prefixes, bits(8), bits(8), modr_m, sib) -> unit
 
 function x86_movups_movupd_movdqu_op_en_mr (proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode, modr_m, sib) = {
     let ctx : string = "X86-MOVUPS/MOVUPD/MOVDQU-OP/EN-MR";
@@ -211,7 +211,7 @@ function x86_movups_movupd_movdqu_op_en_mr (proc_mode, start_rip, temp_rip, pref
 <h3>Op/En = RM: [OP XMM, M]</h3> 
  0F 12: MOVLPS xmm, m64<br/> 
  66 0F 12: MOVLPD xmm, m64<br/> */
-val x86_movlps_movlpd_op_en_rm : (range(0, 4), sbits(48), sbits(48), prefixes, bits(8), bits(8), modr_m, sib) -> unit
+val x86_movlps_movlpd_op_en_rm : (proc_mode, sbits(48), sbits(48), prefixes, bits(8), bits(8), modr_m, sib) -> unit
 
 function x86_movlps_movlpd_op_en_rm (proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode, modr_m, sib) = {
     let ctx : string = "X86-MOVLPS/MOVLPD-OP/EN-RM";
@@ -239,7 +239,7 @@ function x86_movlps_movlpd_op_en_rm (proc_mode, start_rip, temp_rip, prefixes, r
 <h3>Op/En = MR: [OP M, XMM]</h3> 
  0F 13: MOVLPS m64, xmm<br/> 
  66 0F 13: MOVLPD m64, xmm<br/> */
-val x86_movlps_movlpd_op_en_mr : (range(0, 4), sbits(48), sbits(48), prefixes, bits(8), bits(8), modr_m, sib) -> unit
+val x86_movlps_movlpd_op_en_mr : (proc_mode, sbits(48), sbits(48), prefixes, bits(8), bits(8), modr_m, sib) -> unit
 
 function x86_movlps_movlpd_op_en_mr (proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode, modr_m, sib) = {
     let ctx : string = "X86-MOVLPS/MOVLPD-OP/EN-MR";
@@ -269,7 +269,7 @@ function x86_movlps_movlpd_op_en_mr (proc_mode, start_rip, temp_rip, prefixes, r
 <h3>Op/En = RM: [OP XMM, M]</h3> 
  0F 16: MOVHPS xmm, m64<br/> 
  66 0F 16: MOVHPD xmm, m64<br/> */
-val x86_movhps_movhpd_op_en_rm : (range(0, 4), sbits(48), sbits(48), prefixes, bits(8), bits(8), modr_m, sib) -> unit
+val x86_movhps_movhpd_op_en_rm : (proc_mode, sbits(48), sbits(48), prefixes, bits(8), bits(8), modr_m, sib) -> unit
 
 function x86_movhps_movhpd_op_en_rm (proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode, modr_m, sib) = {
     let ctx : string = "X86-MOVHPS/MOVHPD-OP/EN-RM";
@@ -299,7 +299,7 @@ function x86_movhps_movhpd_op_en_rm (proc_mode, start_rip, temp_rip, prefixes, r
 <h3>Op/En = MR: [OP M, XMM]</h3> 
  0F 17: MOVHPS m64, xmm<br/> 
  66 0F 17: MOVHPD m64, xmm<br/> */
-val x86_movhps_movhpd_op_en_mr : (range(0, 4), sbits(48), sbits(48), prefixes, bits(8), bits(8), modr_m, sib) -> unit
+val x86_movhps_movhpd_op_en_mr : (proc_mode, sbits(48), sbits(48), prefixes, bits(8), bits(8), modr_m, sib) -> unit
 
 function x86_movhps_movhpd_op_en_mr (proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode, modr_m, sib) = {
     let ctx : string = "X86-MOVHPS/MOVHPD-OP/EN-MR";

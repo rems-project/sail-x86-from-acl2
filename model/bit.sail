@@ -1,5 +1,5 @@
 
-val x86_bt_0f_a3 : (range(0, 4), sbits(48), sbits(48), prefixes, bits(8), bits(8), modr_m, sib) -> unit
+val x86_bt_0f_a3 : (proc_mode, sbits(48), sbits(48), prefixes, bits(8), bits(8), modr_m, sib) -> unit
 
 function x86_bt_0f_a3 (proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode, modr_m, sib) = {
     let ctx : string = "X86-BT-0F-A3";
@@ -73,7 +73,7 @@ function x86_bt_0f_a3 (proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcod
     write_iptr(proc_mode, temp_rip)
 }
 
-val x86_bt_0f_ba : (range(0, 4), sbits(48), sbits(48), prefixes, bits(8), bits(8), modr_m, sib) -> unit
+val x86_bt_0f_ba : (proc_mode, sbits(48), sbits(48), prefixes, bits(8), bits(8), modr_m, sib) -> unit
 
 function x86_bt_0f_ba (proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode, modr_m, sib) = {
     let ctx : string = "X86-BT-0F-BA";

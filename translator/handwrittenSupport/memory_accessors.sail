@@ -40,15 +40,14 @@ function select_address_size (proc_mode, prefixes) = {
          Some(prefixes) => 0x67 == prefixes[adr],
          None() => false
     };
-    match proc_mode {
-      0 => if p4? then 4 else 8,
-      _ => {
-          let cs_attr : bits(16) = seg_hidden_attrs[1];
-          let cs_d : bits(1) = Mk_code_segment_descriptor_attributesbits(cs_attr)[d];
-          if cs_d == 0b1 then {
-              if p4? then 2 else 4
-          } else if p4? then 4 else 2
-      }
+    if in_64bit_mode(proc_mode) then {
+        if p4? then 4 else 8
+    } else {
+        let cs_attr : bits(16) = seg_hidden_attrs[1];
+        let cs_d : bits(1) = Mk_code_segment_descriptor_attributesbits(cs_attr)[d];
+        if cs_d == 0b1 then {
+            if p4? then 2 else 4
+        } else if p4? then 4 else 2
     }
 }
 
@@ -76,7 +75,7 @@ val load_bytes_from_ea : forall 'nbytes, 'nbytes in {1, 2, 4, 6, 8, 10, 16}.
 
 function load_bytes_from_ea (proc_mode, addr_size, nbytes, eff_addr, base_reg, seg_reg, r_x, check_alignment?, mem_ptr?) = {
     let cs_attrs = Mk_code_segment_descriptor_attributesbits(seg_hidden_attrs[1]);
-    if proc_mode != 0 & seg_reg == 1 & r_x == ":R" & cs_attrs[r] == 0b0 then {
+    if not_bool(in_64bit_mode(proc_mode)) & seg_reg == 1 & r_x == ":R" & cs_attrs[r] == 0b0 then {
         (Some(":EXECUTE-ONLY-CODE-SEGMENT"), sail_zeros(8 * nbytes))
     } else {
         let (flg, lin_addr) : (option(string), sbits(64)) = ea_to_la(proc_mode, eff_addr, seg_reg, nbytes);
@@ -101,7 +100,7 @@ val store_bytes_to_ea : forall 'nbytes, 'nbytes in {1, 2, 4, 6, 8, 10, 16}.
 
 function store_bytes_to_ea (proc_mode, addr_size, nbytes, eff_addr, base_reg, seg_reg, data, check_alignment?, mem_ptr?) = {
     let seg_attrs = Mk_data_segment_descriptor_attributesbits(seg_hidden_attrs[seg_reg]);
-    if proc_mode != 0 & (seg_reg == 1 | seg_attrs[w] == 0b0) then {
+    if not_bool(in_64bit_mode(proc_mode)) & (seg_reg == 1 | seg_attrs[w] == 0b0) then {
         Some(":NON-WRITABLE-SEGMENT")
     } else {
         let (flg, lin_addr) : (option(string), sbits(64)) = ea_to_la(proc_mode, eff_addr, seg_reg, nbytes);

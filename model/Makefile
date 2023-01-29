@@ -9,7 +9,7 @@ SAIL_DIR:=$(shell opam config var sail:share)
 SAIL:=sail
 endif
 
-PRELUDE_SAILS=prelude.sail register_types.sail registers.sail register_accessors.sail memory_accessors.sail opcode_ext.sail init.sail config.sail logging.sail
+PRELUDE_SAILS=prelude.sail register_types.sail registers.sail register_accessors.sail opcode_ext.sail memory_accessors.sail init.sail config.sail logging.sail
 MODEL_SAILS=step.sail
 MAIN_SAIL=main.sail
 ALL_SAILS=$(PRELUDE_SAILS) $(MODEL_SAILS) $(MAIN_SAIL)

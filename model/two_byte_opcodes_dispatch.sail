@@ -4,7 +4,7 @@ $include "./three_byte_opcodes_dispatch.sail"
 <p>@ ( ' two-byte-opcode-execute ' ) is the doorway to the two-byte 
  opcode map, and will lead to the three-byte opcode map if @ ( ' opcode ' ) is 
  either @ ( ' #x38 ' ) or @ ( ' #x3A ' ) .</p> */
-val two_byte_opcode_execute : (range(0, 4), sbits(48), sbits(48), prefixes, bits(8), bits(8), bits(8), modr_m, sib) -> unit
+val two_byte_opcode_execute : (proc_mode, sbits(48), sbits(48), prefixes, bits(8), bits(8), bits(8), modr_m, sib) -> unit
 
 function two_byte_opcode_execute (proc_mode, start_rip, temp_rip, prefixes, mandatory_prefix, rex_byte, opcode, modr_m, sib) = {
     (match opcode {
@@ -556,7 +556,7 @@ function two_byte_opcode_execute (proc_mode, start_rip, temp_rip, prefixes, mand
               } else {
                   ext_two_byte_opcode_execute(proc_mode, start_rip, temp_rip, prefixes, mandatory_prefix, rex_byte, opcode, modr_m, sib)
               }
-          } else if proc_mode == 0 & modr_m[reg] == 0b111 & modr_m[mod] == 0b11 & modr_m[r_m] == 0b000 then {
+          } else if in_64bit_mode(proc_mode) & modr_m[reg] == 0b111 & modr_m[mod] == 0b11 & modr_m[r_m] == 0b000 then {
               let fault_var : option(string) = {
                   if 0xf0 == prefixes[lck] then {
                       Some(":UD")
@@ -633,7 +633,7 @@ function two_byte_opcode_execute (proc_mode, start_rip, temp_rip, prefixes, mand
           }
       },
       5 => {
-          if proc_mode == 0 then {
+          if in_64bit_mode(proc_mode) then {
               let fault_var : option(string) = {
                   if 0xf0 == prefixes[lck] | Mk_ia32_eferbits(truncate(msrs[0], 12))[sce] == 0b0 then {
                       Some(":UD")
@@ -677,7 +677,7 @@ function two_byte_opcode_execute (proc_mode, start_rip, temp_rip, prefixes, mand
           }
       },
       7 => {
-          if proc_mode == 0 then {
+          if in_64bit_mode(proc_mode) then {
               let fault_var : option(string) = {
                   if 0xf0 == prefixes[lck] | Mk_ia32_eferbits(truncate(msrs[0], 12))[sce] == 0b0 then {
                       Some(":UD")
@@ -1395,7 +1395,7 @@ function two_byte_opcode_execute (proc_mode, start_rip, temp_rip, prefixes, mand
       26 => {
           if not_bool(modr_m[mod] == 0b11) & mandatory_prefix == 0x00 then {
               let fault_var : option(string) = {
-                  if feature_flags_fn([|":MPX"|]) == 0 | 0xf0 == prefixes[lck] | 4 <= unsigned(reg_index(modr_m[reg], rex_byte, 0b10)) | (if proc_mode == 0 then {
+                  if feature_flags_fn([|":MPX"|]) == 0 | 0xf0 == prefixes[lck] | 4 <= unsigned(reg_index(modr_m[reg], rex_byte, 0b10)) | (if in_64bit_mode(proc_mode) then {
                       modr_m[mod] == 0b00 & (modr_m[r_m] == 0b101 | modr_m[r_m] == 0b100 & sib[base] == 0b101 & sib[index] == 0b100)
                   } else if prefixes[adr] == 0x67 then {
                       (let cs_attr : bits(16) = seg_hidden_attrs[1] in
@@ -1435,7 +1435,7 @@ function two_byte_opcode_execute (proc_mode, start_rip, temp_rip, prefixes, mand
               }
           } else if not_bool(modr_m[mod] == 0b11) & mandatory_prefix == 0x66 then {
               let fault_var : option(string) = {
-                  if feature_flags_fn([|":MPX"|]) == 0 | modr_m[mod] == 0b11 & 0xf0 == prefixes[lck] | 4 <= unsigned(reg_index(modr_m[r_m], rex_byte, 0b00)) | (if not_bool(proc_mode == 0) & prefixes[adr] == 0x67 then {
+                  if feature_flags_fn([|":MPX"|]) == 0 | modr_m[mod] == 0b11 & 0xf0 == prefixes[lck] | 4 <= unsigned(reg_index(modr_m[r_m], rex_byte, 0b00)) | (if not_bool(in_64bit_mode(proc_mode)) & prefixes[adr] == 0x67 then {
                       (let cs_attr : bits(16) = seg_hidden_attrs[1] in
                         Mk_code_segment_descriptor_attributesbits(cs_attr)[d]) == 0b1
                   } else {
@@ -1457,7 +1457,7 @@ function two_byte_opcode_execute (proc_mode, start_rip, temp_rip, prefixes, mand
               }
           } else if modr_m[mod] == 0b11 & mandatory_prefix == 0x66 then {
               let fault_var : option(string) = {
-                  if feature_flags_fn([|":MPX"|]) == 0 | modr_m[mod] == 0b11 & 0xf0 == prefixes[lck] | 4 <= unsigned(reg_index(modr_m[r_m], rex_byte, 0b00)) | (if not_bool(proc_mode == 0) & prefixes[adr] == 0x67 then {
+                  if feature_flags_fn([|":MPX"|]) == 0 | modr_m[mod] == 0b11 & 0xf0 == prefixes[lck] | 4 <= unsigned(reg_index(modr_m[r_m], rex_byte, 0b00)) | (if not_bool(in_64bit_mode(proc_mode)) & prefixes[adr] == 0x67 then {
                       (let cs_attr : bits(16) = seg_hidden_attrs[1] in
                         Mk_code_segment_descriptor_attributesbits(cs_attr)[d]) == 0b1
                   } else {
@@ -1479,7 +1479,7 @@ function two_byte_opcode_execute (proc_mode, start_rip, temp_rip, prefixes, mand
               }
           } else if mandatory_prefix == 0xf3 then {
               let fault_var : option(string) = {
-                  if feature_flags_fn([|":MPX"|]) == 0 | 0xf0 == prefixes[lck] | 4 <= unsigned(reg_index(modr_m[reg], rex_byte, 0b10)) | not_bool(proc_mode == 0) & (if prefixes[adr] == 0x67 then {
+                  if feature_flags_fn([|":MPX"|]) == 0 | 0xf0 == prefixes[lck] | 4 <= unsigned(reg_index(modr_m[reg], rex_byte, 0b10)) | not_bool(in_64bit_mode(proc_mode)) & (if prefixes[adr] == 0x67 then {
                       (let cs_attr : bits(16) = seg_hidden_attrs[1] in
                         Mk_code_segment_descriptor_attributesbits(cs_attr)[d]) == 0b1
                   } else {
@@ -1501,7 +1501,7 @@ function two_byte_opcode_execute (proc_mode, start_rip, temp_rip, prefixes, mand
               }
           } else if mandatory_prefix == 0xf2 then {
               let fault_var : option(string) = {
-                  if feature_flags_fn([|":MPX"|]) == 0 | 0xf0 == prefixes[lck] | 4 <= unsigned(reg_index(modr_m[reg], rex_byte, 0b10)) | not_bool(proc_mode == 0) & (if prefixes[adr] == 0x67 then {
+                  if feature_flags_fn([|":MPX"|]) == 0 | 0xf0 == prefixes[lck] | 4 <= unsigned(reg_index(modr_m[reg], rex_byte, 0b10)) | not_bool(in_64bit_mode(proc_mode)) & (if prefixes[adr] == 0x67 then {
                       (let cs_attr : bits(16) = seg_hidden_attrs[1] in
                         Mk_code_segment_descriptor_attributesbits(cs_attr)[d]) == 0b1
                   } else {
@@ -1528,7 +1528,7 @@ function two_byte_opcode_execute (proc_mode, start_rip, temp_rip, prefixes, mand
       27 => {
           if not_bool(modr_m[mod] == 0b11) & mandatory_prefix == 0x00 then {
               let fault_var : option(string) = {
-                  if feature_flags_fn([|":MPX"|]) == 0 | 0xf0 == prefixes[lck] | 4 <= unsigned(reg_index(modr_m[reg], rex_byte, 0b10)) | (if proc_mode == 0 then {
+                  if feature_flags_fn([|":MPX"|]) == 0 | 0xf0 == prefixes[lck] | 4 <= unsigned(reg_index(modr_m[reg], rex_byte, 0b10)) | (if in_64bit_mode(proc_mode) then {
                       modr_m[mod] == 0b00 & (modr_m[r_m] == 0b101 | modr_m[r_m] == 0b100 & sib[base] == 0b101 & sib[index] == 0b100)
                   } else if prefixes[adr] == 0x67 then {
                       (let cs_attr : bits(16) = seg_hidden_attrs[1] in
@@ -1568,7 +1568,7 @@ function two_byte_opcode_execute (proc_mode, start_rip, temp_rip, prefixes, mand
               }
           } else if not_bool(modr_m[mod] == 0b11) & mandatory_prefix == 0x66 then {
               let fault_var : option(string) = {
-                  if feature_flags_fn([|":MPX"|]) == 0 | modr_m[mod] == 0b11 & 0xf0 == prefixes[lck] | 4 <= unsigned(reg_index(modr_m[r_m], rex_byte, 0b00)) | (if not_bool(proc_mode == 0) & prefixes[adr] == 0x67 then {
+                  if feature_flags_fn([|":MPX"|]) == 0 | modr_m[mod] == 0b11 & 0xf0 == prefixes[lck] | 4 <= unsigned(reg_index(modr_m[r_m], rex_byte, 0b00)) | (if not_bool(in_64bit_mode(proc_mode)) & prefixes[adr] == 0x67 then {
                       (let cs_attr : bits(16) = seg_hidden_attrs[1] in
                         Mk_code_segment_descriptor_attributesbits(cs_attr)[d]) == 0b1
                   } else {
@@ -1590,7 +1590,7 @@ function two_byte_opcode_execute (proc_mode, start_rip, temp_rip, prefixes, mand
               }
           } else if modr_m[mod] == 0b11 & mandatory_prefix == 0x66 then {
               let fault_var : option(string) = {
-                  if feature_flags_fn([|":MPX"|]) == 0 | modr_m[mod] == 0b11 & 0xf0 == prefixes[lck] | 4 <= unsigned(reg_index(modr_m[r_m], rex_byte, 0b00)) | (if not_bool(proc_mode == 0) & prefixes[adr] == 0x67 then {
+                  if feature_flags_fn([|":MPX"|]) == 0 | modr_m[mod] == 0b11 & 0xf0 == prefixes[lck] | 4 <= unsigned(reg_index(modr_m[r_m], rex_byte, 0b00)) | (if not_bool(in_64bit_mode(proc_mode)) & prefixes[adr] == 0x67 then {
                       (let cs_attr : bits(16) = seg_hidden_attrs[1] in
                         Mk_code_segment_descriptor_attributesbits(cs_attr)[d]) == 0b1
                   } else {
@@ -1612,7 +1612,7 @@ function two_byte_opcode_execute (proc_mode, start_rip, temp_rip, prefixes, mand
               }
           } else if not_bool(modr_m[mod] == 0b11) & mandatory_prefix == 0xf3 then {
               let fault_var : option(string) = {
-                  if feature_flags_fn([|":MPX"|]) == 0 | 0xf0 == prefixes[lck] | 4 <= unsigned(reg_index(modr_m[reg], rex_byte, 0b10)) | (if proc_mode == 0 then {
+                  if feature_flags_fn([|":MPX"|]) == 0 | 0xf0 == prefixes[lck] | 4 <= unsigned(reg_index(modr_m[reg], rex_byte, 0b10)) | (if in_64bit_mode(proc_mode) then {
                       modr_m[mod] == 0b00 & (modr_m[r_m] == 0b101 | modr_m[r_m] == 0b100 & sib[base] == 0b101 & sib[index] == 0b100)
                   } else if prefixes[adr] == 0x67 then {
                       (let cs_attr : bits(16) = seg_hidden_attrs[1] in
@@ -1652,7 +1652,7 @@ function two_byte_opcode_execute (proc_mode, start_rip, temp_rip, prefixes, mand
               }
           } else if mandatory_prefix == 0xf2 then {
               let fault_var : option(string) = {
-                  if feature_flags_fn([|":MPX"|]) == 0 | 0xf0 == prefixes[lck] | 4 <= unsigned(reg_index(modr_m[reg], rex_byte, 0b10)) | not_bool(proc_mode == 0) & (if prefixes[adr] == 0x67 then {
+                  if feature_flags_fn([|":MPX"|]) == 0 | 0xf0 == prefixes[lck] | 4 <= unsigned(reg_index(modr_m[reg], rex_byte, 0b10)) | not_bool(in_64bit_mode(proc_mode)) & (if prefixes[adr] == 0x67 then {
                       (let cs_attr : bits(16) = seg_hidden_attrs[1] in
                         Mk_code_segment_descriptor_attributesbits(cs_attr)[d]) == 0b1
                   } else {
@@ -1699,7 +1699,7 @@ function two_byte_opcode_execute (proc_mode, start_rip, temp_rip, prefixes, mand
       32 => {
           let fault_var : option(string) = {
               if 0xf0 == prefixes[lck] | (let reg : bits(3) = modr_m[reg] in
-                if proc_mode == 0 & logbitp(2, rex_byte) then {
+                if in_64bit_mode(proc_mode) & logbitp(2, rex_byte) then {
                     not_bool(reg == 0b000)
                 } else {
                     reg == 0b001 | reg == 0b101 | reg == 0b110 | reg == 0b111
@@ -1750,7 +1750,7 @@ function two_byte_opcode_execute (proc_mode, start_rip, temp_rip, prefixes, mand
       34 => {
           let fault_var : option(string) = {
               if 0xf0 == prefixes[lck] | (let reg : bits(3) = modr_m[reg] in
-                if proc_mode == 0 & logbitp(2, rex_byte) then {
+                if in_64bit_mode(proc_mode) & logbitp(2, rex_byte) then {
                     not_bool(reg == 0b000)
                 } else {
                     reg == 0b001 | reg == 0b101 | reg == 0b110 | reg == 0b111
@@ -7548,7 +7548,7 @@ function two_byte_opcode_execute (proc_mode, start_rip, temp_rip, prefixes, mand
 
 /*! Decoder and dispatch function for two-byte opcodes
 <p>Source: Intel Manual, Volume 2, Appendix A-2</p> */
-val two_byte_opcode_decode_and_execute : (range(0, 4), sbits(48), sbits(48), prefixes, bits(8), bits(8)) -> unit
+val two_byte_opcode_decode_and_execute : (proc_mode, sbits(48), sbits(48), prefixes, bits(8), bits(8)) -> unit
 
 function two_byte_opcode_decode_and_execute (proc_mode, start_rip, temp_rip, prefixes, rex_byte, escape_byte) = {
     let ctx : string = "two-byte-opcode-decode-and-execute";

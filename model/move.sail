@@ -1,5 +1,5 @@
 
-val x86_mov_op_en_mr : (range(0, 4), sbits(48), sbits(48), prefixes, bits(8), bits(8), modr_m, sib) -> unit
+val x86_mov_op_en_mr : (proc_mode, sbits(48), sbits(48), prefixes, bits(8), bits(8), modr_m, sib) -> unit
 
 function x86_mov_op_en_mr (proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode, modr_m, sib) = {
     let ctx : string = "X86-MOV-OP/EN-MR";
@@ -31,7 +31,7 @@ function x86_mov_op_en_mr (proc_mode, start_rip, temp_rip, prefixes, rex_byte, o
     write_iptr(proc_mode, truncate(temp_rip, 48))
 }
 
-val x86_mov_op_en_rm : (range(0, 4), sbits(48), sbits(48), prefixes, bits(8), bits(8), modr_m, sib) -> unit
+val x86_mov_op_en_rm : (proc_mode, sbits(48), sbits(48), prefixes, bits(8), bits(8), modr_m, sib) -> unit
 
 function x86_mov_op_en_rm (proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode, modr_m, sib) = {
     let ctx : string = "X86-MOV-OP/EN-RM";
@@ -55,7 +55,7 @@ function x86_mov_op_en_rm (proc_mode, start_rip, temp_rip, prefixes, rex_byte, o
     write_iptr(proc_mode, truncate(temp_rip, 48))
 }
 
-val x86_mov_op_en_fd : (range(0, 4), sbits(48), sbits(48), prefixes, bits(8), bits(8), modr_m, sib) -> unit
+val x86_mov_op_en_fd : (proc_mode, sbits(48), sbits(48), prefixes, bits(8), bits(8), modr_m, sib) -> unit
 
 function x86_mov_op_en_fd (proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode, modr_m, sib) = {
     let ctx : string = "X86-MOV-OP/EN-FD";
@@ -79,7 +79,7 @@ function x86_mov_op_en_fd (proc_mode, start_rip, temp_rip, prefixes, rex_byte, o
     write_iptr(proc_mode, temp_rip)
 }
 
-val x86_mov_op_en_td : (range(0, 4), sbits(48), sbits(48), prefixes, bits(8), bits(8), modr_m, sib) -> unit
+val x86_mov_op_en_td : (proc_mode, sbits(48), sbits(48), prefixes, bits(8), bits(8), modr_m, sib) -> unit
 
 function x86_mov_op_en_td (proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode, modr_m, sib) = {
     let ctx : string = "X86-MOV-OP/EN-TD";
@@ -103,7 +103,7 @@ function x86_mov_op_en_td (proc_mode, start_rip, temp_rip, prefixes, rex_byte, o
     write_iptr(proc_mode, temp_rip)
 }
 
-val x86_mov_op_en_oi : (range(0, 4), sbits(48), sbits(48), prefixes, bits(8), bits(8), modr_m, sib) -> unit
+val x86_mov_op_en_oi : (proc_mode, sbits(48), sbits(48), prefixes, bits(8), bits(8), modr_m, sib) -> unit
 
 function x86_mov_op_en_oi (proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode, modr_m, sib) = {
     let ctx : string = "X86-MOV-OP/EN-OI";
@@ -120,7 +120,7 @@ function x86_mov_op_en_oi (proc_mode, start_rip, temp_rip, prefixes, rex_byte, o
     write_iptr(proc_mode, truncate(temp_rip, 48))
 }
 
-val x86_mov_op_en_mi : (range(0, 4), sbits(48), sbits(48), prefixes, bits(8), bits(8), modr_m, sib) -> unit
+val x86_mov_op_en_mi : (proc_mode, sbits(48), sbits(48), prefixes, bits(8), bits(8), modr_m, sib) -> unit
 
 function x86_mov_op_en_mi (proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode, modr_m, sib) = {
     let ctx : string = "X86-MOV-OP/EN-MI";
@@ -169,7 +169,7 @@ function x86_mov_op_en_mi (proc_mode, start_rip, temp_rip, prefixes, rex_byte, o
     write_iptr(proc_mode, temp_rip)
 }
 
-val x86_lea : (range(0, 4), sbits(48), sbits(48), prefixes, bits(8), bits(8), modr_m, sib) -> unit
+val x86_lea : (proc_mode, sbits(48), sbits(48), prefixes, bits(8), bits(8), modr_m, sib) -> unit
 
 function x86_lea (proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode, modr_m, sib) = {
     let ctx : string = "X86-LEA";
@@ -190,7 +190,7 @@ function x86_lea (proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode, mo
     write_iptr(proc_mode, truncate(temp_rip, 48))
 }
 
-val x86_movsx : (range(0, 4), sbits(48), sbits(48), prefixes, bits(8), bits(8), modr_m, sib) -> unit
+val x86_movsx : (proc_mode, sbits(48), sbits(48), prefixes, bits(8), bits(8), modr_m, sib) -> unit
 
 function x86_movsx (proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode, modr_m, sib) = {
     let ctx : string = "X86-MOVSX";
@@ -226,7 +226,7 @@ function x86_movsx (proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode, 
     write_iptr(proc_mode, temp_rip)
 }
 
-val x86_movsxd : (range(0, 4), sbits(48), sbits(48), prefixes, bits(8), bits(8), modr_m, sib) -> unit
+val x86_movsxd : (proc_mode, sbits(48), sbits(48), prefixes, bits(8), bits(8), modr_m, sib) -> unit
 
 function x86_movsxd (proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode, modr_m, sib) = {
     let ctx : string = "X86-MOVSXD";
@@ -264,7 +264,7 @@ function x86_movsxd (proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode,
     write_iptr(proc_mode, temp_rip)
 }
 
-val x86_movzx : (range(0, 4), sbits(48), sbits(48), prefixes, bits(8), bits(8), modr_m, sib) -> unit
+val x86_movzx : (proc_mode, sbits(48), sbits(48), prefixes, bits(8), bits(8), modr_m, sib) -> unit
 
 function x86_movzx (proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode, modr_m, sib) = {
     let ctx : string = "X86-MOVZX";
@@ -291,7 +291,7 @@ function x86_movzx (proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode, 
     write_iptr(proc_mode, temp_rip)
 }
 
-val x86_mov_control_regs_op_en_mr : (range(0, 4), sbits(48), sbits(48), prefixes, bits(8), bits(8), modr_m, sib) -> unit
+val x86_mov_control_regs_op_en_mr : (proc_mode, sbits(48), sbits(48), prefixes, bits(8), bits(8), modr_m, sib) -> unit
 
 function x86_mov_control_regs_op_en_mr (proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode, modr_m, sib) = {
     let ctx : string = "X86-MOV-CONTROL-REGS-OP/EN-MR";
@@ -304,7 +304,7 @@ function x86_mov_control_regs_op_en_mr (proc_mode, start_rip, temp_rip, prefixes
         }
     };
     let operand_size : {|4, 8|} = {
-        if proc_mode == 0 then 8 else 4
+        if in_64bit_mode(proc_mode) then 8 else 4
     };
     let ctr_val : bits(64) = ctrs[unsigned(ctr_index)];
     let ctr_val : bits(64) = {
@@ -336,7 +336,7 @@ function x86_mov_control_regs_op_en_mr (proc_mode, start_rip, temp_rip, prefixes
     write_iptr(proc_mode, temp_rip)
 }
 
-val x86_movd_movq_to_xmm : (range(0, 4), sbits(48), sbits(48), prefixes, bits(8), bits(8), modr_m, sib) -> unit
+val x86_movd_movq_to_xmm : (proc_mode, sbits(48), sbits(48), prefixes, bits(8), bits(8), modr_m, sib) -> unit
 
 function x86_movd_movq_to_xmm (proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode, modr_m, sib) = {
     let ctx : string = "X86-MOVD/MOVQ-TO-XMM";
@@ -361,7 +361,7 @@ function x86_movd_movq_to_xmm (proc_mode, start_rip, temp_rip, prefixes, rex_byt
     write_iptr(proc_mode, truncate(temp_rip, 48))
 }
 
-val x86_movd_movq_from_xmm : (range(0, 4), sbits(48), sbits(48), prefixes, bits(8), bits(8), modr_m, sib) -> unit
+val x86_movd_movq_from_xmm : (proc_mode, sbits(48), sbits(48), prefixes, bits(8), bits(8), modr_m, sib) -> unit
 
 function x86_movd_movq_from_xmm (proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode, modr_m, sib) = {
     let ctx : string = "X86-MOVD/MOVQ-FROM-XMM";

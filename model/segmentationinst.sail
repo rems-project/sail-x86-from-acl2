@@ -11,7 +11,7 @@
  
  <p><b>TO-DO:</b> If a memory address referencing the SS segment is in 
  a non-canonical form, raise the SS exception.</p> */
-val x86_lgdt : (range(0, 4), sbits(48), sbits(48), prefixes, bits(8), bits(8), modr_m, sib) -> unit
+val x86_lgdt : (proc_mode, sbits(48), sbits(48), prefixes, bits(8), bits(8), modr_m, sib) -> unit
 
 function x86_lgdt (proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode, modr_m, sib) = {
     let ctx : string = "X86-LGDT";
@@ -70,7 +70,7 @@ function x86_lgdt (proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode, m
  
  <p><b>TO-DO:</b> If a memory address referencing the SS segment is in 
  a non-canonical form, raise the SS exception.</p> */
-val x86_lidt : (range(0, 4), sbits(48), sbits(48), prefixes, bits(8), bits(8), modr_m, sib) -> unit
+val x86_lidt : (proc_mode, sbits(48), sbits(48), prefixes, bits(8), bits(8), modr_m, sib) -> unit
 
 function x86_lidt (proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode, modr_m, sib) = {
     let ctx : string = "X86-LIDT";
@@ -131,7 +131,7 @@ function x86_lidt (proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode, m
  
  <p><b>TO-DO:</b> If a memory address referencing the SS segment is in 
  a non-canonical form, raise the SS exception.</p> */
-val x86_lldt : (range(0, 4), sbits(48), sbits(48), prefixes, bits(8), bits(8), modr_m, sib) -> unit
+val x86_lldt : (proc_mode, sbits(48), sbits(48), prefixes, bits(8), bits(8), modr_m, sib) -> unit
 
 function x86_lldt (proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode, modr_m, sib) = {
     let ctx : string = "X86-LLDT";
@@ -157,14 +157,14 @@ function x86_lldt (proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode, m
     if sel_ti == 0b1 then throw(Emsg("Model state error: :GP-SELECTOR-DOES-NOT-POINT-TO-GDT"));
     let gdtr : bits(80) = strs[0];
     let gdtr_base : bits(64) = {
-        if proc_mode == 0 then {
+        if in_64bit_mode(proc_mode) then {
             Mk_gdtr_idtrbits(gdtr)[base_addr]
         } else {
             sail_zero_extend(truncate(Mk_gdtr_idtrbits(gdtr)[base_addr], 32), 64)
         }
     };
     let gdtr_limit : bits(16) = Mk_gdtr_idtrbits(gdtr)[limit];
-    let largest_address : int = ash(unsigned(sel_index), 3) + (if proc_mode == 0 then 15 else 7);
+    let largest_address : int = ash(unsigned(sel_index), 3) + (if in_64bit_mode(proc_mode) then 15 else 7);
     if unsigned(gdtr_limit) < largest_address then throw(Emsg("Model state error: :GP-SELECTOR-LIMIT-CHECK-FAILED"));
     if sel_index == 0b0000000000000 then {
         ssr_visibles[0] = truncate(selector, 16)
@@ -172,7 +172,7 @@ function x86_lldt (proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode, m
         let descriptor_addr : int = unsigned(gdtr_base) + unsigned(bits_of_int(ash(unsigned(sel_index), 3), 16));
         if not_bool(canonical_address_p(descriptor_addr)) then throw(Emsg("Model state error: :DESCRIPTOR-ADDR-VIRTUAL-MEMORY-ERROR"));
         let descriptor_size : {|8, 16|} = {
-            if proc_mode == 0 then 16 else 8
+            if in_64bit_mode(proc_mode) then 16 else 8
         };
         let (flg, descriptor) : (option(string), bits(128)) = rml_size(descriptor_size, bits_of_int(descriptor_addr, 48), ":X");
         if is_some(flg) then throw(Emsg("Model state error: :RML-SIZE-ERROR"));

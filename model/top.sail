@@ -15,7 +15,7 @@ $include "./syscall.sail"
 $include "./subroutine.sail"
 $include "./topfp.sail"
 
-val x86_hlt : (range(0, 4), sbits(48), sbits(48), prefixes, bits(8), bits(8), modr_m, sib) -> unit
+val x86_hlt : (proc_mode, sbits(48), sbits(48), prefixes, bits(8), bits(8), modr_m, sib) -> unit
 
 function x86_hlt (proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode, modr_m, sib) = {
     let ctx : string = "X86-HLT";
@@ -23,7 +23,7 @@ function x86_hlt (proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode, mo
     throw(Emsg("Model state error: :LEGAL-HALT"))
 }
 
-val x86_cmc_clc_stc_cld_std : (range(0, 4), sbits(48), sbits(48), prefixes, bits(8), bits(8), modr_m, sib) -> unit
+val x86_cmc_clc_stc_cld_std : (proc_mode, sbits(48), sbits(48), prefixes, bits(8), bits(8), modr_m, sib) -> unit
 
 function x86_cmc_clc_stc_cld_std (proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode, modr_m, sib) = {
     let ctx : string = "X86-CMC/CLC/STC/CLD/STD";
@@ -64,7 +64,7 @@ function x86_cmc_clc_stc_cld_std (proc_mode, start_rip, temp_rip, prefixes, rex_
     write_iptr(proc_mode, temp_rip)
 }
 
-val x86_sahf : (range(0, 4), sbits(48), sbits(48), prefixes, bits(8), bits(8), modr_m, sib) -> unit
+val x86_sahf : (proc_mode, sbits(48), sbits(48), prefixes, bits(8), bits(8), modr_m, sib) -> unit
 
 function x86_sahf (proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode, modr_m, sib) = {
     let ctx : string = "X86-SAHF";
@@ -81,7 +81,7 @@ function x86_sahf (proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode, m
     write_iptr(proc_mode, temp_rip)
 }
 
-val x86_lahf : (range(0, 4), sbits(48), sbits(48), prefixes, bits(8), bits(8), modr_m, sib) -> unit
+val x86_lahf : (proc_mode, sbits(48), sbits(48), prefixes, bits(8), bits(8), modr_m, sib) -> unit
 
 function x86_lahf (proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode, modr_m, sib) = {
     let ctx : string = "X86-LAHF";

@@ -408,6 +408,84 @@ def ext_opcode_hooks(ACL2ast, env):
 	else:
 		return None
 
+def is_acl2_list(acl2, min_len=0):
+	return isinstance(acl2, list) and len(acl2) >= min_len
+
+def is_acl2_symbol(acl2, sym=None):
+	return isinstance(acl2, str) and (sym is None or (isinstance(sym, str) and acl2.lower() == sym.lower()))
+
+def is_acl2_app(acl2, head=None, min_len=1):
+	if not is_acl2_list(acl2, min_len=min_len):
+		return False
+	elif isinstance(head, list):
+		return any(is_acl2_symbol(acl2[0], sym) for sym in head)
+	else:
+		return is_acl2_symbol(acl2[0], head)
+
+# Replace proc_mode checks with calls to hooks
+def proc_mode_hooks(ACL2ast, env):
+	if is_acl2_list(ACL2ast, min_len=1) and isinstance(ACL2ast[0], str):
+		proc_modes = ['*64-bit-mode*', '*compatibility-mode*', '*protected-mode*', '*real-address-mode*', '*smm-mode*']
+		hooks = {
+			'*64-bit-mode*': 'in_64bit_mode',
+			'*compatibility-mode*': 'in_compatibility_mode',
+			'*protected-mode*': 'in_protected_mode',
+			'*real-address-mode*': 'in_real_mode',
+			'*smm-mode*': 'in_system_management_mode'
+		}
+		def getConstName(n):
+			return n[2:] if n.startswith('#.') else n
+		# Check for direct proc_mode comparisons
+		is_comparison = is_acl2_app(ACL2ast, ['equal', 'eql', 'eq', '=', '/='])
+		lhs_is_proc_mode = (is_comparison and is_acl2_symbol(ACL2ast[1], 'proc-mode'))
+		rhs_is_proc_mode_const = (is_comparison and isinstance(ACL2ast[2], str) and getConstName(ACL2ast[2].lower()) in hooks)
+		# The mode constants might already have been evaluated to integers by ACL2, e.g. as part of macro expansion in tr_def_inst
+		rhs_is_proc_mode_num = (is_comparison and isinstance(ACL2ast[2], str) and ACL2ast[2].isdecimal() and 0 <= int(ACL2ast[2]) and int(ACL2ast[2]) <= 4)
+		if is_comparison and rhs_is_proc_mode_const or (lhs_is_proc_mode and rhs_is_proc_mode_num):
+			(arg, env, _) = transform.transformACL2asttoSail(ACL2ast[1], env)
+			proc_mode_arg = ACL2ast[2].lower()
+			proc_mode = getConstName(proc_mode_arg) if rhs_is_proc_mode_const else proc_modes[int(proc_mode_arg)]
+			fnName = hooks[proc_mode]
+			fnTyp = Sail_t_fn([handwritten_tokens.proc_mode_typ], Sail_t_bool())
+			call = SailApp(SailHandwrittenFn(fnName, fnTyp), arg)
+			if ACL2ast[0].lower() == '/=':
+				call = SailApp(handwritten_tokens.not_fn, [call])
+			return True, [call], env
+		# Also check for proc_mode pattern matches
+		elif is_acl2_app(ACL2ast, 'case', min_len=3) and is_acl2_symbol(ACL2ast[1], 'proc-mode'):
+			(match_exp, env, _) = transform.transformACL2asttoSail(ACL2ast[1], env)
+			def rewrite_clauses(clauses, env):
+				if not is_acl2_list(clauses, min_len=1):
+					return (None, env)
+				clause = clauses[0]
+				rest = clauses[1:]
+				if not is_acl2_list(clause, min_len=2):
+					return (None, env)
+				is_proc_mode_const = (isinstance(clause[0], str) and getConstName(clause[0].lower()) in hooks)
+				is_proc_mode_num = (isinstance(clause[0], str) and clause[0].isdecimal() and 0 <= int(clause[0]) and int(clause[0]) <= 4)
+				is_wildcard = is_acl2_symbol(clause[0], 'otherwise')
+				(clause_rhs, env, _) = transform.transformACL2asttoSail(clause[1], env)
+				if is_proc_mode_const or is_proc_mode_num:
+					proc_mode = getConstName(clause[0].lower()) if is_proc_mode_const else proc_modes[int(clause[0])]
+					fnName = hooks[proc_mode]
+					fnTyp = Sail_t_fn([handwritten_tokens.proc_mode_typ], Sail_t_bool())
+					call = SailApp(SailHandwrittenFn(fnName, fnTyp), match_exp)
+					if len(rest) == 0:
+						return (clause_rhs, env)
+					else:
+						(rest_exp, env) = rewrite_clauses(rest, env)
+						return ([SailIf([call], clause_rhs, rest_exp)], env) if rest_exp else (None, env)
+				elif is_wildcard:
+					return (clause_rhs, env)
+				else:
+					return (None, env)
+			(sail, env) = rewrite_clauses(ACL2ast[2:], env)
+			return (True, sail, env) if sail else None
+		else:
+			return None
+	else:
+		return None
+
 def ext_memory_hooks(ACL2ast, env):
 	memory_readers = ["rme08", "rme16", "rme32", "rme48", "rme64", "rme80", "rme128", "rme-size"]
 	memory_readers += [f.replace("rme", "rime") for f in memory_readers]
@@ -462,6 +540,7 @@ interventionsList = [
 	t_in_get_prefixes,
 	fault_var_int_dispatch_creator,
 	ext_opcode_hooks,
+	proc_mode_hooks,
 	ext_memory_hooks,
 	x86_illegal_instruction,
 	x86_step_unimplemented,

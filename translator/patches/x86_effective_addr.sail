@@ -1,4 +1,4 @@
-val x86_effective_addr : (range(0, 4), prefixes, sbits(48), bits(8), bits(3), bits(2), sib, bits(3)) -> (option(string), sbits(64), {|0, 1, 2, 4|})
+val x86_effective_addr : (proc_mode, prefixes, sbits(48), bits(8), bits(3), bits(2), sib, bits(3)) -> (option(string), sbits(64), {|0, 1, 2, 4|})
 
 function x86_effective_addr (proc_mode, prefixes, temp_rip, rex_byte, r_m, mod_var, sib, num_imm_bytes) = {
     let p4 = (0x67 == prefixes[adr]);

@@ -1900,8 +1900,10 @@ def coerceExpr(expr, typ, exact=True):
 		return noneHelper(typ.getTyp())
 	elif isinstance(expr, SailApp) and expr.getFn().getName().lower() == 'throw':
 		return expr
+	elif isinstance(expr, SailNumLit) and isinstance(typ, Sail_t_enum) and typ.elems and 0 <= expr.getNum() and expr.getNum() <= len(typ.elems):
+		return SailBoundVar(typ.elems[expr.getNum()], typ=typ, sanitise=False)
 	else:
-		print(f"coerceExpr: Cannot coerce {expr.pp()} to {typ.pp()}")
+		print(f"coerceExpr: Cannot coerce {expr.pp()} : {etyp.pp()} to {typ.pp()}")
 		return None
 
 def coerceExprs(exprs, typs):

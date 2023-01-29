@@ -72,51 +72,49 @@
  this function returns 0 as the upper bound; 
  the caller must ignore this result in 64-bit mode. 
  </p> */
-val segment_base_and_bounds : (range(0, 4), range(0, 5)) -> (bits(64), int, bits(32))
+val segment_base_and_bounds : (proc_mode, range(0, 5)) -> (bits(64), int, bits(32))
 
 function segment_base_and_bounds (proc_mode, seg_reg) = {
-    (match proc_mode {
-      0 => {
-          if seg_reg == 4 then {
-              (msrs[1], 0, 0x00000000)
-          } else if seg_reg == 5 then {
-              (msrs[2], 0, 0x00000000)
-          } else {
-              (0x0000000000000000, 0, 0x00000000)
-          }
-      },
-      1 => {
-          let base : bits(64) = loghead(64, seg_hidden_bases[seg_reg]);
-          let limit : bits(32) = loghead(32, seg_hidden_limits[seg_reg]);
-          let attr : bits(16) = loghead(16, seg_hidden_attrs[seg_reg]);
-          let d_b : bits(1) = {
-              if seg_reg == 1 then {
-                  Mk_code_segment_descriptor_attributesbits(attr)[d]
-              } else {
-                  Mk_data_segment_descriptor_attributesbits(attr)[d_b]
-              }
-          };
-          let e : bits(1) = {
-              if seg_reg == 1 then 0b0 else {
-                  Mk_data_segment_descriptor_attributesbits(attr)[e]
-              }
-          };
-          let lower : int = {
-              if e == 0b1 then {
-                  1 + unsigned(limit)
-              } else 0
-          };
-          let upper : bits(32) = {
-              if e == 0b1 then {
-                  if d_b == 0b1 then 0xffffffff else 0x0000ffff
-              } else {
-                  limit
-              }
-          };
-          (sail_zero_extend(truncate(base, 32), 64), lower, upper)
-      },
-      _ => (0x0000000000000000, 0, 0x00000000)
-    }) : (bits(64), int, bits(32))
+    if in_64bit_mode(proc_mode) then {
+        if seg_reg == 4 then {
+            (msrs[1], 0, 0x00000000)
+        } else if seg_reg == 5 then {
+            (msrs[2], 0, 0x00000000)
+        } else {
+            (0x0000000000000000, 0, 0x00000000)
+        }
+    } else if in_compatibility_mode(proc_mode) then {
+        let base : bits(64) = loghead(64, seg_hidden_bases[seg_reg]);
+        let limit : bits(32) = loghead(32, seg_hidden_limits[seg_reg]);
+        let attr : bits(16) = loghead(16, seg_hidden_attrs[seg_reg]);
+        let d_b : bits(1) = {
+            if seg_reg == 1 then {
+                Mk_code_segment_descriptor_attributesbits(attr)[d]
+            } else {
+                Mk_data_segment_descriptor_attributesbits(attr)[d_b]
+            }
+        };
+        let e : bits(1) = {
+            if seg_reg == 1 then 0b0 else {
+                Mk_data_segment_descriptor_attributesbits(attr)[e]
+            }
+        };
+        let lower : int = {
+            if e == 0b1 then {
+                1 + unsigned(limit)
+            } else 0
+        };
+        let upper : bits(32) = {
+            if e == 0b1 then {
+                if d_b == 0b1 then 0xffffffff else 0x0000ffff
+            } else {
+                limit
+            }
+        };
+        (sail_zero_extend(truncate(base, 32), 64), lower, upper)
+    } else {
+        (0x0000000000000000, 0, 0x00000000)
+    }
 }
 
 /*! Translate an effective address to a <i>canonical</i> linear address.
@@ -248,45 +246,43 @@ function segment_base_and_bounds (proc_mode, seg_reg) = {
  The null segment selector check is skipped in 64-bit mode 
  ( see Intel manual, May ' 18, Volume 3, Section 5.4.1.1 ) . 
  </p> */
-val ea_to_la : (range(0, 4), sbits(64), range(0, 5), {|1, 2, 4, 6, 8, 10, 16, 32, 64|}) -> (option(string), sbits(64))
+val ea_to_la : (proc_mode, sbits(64), range(0, 5), {|1, 2, 4, 6, 8, 10, 16, 32, 64|}) -> (option(string), sbits(64))
 
 function ea_to_la (proc_mode, eff_addr, seg_reg, nbytes) = {
-    (match proc_mode {
-      0 => {
-          let lin_addr : sbits(64) = {
-              if seg_reg == 4 | seg_reg == 5 then {
-                  let (base, _, _) : (bits(64), int, bits(32)) = segment_base_and_bounds(0, seg_reg);
-                  let lin_addr : sbits(64) = bits_of_int(unsigned(base) + unsigned(eff_addr), 64);
-                  lin_addr
-              } else {
-                  eff_addr
-              }
-          };
-          if not_bool(canonical_address_p(signed(lin_addr))) then {
-              (Some(":NON-CANONICAL-ADDRESS"), 0x0000000000000000)
-          } else {
-              (None() : option(string), lin_addr)
-          }
-      },
-      1 => {
-          if not_bool(seg_reg == 1) & not_bool(seg_reg == 2) & unsigned(seg_visibles[seg_reg]) < 4 then {
-              (Some(":NULL-SEGMENT-SELECTOR"), 0x0000000000000000)
-          } else {
-              let (base, lower_bound, upper_bound) : (bits(64), int, bits(32)) = segment_base_and_bounds(proc_mode, seg_reg);
-              let base : bits(32) = truncate(base, 32);
-              let lower_bound : bits(33) = bits_of_int(lower_bound, 33);
-              let first_addr : sbits(64) = eff_addr;
-              let last_addr : int = signed(eff_addr) + (nbytes + -1);
-              if not_bool(unsigned(lower_bound) <= signed(first_addr) & last_addr <= unsigned(upper_bound)) then {
-                  (Some(":SEGMENT-LIMIT-FAIL"), 0x0000000000000000)
-              } else {
-                  let lin_addr : bits(32) = bits_of_int(unsigned(base) + unsigned(truncate(eff_addr, 32)), 32);
-                  (None() : option(string), sail_zero_extend(lin_addr, 64))
-              }
-          }
-      },
-      _ => (Some(":UNIMPLEMENTED-PROC-MODE"), 0x0000000000000000)
-    }) : (option(string), sbits(64))
+    if in_64bit_mode(proc_mode) then {
+        let lin_addr : sbits(64) = {
+            if seg_reg == 4 | seg_reg == 5 then {
+                let (base, _, _) : (bits(64), int, bits(32)) = segment_base_and_bounds(Mode_64bit, seg_reg);
+                let lin_addr : sbits(64) = bits_of_int(unsigned(base) + unsigned(eff_addr), 64);
+                lin_addr
+            } else {
+                eff_addr
+            }
+        };
+        if not_bool(canonical_address_p(signed(lin_addr))) then {
+            (Some(":NON-CANONICAL-ADDRESS"), 0x0000000000000000)
+        } else {
+            (None() : option(string), lin_addr)
+        }
+    } else if in_compatibility_mode(proc_mode) then {
+        if not_bool(seg_reg == 1) & not_bool(seg_reg == 2) & unsigned(seg_visibles[seg_reg]) < 4 then {
+            (Some(":NULL-SEGMENT-SELECTOR"), 0x0000000000000000)
+        } else {
+            let (base, lower_bound, upper_bound) : (bits(64), int, bits(32)) = segment_base_and_bounds(proc_mode, seg_reg);
+            let base : bits(32) = truncate(base, 32);
+            let lower_bound : bits(33) = bits_of_int(lower_bound, 33);
+            let first_addr : sbits(64) = eff_addr;
+            let last_addr : int = signed(eff_addr) + (nbytes + -1);
+            if not_bool(unsigned(lower_bound) <= signed(first_addr) & last_addr <= unsigned(upper_bound)) then {
+                (Some(":SEGMENT-LIMIT-FAIL"), 0x0000000000000000)
+            } else {
+                let lin_addr : bits(32) = bits_of_int(unsigned(base) + unsigned(truncate(eff_addr, 32)), 32);
+                (None() : option(string), sail_zero_extend(lin_addr, 64))
+            }
+        }
+    } else {
+        (Some(":UNIMPLEMENTED-PROC-MODE"), 0x0000000000000000)
+    }
 }
 
 /*! Recognizer for a valid code segment descriptor in 64-bit mode */

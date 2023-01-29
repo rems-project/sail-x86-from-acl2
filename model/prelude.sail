@@ -639,6 +639,7 @@ function fault () = fault_reg
 /* Address translation function and another helper function used by `rb`/`wb` */
 val ia32e_la_to_pa : (sbits(48), string) -> (option(string), bits(52))
 val canonical_address_p : int -> bool
+val n64_bit_modep : unit -> bool
 
 val rb : forall 'addr_width 'n, 'addr_width > 0 & 'n > 0. (int('n), bits('addr_width), string) -> (option(string), bits(8 * 'n))
 
@@ -676,12 +677,5 @@ function wb (n, addr, access_kind, value) = {
   };
   return None()
 }
-
-/*-----------------------------------------------------------------*/
-// Untranslated functions
-/*-----------------------------------------------------------------*/
-
-val unimplemented_x86_syscall_app_view : (range(0, 4), sbits(48), sbits(48), bits(52), bits(8), bits(8), bits(8), bits(8)) -> unit
-function unimplemented_x86_syscall_app_view (_, _, _, _, _, _, _, _) = throw(Syscall())
 
 $endif

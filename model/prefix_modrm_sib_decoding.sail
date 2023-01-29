@@ -56,13 +56,14 @@ function get_one_byte_prefix_array_code byte = {
  </li> 
  
  </ol> */
-val compute_mandatory_prefix_for_two_byte_opcode : (range(0, 4), bits(8), prefixes) -> bits(8)
+val compute_mandatory_prefix_for_two_byte_opcode : (proc_mode, bits(8), prefixes) -> bits(8)
 
 function compute_mandatory_prefix_for_two_byte_opcode (proc_mode, opcode, prefixes) = {
-    (match proc_mode {
-      0 => n64_bit_compute_mandatory_prefix_for_two_byte_opcode(opcode, prefixes),
-      _ => n32_bit_compute_mandatory_prefix_for_two_byte_opcode(opcode, prefixes)
-    }) : bits(8)
+    if in_64bit_mode(proc_mode) then {
+        n64_bit_compute_mandatory_prefix_for_two_byte_opcode(opcode, prefixes)
+    } else {
+        n32_bit_compute_mandatory_prefix_for_two_byte_opcode(opcode, prefixes)
+    }
 }
 
 /*! Functions to detect and decode ModR/M bytes
@@ -84,10 +85,10 @@ function n32_bit_mode_one_byte_opcode_modr_m_p opcode = {
 
 /*! Returns @ ( ' t ' ) if a one-byte opcode requires a ModR/M byte; 
  @ ( ' nil ' ) otherwise */
-val one_byte_opcode_modr_m_p : (range(0, 4), bits(8)) -> bool
+val one_byte_opcode_modr_m_p : (proc_mode, bits(8)) -> bool
 
 function one_byte_opcode_modr_m_p (proc_mode, opcode) = {
-    if proc_mode == 0 then {
+    if in_64bit_mode(proc_mode) then {
         n64_bit_mode_one_byte_opcode_modr_m_p(opcode)
     } else {
         n32_bit_mode_one_byte_opcode_modr_m_p(opcode)
@@ -122,10 +123,10 @@ function n32_bit_mode_two_byte_opcode_modr_m_p (mandatory_prefix, opcode) = {
 
 /*! Returns @ ( ' t ' ) if a two-byte opcode requires a ModR/M byte; 
  @ ( ' nil ' ) otherwise. Doesn ' t account for AVX/AVX2/AVX512 instructions. */
-val two_byte_opcode_modr_m_p : (range(0, 4), bits(8), bits(8)) -> bool
+val two_byte_opcode_modr_m_p : (proc_mode, bits(8), bits(8)) -> bool
 
 function two_byte_opcode_modr_m_p (proc_mode, mandatory_prefix, opcode) = {
-    if proc_mode == 0 then {
+    if in_64bit_mode(proc_mode) then {
         n64_bit_mode_two_byte_opcode_modr_m_p(mandatory_prefix, opcode)
     } else {
         n32_bit_mode_two_byte_opcode_modr_m_p(mandatory_prefix, opcode)

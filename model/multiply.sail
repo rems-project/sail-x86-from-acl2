@@ -9,7 +9,7 @@ $include "./multiply_spec.sail"
  MUL r/m16: DX:AX := AX * r/m16<br/> 
  MUL r/m32: EDX:EAX := EAX * r/m32<br/> 
  MUL r/m64: RDX:RAX := RAX * r/m64<br/></p> */
-val x86_mul : (range(0, 4), sbits(48), sbits(48), prefixes, bits(8), bits(8), modr_m, sib) -> unit
+val x86_mul : (proc_mode, sbits(48), sbits(48), prefixes, bits(8), bits(8), modr_m, sib) -> unit
 
 function x86_mul (proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode, modr_m, sib) = {
     let ctx : string = "X86-MUL";
@@ -94,7 +94,7 @@ function x86_mul (proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode, mo
  IMUL r/m16: DX:AX := AX * r/m16<br/> 
  IMUL r/m32: EDX:EAX := EAX * r/m32<br/> 
  IMUL r/m64: RDX:RAX := RAX * r/m64<br/></p> */
-val x86_imul_op_en_m : (range(0, 4), sbits(48), sbits(48), prefixes, bits(8), bits(8), modr_m, sib) -> unit
+val x86_imul_op_en_m : (proc_mode, sbits(48), sbits(48), prefixes, bits(8), bits(8), modr_m, sib) -> unit
 
 function x86_imul_op_en_m (proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode, modr_m, sib) = {
     let ctx : string = "X86-IMUL-OP/EN-M";
@@ -154,7 +154,7 @@ function x86_imul_op_en_m (proc_mode, start_rip, temp_rip, prefixes, rex_byte, o
  IMUL r16, r/m16: r16 := r16 * r/m16 <br/> 
  IMUL r32, r/m32: r32 := r32 * r/m32 <br/> 
  IMUL r64, r/m64: r64 := r64 * r/m64 <br/> </p> */
-val x86_imul_op_en_rm : (range(0, 4), sbits(48), sbits(48), prefixes, bits(8), bits(8), modr_m, sib) -> unit
+val x86_imul_op_en_rm : (proc_mode, sbits(48), sbits(48), prefixes, bits(8), bits(8), modr_m, sib) -> unit
 
 function x86_imul_op_en_rm (proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode, modr_m, sib) = {
     let ctx : string = "X86-IMUL-OP/EN-RM";
@@ -210,7 +210,7 @@ function x86_imul_op_en_rm (proc_mode, start_rip, temp_rip, prefixes, rex_byte, 
  IMUL r16, r/m16, imm16 <br/> 
  IMUL r32, r/m32, imm32 <br/> 
  IMUL r64, r/m64, imm32 <br/> </p> */
-val x86_imul_op_en_rmi : (range(0, 4), sbits(48), sbits(48), prefixes, bits(8), bits(8), modr_m, sib) -> unit
+val x86_imul_op_en_rmi : (proc_mode, sbits(48), sbits(48), prefixes, bits(8), bits(8), modr_m, sib) -> unit
 
 function x86_imul_op_en_rmi (proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode, modr_m, sib) = {
     let ctx : string = "X86-IMUL-OP/EN-RMI";

@@ -83,7 +83,7 @@ $include "./evex_opcodes_dispatch.sail"
  @ ( ' :num-prefixes ' ) field includes a count of the REX prefixes encountered. 
  This is because adding an 8-bit field to the prefixes structure to store a 
  REX byte will make it a bignum, thereby impacting execution efficiency.</p> */
-val get_prefixes : (range(0, 4), sbits(48), prefixes, bits(8), range(0, 15)) -> (option(string), prefixes, bits(8))
+val get_prefixes : (proc_mode, sbits(48), prefixes, bits(8), range(0, 15)) -> (option(string), prefixes, bits(8))
 
 function get_prefixes (proc_mode, start_rip, prefixes, rex_byte, cnt) = {
     if cnt == 0 then {
@@ -108,7 +108,7 @@ function get_prefixes (proc_mode, start_rip, prefixes, rex_byte, cnt) = {
             let prefix_byte_group_code : {|0, 1, 2, 3, 4|} = get_one_byte_prefix_array_code(byte);
             match prefix_byte_group_code {
               0 => {
-                  let rex? : bool = proc_mode == 0 & bits_of_int(ash(unsigned(byte), -4), 4) == 0x4;
+                  let rex? : bool = in_64bit_mode(proc_mode) & bits_of_int(ash(unsigned(byte), -4), 4) == 0x4;
                   if rex? then {
                       let (flg, next_rip) : (option(string), sbits(49)) = add_to_iptr(proc_mode, start_rip, 0x000000000001);
                       if is_some(flg) then {
@@ -140,7 +140,7 @@ function get_prefixes (proc_mode, start_rip, prefixes, rex_byte, cnt) = {
                   let (flg, next_rip) : (option(string), sbits(49)) = add_to_iptr(proc_mode, start_rip, 0x000000000001);
                   if is_some(flg) then {
                       (flg, prefixes, rex_byte)
-                  } else if proc_mode == 0 & (byte == 0x64 | byte == 0x65) | not_bool(proc_mode == 0) then {
+                  } else if in_64bit_mode(proc_mode) & (byte == 0x64 | byte == 0x65) | not_bool(in_64bit_mode(proc_mode)) then {
                       get_prefixes(proc_mode, truncate(next_rip, 48), [prefixes with seg = byte], 0x00, check_range(0, 15, cnt - 1))
                   } else {
                       get_prefixes(proc_mode, truncate(next_rip, 48), prefixes, 0x00, check_range(0, 15, cnt - 1))
@@ -171,7 +171,7 @@ function get_prefixes (proc_mode, start_rip, prefixes, rex_byte, cnt) = {
 /*! Top-level dispatch function.
 <p>@ ( ' one-byte-opcode-execute ' ) is the doorway to all the opcode 
  maps ( for non-AVX/AVX512 instructions ) .</p> */
-val one_byte_opcode_execute : (range(0, 4), sbits(48), sbits(48), prefixes, bits(8), bits(8), modr_m, sib) -> unit
+val one_byte_opcode_execute : (proc_mode, sbits(48), sbits(48), prefixes, bits(8), bits(8), modr_m, sib) -> unit
 
 function one_byte_opcode_execute (proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode, modr_m, sib) = {
     (match opcode {
@@ -278,7 +278,7 @@ function one_byte_opcode_execute (proc_mode, start_rip, temp_rip, prefixes, rex_
           }
       },
       6 => {
-          if not_bool(proc_mode == 0) then {
+          if not_bool(in_64bit_mode(proc_mode)) then {
               let fault_var : option(string) = {
                   if 0xf0 == prefixes[lck] then {
                       Some(":UD")
@@ -294,7 +294,7 @@ function one_byte_opcode_execute (proc_mode, start_rip, temp_rip, prefixes, rex_
               } else {
                   x86_push_segment_register(proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode, modr_m, sib)
               }
-          } else if proc_mode == 0 then {
+          } else if in_64bit_mode(proc_mode) then {
               let fault_var : option(string) = {
                   if true then {
                       Some(":UD")
@@ -315,7 +315,7 @@ function one_byte_opcode_execute (proc_mode, start_rip, temp_rip, prefixes, rex_
           }
       },
       7 => {
-          if not_bool(proc_mode == 0) then {
+          if not_bool(in_64bit_mode(proc_mode)) then {
               let fault_var : option(string) = {
                   if 0xf0 == prefixes[lck] then {
                       Some(":UD")
@@ -331,7 +331,7 @@ function one_byte_opcode_execute (proc_mode, start_rip, temp_rip, prefixes, rex_
               } else {
                   ext_one_byte_opcode_execute(proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode, modr_m, sib)
               }
-          } else if proc_mode == 0 then {
+          } else if in_64bit_mode(proc_mode) then {
               let fault_var : option(string) = {
                   if true then {
                       Some(":UD")
@@ -454,7 +454,7 @@ function one_byte_opcode_execute (proc_mode, start_rip, temp_rip, prefixes, rex_
           }
       },
       14 => {
-          if not_bool(proc_mode == 0) then {
+          if not_bool(in_64bit_mode(proc_mode)) then {
               let fault_var : option(string) = {
                   if 0xf0 == prefixes[lck] then {
                       Some(":UD")
@@ -470,7 +470,7 @@ function one_byte_opcode_execute (proc_mode, start_rip, temp_rip, prefixes, rex_
               } else {
                   x86_push_segment_register(proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode, modr_m, sib)
               }
-          } else if proc_mode == 0 then {
+          } else if in_64bit_mode(proc_mode) then {
               let fault_var : option(string) = {
                   if true then {
                       Some(":UD")
@@ -594,7 +594,7 @@ function one_byte_opcode_execute (proc_mode, start_rip, temp_rip, prefixes, rex_
           }
       },
       22 => {
-          if not_bool(proc_mode == 0) then {
+          if not_bool(in_64bit_mode(proc_mode)) then {
               let fault_var : option(string) = {
                   if 0xf0 == prefixes[lck] then {
                       Some(":UD")
@@ -610,7 +610,7 @@ function one_byte_opcode_execute (proc_mode, start_rip, temp_rip, prefixes, rex_
               } else {
                   x86_push_segment_register(proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode, modr_m, sib)
               }
-          } else if proc_mode == 0 then {
+          } else if in_64bit_mode(proc_mode) then {
               let fault_var : option(string) = {
                   if true then {
                       Some(":UD")
@@ -631,7 +631,7 @@ function one_byte_opcode_execute (proc_mode, start_rip, temp_rip, prefixes, rex_
           }
       },
       23 => {
-          if not_bool(proc_mode == 0) then {
+          if not_bool(in_64bit_mode(proc_mode)) then {
               let fault_var : option(string) = {
                   if 0xf0 == prefixes[lck] then {
                       Some(":UD")
@@ -647,7 +647,7 @@ function one_byte_opcode_execute (proc_mode, start_rip, temp_rip, prefixes, rex_
               } else {
                   ext_one_byte_opcode_execute(proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode, modr_m, sib)
               }
-          } else if proc_mode == 0 then {
+          } else if in_64bit_mode(proc_mode) then {
               let fault_var : option(string) = {
                   if true then {
                       Some(":UD")
@@ -770,7 +770,7 @@ function one_byte_opcode_execute (proc_mode, start_rip, temp_rip, prefixes, rex_
           }
       },
       30 => {
-          if not_bool(proc_mode == 0) then {
+          if not_bool(in_64bit_mode(proc_mode)) then {
               let fault_var : option(string) = {
                   if 0xf0 == prefixes[lck] then {
                       Some(":UD")
@@ -786,7 +786,7 @@ function one_byte_opcode_execute (proc_mode, start_rip, temp_rip, prefixes, rex_
               } else {
                   x86_push_segment_register(proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode, modr_m, sib)
               }
-          } else if proc_mode == 0 then {
+          } else if in_64bit_mode(proc_mode) then {
               let fault_var : option(string) = {
                   if true then {
                       Some(":UD")
@@ -807,7 +807,7 @@ function one_byte_opcode_execute (proc_mode, start_rip, temp_rip, prefixes, rex_
           }
       },
       31 => {
-          if not_bool(proc_mode == 0) then {
+          if not_bool(in_64bit_mode(proc_mode)) then {
               let fault_var : option(string) = {
                   if 0xf0 == prefixes[lck] then {
                       Some(":UD")
@@ -823,7 +823,7 @@ function one_byte_opcode_execute (proc_mode, start_rip, temp_rip, prefixes, rex_
               } else {
                   ext_one_byte_opcode_execute(proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode, modr_m, sib)
               }
-          } else if proc_mode == 0 then {
+          } else if in_64bit_mode(proc_mode) then {
               let fault_var : option(string) = {
                   if true then {
                       Some(":UD")
@@ -947,7 +947,7 @@ function one_byte_opcode_execute (proc_mode, start_rip, temp_rip, prefixes, rex_
       },
       38 => throw(Emsg("A fault occurred.  Original ACL2 AST: (X86-ILLEGAL-INSTRUCTION \"#UD Encountered!\" START-RIP TEMP-RIP X86)")),
       39 => {
-          if not_bool(proc_mode == 0) then {
+          if not_bool(in_64bit_mode(proc_mode)) then {
               let fault_var : option(string) = {
                   if 0xf0 == prefixes[lck] then {
                       Some(":UD")
@@ -963,7 +963,7 @@ function one_byte_opcode_execute (proc_mode, start_rip, temp_rip, prefixes, rex_
               } else {
                   ext_one_byte_opcode_execute(proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode, modr_m, sib)
               }
-          } else if proc_mode == 0 then {
+          } else if in_64bit_mode(proc_mode) then {
               let fault_var : option(string) = {
                   if true then {
                       Some(":UD")
@@ -1087,7 +1087,7 @@ function one_byte_opcode_execute (proc_mode, start_rip, temp_rip, prefixes, rex_
       },
       46 => throw(Emsg("A fault occurred.  Original ACL2 AST: (X86-ILLEGAL-INSTRUCTION \"#UD Encountered!\" START-RIP TEMP-RIP X86)")),
       47 => {
-          if not_bool(proc_mode == 0) then {
+          if not_bool(in_64bit_mode(proc_mode)) then {
               let fault_var : option(string) = {
                   if 0xf0 == prefixes[lck] then {
                       Some(":UD")
@@ -1103,7 +1103,7 @@ function one_byte_opcode_execute (proc_mode, start_rip, temp_rip, prefixes, rex_
               } else {
                   ext_one_byte_opcode_execute(proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode, modr_m, sib)
               }
-          } else if proc_mode == 0 then {
+          } else if in_64bit_mode(proc_mode) then {
               let fault_var : option(string) = {
                   if true then {
                       Some(":UD")
@@ -1227,7 +1227,7 @@ function one_byte_opcode_execute (proc_mode, start_rip, temp_rip, prefixes, rex_
       },
       54 => throw(Emsg("A fault occurred.  Original ACL2 AST: (X86-ILLEGAL-INSTRUCTION \"#UD Encountered!\" START-RIP TEMP-RIP X86)")),
       55 => {
-          if not_bool(proc_mode == 0) then {
+          if not_bool(in_64bit_mode(proc_mode)) then {
               let fault_var : option(string) = {
                   if 0xf0 == prefixes[lck] then {
                       Some(":UD")
@@ -1243,7 +1243,7 @@ function one_byte_opcode_execute (proc_mode, start_rip, temp_rip, prefixes, rex_
               } else {
                   ext_one_byte_opcode_execute(proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode, modr_m, sib)
               }
-          } else if proc_mode == 0 then {
+          } else if in_64bit_mode(proc_mode) then {
               let fault_var : option(string) = {
                   if true then {
                       Some(":UD")
@@ -1367,7 +1367,7 @@ function one_byte_opcode_execute (proc_mode, start_rip, temp_rip, prefixes, rex_
       },
       62 => throw(Emsg("A fault occurred.  Original ACL2 AST: (X86-ILLEGAL-INSTRUCTION \"#UD Encountered!\" START-RIP TEMP-RIP X86)")),
       63 => {
-          if not_bool(proc_mode == 0) then {
+          if not_bool(in_64bit_mode(proc_mode)) then {
               let fault_var : option(string) = {
                   if 0xf0 == prefixes[lck] then {
                       Some(":UD")
@@ -1383,7 +1383,7 @@ function one_byte_opcode_execute (proc_mode, start_rip, temp_rip, prefixes, rex_
               } else {
                   ext_one_byte_opcode_execute(proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode, modr_m, sib)
               }
-          } else if proc_mode == 0 then {
+          } else if in_64bit_mode(proc_mode) then {
               let fault_var : option(string) = {
                   if true then {
                       Some(":UD")
@@ -1404,9 +1404,9 @@ function one_byte_opcode_execute (proc_mode, start_rip, temp_rip, prefixes, rex_
           }
       },
       64 => {
-          if proc_mode == 0 then {
+          if in_64bit_mode(proc_mode) then {
               throw(Emsg("A fault occurred.  Original ACL2 AST: (X86-ILLEGAL-INSTRUCTION \"#UD Encountered!\" START-RIP TEMP-RIP X86)"))
-          } else if not_bool(proc_mode == 0) then {
+          } else if not_bool(in_64bit_mode(proc_mode)) then {
               let fault_var : option(string) = {
                   if 0xf0 == prefixes[lck] then {
                       Some(":UD")
@@ -1427,9 +1427,9 @@ function one_byte_opcode_execute (proc_mode, start_rip, temp_rip, prefixes, rex_
           }
       },
       65 => {
-          if proc_mode == 0 then {
+          if in_64bit_mode(proc_mode) then {
               throw(Emsg("A fault occurred.  Original ACL2 AST: (X86-ILLEGAL-INSTRUCTION \"#UD Encountered!\" START-RIP TEMP-RIP X86)"))
-          } else if not_bool(proc_mode == 0) then {
+          } else if not_bool(in_64bit_mode(proc_mode)) then {
               let fault_var : option(string) = {
                   if 0xf0 == prefixes[lck] then {
                       Some(":UD")
@@ -1450,9 +1450,9 @@ function one_byte_opcode_execute (proc_mode, start_rip, temp_rip, prefixes, rex_
           }
       },
       66 => {
-          if proc_mode == 0 then {
+          if in_64bit_mode(proc_mode) then {
               throw(Emsg("A fault occurred.  Original ACL2 AST: (X86-ILLEGAL-INSTRUCTION \"#UD Encountered!\" START-RIP TEMP-RIP X86)"))
-          } else if not_bool(proc_mode == 0) then {
+          } else if not_bool(in_64bit_mode(proc_mode)) then {
               let fault_var : option(string) = {
                   if 0xf0 == prefixes[lck] then {
                       Some(":UD")
@@ -1473,9 +1473,9 @@ function one_byte_opcode_execute (proc_mode, start_rip, temp_rip, prefixes, rex_
           }
       },
       67 => {
-          if proc_mode == 0 then {
+          if in_64bit_mode(proc_mode) then {
               throw(Emsg("A fault occurred.  Original ACL2 AST: (X86-ILLEGAL-INSTRUCTION \"#UD Encountered!\" START-RIP TEMP-RIP X86)"))
-          } else if not_bool(proc_mode == 0) then {
+          } else if not_bool(in_64bit_mode(proc_mode)) then {
               let fault_var : option(string) = {
                   if 0xf0 == prefixes[lck] then {
                       Some(":UD")
@@ -1496,9 +1496,9 @@ function one_byte_opcode_execute (proc_mode, start_rip, temp_rip, prefixes, rex_
           }
       },
       68 => {
-          if proc_mode == 0 then {
+          if in_64bit_mode(proc_mode) then {
               throw(Emsg("A fault occurred.  Original ACL2 AST: (X86-ILLEGAL-INSTRUCTION \"#UD Encountered!\" START-RIP TEMP-RIP X86)"))
-          } else if not_bool(proc_mode == 0) then {
+          } else if not_bool(in_64bit_mode(proc_mode)) then {
               let fault_var : option(string) = {
                   if 0xf0 == prefixes[lck] then {
                       Some(":UD")
@@ -1519,9 +1519,9 @@ function one_byte_opcode_execute (proc_mode, start_rip, temp_rip, prefixes, rex_
           }
       },
       69 => {
-          if proc_mode == 0 then {
+          if in_64bit_mode(proc_mode) then {
               throw(Emsg("A fault occurred.  Original ACL2 AST: (X86-ILLEGAL-INSTRUCTION \"#UD Encountered!\" START-RIP TEMP-RIP X86)"))
-          } else if not_bool(proc_mode == 0) then {
+          } else if not_bool(in_64bit_mode(proc_mode)) then {
               let fault_var : option(string) = {
                   if 0xf0 == prefixes[lck] then {
                       Some(":UD")
@@ -1542,9 +1542,9 @@ function one_byte_opcode_execute (proc_mode, start_rip, temp_rip, prefixes, rex_
           }
       },
       70 => {
-          if proc_mode == 0 then {
+          if in_64bit_mode(proc_mode) then {
               throw(Emsg("A fault occurred.  Original ACL2 AST: (X86-ILLEGAL-INSTRUCTION \"#UD Encountered!\" START-RIP TEMP-RIP X86)"))
-          } else if not_bool(proc_mode == 0) then {
+          } else if not_bool(in_64bit_mode(proc_mode)) then {
               let fault_var : option(string) = {
                   if 0xf0 == prefixes[lck] then {
                       Some(":UD")
@@ -1565,9 +1565,9 @@ function one_byte_opcode_execute (proc_mode, start_rip, temp_rip, prefixes, rex_
           }
       },
       71 => {
-          if proc_mode == 0 then {
+          if in_64bit_mode(proc_mode) then {
               throw(Emsg("A fault occurred.  Original ACL2 AST: (X86-ILLEGAL-INSTRUCTION \"#UD Encountered!\" START-RIP TEMP-RIP X86)"))
-          } else if not_bool(proc_mode == 0) then {
+          } else if not_bool(in_64bit_mode(proc_mode)) then {
               let fault_var : option(string) = {
                   if 0xf0 == prefixes[lck] then {
                       Some(":UD")
@@ -1588,9 +1588,9 @@ function one_byte_opcode_execute (proc_mode, start_rip, temp_rip, prefixes, rex_
           }
       },
       72 => {
-          if proc_mode == 0 then {
+          if in_64bit_mode(proc_mode) then {
               throw(Emsg("A fault occurred.  Original ACL2 AST: (X86-ILLEGAL-INSTRUCTION \"#UD Encountered!\" START-RIP TEMP-RIP X86)"))
-          } else if not_bool(proc_mode == 0) then {
+          } else if not_bool(in_64bit_mode(proc_mode)) then {
               let fault_var : option(string) = {
                   if 0xf0 == prefixes[lck] then {
                       Some(":UD")
@@ -1611,9 +1611,9 @@ function one_byte_opcode_execute (proc_mode, start_rip, temp_rip, prefixes, rex_
           }
       },
       73 => {
-          if proc_mode == 0 then {
+          if in_64bit_mode(proc_mode) then {
               throw(Emsg("A fault occurred.  Original ACL2 AST: (X86-ILLEGAL-INSTRUCTION \"#UD Encountered!\" START-RIP TEMP-RIP X86)"))
-          } else if not_bool(proc_mode == 0) then {
+          } else if not_bool(in_64bit_mode(proc_mode)) then {
               let fault_var : option(string) = {
                   if 0xf0 == prefixes[lck] then {
                       Some(":UD")
@@ -1634,9 +1634,9 @@ function one_byte_opcode_execute (proc_mode, start_rip, temp_rip, prefixes, rex_
           }
       },
       74 => {
-          if proc_mode == 0 then {
+          if in_64bit_mode(proc_mode) then {
               throw(Emsg("A fault occurred.  Original ACL2 AST: (X86-ILLEGAL-INSTRUCTION \"#UD Encountered!\" START-RIP TEMP-RIP X86)"))
-          } else if not_bool(proc_mode == 0) then {
+          } else if not_bool(in_64bit_mode(proc_mode)) then {
               let fault_var : option(string) = {
                   if 0xf0 == prefixes[lck] then {
                       Some(":UD")
@@ -1657,9 +1657,9 @@ function one_byte_opcode_execute (proc_mode, start_rip, temp_rip, prefixes, rex_
           }
       },
       75 => {
-          if proc_mode == 0 then {
+          if in_64bit_mode(proc_mode) then {
               throw(Emsg("A fault occurred.  Original ACL2 AST: (X86-ILLEGAL-INSTRUCTION \"#UD Encountered!\" START-RIP TEMP-RIP X86)"))
-          } else if not_bool(proc_mode == 0) then {
+          } else if not_bool(in_64bit_mode(proc_mode)) then {
               let fault_var : option(string) = {
                   if 0xf0 == prefixes[lck] then {
                       Some(":UD")
@@ -1680,9 +1680,9 @@ function one_byte_opcode_execute (proc_mode, start_rip, temp_rip, prefixes, rex_
           }
       },
       76 => {
-          if proc_mode == 0 then {
+          if in_64bit_mode(proc_mode) then {
               throw(Emsg("A fault occurred.  Original ACL2 AST: (X86-ILLEGAL-INSTRUCTION \"#UD Encountered!\" START-RIP TEMP-RIP X86)"))
-          } else if not_bool(proc_mode == 0) then {
+          } else if not_bool(in_64bit_mode(proc_mode)) then {
               let fault_var : option(string) = {
                   if 0xf0 == prefixes[lck] then {
                       Some(":UD")
@@ -1703,9 +1703,9 @@ function one_byte_opcode_execute (proc_mode, start_rip, temp_rip, prefixes, rex_
           }
       },
       77 => {
-          if proc_mode == 0 then {
+          if in_64bit_mode(proc_mode) then {
               throw(Emsg("A fault occurred.  Original ACL2 AST: (X86-ILLEGAL-INSTRUCTION \"#UD Encountered!\" START-RIP TEMP-RIP X86)"))
-          } else if not_bool(proc_mode == 0) then {
+          } else if not_bool(in_64bit_mode(proc_mode)) then {
               let fault_var : option(string) = {
                   if 0xf0 == prefixes[lck] then {
                       Some(":UD")
@@ -1726,9 +1726,9 @@ function one_byte_opcode_execute (proc_mode, start_rip, temp_rip, prefixes, rex_
           }
       },
       78 => {
-          if proc_mode == 0 then {
+          if in_64bit_mode(proc_mode) then {
               throw(Emsg("A fault occurred.  Original ACL2 AST: (X86-ILLEGAL-INSTRUCTION \"#UD Encountered!\" START-RIP TEMP-RIP X86)"))
-          } else if not_bool(proc_mode == 0) then {
+          } else if not_bool(in_64bit_mode(proc_mode)) then {
               let fault_var : option(string) = {
                   if 0xf0 == prefixes[lck] then {
                       Some(":UD")
@@ -1749,9 +1749,9 @@ function one_byte_opcode_execute (proc_mode, start_rip, temp_rip, prefixes, rex_
           }
       },
       79 => {
-          if proc_mode == 0 then {
+          if in_64bit_mode(proc_mode) then {
               throw(Emsg("A fault occurred.  Original ACL2 AST: (X86-ILLEGAL-INSTRUCTION \"#UD Encountered!\" START-RIP TEMP-RIP X86)"))
-          } else if not_bool(proc_mode == 0) then {
+          } else if not_bool(in_64bit_mode(proc_mode)) then {
               let fault_var : option(string) = {
                   if 0xf0 == prefixes[lck] then {
                       Some(":UD")
@@ -2044,7 +2044,7 @@ function one_byte_opcode_execute (proc_mode, start_rip, temp_rip, prefixes, rex_
           }
       },
       96 => {
-          if not_bool(proc_mode == 0) then {
+          if not_bool(in_64bit_mode(proc_mode)) then {
               let fault_var : option(string) = {
                   if 0xf0 == prefixes[lck] then {
                       Some(":UD")
@@ -2060,7 +2060,7 @@ function one_byte_opcode_execute (proc_mode, start_rip, temp_rip, prefixes, rex_
               } else {
                   x86_pusha(proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode, modr_m, sib)
               }
-          } else if proc_mode == 0 then {
+          } else if in_64bit_mode(proc_mode) then {
               let fault_var : option(string) = {
                   if true then {
                       Some(":UD")
@@ -2081,7 +2081,7 @@ function one_byte_opcode_execute (proc_mode, start_rip, temp_rip, prefixes, rex_
           }
       },
       97 => {
-          if not_bool(proc_mode == 0) then {
+          if not_bool(in_64bit_mode(proc_mode)) then {
               let fault_var : option(string) = {
                   if 0xf0 == prefixes[lck] then {
                       Some(":UD")
@@ -2097,7 +2097,7 @@ function one_byte_opcode_execute (proc_mode, start_rip, temp_rip, prefixes, rex_
               } else {
                   x86_popa(proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode, modr_m, sib)
               }
-          } else if proc_mode == 0 then {
+          } else if in_64bit_mode(proc_mode) then {
               let fault_var : option(string) = {
                   if true then {
                       Some(":UD")
@@ -2118,7 +2118,7 @@ function one_byte_opcode_execute (proc_mode, start_rip, temp_rip, prefixes, rex_
           }
       },
       98 => {
-          if not_bool(proc_mode == 0) then {
+          if not_bool(in_64bit_mode(proc_mode)) then {
               let fault_var : option(string) = {
                   if 0xf0 == prefixes[lck] | modr_m[mod] == 0b11 then {
                       Some(":UD")
@@ -2134,14 +2134,14 @@ function one_byte_opcode_execute (proc_mode, start_rip, temp_rip, prefixes, rex_
               } else {
                   ext_one_byte_opcode_execute(proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode, modr_m, sib)
               }
-          } else if proc_mode == 0 then {
+          } else if in_64bit_mode(proc_mode) then {
               throw(Emsg("A fault occurred.  Original ACL2 AST: (X86-ILLEGAL-INSTRUCTION \"#UD Encountered!\" START-RIP TEMP-RIP X86)"))
           } else {
               throw(Emsg("A fault occurred.  Original ACL2 AST: (X86-ILLEGAL-INSTRUCTION \"#UD Encountered!\" START-RIP TEMP-RIP X86)"))
           }
       },
       99 => {
-          if proc_mode == 0 then {
+          if in_64bit_mode(proc_mode) then {
               let fault_var : option(string) = {
                   if 0xf0 == prefixes[lck] then {
                       Some(":UD")
@@ -2157,7 +2157,7 @@ function one_byte_opcode_execute (proc_mode, start_rip, temp_rip, prefixes, rex_
               } else {
                   x86_movsx(proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode, modr_m, sib)
               }
-          } else if not_bool(proc_mode == 0) then {
+          } else if not_bool(in_64bit_mode(proc_mode)) then {
               let fault_var : option(string) = {
                   if 0xf0 == prefixes[lck] then {
                       Some(":UD")
@@ -2856,7 +2856,7 @@ function one_byte_opcode_execute (proc_mode, start_rip, temp_rip, prefixes, rex_
           }
       },
       130 => {
-          if not_bool(proc_mode == 0) & modr_m[reg] == 0b000 then {
+          if not_bool(in_64bit_mode(proc_mode)) & modr_m[reg] == 0b000 then {
               let fault_var : option(string) = {
                   if modr_m[mod] == 0b11 & 0xf0 == prefixes[lck] then {
                       Some(":UD")
@@ -2872,7 +2872,7 @@ function one_byte_opcode_execute (proc_mode, start_rip, temp_rip, prefixes, rex_
               } else {
                   x86_add_adc_sub_sbb_or_and_xor_cmp_test_e_i(0, proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode, modr_m, sib)
               }
-          } else if not_bool(proc_mode == 0) & modr_m[reg] == 0b001 then {
+          } else if not_bool(in_64bit_mode(proc_mode)) & modr_m[reg] == 0b001 then {
               let fault_var : option(string) = {
                   if modr_m[mod] == 0b11 & 0xf0 == prefixes[lck] then {
                       Some(":UD")
@@ -2888,7 +2888,7 @@ function one_byte_opcode_execute (proc_mode, start_rip, temp_rip, prefixes, rex_
               } else {
                   x86_add_adc_sub_sbb_or_and_xor_cmp_test_e_i(1, proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode, modr_m, sib)
               }
-          } else if not_bool(proc_mode == 0) & modr_m[reg] == 0b010 then {
+          } else if not_bool(in_64bit_mode(proc_mode)) & modr_m[reg] == 0b010 then {
               let fault_var : option(string) = {
                   if modr_m[mod] == 0b11 & 0xf0 == prefixes[lck] then {
                       Some(":UD")
@@ -2904,7 +2904,7 @@ function one_byte_opcode_execute (proc_mode, start_rip, temp_rip, prefixes, rex_
               } else {
                   x86_add_adc_sub_sbb_or_and_xor_cmp_test_e_i(2, proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode, modr_m, sib)
               }
-          } else if not_bool(proc_mode == 0) & modr_m[reg] == 0b011 then {
+          } else if not_bool(in_64bit_mode(proc_mode)) & modr_m[reg] == 0b011 then {
               let fault_var : option(string) = {
                   if modr_m[mod] == 0b11 & 0xf0 == prefixes[lck] then {
                       Some(":UD")
@@ -2920,7 +2920,7 @@ function one_byte_opcode_execute (proc_mode, start_rip, temp_rip, prefixes, rex_
               } else {
                   x86_add_adc_sub_sbb_or_and_xor_cmp_test_e_i(6, proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode, modr_m, sib)
               }
-          } else if not_bool(proc_mode == 0) & modr_m[reg] == 0b100 then {
+          } else if not_bool(in_64bit_mode(proc_mode)) & modr_m[reg] == 0b100 then {
               let fault_var : option(string) = {
                   if modr_m[mod] == 0b11 & 0xf0 == prefixes[lck] then {
                       Some(":UD")
@@ -2936,7 +2936,7 @@ function one_byte_opcode_execute (proc_mode, start_rip, temp_rip, prefixes, rex_
               } else {
                   x86_add_adc_sub_sbb_or_and_xor_cmp_test_e_i(3, proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode, modr_m, sib)
               }
-          } else if not_bool(proc_mode == 0) & modr_m[reg] == 0b101 then {
+          } else if not_bool(in_64bit_mode(proc_mode)) & modr_m[reg] == 0b101 then {
               let fault_var : option(string) = {
                   if modr_m[mod] == 0b11 & 0xf0 == prefixes[lck] then {
                       Some(":UD")
@@ -2952,7 +2952,7 @@ function one_byte_opcode_execute (proc_mode, start_rip, temp_rip, prefixes, rex_
               } else {
                   x86_add_adc_sub_sbb_or_and_xor_cmp_test_e_i(4, proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode, modr_m, sib)
               }
-          } else if not_bool(proc_mode == 0) & modr_m[reg] == 0b110 then {
+          } else if not_bool(in_64bit_mode(proc_mode)) & modr_m[reg] == 0b110 then {
               let fault_var : option(string) = {
                   if modr_m[mod] == 0b11 & 0xf0 == prefixes[lck] then {
                       Some(":UD")
@@ -2968,7 +2968,7 @@ function one_byte_opcode_execute (proc_mode, start_rip, temp_rip, prefixes, rex_
               } else {
                   x86_add_adc_sub_sbb_or_and_xor_cmp_test_e_i(5, proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode, modr_m, sib)
               }
-          } else if not_bool(proc_mode == 0) & modr_m[reg] == 0b111 then {
+          } else if not_bool(in_64bit_mode(proc_mode)) & modr_m[reg] == 0b111 then {
               let fault_var : option(string) = {
                   if 0xf0 == prefixes[lck] then {
                       Some(":UD")
@@ -2984,7 +2984,7 @@ function one_byte_opcode_execute (proc_mode, start_rip, temp_rip, prefixes, rex_
               } else {
                   x86_add_adc_sub_sbb_or_and_xor_cmp_test_e_i(8, proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode, modr_m, sib)
               }
-          } else if proc_mode == 0 then {
+          } else if in_64bit_mode(proc_mode) then {
               let fault_var : option(string) = {
                   if true then {
                       Some(":UD")
@@ -3516,7 +3516,7 @@ function one_byte_opcode_execute (proc_mode, start_rip, temp_rip, prefixes, rex_
           }
       },
       154 => {
-          if not_bool(proc_mode == 0) then {
+          if not_bool(in_64bit_mode(proc_mode)) then {
               let fault_var : option(string) = {
                   if 0xf0 == prefixes[lck] then {
                       Some(":UD")
@@ -3532,7 +3532,7 @@ function one_byte_opcode_execute (proc_mode, start_rip, temp_rip, prefixes, rex_
               } else {
                   ext_one_byte_opcode_execute(proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode, modr_m, sib)
               }
-          } else if proc_mode == 0 then {
+          } else if in_64bit_mode(proc_mode) then {
               let fault_var : option(string) = {
                   if true then {
                       Some(":UD")
@@ -3605,7 +3605,7 @@ function one_byte_opcode_execute (proc_mode, start_rip, temp_rip, prefixes, rex_
       },
       158 => {
           let fault_var : option(string) = {
-              if 0xf0 == prefixes[lck] | proc_mode == 0 & feature_flag_fn(":LAHF-SAHF") == 0 then {
+              if 0xf0 == prefixes[lck] | in_64bit_mode(proc_mode) & feature_flag_fn(":LAHF-SAHF") == 0 then {
                   Some(":UD")
               } else {
                   None() : option(string)
@@ -3622,7 +3622,7 @@ function one_byte_opcode_execute (proc_mode, start_rip, temp_rip, prefixes, rex_
       },
       159 => {
           let fault_var : option(string) = {
-              if 0xf0 == prefixes[lck] | proc_mode == 0 & feature_flag_fn(":LAHF-SAHF") == 0 then {
+              if 0xf0 == prefixes[lck] | in_64bit_mode(proc_mode) & feature_flag_fn(":LAHF-SAHF") == 0 then {
                   Some(":UD")
               } else {
                   None() : option(string)
@@ -4450,9 +4450,9 @@ function one_byte_opcode_execute (proc_mode, start_rip, temp_rip, prefixes, rex_
           }
       },
       196 => {
-          if proc_mode == 0 then {
+          if in_64bit_mode(proc_mode) then {
               throw(Emsg("A fault occurred.  Original ACL2 AST: (X86-ILLEGAL-INSTRUCTION \"#UD Encountered!\" START-RIP TEMP-RIP X86)"))
-          } else if not_bool(proc_mode == 0) then {
+          } else if not_bool(in_64bit_mode(proc_mode)) then {
               let fault_var : option(string) = {
                   if 0xf0 == prefixes[lck] | modr_m[mod] == 0b11 then {
                       Some(":UD")
@@ -4473,9 +4473,9 @@ function one_byte_opcode_execute (proc_mode, start_rip, temp_rip, prefixes, rex_
           }
       },
       197 => {
-          if proc_mode == 0 then {
+          if in_64bit_mode(proc_mode) then {
               throw(Emsg("A fault occurred.  Original ACL2 AST: (X86-ILLEGAL-INSTRUCTION \"#UD Encountered!\" START-RIP TEMP-RIP X86)"))
-          } else if not_bool(proc_mode == 0) then {
+          } else if not_bool(in_64bit_mode(proc_mode)) then {
               let fault_var : option(string) = {
                   if 0xf0 == prefixes[lck] | modr_m[mod] == 0b11 then {
                       Some(":UD")
@@ -4640,7 +4640,7 @@ function one_byte_opcode_execute (proc_mode, start_rip, temp_rip, prefixes, rex_
           }
       },
       206 => {
-          if not_bool(proc_mode == 0) then {
+          if not_bool(in_64bit_mode(proc_mode)) then {
               let fault_var : option(string) = {
                   if 0xf0 == prefixes[lck] then {
                       Some(":UD")
@@ -4656,7 +4656,7 @@ function one_byte_opcode_execute (proc_mode, start_rip, temp_rip, prefixes, rex_
               } else {
                   ext_one_byte_opcode_execute(proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode, modr_m, sib)
               }
-          } else if proc_mode == 0 then {
+          } else if in_64bit_mode(proc_mode) then {
               let fault_var : option(string) = {
                   if true then {
                       Some(":UD")
@@ -5162,7 +5162,7 @@ function one_byte_opcode_execute (proc_mode, start_rip, temp_rip, prefixes, rex_
           }
       },
       212 => {
-          if not_bool(proc_mode == 0) then {
+          if not_bool(in_64bit_mode(proc_mode)) then {
               let fault_var : option(string) = {
                   if 0xf0 == prefixes[lck] then {
                       Some(":UD")
@@ -5178,7 +5178,7 @@ function one_byte_opcode_execute (proc_mode, start_rip, temp_rip, prefixes, rex_
               } else {
                   ext_one_byte_opcode_execute(proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode, modr_m, sib)
               }
-          } else if proc_mode == 0 then {
+          } else if in_64bit_mode(proc_mode) then {
               let fault_var : option(string) = {
                   if true then {
                       Some(":UD")
@@ -5199,7 +5199,7 @@ function one_byte_opcode_execute (proc_mode, start_rip, temp_rip, prefixes, rex_
           }
       },
       213 => {
-          if not_bool(proc_mode == 0) then {
+          if not_bool(in_64bit_mode(proc_mode)) then {
               let fault_var : option(string) = {
                   if 0xf0 == prefixes[lck] then {
                       Some(":UD")
@@ -5215,7 +5215,7 @@ function one_byte_opcode_execute (proc_mode, start_rip, temp_rip, prefixes, rex_
               } else {
                   ext_one_byte_opcode_execute(proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode, modr_m, sib)
               }
-          } else if proc_mode == 0 then {
+          } else if in_64bit_mode(proc_mode) then {
               let fault_var : option(string) = {
                   if true then {
                       Some(":UD")
@@ -5559,7 +5559,7 @@ function one_byte_opcode_execute (proc_mode, start_rip, temp_rip, prefixes, rex_
           }
       },
       234 => {
-          if not_bool(proc_mode == 0) then {
+          if not_bool(in_64bit_mode(proc_mode)) then {
               let fault_var : option(string) = {
                   if 0xf0 == prefixes[lck] then {
                       Some(":UD")
@@ -5575,7 +5575,7 @@ function one_byte_opcode_execute (proc_mode, start_rip, temp_rip, prefixes, rex_
               } else {
                   ext_one_byte_opcode_execute(proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode, modr_m, sib)
               }
-          } else if proc_mode == 0 then {
+          } else if in_64bit_mode(proc_mode) then {
               let fault_var : option(string) = {
                   if true then {
                       Some(":UD")
@@ -6228,8 +6228,8 @@ val x86_fetch_decode_execute : unit -> unit
 function x86_fetch_decode_execute () = {
     let ctx : string = "x86-fetch-decode-execute";
     if ms() | fault() then () else {
-        let proc_mode : {|0, 1|} = x86_operation_mode();
-        let n64_bit_modep_var : bool = proc_mode == 0;
+        let proc_mode : proc_mode = x86_operation_mode();
+        let n64_bit_modep_var : bool = in_64bit_mode(proc_mode);
         let start_rip : sbits(48) = read_iptr(proc_mode);
         let (flg, prefixes, rex_byte) : (option(string), prefixes, bits(8)) = get_prefixes(proc_mode, start_rip, Mk_prefixes(0x0000000000000), 0x00, 15);
         if is_some(flg) then throw(Emsg("Model state error: :ERROR-IN-READING-PREFIXES"));

@@ -37,7 +37,7 @@ function jcc_cmovcc_setcc_spec opcode = {
     }) : bool
 }
 
-val x86_one_byte_jcc : (range(0, 4), sbits(48), sbits(48), prefixes, bits(8), bits(8), modr_m, sib) -> unit
+val x86_one_byte_jcc : (proc_mode, sbits(48), sbits(48), prefixes, bits(8), bits(8), modr_m, sib) -> unit
 
 function x86_one_byte_jcc (proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode, modr_m, sib) = {
     let ctx : string = "X86-ONE-BYTE-JCC";
@@ -57,7 +57,7 @@ function x86_one_byte_jcc (proc_mode, start_rip, temp_rip, prefixes, rex_byte, o
     }
 }
 
-val x86_two_byte_jcc : (range(0, 4), sbits(48), sbits(48), prefixes, bits(8), bits(8), modr_m, sib) -> unit
+val x86_two_byte_jcc : (proc_mode, sbits(48), sbits(48), prefixes, bits(8), bits(8), modr_m, sib) -> unit
 
 function x86_two_byte_jcc (proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode, modr_m, sib) = {
     let ctx : string = "X86-TWO-BYTE-JCC";
@@ -78,7 +78,7 @@ function x86_two_byte_jcc (proc_mode, start_rip, temp_rip, prefixes, rex_byte, o
     }
 }
 
-val x86_jrcxz : (range(0, 4), sbits(48), sbits(48), prefixes, bits(8), bits(8), modr_m, sib) -> unit
+val x86_jrcxz : (proc_mode, sbits(48), sbits(48), prefixes, bits(8), bits(8), modr_m, sib) -> unit
 
 function x86_jrcxz (proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode, modr_m, sib) = {
     let ctx : string = "X86-JRCXZ";
@@ -100,7 +100,7 @@ function x86_jrcxz (proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode, 
     }
 }
 
-val x86_cmovcc : (range(0, 4), sbits(48), sbits(48), prefixes, bits(8), bits(8), modr_m, sib) -> unit
+val x86_cmovcc : (proc_mode, sbits(48), sbits(48), prefixes, bits(8), bits(8), modr_m, sib) -> unit
 
 function x86_cmovcc (proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode, modr_m, sib) = {
     let ctx : string = "X86-CMOVCC";
@@ -127,7 +127,7 @@ function x86_cmovcc (proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode,
     write_iptr(proc_mode, temp_rip)
 }
 
-val x86_setcc : (range(0, 4), sbits(48), sbits(48), prefixes, bits(8), bits(8), modr_m, sib) -> unit
+val x86_setcc : (proc_mode, sbits(48), sbits(48), prefixes, bits(8), bits(8), modr_m, sib) -> unit
 
 function x86_setcc (proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode, modr_m, sib) = {
     let ctx : string = "X86-SETCC";

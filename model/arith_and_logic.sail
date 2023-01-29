@@ -21,7 +21,7 @@ $include "./decoding_and_spec_utils.sail"
  30, 31: XOR p z s ( o and c cleared, a undefined ) <br/> 
  38, 39: CMP c p a z s o<br/> 
  84, 85: TEST p z s ( o and c cleared, a undefined ) <br/> */
-val x86_add_adc_sub_sbb_or_and_xor_cmp_test_e_g : (range(0, 8), range(0, 4), sbits(48), sbits(48), prefixes, bits(8), bits(8), modr_m, sib) -> unit
+val x86_add_adc_sub_sbb_or_and_xor_cmp_test_e_g : (range(0, 8), proc_mode, sbits(48), sbits(48), prefixes, bits(8), bits(8), modr_m, sib) -> unit
 
 function x86_add_adc_sub_sbb_or_and_xor_cmp_test_e_g (operation, proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode, modr_m, sib) = {
     let ctx : string = "X86-ADD/ADC/SUB/SBB/OR/AND/XOR/CMP/TEST-E-G";
@@ -76,7 +76,7 @@ function x86_add_adc_sub_sbb_or_and_xor_cmp_test_e_g (operation, proc_mode, star
  2A, 2B: SUB c p a z s o<br/> 
  32, 33: XOR p z s ( o and c cleared, a undefined ) <br/> 
  3A, 3B: CMP c p a z s o <br/> */
-val x86_add_adc_sub_sbb_or_and_xor_cmp_g_e : (range(0, 8), range(0, 4), sbits(48), sbits(48), prefixes, bits(8), bits(8), modr_m, sib) -> unit
+val x86_add_adc_sub_sbb_or_and_xor_cmp_g_e : (range(0, 8), proc_mode, sbits(48), sbits(48), prefixes, bits(8), bits(8), modr_m, sib) -> unit
 
 function x86_add_adc_sub_sbb_or_and_xor_cmp_g_e (operation, proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode, modr_m, sib) = {
     let ctx : string = "X86-ADD/ADC/SUB/SBB/OR/AND/XOR/CMP-G-E";
@@ -129,7 +129,7 @@ function x86_add_adc_sub_sbb_or_and_xor_cmp_g_e (operation, proc_mode, start_rip
  80-83 ( 110 ) : XOR p z s ( o and c cleared, a undefined ) <br/> 
  80-83 ( 111 ) : CMP c p a z s o<br/> 
  F6-F7 ( 000 ) : TEST p z s ( o and c cleared, a undefined ) <br/> */
-val x86_add_adc_sub_sbb_or_and_xor_cmp_test_e_i : (range(0, 8), range(0, 4), sbits(48), sbits(48), prefixes, bits(8), bits(8), modr_m, sib) -> unit
+val x86_add_adc_sub_sbb_or_and_xor_cmp_test_e_i : (range(0, 8), proc_mode, sbits(48), sbits(48), prefixes, bits(8), bits(8), modr_m, sib) -> unit
 
 function x86_add_adc_sub_sbb_or_and_xor_cmp_test_e_i (operation, proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode, modr_m, sib) = {
     let ctx : string = "X86-ADD/ADC/SUB/SBB/OR/AND/XOR/CMP-TEST-E-I";
@@ -190,7 +190,7 @@ function x86_add_adc_sub_sbb_or_and_xor_cmp_test_e_i (operation, proc_mode, star
  34, 35: XOR p z s ( o and c cleared, a undefined ) <br/> 
  3C, 3D: CMP c p a z s o<br/> 
  A8, A9: TEST p z s ( o and c cleared, a undefined ) <br/> */
-val x86_add_adc_sub_sbb_or_and_xor_cmp_test_rax_i : (range(0, 8), range(0, 4), sbits(48), sbits(48), prefixes, bits(8), bits(8), modr_m, sib) -> unit
+val x86_add_adc_sub_sbb_or_and_xor_cmp_test_rax_i : (range(0, 8), proc_mode, sbits(48), sbits(48), prefixes, bits(8), bits(8), modr_m, sib) -> unit
 
 function x86_add_adc_sub_sbb_or_and_xor_cmp_test_rax_i (operation, proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode, modr_m, sib) = {
     let ctx : string = "X86-ADD/ADC/SUB/SBB/OR/AND/XOR/CMP-TEST-RAX-I";
@@ -224,7 +224,7 @@ function x86_add_adc_sub_sbb_or_and_xor_cmp_test_rax_i (operation, proc_mode, st
     write_iptr(proc_mode, truncate(temp_rip, 48))
 }
 
-val x86_inc_dec_fe_ff : (range(0, 4), sbits(48), sbits(48), prefixes, bits(8), bits(8), modr_m, sib) -> unit
+val x86_inc_dec_fe_ff : (proc_mode, sbits(48), sbits(48), prefixes, bits(8), bits(8), modr_m, sib) -> unit
 
 function x86_inc_dec_fe_ff (proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode, modr_m, sib) = {
     let ctx : string = "X86-INC/DEC-FE-FF";
@@ -255,7 +255,7 @@ function x86_inc_dec_fe_ff (proc_mode, start_rip, temp_rip, prefixes, rex_byte, 
     write_iptr(proc_mode, temp_rip)
 }
 
-val x86_inc_dec_4x : (range(0, 4), sbits(48), sbits(48), prefixes, bits(8), bits(8), modr_m, sib) -> unit
+val x86_inc_dec_4x : (proc_mode, sbits(48), sbits(48), prefixes, bits(8), bits(8), modr_m, sib) -> unit
 
 function x86_inc_dec_4x (proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode, modr_m, sib) = {
     let ctx : string = "X86-INC/DEC-4X";
@@ -273,7 +273,7 @@ function x86_inc_dec_4x (proc_mode, start_rip, temp_rip, prefixes, rex_byte, opc
     write_iptr(proc_mode, temp_rip)
 }
 
-val x86_not_neg_f6_f7 : (range(0, 4), sbits(48), sbits(48), prefixes, bits(8), bits(8), modr_m, sib) -> unit
+val x86_not_neg_f6_f7 : (proc_mode, sbits(48), sbits(48), prefixes, bits(8), bits(8), modr_m, sib) -> unit
 
 function x86_not_neg_f6_f7 (proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode, modr_m, sib) = {
     let ctx : string = "X86-NOT/NEG-F6-F7";

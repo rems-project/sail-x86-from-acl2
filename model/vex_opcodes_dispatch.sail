@@ -1,6 +1,6 @@
 
 /*! Dispatch function for VEX-encoded instructions in the two-byte opcode map */
-val vex_0f_execute : (range(0, 4), sbits(48), sbits(48), prefixes, bits(8), vex_prefixes, bits(8), modr_m, sib) -> unit
+val vex_0f_execute : (proc_mode, sbits(48), sbits(48), prefixes, bits(8), vex_prefixes, bits(8), modr_m, sib) -> unit
 
 function vex_0f_execute (proc_mode, start_rip, temp_rip, prefixes, rex_byte, vex_prefixes, opcode, modr_m, sib) = {
     (match opcode {
@@ -9002,7 +9002,7 @@ function vex_0f_execute (proc_mode, start_rip, temp_rip, prefixes, rex_byte, vex
 
 /*! Dispatch function for VEX-encoded instructions in the first 
  three-byte opcode map */
-val vex_0f38_execute : (range(0, 4), sbits(48), sbits(48), prefixes, bits(8), vex_prefixes, bits(8), modr_m, sib) -> unit
+val vex_0f38_execute : (proc_mode, sbits(48), sbits(48), prefixes, bits(8), vex_prefixes, bits(8), modr_m, sib) -> unit
 
 function vex_0f38_execute (proc_mode, start_rip, temp_rip, prefixes, rex_byte, vex_prefixes, opcode, modr_m, sib) = {
     (match opcode {
@@ -15477,7 +15477,7 @@ function vex_0f38_execute (proc_mode, start_rip, temp_rip, prefixes, rex_byte, v
 
 /*! Dispatch function for VEX-encoded instructions in the second 
  three-byte opcode map */
-val vex_0f3a_execute : (range(0, 4), sbits(48), sbits(48), prefixes, bits(8), vex_prefixes, bits(8), modr_m, sib) -> unit
+val vex_0f3a_execute : (proc_mode, sbits(48), sbits(48), prefixes, bits(8), vex_prefixes, bits(8), modr_m, sib) -> unit
 
 function vex_0f3a_execute (proc_mode, start_rip, temp_rip, prefixes, rex_byte, vex_prefixes, opcode, modr_m, sib) = {
     (match opcode {
@@ -17139,7 +17139,7 @@ function vex_0f3a_execute (proc_mode, start_rip, temp_rip, prefixes, rex_byte, v
  
  <p><i>Reference: Intel Vol. 2A, Section 2.3: Intel Advanced Vector 
  Extensions ( Intel AVX ) </i></p> */
-val vex_decode_and_execute : (range(0, 4), sbits(48), sbits(48), prefixes, bits(8), vex_prefixes) -> unit
+val vex_decode_and_execute : (proc_mode, sbits(48), sbits(48), prefixes, bits(8), vex_prefixes) -> unit
 
 function vex_decode_and_execute (proc_mode, start_rip, temp_rip, prefixes, rex_byte, vex_prefixes) = {
     let ctx : string = "vex-decode-and-execute";

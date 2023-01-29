@@ -1,6 +1,6 @@
 
 /*! Dispatch function for EVEX-encoded instructions in the two-byte opcode map */
-val evex_0f_execute : (range(0, 4), sbits(48), sbits(48), prefixes, bits(8), evex_prefixes, bits(8), modr_m, sib) -> unit
+val evex_0f_execute : (proc_mode, sbits(48), sbits(48), prefixes, bits(8), evex_prefixes, bits(8), modr_m, sib) -> unit
 
 function evex_0f_execute (proc_mode, start_rip, temp_rip, prefixes, rex_byte, evex_prefixes, opcode, modr_m, sib) = {
     (match opcode {
@@ -12278,7 +12278,7 @@ function evex_0f_execute (proc_mode, start_rip, temp_rip, prefixes, rex_byte, ev
 
 /*! Dispatch function for EVEX-encoded instructions in the first 
  three-byte opcode map */
-val evex_0f38_execute : (range(0, 4), sbits(48), sbits(48), prefixes, bits(8), evex_prefixes, bits(8), modr_m, sib) -> unit
+val evex_0f38_execute : (proc_mode, sbits(48), sbits(48), prefixes, bits(8), evex_prefixes, bits(8), modr_m, sib) -> unit
 
 function evex_0f38_execute (proc_mode, start_rip, temp_rip, prefixes, rex_byte, evex_prefixes, opcode, modr_m, sib) = {
     (match opcode {
@@ -27123,7 +27123,7 @@ function evex_0f38_execute (proc_mode, start_rip, temp_rip, prefixes, rex_byte, 
 
 /*! Dispatch function for EVEX-encoded instructions in the second 
  three-byte opcode map */
-val evex_0f3a_execute : (range(0, 4), sbits(48), sbits(48), prefixes, bits(8), evex_prefixes, bits(8), modr_m, sib) -> unit
+val evex_0f3a_execute : (proc_mode, sbits(48), sbits(48), prefixes, bits(8), evex_prefixes, bits(8), modr_m, sib) -> unit
 
 function evex_0f3a_execute (proc_mode, start_rip, temp_rip, prefixes, rex_byte, evex_prefixes, opcode, modr_m, sib) = {
     (match opcode {
@@ -30381,7 +30381,7 @@ function evex_0f3a_execute (proc_mode, start_rip, temp_rip, prefixes, rex_byte, 
  
  <p><i>Reference: Intel Vol. 2A, Section 2.6: Intel ( R ) AVX-512 
  Encoding</i></p> */
-val evex_decode_and_execute : (range(0, 4), sbits(48), sbits(48), prefixes, bits(8), evex_prefixes) -> unit
+val evex_decode_and_execute : (proc_mode, sbits(48), sbits(48), prefixes, bits(8), evex_prefixes) -> unit
 
 function evex_decode_and_execute (proc_mode, start_rip, temp_rip, prefixes, rex_byte, evex_prefixes) = {
     let ctx : string = "evex-decode-and-execute";

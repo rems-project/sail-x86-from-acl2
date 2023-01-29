@@ -22,7 +22,7 @@ function extract_64_bits (x, n) = {
 /*! Shuffle packed single-precision floating-point values
 <h3>Op/En = RMI: [OP XMM, XMM/M, IMM]</h3> 
  0F C6: SHUFPS xmm1, xmm2/m128, imm8<br/> */
-val x86_shufps_op_en_rmi : (range(0, 4), sbits(48), sbits(48), prefixes, bits(8), bits(8), modr_m, sib) -> unit
+val x86_shufps_op_en_rmi : (proc_mode, sbits(48), sbits(48), prefixes, bits(8), bits(8), modr_m, sib) -> unit
 
 function x86_shufps_op_en_rmi (proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode, modr_m, sib) = {
     let ctx : string = "X86-SHUFPS-OP/EN-RMI";
@@ -64,7 +64,7 @@ function x86_shufps_op_en_rmi (proc_mode, start_rip, temp_rip, prefixes, rex_byt
 /*! Shuffle packed double-precision floating-point values
 <h3>Op/En = RMI: [OP XMM, XMM/M, IMM]</h3> 
  66 0F C6: SHUFPD xmm1, xmm2/m128, imm8<br/> */
-val x86_shufpd_op_en_rmi : (range(0, 4), sbits(48), sbits(48), prefixes, bits(8), bits(8), modr_m, sib) -> unit
+val x86_shufpd_op_en_rmi : (proc_mode, sbits(48), sbits(48), prefixes, bits(8), bits(8), modr_m, sib) -> unit
 
 function x86_shufpd_op_en_rmi (proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode, modr_m, sib) = {
     let ctx : string = "X86-SHUFPD-OP/EN-RMI";
@@ -104,7 +104,7 @@ function x86_shufpd_op_en_rmi (proc_mode, start_rip, temp_rip, prefixes, rex_byt
 <h3>Op/En = RM: [OP XMM, XMM/M]</h3> 
  0F 14: UNPCKLPS xmm1, xmm2/m128<br/> 
  0F 15: UNPCKHPS xmm1, xmm2/m128<br/> */
-val x86_unpck?ps_op_en_rm : (range(0, 1), range(0, 4), sbits(48), sbits(48), prefixes, bits(8), bits(8), modr_m, sib) -> unit
+val x86_unpck?ps_op_en_rm : (range(0, 1), proc_mode, sbits(48), sbits(48), prefixes, bits(8), bits(8), modr_m, sib) -> unit
 
 function x86_unpck?ps_op_en_rm (high_low, proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode, modr_m, sib) = {
     let ctx : string = "X86-UNPCK?PS-OP/EN-RM";
@@ -162,7 +162,7 @@ function x86_unpck?ps_op_en_rm (high_low, proc_mode, start_rip, temp_rip, prefix
 <h3>Op/En = RM: [OP XMM, XMM/M]</h3> 
  66 0F 14: UNPCKLPD xmm1, xmm2/m128<br/> 
  66 0F 15: UNPCKHPD xmm1, xmm2/m128<br/> */
-val x86_unpck?pd_op_en_rm : (range(0, 1), range(0, 4), sbits(48), sbits(48), prefixes, bits(8), bits(8), modr_m, sib) -> unit
+val x86_unpck?pd_op_en_rm : (range(0, 1), proc_mode, sbits(48), sbits(48), prefixes, bits(8), bits(8), modr_m, sib) -> unit
 
 function x86_unpck?pd_op_en_rm (high_low, proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode, modr_m, sib) = {
     let ctx : string = "X86-UNPCK?PD-OP/EN-RM";

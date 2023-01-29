@@ -896,6 +896,36 @@ class Sail_t_synonym(SailType):
 		return self.name
 
 
+class Sail_t_enum(SailType):
+	"""
+	Represents a Sail enumeration type
+	"""
+	def __init__(self, name, elems=None):
+		"""
+		Args:
+		    - name : str
+			- elems : list[str] - the enumeration elements
+		"""
+		super(Sail_t_enum, self).__init__()
+		self.name = name
+		self.elems = elems
+
+	def __eq__(self, other):
+		return type(self) == type(other) and self.name == other.name and self.elems == other.elems
+
+	def __hash__(self):
+		return id(self)
+
+	def getName(self):
+		return self.name
+
+	def generalise(self):
+		return Sail_t_enum(self.name, self.elems)
+
+	def pp(self):
+		return self.name
+
+
 def isRangeType(typ):
 	return (isinstance(typ, Sail_t_range) \
 		or (isinstance(typ, Sail_t_member) and typ.subType == Sail_t_member.INT)) \
