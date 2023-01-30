@@ -9,6 +9,7 @@ $include "segmentation.sail"
 $include "opcode_ext.sail"
 
 type address_size = {|2, 4, 8|}
+type moffset_size = {|2, 4, 8|}
 type base_reg_idx = range(0, 15)
 type seg_reg_idx = range(0, 5)
 
@@ -49,6 +50,12 @@ function select_address_size (proc_mode, prefixes) = {
             if p4? then 2 else 4
         } else if p4? then 4 else 2
     }
+}
+
+val select_moffset_size : (proc_mode, option(prefixes)) -> moffset_size
+
+function select_moffset_size (proc_mode, prefixes) = {
+    select_address_size (proc_mode, prefixes)
 }
 
 val select_segment_register : (proc_mode, prefixes, bits(2), bits(3), sib) -> seg_reg_idx

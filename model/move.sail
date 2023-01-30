@@ -63,7 +63,7 @@ function x86_mov_op_en_fd (proc_mode, start_rip, temp_rip, prefixes, rex_byte, o
     let p4? : bool = 0x67 == prefixes[adr];
     let byte_operand? : bool = opcode == 0xa0;
     let operand_size : {|1, 2, 4, 8|} = select_operand_size(proc_mode, byte_operand?, rex_byte, false, prefixes, false, false, false);
-    let offset_size : address_size = select_address_size(proc_mode, Some(prefixes));
+    let offset_size : moffset_size = select_moffset_size(proc_mode, Some(prefixes));
     let (flg, offset) : (option(string), sbits(64)) = rime_size(proc_mode, select_address_size(proc_mode, Some(prefixes)), offset_size, sail_sign_extend(temp_rip, 64), None(), 1, ":X", false, false);
     if is_some(flg) then throw(Emsg("Model state error: :RIME-SIZE-ERROR"));
     let (flg, temp_rip) : (option(string), sbits(49)) = add_to_iptr(proc_mode, temp_rip, bits_of_int(offset_size, 48));
@@ -87,7 +87,7 @@ function x86_mov_op_en_td (proc_mode, start_rip, temp_rip, prefixes, rex_byte, o
     let p4? : bool = 0x67 == prefixes[adr];
     let byte_operand? : bool = opcode == 0xa2;
     let operand_size : {|1, 2, 4, 8|} = select_operand_size(proc_mode, byte_operand?, rex_byte, false, prefixes, false, false, false);
-    let offset_size : address_size = select_address_size(proc_mode, Some(prefixes));
+    let offset_size : moffset_size = select_moffset_size(proc_mode, Some(prefixes));
     let (flg, offset) : (option(string), sbits(64)) = rime_size(proc_mode, select_address_size(proc_mode, Some(prefixes)), offset_size, sail_sign_extend(temp_rip, 64), None(), 1, ":X", false, false);
     if is_some(flg) then throw(Emsg("Model state error: :RIME-SIZE-ERROR"));
     let (flg, temp_rip) : (option(string), sbits(49)) = add_to_iptr(proc_mode, temp_rip, bits_of_int(offset_size, 48));
