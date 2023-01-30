@@ -2528,9 +2528,12 @@ def tr_wb(ACL2ast, env):
 
 def tr_select_address_size(ACL2ast, env):
 	prefixesTyp = env.lookupBitfieldType("prefixes")
-	retTyp = Sail_t_synonym("address_size", Sail_t_member([2, 4, 8]))
+	# Hack: Use a separate hook for MOV instructions with an moffset,
+	# so that extensions can treat this as distinct from select_address_size
+	is_moffset = (ACL2ast[0].lower() == 'select-moffset-size')
+	retTyp = Sail_t_synonym("address_size" if not(is_moffset) else "moffset_size", Sail_t_member([2, 4, 8]))
 	fnTyp = Sail_t_fn([handwritten_tokens.proc_mode_typ, prefixesTyp], retTyp)
-	fn = SailHandwrittenFn('select-address-size', fnTyp)
+	fn = SailHandwrittenFn('select_address_size' if not(is_moffset) else 'select_moffset_size', fnTyp)
 	# Translate arguments, replacing `p4?` with the full prefixes bitfield
 	proc_mode = SailBoundVar("proc-mode") # env.lookup("proc-mode")(["proc-mode"], env)[0]
 	if isinstance(ACL2ast[2], str) and ACL2ast[2].lower() == "p4?":

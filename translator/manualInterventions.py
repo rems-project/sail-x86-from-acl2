@@ -422,6 +422,9 @@ def is_acl2_app(acl2, head=None, min_len=1):
 	else:
 		return is_acl2_symbol(acl2[0], head)
 
+def is_acl2_the_bind(acl2, sym=None):
+	return is_acl2_app(acl2, "the", min_len=3) and is_acl2_symbol(acl2[2], sym)
+
 # Replace proc_mode checks with calls to hooks
 def proc_mode_hooks(ACL2ast, env):
 	if is_acl2_list(ACL2ast, min_len=1) and isinstance(ACL2ast[0], str):
@@ -529,6 +532,19 @@ def ext_memory_hooks(ACL2ast, env):
 		return True, sail, env
 	return None
 
+def moffset_hooks(ACL2ast, env):
+	in_moffset_mov_inst = env.getDefineSlot().lower() in ["x86-mov-Op/En-FD".lower(), "x86-mov-Op/En-TD".lower()]
+	in_bstar = is_acl2_app(ACL2ast, "b*") and is_acl2_list(ACL2ast[1])
+	def is_offset_size_bind(b):
+		return is_acl2_symbol(b[0], "offset-size") or is_acl2_the_bind(b[0], "offset-size") and is_acl2_app(b[1], "select-address-size")
+	has_offset_size = in_bstar and any(is_offset_size_bind(b) for b in ACL2ast[1])
+	if in_moffset_mov_inst and has_offset_size:
+		binds = [("offset-size", ["select-moffset-size"] + b[1][1:]) if is_offset_size_bind(b) else b for b in ACL2ast[1]]
+		(sail, env, _) = specialTokens.tr_bstar([ACL2ast[0], binds] + ACL2ast[2:], env)
+		return True, sail, env
+	else:
+		return None
+
 interventionsList = [
 	x86_token,
 	and_macro,
@@ -550,7 +566,8 @@ interventionsList = [
 	div_type,
 	chk_exc_fn_type,
 	bitvector_merges,
-	syscall_numbers
+	syscall_numbers,
+	moffset_hooks
 ]
 
 def replacePatterns(ACL2ast, env):

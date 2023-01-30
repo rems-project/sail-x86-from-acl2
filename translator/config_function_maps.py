@@ -104,6 +104,7 @@ def specialTokens():
 		'rb':                           tr_rb,
 		'wb':                           tr_wb,
 		'select-address-size':			tr_select_address_size,
+		'select-moffset-size':			tr_select_address_size,
 		'select-segment-register':		tr_select_segment_register,
 
 		# The following ACL2 tokens are ignored (we do not translate them).
