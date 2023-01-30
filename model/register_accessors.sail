@@ -21,4 +21,14 @@ function write_rip(value) = {
     rip = regval_into_reg(sail_sign_extend(value, 64))
 }
 
+type msr_index = range(0, 6)
+
+val read_msr : msr_index -> bits(64)
+function read_msr(idx) = msrs[idx]
+
+val write_msr : (msr_index, bits(64)) -> unit
+function write_msr(idx, value) = {
+    msrs[idx] = value
+}
+
 $endif

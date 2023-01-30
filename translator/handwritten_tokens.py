@@ -151,9 +151,14 @@ write_rgfi_fn = SailHandwrittenFn(
 						'write_rgfi',
 						Sail_t_fn([Sail_t_int(), Sail_t_bits(64, signed=True)], Sail_t_unit(), {'escape', 'wreg'}))
 
-msri_fn = SailHandwrittenFn(
-	'msri',
-	Sail_t_fn([Sail_t_int(), Sail_t_int()], Sail_t_int(), {'escape', 'rreg'})
+read_msr_fn = SailHandwrittenFn(
+	'read_msr',
+	Sail_t_fn([Sail_t_range(0, 6)], Sail_t_bits(64))
+)
+
+write_msr_fn = SailHandwrittenFn(
+	'write_msr',
+	Sail_t_fn([Sail_t_range(0, 6), Sail_t_bits(64)], Sail_t_unit())
 )
 
 seg_visiblei_fn = SailHandwrittenFn(

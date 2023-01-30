@@ -77,9 +77,9 @@ val segment_base_and_bounds : (proc_mode, range(0, 5)) -> (bits(64), int, bits(3
 function segment_base_and_bounds (proc_mode, seg_reg) = {
     if in_64bit_mode(proc_mode) then {
         if seg_reg == 4 then {
-            (msrs[1], 0, 0x00000000)
+            (read_msr(1), 0, 0x00000000)
         } else if seg_reg == 5 then {
-            (msrs[2], 0, 0x00000000)
+            (read_msr(2), 0, 0x00000000)
         } else {
             (0x0000000000000000, 0, 0x00000000)
         }

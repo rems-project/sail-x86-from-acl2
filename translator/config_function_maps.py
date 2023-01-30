@@ -154,7 +154,6 @@ def specialTokens():
 
 	register_accessors = [
 		'rflags',
-		'msri',
 		'seg-visiblei',
 		'seg-hidden-attri',
 		'seg-hidden-basei',
@@ -199,6 +198,8 @@ def handwritten():
 		'!rgfi'					: write_rgfi_fn,
 		'rip'					: read_rip_fn,
 		'!rip'					: write_rip_fn,
+		'msri'					: read_msr_fn,
+		'!msri'					: write_msr_fn,
 		'memi'					: memi_fn,
 		'abs'					: abs_fn,
 		'floor'					: floor_fn,

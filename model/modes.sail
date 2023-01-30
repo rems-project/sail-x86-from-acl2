@@ -29,7 +29,7 @@ $include "./register_readers_and_writers.sail"
  So we use @ ( tsee n12 ) to make @ ( ' ia32_eferBits ' ) functions applicable. 
  </p> */
 function n64_bit_modep () = {
-    let ia32_efer : bits(12) = truncate(msrs[0], 12);
+    let ia32_efer : bits(12) = truncate(read_msr(0), 12);
     let ia32_efer_lma : bits(1) = Mk_ia32_eferbits(ia32_efer)[lma];
     let cs_attr : bits(16) = seg_hidden_attrs[1];
     let cs_l : bits(1) = Mk_code_segment_descriptor_attributesbits(cs_attr)[l];

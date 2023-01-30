@@ -3,22 +3,22 @@ val x86_syscall : (proc_mode, sbits(48), sbits(48), prefixes, bits(8), bits(8), 
 
 function x86_syscall (proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode, modr_m, sib) = {
     let ctx : string = "X86-SYSCALL";
-    let ia32_efer : bits(12) = truncate(msrs[0], 12);
+    let ia32_efer : bits(12) = truncate(read_msr(0), 12);
     let ia32_efer_sce : bits(1) = Mk_ia32_eferbits(ia32_efer)[sce];
     if ia32_efer_sce == 0 then throw(Emsg("A fault occurred.  Original ACL2 AST: (!!FAULT-FRESH :UD NIL :IA32-EFER-SCE=0 (CONS 'IA32_EFER IA32-EFER))"));
     let cs_attr : bits(16) = seg_hidden_attrs[1];
     write_rgfi(1, sail_sign_extend(temp_rip, 64));
-    let lstar : bits(64) = msrs[5];
+    let lstar : bits(64) = read_msr(5);
     let lstar_addr : sbits(64) = lstar;
     if not_bool(canonical_address_p(signed(lstar_addr))) then throw(Emsg("Model state error: :LSTAR-NOT-CANONICAL"));
     write_rip(truncate(lstar_addr, 48));
     let eflags : rflagsbits = rflags;
     wr64(0xb, sail_zero_extend(eflags.bits, 64));
-    let fmask : bits(64) = msrs[6];
+    let fmask : bits(64) = read_msr(6);
     let not_fmask : bits(64) = lognot(fmask);
     let new_eflags : bits(32) = truncate(logand(sail_zero_extend(eflags.bits, 64), not_fmask), 32);
     rflags = Mk_rflagsbits(new_eflags);
-    let star : bits(64) = msrs[4];
+    let star : bits(64) = read_msr(4);
     let new_cs_selector : bits(16) = logand(star[47 .. 32], 0xfffc);
     seg_visibles[1] = new_cs_selector;
     let cs_hidden_base_addr : {|0|} = 0;
@@ -64,7 +64,7 @@ val x86_sysret : (proc_mode, sbits(48), sbits(48), prefixes, bits(8), bits(8), m
 function x86_sysret (proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode, modr_m, sib) = {
     let ctx : string = "X86-SYSRET";
     if not_bool(logbitp(3, rex_byte)) then throw(Emsg("Model state error: :UNSUPPORTED-SYSRET-BECAUSE-REX.W!=1"));
-    let ia32_efer : bits(12) = truncate(msrs[0], 12);
+    let ia32_efer : bits(12) = truncate(read_msr(0), 12);
     let ia32_efer_sce : bits(1) = Mk_ia32_eferbits(ia32_efer)[sce];
     if ia32_efer_sce == 0 then throw(Emsg("A fault occurred.  Original ACL2 AST: (!!FAULT-FRESH :UD NIL :IA32-EFER-SCE=0 (CONS 'IA32_EFER IA32-EFER))"));
     let current_cs_register : bits(16) = seg_visibles[1];
@@ -75,7 +75,7 @@ function x86_sysret (proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode,
     write_rip(truncate(rcx_var, 48));
     let r11_var : bits(32) = truncate(rgfi(11), 32);
     rflags = Mk_rflagsbits(logior(logand(r11_var, 0x003c7fd7), 0x00000002));
-    let star : bits(64) = msrs[4];
+    let star : bits(64) = read_msr(4);
     let new_cs_selector : int = unsigned(star[63 .. 48]) + 16;
     if not_bool(fits_in_signed_bitvector(16, new_cs_selector)) then throw(Emsg("Model state error: :NEW-CS-SELECTOR-TOO-LARGE"));
     let new_cs_selector : segment_selectorbits = [Mk_segment_selectorbits(bits_of_int(new_cs_selector, 16)) with rpl = 0b11];

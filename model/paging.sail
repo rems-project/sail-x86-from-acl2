@@ -397,7 +397,7 @@ function ia32e_la_to_pa (lin_addr, r_w_x) = {
             Mk_segment_selectorbits(seg_visibles[1])[rpl]
         }
     };
-    let ia32_efer : bits(12) = truncate(msrs[0], 12);
+    let ia32_efer : bits(12) = truncate(read_msr(0), 12);
     let wp : bits(1) = Mk_cr0bits(cr0)[wp];
     let smep : bits(1) = Mk_cr4bits(cr4)[smep];
     let smap : bits(1) = Mk_cr4bits(cr4)[smap];

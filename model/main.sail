@@ -5,7 +5,10 @@ function clause __SetConfig("ha", value) = { haltAddrReg = get_slice_int(48, val
 // Set 64 bit mode
 val initialise_64_bit_mode : unit -> unit
 function initialise_64_bit_mode () = {
-	msrs[0][11 .. 0] = [Mk_ia32_eferbits(msrs[0][11 ..0]) with lma = 0b1].bits;
+	let msr0 = read_msr(0);
+	let efer = Mk_ia32_eferbits(msr0[11 .. 0]);
+	let new_efer = [efer with lma = 0b1];
+	write_msr(0, [msr0 with 11 .. 0 = new_efer.bits]);
 	seg_hidden_attrs[1] = [Mk_code_segment_descriptor_attributesbits(seg_hidden_attrs[1]) with l = 0b1].bits;
 }
 

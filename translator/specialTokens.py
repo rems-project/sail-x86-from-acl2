@@ -1735,7 +1735,7 @@ def get_register_info(env, name):
 		# Name		        (            Width, signed,		number of elements)
 		'rflags':	        (Sail_t_bitfield("rflagsBits", 32),	None),
 		'rgfi':		        (Sail_t_bits(64,    signed=True),	16),
-		'msr':		        (Sail_t_bits(64,    signed=False),	7),
+		# 'msr':		        (Sail_t_bits(64,    signed=False),	7),
 		'seg-visible':	        (Sail_t_bits(16,    signed=False),	6),
 		'seg-hidden-attr':	(Sail_t_bits(16,    signed=False),	6),
 		'seg-hidden-base':	(Sail_t_bits(64,    signed=False),	6),

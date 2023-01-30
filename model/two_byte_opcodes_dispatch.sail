@@ -635,7 +635,7 @@ function two_byte_opcode_execute (proc_mode, start_rip, temp_rip, prefixes, mand
       5 => {
           if in_64bit_mode(proc_mode) then {
               let fault_var : option(string) = {
-                  if 0xf0 == prefixes[lck] | Mk_ia32_eferbits(truncate(msrs[0], 12))[sce] == 0b0 then {
+                  if 0xf0 == prefixes[lck] | Mk_ia32_eferbits(truncate(read_msr(0), 12))[sce] == 0b0 then {
                       Some(":UD")
                   } else {
                       None() : option(string)
@@ -679,7 +679,7 @@ function two_byte_opcode_execute (proc_mode, start_rip, temp_rip, prefixes, mand
       7 => {
           if in_64bit_mode(proc_mode) then {
               let fault_var : option(string) = {
-                  if 0xf0 == prefixes[lck] | Mk_ia32_eferbits(truncate(msrs[0], 12))[sce] == 0b0 then {
+                  if 0xf0 == prefixes[lck] | Mk_ia32_eferbits(truncate(read_msr(0), 12))[sce] == 0b0 then {
                       Some(":UD")
                   } else if not_bool(unsigned({
                       ();
