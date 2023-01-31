@@ -349,22 +349,22 @@ def bits_list(bits):
 
 ext_one_byte_opcode_execute_fn = SailHandwrittenFn(
 	'ext_one_byte_opcode_execute',
-	Sail_t_fn([proc_mode_typ] + [Sail_t_bits(48, signed=True)] * 2 + bits_list([52, 8, 8, 8, 8]), Sail_t_unit())
+	Sail_t_fn([proc_mode_typ] + [Sail_t_bits(48, signed=True)] * 2 + bits_list([52, 8, 8, 8, 8]), Sail_t_bool())
 )
 
 ext_two_byte_opcode_execute_fn = SailHandwrittenFn(
 	'ext_two_byte_opcode_execute',
-	Sail_t_fn([proc_mode_typ] + [Sail_t_bits(48, signed=True)] * 2 + bits_list([52, 8, 8, 8, 8, 8]), Sail_t_unit())
+	Sail_t_fn([proc_mode_typ] + [Sail_t_bits(48, signed=True)] * 2 + bits_list([52, 8, 8, 8, 8, 8]), Sail_t_bool())
 )
 
 def ext_vex_execute_fn(name):
 	ext_name = 'ext_' + utils.sanitiseSymbol(name)
 	args = [proc_mode_typ] + [Sail_t_bits(48, signed=True)] * 2 + bits_list([52, 8, 24, 8, 8, 8])
-	return SailHandwrittenFn(ext_name, Sail_t_fn(args, Sail_t_unit())
+	return SailHandwrittenFn(ext_name, Sail_t_fn(args, Sail_t_bool())
 )
 
 def ext_evex_execute_fn(name):
 	ext_name = 'ext_' + utils.sanitiseSymbol(name)
 	args = [proc_mode_typ] + [Sail_t_bits(48, signed=True)] * 2 + bits_list([52, 8, 32, 8, 8, 8])
-	return SailHandwrittenFn(ext_name, Sail_t_fn(args, Sail_t_unit())
+	return SailHandwrittenFn(ext_name, Sail_t_fn(args, Sail_t_bool())
 )

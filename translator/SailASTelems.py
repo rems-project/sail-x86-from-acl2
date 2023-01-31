@@ -418,6 +418,25 @@ class SailAssign(SailASTelem):
 		return f"{self.lhs.pp()} = {self.rhs.pp()}"
 
 
+class SailReturn(SailASTelem):
+	"""Return statement in Sail"""
+	def __init__(self, exp):
+		super().__init__()
+		self.exp = exp
+
+	### Required methods ###
+	def getType(self):
+		return Sail_t_unit()
+
+	def getChildrenByPred(self, p):
+		expSet = self.exp.getChildrenByPred(p)
+		selfSet = super().getChildrenByPred(p)
+		return set.union(expSet, selfSet)
+
+	def pp(self):
+		return f"return ({self.exp.pp()})"
+
+
 class SailPlaceholderNil(SailASTelem):
 	"""Represents a `nil` in the ACL2 code which hasn't yet been resolved in the Sail code"""
 	# Class variables
