@@ -9,6 +9,8 @@ SAIL_DIR:=$(shell opam config var sail:share)
 SAIL:=sail
 endif
 
+ISLA_SAIL=isla-sail
+
 PRELUDE_SAILS=prelude.sail register_types.sail registers.sail register_accessors.sail opcode_ext.sail memory_accessors.sail init.sail config.sail logging.sail
 MODEL_SAILS=step.sail
 MAIN_SAIL=main.sail
@@ -28,6 +30,9 @@ x86_emulator.c: $(ALL_SAILS)
 
 x86_emulator: x86_emulator.c
 	$(CC) -O2 -DHAVE_SETCONFIG x86_emulator.c $(SAIL_DIR)/lib/*.c -lgmp -lz -I $(SAIL_DIR)/lib/ -o x86_emulator
+
+x86.ir: $(ALL_SAILS)
+	$(ISLA_SAIL) -verbose 1 -o x86 $(ALL_SAILS)
 
 interactive:
 	$(SAIL) -i -memo_z3 $(SAIL_FLAGS) $(ALL_SAILS)
