@@ -619,6 +619,13 @@ scattered function __SetConfig
 register app_view : bool
 register marking_view : bool
 
+/* Register logging helpers */
+register log_register_writes : bool
+
+val log_gpr_write : range(0, 15) -> unit
+val log_rflags_write : unit -> unit
+val log_rip_write : unit -> unit
+
 // Model state.
 register ms_reg : bool
 
