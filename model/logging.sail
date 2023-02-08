@@ -25,12 +25,12 @@ function printState () = {
 	print_bits("rip = ", read_rip());
 }
 
-function log_memory_read(addr, value) = {
-	print_endline(bits_str(read_rip()) + ": R " + bits_str(addr) + " " + dec_str(1) + " " + bits_str(value))
+function log_memory_read(addr, len, value) = {
+	print_endline(bits_str(read_rip()) + ": R " + bits_str(addr) + " " + dec_str(len) + " " + bits_str(value))
 }
 
-function log_memory_write(addr, value) = {
-	print_endline(bits_str(read_rip()) + ": W " + bits_str(addr) + " " + dec_str(1) + " " + bits_str(value))
+function log_memory_write(addr, len, value) = {
+	print_endline(bits_str(read_rip()) + ": W " + bits_str(addr) + " " + dec_str(len) + " " + bits_str(value))
 }
 
 $endif

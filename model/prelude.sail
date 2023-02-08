@@ -573,23 +573,23 @@ function genericBitstructUpdater (width, spliceBits, low, inputBits) =
 Reading from and writing to memory
 */
 
-val log_memory_read : forall 'addr_width, 'addr_width >= 0. (bits('addr_width), bits(8)) -> unit
+val log_memory_read : forall 'addr_width 'n, 'addr_width > 0 & 'n > 0. (bits('addr_width), int('n), bits(8 * 'n)) -> unit
 
 // TODO: Rename these
-val memi : forall 'addr_width, 'addr_width >= 0. (bits('addr_width)) -> bits(8)
+val memi : forall 'addr_width, 'addr_width > 0. (bits('addr_width)) -> bits(8)
 function memi (addr) = {
 	result = __read_mem( Read_plain,					// Read type
 					64,							// Address size
 					sail_mask(64, addr),	// Address to read
 					1							// Number of bytes to read
 				);
-	log_memory_read(addr, result);
+	log_memory_read(addr, 1, result);
 	result
 }
 
-val log_memory_write : forall 'addr_width, 'addr_width >= 0. (bits('addr_width), bits(8)) -> unit
+val log_memory_write : forall 'addr_width 'n, 'addr_width > 0 & 'n > 0. (bits('addr_width), int('n), bits(8 * 'n)) -> unit
 
-val bang_memi : forall 'addr_width, 'addr_width >= 0. (bits('addr_width), bits(8)) -> unit
+val bang_memi : forall 'addr_width, 'addr_width > 0. (bits('addr_width), bits(8)) -> unit
 function bang_memi (addr, valToWrite) = {
 	dummy = 
 		__write_mem_ea(	Write_plain,				// Write type
@@ -603,7 +603,7 @@ function bang_memi (addr, valToWrite) = {
 					1,								// Number of bytes to write
 					valToWrite	// Value to write
 					);
-	log_memory_write(addr, valToWrite);
+	log_memory_write(addr, 1, valToWrite);
 }
 
 /*-----------------------------------------------------------------*/
