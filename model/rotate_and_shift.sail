@@ -113,7 +113,7 @@ function x86_sal_sar_shl_shr_rcl_rcr_rol_ror (proc_mode, start_rip, temp_rip, pr
         }
     };
     write_user_rflags(output_rflags, undefined_flags);
-    let flg2 : option(string) = x86_operand_to_reg_mem(proc_mode, reg_mem_size, inst_ac?, false, sail_zero_extend(sail_mask(64, trunc(reg_mem_size, result)), 128), seg_reg, addr, prefixes, rex_byte, r_m, mod_var);
+    let flg2 : option(string) = x86_operand_to_reg_mem(proc_mode, reg_mem_size, inst_ac?, false, sail_zero_extend(sail_mask(64, trunc(reg_mem_size, result)), 128), seg_reg, addr, prefixes, rex_byte, r_m, mod_var, sib);
     if is_some(flg2) then throw(Emsg("Model state error: :X86-OPERAND-TO-REG/MEM"));
     write_iptr(proc_mode, truncate(temp_rip, 48))
 }
@@ -209,7 +209,7 @@ function x86_shld_shrd (proc_mode, start_rip, temp_rip, prefixes, rex_byte, opco
         }
     };
     write_user_rflags(output_rflags, undefined_flags);
-    let flg : option(string) = x86_operand_to_reg_mem(proc_mode, operand_size, inst_ac?, false, sail_zero_extend(sail_mask(64, trunc(operand_size, bits_of_int(result, 64))), 128), seg_reg, dst_addr, prefixes, rex_byte, r_m, mod_var);
+    let flg : option(string) = x86_operand_to_reg_mem(proc_mode, operand_size, inst_ac?, false, sail_zero_extend(sail_mask(64, trunc(operand_size, bits_of_int(result, 64))), 128), seg_reg, dst_addr, prefixes, rex_byte, r_m, mod_var, sib);
     if is_some(flg) then throw(Emsg("Model state error: :X86-OPERAND-TO-REG/MEM"));
     write_iptr(proc_mode, temp_rip)
 }

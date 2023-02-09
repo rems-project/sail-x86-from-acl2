@@ -49,7 +49,7 @@ function x86_add_adc_sub_sbb_or_and_xor_cmp_test_e_g (operation, proc_mode, star
         if operation == 8 | operation == 7 then {
             None() : option(string)
         } else {
-            x86_operand_to_reg_mem(proc_mode, operand_size, inst_ac?, false, sail_zero_extend(result, 128), seg_reg, e_addr, prefixes, rex_byte, r_m, mod_var)
+            x86_operand_to_reg_mem(proc_mode, operand_size, inst_ac?, false, sail_zero_extend(result, 128), seg_reg, e_addr, prefixes, rex_byte, r_m, mod_var, sib)
         }
     };
     if is_some(flg1) then throw(Emsg("Model state error: :X86-OPERAND-TO-REG/MEM"));
@@ -163,7 +163,7 @@ function x86_add_adc_sub_sbb_or_and_xor_cmp_test_e_i (operation, proc_mode, star
         if operation == 8 | operation == 7 then {
             None() : option(string)
         } else {
-            x86_operand_to_reg_mem(proc_mode, e_size, inst_ac?, false, sail_zero_extend(result, 128), seg_reg, e_addr, prefixes, rex_byte, r_m, mod_var)
+            x86_operand_to_reg_mem(proc_mode, e_size, inst_ac?, false, sail_zero_extend(result, 128), seg_reg, e_addr, prefixes, rex_byte, r_m, mod_var, sib)
         }
     };
     if is_some(flg1) then throw(Emsg("Model state error: :X86-OPERAND-TO-REG/MEM"));
@@ -250,7 +250,7 @@ function x86_inc_dec_fe_ff (proc_mode, start_rip, temp_rip, prefixes, rex_byte, 
     let (result, output_rflags, undefined_flags) : (bits(64), rflagsbits, rflagsbits) = gpr_arith_logic_spec(r_mem_size, if reg == 0b000 then 0 else 4, truncate(r_mem, 64), 0x0000000000000001, input_rflags);
     let output_rflags : rflagsbits = [output_rflags with cf = old_cf];
     write_user_rflags(output_rflags, undefined_flags);
-    let flg1 : option(string) = x86_operand_to_reg_mem(proc_mode, r_mem_size, inst_ac?, false, sail_zero_extend(result, 128), seg_reg, addr, prefixes, rex_byte, r_m, mod_var);
+    let flg1 : option(string) = x86_operand_to_reg_mem(proc_mode, r_mem_size, inst_ac?, false, sail_zero_extend(result, 128), seg_reg, addr, prefixes, rex_byte, r_m, mod_var, sib);
     if is_some(flg1) then throw(Emsg("Model state error: :X86-OPERAND-TO-REG/MEM"));
     write_iptr(proc_mode, temp_rip)
 }
@@ -308,7 +308,7 @@ function x86_not_neg_f6_f7 (proc_mode, start_rip, temp_rip, prefixes, rex_byte, 
         let output_rflags : rflagsbits = [output_rflags with cf];
         write_user_rflags(output_rflags, undefined_flags)
     };
-    let flg1 : option(string) = x86_operand_to_reg_mem(proc_mode, r_mem_size, inst_ac?, false, sail_zero_extend(result, 128), seg_reg, addr, prefixes, rex_byte, r_m, mod_var);
+    let flg1 : option(string) = x86_operand_to_reg_mem(proc_mode, r_mem_size, inst_ac?, false, sail_zero_extend(result, 128), seg_reg, addr, prefixes, rex_byte, r_m, mod_var, sib);
     if is_some(flg1) then throw(Emsg("Model state error: :X86-OPERAND-TO-REG/MEM"));
     write_iptr(proc_mode, temp_rip)
 }

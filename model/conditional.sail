@@ -156,7 +156,7 @@ function x86_setcc (proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode, 
     let sailval : {|0, 1|} = {
         if branch_cond then 1 else 0
     };
-    let flg2 : option(string) = x86_operand_to_reg_mem(proc_mode, 1, inst_ac?, false, bits_of_int(sailval, 128), seg_reg, addr, prefixes, rex_byte, r_m, mod_var);
+    let flg2 : option(string) = x86_operand_to_reg_mem(proc_mode, 1, inst_ac?, false, bits_of_int(sailval, 128), seg_reg, addr, prefixes, rex_byte, r_m, mod_var, sib);
     if is_some(flg2) then throw(Emsg("Model state error: :X86-OPERAND-TO-REG/MEM"));
     write_iptr(proc_mode, temp_rip)
 }

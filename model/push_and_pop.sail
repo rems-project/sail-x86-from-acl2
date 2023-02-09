@@ -224,7 +224,7 @@ function x86_pop_ev (proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode,
     let badlength? : option(int) = check_instruction_length(start_rip, truncate(temp_rip, 48), 0b000);
     if is_some(badlength?) then throw(Emsg("A fault occurred.  Original ACL2 AST: (!!FAULT-FRESH :GP 0 :INSTRUCTION-LENGTH BADLENGTH?)"));
     write_sptr(proc_mode, new_rsp);
-    let flg3 : option(string) = x86_operand_to_reg_mem(proc_mode, operand_size, check_alignment?, false, sailval, seg_reg, addr, prefixes, rex_byte, r_m, mod_var);
+    let flg3 : option(string) = x86_operand_to_reg_mem(proc_mode, operand_size, check_alignment?, false, sailval, seg_reg, addr, prefixes, rex_byte, r_m, mod_var, sib);
     if is_some(flg3) then throw(Emsg("Model state error: :X86-OPERAND-TO-REG/MEM"));
     write_iptr(proc_mode, truncate(temp_rip, 48))
 }
