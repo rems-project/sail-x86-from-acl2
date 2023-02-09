@@ -39,7 +39,7 @@ function x86_xchg (proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode, m
             write_rgfi_size(bits_of_int(reg_mem_size, 4), 0x0, val2, rex_byte);
             None() : option(string)
         } else {
-            x86_operand_to_reg_mem(proc_mode, reg_mem_size, inst_ac?, false, sail_zero_extend(val2, 128), seg_reg, addr, prefixes, rex_byte, r_m, mod_var)
+            x86_operand_to_reg_mem(proc_mode, reg_mem_size, inst_ac?, false, sail_zero_extend(val2, 128), seg_reg, addr, prefixes, rex_byte, r_m, mod_var, sib)
         }
     };
     if is_some(flg2) then throw(Emsg("Model state error: :X86-OPERAND-TO-REG/MEM-ERROR"));
@@ -79,7 +79,7 @@ function x86_cmpxchg (proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode
     let flg1 : option(string) = {
         if result == 0x0000000000000000 then {
             let register_var : bits(64) = rgfi_size(bits_of_int(reg_mem_size, 4), reg_index(reg, rex_byte, 0b10), rex_byte);
-            x86_operand_to_reg_mem(proc_mode, reg_mem_size, inst_ac?, false, sail_zero_extend(register_var, 128), seg_reg, addr, prefixes, rex_byte, r_m, mod_var)
+            x86_operand_to_reg_mem(proc_mode, reg_mem_size, inst_ac?, false, sail_zero_extend(register_var, 128), seg_reg, addr, prefixes, rex_byte, r_m, mod_var, sib)
         } else {
             write_rgfi_size(bits_of_int(reg_mem_size, 4), 0x0, truncate(reg_mem, 64), rex_byte);
             None() : option(string)

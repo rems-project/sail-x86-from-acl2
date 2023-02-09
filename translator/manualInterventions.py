@@ -534,6 +534,10 @@ def ext_memory_hooks(ACL2ast, env):
 			fnArgs[6] = prefixesVar
 		elif fnName in ["x86-operand-to-reg/mem", "x86-operand-to-xmm/mem"]:
 			fnArgs.insert(fnArgNames.index("rex-byte"), prefixesVar)
+			sibTyp = env.lookupBitfieldType("sib")
+			sibAST, env, _ = env.lookup("sib")(["sib"], env)
+			sibVar = coerceExpr(sibAST[0], sibTyp)
+			fnArgs.append(sibVar)
 		elif fnName == "x86-effective-addr":
 			fnArgs[1] = prefixesVar
 		elif fnName in memory_readers + memory_writers:

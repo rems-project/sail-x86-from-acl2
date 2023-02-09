@@ -68,7 +68,7 @@ function x86_movss_movsd_op_en_mr (sp_dp, proc_mode, start_rip, temp_rip, prefix
     let badlength? : option(int) = check_instruction_length(start_rip, temp_rip, 0b000);
     if is_some(badlength?) then throw(Emsg("A fault occurred.  Original ACL2 AST: (!!FAULT-FRESH :GP 0 :INSTRUCTION-LENGTH BADLENGTH?)"));
     let inst_ac? : bool = true;
-    let flg1 : option(string) = x86_operand_to_xmm_mem(proc_mode, operand_size, inst_ac?, xmm, seg_reg, addr, prefixes, rex_byte, r_m, mod_var);
+    let flg1 : option(string) = x86_operand_to_xmm_mem(proc_mode, operand_size, inst_ac?, xmm, seg_reg, addr, prefixes, rex_byte, r_m, mod_var, sib);
     if is_some(flg1) then throw(Emsg("Model state error: :X86-OPERAND-TO-XMM/MEM"));
     write_iptr(proc_mode, temp_rip)
 }
@@ -131,7 +131,7 @@ function x86_movaps_movapd_op_en_mr (proc_mode, start_rip, temp_rip, prefixes, r
     let badlength? : option(int) = check_instruction_length(start_rip, temp_rip, 0b000);
     if is_some(badlength?) then throw(Emsg("A fault occurred.  Original ACL2 AST: (!!FAULT-FRESH :GP 0 :INSTRUCTION-LENGTH BADLENGTH?)"));
     let inst_ac? : bool = true;
-    let flg1 : option(string) = x86_operand_to_xmm_mem(proc_mode, 16, inst_ac?, xmm, seg_reg, addr, prefixes, rex_byte, r_m, mod_var);
+    let flg1 : option(string) = x86_operand_to_xmm_mem(proc_mode, 16, inst_ac?, xmm, seg_reg, addr, prefixes, rex_byte, r_m, mod_var, sib);
     if is_some(flg1) then throw(Emsg("Model state error: :X86-OPERAND-TO-XMM/MEM"));
     write_iptr(proc_mode, temp_rip)
 }
@@ -202,7 +202,7 @@ function x86_movups_movupd_movdqu_op_en_mr (proc_mode, start_rip, temp_rip, pref
     let badlength? : option(int) = check_instruction_length(start_rip, temp_rip, 0b000);
     if is_some(badlength?) then throw(Emsg("A fault occurred.  Original ACL2 AST: (!!FAULT-FRESH :GP 0 :INSTRUCTION-LENGTH BADLENGTH?)"));
     let inst_ac? : bool = true;
-    let flg1 : option(string) = x86_operand_to_xmm_mem(proc_mode, 16, inst_ac?, xmm, seg_reg, addr, prefixes, rex_byte, r_m, mod_var);
+    let flg1 : option(string) = x86_operand_to_xmm_mem(proc_mode, 16, inst_ac?, xmm, seg_reg, addr, prefixes, rex_byte, r_m, mod_var, sib);
     if is_some(flg1) then throw(Emsg("Model state error: :X86-OPERAND-TO-XMM/MEM"));
     write_iptr(proc_mode, temp_rip)
 }
@@ -260,7 +260,7 @@ function x86_movlps_movlpd_op_en_mr (proc_mode, start_rip, temp_rip, prefixes, r
     let badlength? : option(int) = check_instruction_length(start_rip, temp_rip, 0b000);
     if is_some(badlength?) then throw(Emsg("A fault occurred.  Original ACL2 AST: (!!FAULT-FRESH :GP 0 :INSTRUCTION-LENGTH BADLENGTH?)"));
     let inst_ac? : bool = true;
-    let flg1 : option(string) = x86_operand_to_xmm_mem(proc_mode, 8, inst_ac?, sail_zero_extend(xmm, 128), seg_reg, addr, prefixes, rex_byte, r_m, mod_var);
+    let flg1 : option(string) = x86_operand_to_xmm_mem(proc_mode, 8, inst_ac?, sail_zero_extend(xmm, 128), seg_reg, addr, prefixes, rex_byte, r_m, mod_var, sib);
     if is_some(flg1) then throw(Emsg("Model state error: :X86-OPERAND-TO-XMM/MEM"));
     write_iptr(proc_mode, temp_rip)
 }
@@ -321,7 +321,7 @@ function x86_movhps_movhpd_op_en_mr (proc_mode, start_rip, temp_rip, prefixes, r
     let badlength? : option(int) = check_instruction_length(start_rip, temp_rip, 0b000);
     if is_some(badlength?) then throw(Emsg("A fault occurred.  Original ACL2 AST: (!!FAULT-FRESH :GP 0 :INSTRUCTION-LENGTH BADLENGTH?)"));
     let inst_ac? : bool = true;
-    let flg1 : option(string) = x86_operand_to_xmm_mem(proc_mode, 8, inst_ac?, sail_zero_extend(high_qword, 128), seg_reg, addr, prefixes, rex_byte, r_m, mod_var);
+    let flg1 : option(string) = x86_operand_to_xmm_mem(proc_mode, 8, inst_ac?, sail_zero_extend(high_qword, 128), seg_reg, addr, prefixes, rex_byte, r_m, mod_var, sib);
     if is_some(flg1) then throw(Emsg("Model state error: :X86-OPERAND-TO-XMM/MEM"));
     write_iptr(proc_mode, temp_rip)
 }
