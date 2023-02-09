@@ -521,5 +521,6 @@ function write_user_rflags (user_flags_vector, undefined_mask) = {
         let rflags_var : rflagsbits = rflags;
         let new_rflags : rflagsbits = [rflags_var with of = user_flags_vector[of]];
         rflags = new_rflags
-    }
+    };
+    if log_register_writes then log_rflags_write()
 }

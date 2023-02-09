@@ -83,7 +83,8 @@ function write_gpr(idx, value) = {
         13 => r13 = value,
         14 => r14 = value,
         15 => r15 = value
-    }
+    };
+    if log_register_writes then log_gpr_write(idx);
 }
 
 /*

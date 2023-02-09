@@ -18,7 +18,8 @@ function read_rip() = truncate(regval_from_reg(rip), 48)
 
 val write_rip : sbits(48) -> unit
 function write_rip(value) = {
-    rip = regval_into_reg(sail_sign_extend(value, 64))
+    rip = regval_into_reg(sail_sign_extend(value, 64));
+    if log_register_writes then log_rip_write()
 }
 
 type msr_index = range(0, 6)
