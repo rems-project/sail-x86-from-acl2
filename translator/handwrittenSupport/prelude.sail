@@ -573,23 +573,23 @@ function genericBitstructUpdater (width, spliceBits, low, inputBits) =
 Reading from and writing to memory
 */
 
-val log_memory_read : forall 'addr_width, 'addr_width >= 0. (bits('addr_width), bits(8)) -> unit
+val log_memory_read : forall 'addr_width 'n, 'addr_width > 0 & 'n > 0. (bits('addr_width), int('n), bits(8 * 'n)) -> unit
 
 // TODO: Rename these
-val memi : forall 'addr_width, 'addr_width >= 0. (bits('addr_width)) -> bits(8)
+val memi : forall 'addr_width, 'addr_width > 0. (bits('addr_width)) -> bits(8)
 function memi (addr) = {
 	result = __read_mem( Read_plain,					// Read type
 					64,							// Address size
 					sail_mask(64, addr),	// Address to read
 					1							// Number of bytes to read
 				);
-	log_memory_read(addr, result);
+	log_memory_read(addr, 1, result);
 	result
 }
 
-val log_memory_write : forall 'addr_width, 'addr_width >= 0. (bits('addr_width), bits(8)) -> unit
+val log_memory_write : forall 'addr_width 'n, 'addr_width > 0 & 'n > 0. (bits('addr_width), int('n), bits(8 * 'n)) -> unit
 
-val bang_memi : forall 'addr_width, 'addr_width >= 0. (bits('addr_width), bits(8)) -> unit
+val bang_memi : forall 'addr_width, 'addr_width > 0. (bits('addr_width), bits(8)) -> unit
 function bang_memi (addr, valToWrite) = {
 	dummy = 
 		__write_mem_ea(	Write_plain,				// Write type
@@ -603,7 +603,7 @@ function bang_memi (addr, valToWrite) = {
 					1,								// Number of bytes to write
 					valToWrite	// Value to write
 					);
-	log_memory_write(addr, valToWrite);
+	log_memory_write(addr, 1, valToWrite);
 }
 
 /*-----------------------------------------------------------------*/
@@ -618,6 +618,13 @@ scattered function __SetConfig
 
 register app_view : bool
 register marking_view : bool
+
+/* Register logging helpers */
+register log_register_writes : bool
+
+val log_gpr_write : range(0, 15) -> unit
+val log_rflags_write : unit -> unit
+val log_rip_write : unit -> unit
 
 // Model state.
 register ms_reg : bool
@@ -640,6 +647,7 @@ function fault () = fault_reg
 val ia32e_la_to_pa : (sbits(48), string) -> (option(string), bits(52))
 val canonical_address_p : int -> bool
 val n64_bit_modep : unit -> bool
+val observe_mem_write : (sbits(48), int) -> unit
 
 val rb : forall 'addr_width 'n, 'addr_width > 0 & 'n > 0. (int('n), bits('addr_width), string) -> (option(string), bits(8 * 'n))
 
@@ -664,17 +672,25 @@ val wb : forall 'addr_width 'n, 'addr_width > 0 & 'n > 0. (int('n), bits('addr_w
 
 function wb (n, addr, access_kind, value) = {
   foreach (offset from 0 to (n - 1)) {
-    if not_bool(canonical_address_p(signed(addr) + offset)) then return Some("wb: non-canonical address");
+    if not_bool(canonical_address_p(signed(addr) + offset)) then {
+        if offset != 0 then observe_mem_write(sail_mask_signed(48, addr), offset - 1);
+        return Some("wb: non-canonical address")
+    };
     let lin_addr : bits(48) = add_bits_int(sail_mask_signed(48, addr), offset);
     let phys_addr : bits(52) =
       if app_view then sail_mask_signed(52, lin_addr) else {
         let (flg, phys_addr) = ia32e_la_to_pa(lin_addr, access_kind);
-        if is_some(flg) then return flg;
+        if is_some(flg) then {
+            if offset != 0 then observe_mem_write(sail_mask_signed(48, addr), offset - 1);
+            return flg
+        };
         phys_addr
       }
     in
     bang_memi(phys_addr, value[((8 * offset) + 7) .. (8 * offset)])
   };
+
+  let dummy = observe_mem_write(sail_mask_signed(48, addr), n);
   return None()
 }
 
