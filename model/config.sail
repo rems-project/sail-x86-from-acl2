@@ -18,9 +18,13 @@ function clause __SetConfig("r12", value) = write_rgfi(12, get_slice_int(64, val
 function clause __SetConfig("r13", value) = write_rgfi(13, get_slice_int(64, value, 0))
 function clause __SetConfig("r14", value) = write_rgfi(14, get_slice_int(64, value, 0))
 function clause __SetConfig("r15", value) = write_rgfi(15, get_slice_int(64, value, 0))
-function clause __SetConfig("rflags", value) = { rflags = Mk_rflagsbits(get_slice_int(32, value, 0)) }
+function clause __SetConfig("rflags", value) = {
+    rflags = Mk_rflagsbits(get_slice_int(32, value, 0));
+    if log_register_writes then log_rflags_write()
+}
 function clause __SetConfig("cr4", value) = { ctrs[4] = get_slice_int(64, value, 0) }
 function clause __SetConfig("app_view", value) = { app_view = (value != 0) }
+function clause __SetConfig("log_register_writes", value) = { log_register_writes = (value != 0) }
 
 // TODO: This should print information about __SetConfig to stderr.
 val __ListConfig : unit -> unit

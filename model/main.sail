@@ -55,6 +55,6 @@ function x86_run_halt (haltAddr, maxSteps, printEachStep, printCount, count) = {
 val main : unit -> unit
 function main () = {
 	initialize_model();
-	steps = x86_run_halt(haltAddrReg, 10000, true, false, 0);
+	steps = x86_run_halt(haltAddrReg, 10000, not_bool(log_register_writes), false, 0);
 	print_int("Steps = ", steps);
 }

@@ -39,6 +39,34 @@ Two important manual interventions are as follows:
 """
 
 
+#
+# Some helper functions
+#
+
+def is_acl2_list(acl2, min_len=0):
+	return isinstance(acl2, list) and len(acl2) >= min_len
+
+def is_acl2_symbol(acl2, sym=None):
+	return isinstance(acl2, str) and (sym is None or (isinstance(sym, str) and acl2.lower() == sym.lower()))
+
+def is_acl2_app(acl2, head=None, min_len=1):
+	if not is_acl2_list(acl2, min_len=min_len):
+		return False
+	elif isinstance(head, list):
+		return any(is_acl2_symbol(acl2[0], sym) for sym in head)
+	else:
+		return is_acl2_symbol(acl2[0], head)
+
+def is_acl2_the_bind(acl2, sym=None):
+	return is_acl2_app(acl2, "the", min_len=3) and is_acl2_symbol(acl2[2], sym)
+
+def is_acl2_case_match(acl2, match_var=None):
+	return is_acl2_app(acl2, 'case', min_len=2) and (match_var is None or is_acl2_symbol(acl2[1], match_var))
+
+#
+# Manual intervention functions
+#
+
 def x86_token(ACL2ast, env):
 	"""
 	In ACL2 a state variable is threaded through many function calls.  It
@@ -157,28 +185,22 @@ def implemented_opcode(ACL2ast, env):
 	casesToExcludeTwoByte = [42, 44, 45, 46, 47, 56, 58, 81, 84, 85, 86, 87, 88, 89, 90, 92, 93, 94, 95, 116, 174, 188, 194, 199, 215, 219, 223, 235, 239]
 
 	if env.getDefineSlot().lower() in ['one-byte-opcode-execute', 'two-byte-opcode-execute'] and \
-			isinstance(ACL2ast, list) and \
-			isinstance(ACL2ast[0], str) and \
-			ACL2ast[0].lower() == 'case' and \
-			isinstance(ACL2ast[1], str) and \
-			ACL2ast[1].lower() == 'opcode':
-		# First two elements are 'case opcode' so include them
+			is_acl2_case_match(ACL2ast, match_var='opcode'):
 		if env.getDefineSlot().lower() == 'one-byte-opcode-execute':
 			casesToExclude = casesToExcludeOneByte
+			msg = 'one'
 		else:
 			casesToExclude = casesToExcludeTwoByte
+			msg = 'two'
 
-		# Exclude the final case which has a 'T' condition
-		newACL2ast = ACL2ast[:2] + [case for case in ACL2ast[2:-1] if int(case[0]) not in casesToExclude]
+		# Exclude the opcodes listed above
+		newACL2ast = ACL2ast[:2] + [case for case in ACL2ast[2:-1] if int(case[0]) not in casesToExclude] + [ACL2ast[-1]]
 		sailAST, env, _ = specialTokens.tr_case(newACL2ast, env)
 
-		# Forward the missing opcodes to the extension hook
+		# Make the missing opcodes throw exceptions
 		matchesList = sailAST[0].getMatches()
-		ext_call, env = gen_ext_opcode_execute_call(env)
-		for i in range(256):
-			if i in casesToExclude:
-				matchesList.append((SailNumLit(i), ext_call[0]))
-		matchesList.append((SailUnderScoreLit(), ext_call[0]))
+		for i in casesToExclude:
+			matchesList.insert(-1, (SailNumLit(i), specialTokens.errorHelper(f"Translation error: {msg}-byte opcode {i} not translated")))
 
 		return True, sailAST, env
 
@@ -397,33 +419,28 @@ def gen_ext_opcode_execute_call(env):
 	return [SailApp(fn, args)], env
 
 def ext_opcode_hooks(ACL2ast, env):
-	if env.getDefineSlot().lower() in all_decodes and \
-			isinstance(ACL2ast, list) and len(ACL2ast) >= 1 and \
-			isinstance(ACL2ast[0], str) and ACL2ast[0].lower() == 'x86-step-unimplemented':
-		sail, env = gen_ext_opcode_execute_call(env)
-		return True, sail, env
-	elif isinstance(ACL2ast, list) and len(ACL2ast) > 2 and ACL2ast[0].lower() == 'defbitstruct' and ACL2ast[1].lower() == 'prefixes':
+	if env.getDefineSlot().lower() in all_decodes and is_acl2_case_match(ACL2ast, 'opcode'):
+		# Apply any filters for implemented opcodes defined above
+		decodes = implemented_opcode(ACL2ast, env)
+		if decodes:
+			(_, decodes, env) = decodes
+		else:
+			# Use default translation if we don't have filters
+			(decodes, env, _) = specialTokens.tr_case(ACL2ast, env)
+		# Add a check for opcode extension hooks
+		ext_call, env = gen_ext_opcode_execute_call(env)
+		early_return = [SailReturn(SailUnitLit())]
+		# return True, [SailBlock([SailIf(ext_call, early_return, [SailUnitLit()])] + decodes)], env
+		return True, [SailIf(ext_call, early_return, decodes)], env
+	elif is_acl2_app(ACL2ast, 'defbitstruct', min_len=3) and is_acl2_symbol(ACL2ast[1], 'prefixes'):
+	# elif isinstance(ACL2ast, list) and len(ACL2ast) > 2 and ACL2ast[0].lower() == 'defbitstruct' and ACL2ast[1].lower() == 'prefixes':
+		# Process the definition of the `prefixes` type and add it to the environemnt,
+		# but don't output the generated Sail, because we have a copy in the handwritten
+		# files so that the type can be overridden by extensions
 		_, env, _ = specialTokens.tr_defbitstruct(ACL2ast, env)
 		return True, [], env
 	else:
 		return None
-
-def is_acl2_list(acl2, min_len=0):
-	return isinstance(acl2, list) and len(acl2) >= min_len
-
-def is_acl2_symbol(acl2, sym=None):
-	return isinstance(acl2, str) and (sym is None or (isinstance(sym, str) and acl2.lower() == sym.lower()))
-
-def is_acl2_app(acl2, head=None, min_len=1):
-	if not is_acl2_list(acl2, min_len=min_len):
-		return False
-	elif isinstance(head, list):
-		return any(is_acl2_symbol(acl2[0], sym) for sym in head)
-	else:
-		return is_acl2_symbol(acl2[0], head)
-
-def is_acl2_the_bind(acl2, sym=None):
-	return is_acl2_app(acl2, "the", min_len=3) and is_acl2_symbol(acl2[2], sym)
 
 # Replace proc_mode checks with calls to hooks
 def proc_mode_hooks(ACL2ast, env):
@@ -552,10 +569,10 @@ interventionsList = [
 	dispatch_creator,
 	or_macro,
 	chk_ex_or,
-	implemented_opcode,
+	ext_opcode_hooks,
+	# implemented_opcode,
 	t_in_get_prefixes,
 	fault_var_int_dispatch_creator,
-	ext_opcode_hooks,
 	proc_mode_hooks,
 	ext_memory_hooks,
 	x86_illegal_instruction,
