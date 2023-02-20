@@ -32,7 +32,7 @@ x86_emulator: x86_emulator.c
 	$(CC) -O2 -DHAVE_SETCONFIG x86_emulator.c $(SAIL_DIR)/lib/*.c -lgmp -lz -I $(SAIL_DIR)/lib/ -o x86_emulator
 
 x86.ir: $(ALL_SAILS)
-	$(ISLA_SAIL) -verbose 1 -o x86 $(ALL_SAILS)
+	$(ISLA_SAIL) $(foreach file,$(wildcard ../test-generation-patches/*.sail),-splice $(file)) -verbose 1 -o x86 $(ALL_SAILS)
 
 interactive:
 	$(SAIL) -i -memo_z3 $(SAIL_FLAGS) $(ALL_SAILS)
