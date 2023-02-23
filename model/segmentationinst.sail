@@ -18,7 +18,7 @@ function x86_lgdt (proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode, m
     let r_m : bits(3) = modr_m[r_m];
     let mod_var : bits(2) = modr_m[mod];
     let reg : bits(3) = modr_m[reg];
-    if app_view then throw(Emsg("Model state error: :LGDT-UNIMPLEMENTED-IN-APP-VIEW"));
+    if app_view then x86_model_error(":LGDT-UNIMPLEMENTED-IN-APP-VIEW");
     let p2 : bits(8) = prefixes[seg];
     let p4? : bool = 0x67 == prefixes[adr];
     let seg_reg : seg_reg_idx = select_segment_register(proc_mode, prefixes, mod_var, r_m, sib);
@@ -27,14 +27,12 @@ function x86_lgdt (proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode, m
     };
     let base_size_plus_2 : {|6, 10|} = 2 + base_size;
     let inst_ac? : bool = false;
-    let (flg0, mem, increment_rip_by, addr) : (option(string), bits(128), {|0, 1, 2, 4|}, sbits(64)) = x86_operand_from_modr_m_and_sib_bytes(proc_mode, 0b0, base_size_plus_2, inst_ac?, true, seg_reg, prefixes, temp_rip, rex_byte, r_m, mod_var, sib, 0b000);
+    let (mem, increment_rip_by, addr) : (bits(128), {|0, 1, 2, 4|}, sbits(64)) = x86_operand_from_modr_m_and_sib_bytes(proc_mode, 0b0, base_size_plus_2, inst_ac?, true, seg_reg, prefixes, temp_rip, rex_byte, r_m, mod_var, sib, 0b000);
     let increment_rip_by : bits(3) = bits_of_int(increment_rip_by, 3);
-    if is_some(flg0) then throw(Emsg("Model state error: :X86-OPERAND-FROM-MODR/M-AND-SIB-BYTES"));
-    let (flg, temp_rip) : (option(string), sbits(49)) = add_to_iptr(proc_mode, temp_rip, sail_zero_extend(increment_rip_by, 48));
+    let temp_rip : sbits(49) = add_to_iptr(proc_mode, temp_rip, sail_zero_extend(increment_rip_by, 48));
     let temp_rip : sbits(48) = truncate(temp_rip, 48);
-    if is_some(flg) then throw(Emsg("Model state error: :RIP-INCREMENT-ERROR"));
     let badlength? : option(int) = check_instruction_length(start_rip, temp_rip, 0b000);
-    if is_some(badlength?) then throw(Emsg("A fault occurred.  Original ACL2 AST: (!!FAULT-FRESH :GP 0 :INSTRUCTION-LENGTH BADLENGTH?)"));
+    if is_some(badlength?) then x86_fault("(!!FAULT-FRESH :GP 0 :INSTRUCTION-LENGTH BADLENGTH?)");
     let p3? : bool = 0x66 == prefixes[opr];
     let operand_size : {|2, 4, 8|} = {
         if base_size == 8 then 8 else {
@@ -77,7 +75,7 @@ function x86_lidt (proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode, m
     let r_m : bits(3) = modr_m[r_m];
     let mod_var : bits(2) = modr_m[mod];
     let reg : bits(3) = modr_m[reg];
-    if app_view then throw(Emsg("Model state error: :LIDT-UNIMPLEMENTED"));
+    if app_view then x86_model_error(":LIDT-UNIMPLEMENTED");
     let p2 : bits(8) = prefixes[seg];
     let p4? : bool = 0x67 == prefixes[adr];
     let seg_reg : seg_reg_idx = select_segment_register(proc_mode, prefixes, mod_var, r_m, sib);
@@ -86,14 +84,12 @@ function x86_lidt (proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode, m
     };
     let base_size_plus_2 : {|6, 10|} = 2 + base_size;
     let inst_ac? : bool = false;
-    let (flg0, mem, increment_rip_by, addr) : (option(string), bits(128), {|0, 1, 2, 4|}, sbits(64)) = x86_operand_from_modr_m_and_sib_bytes(proc_mode, 0b0, base_size_plus_2, inst_ac?, true, seg_reg, prefixes, temp_rip, rex_byte, r_m, mod_var, sib, 0b000);
+    let (mem, increment_rip_by, addr) : (bits(128), {|0, 1, 2, 4|}, sbits(64)) = x86_operand_from_modr_m_and_sib_bytes(proc_mode, 0b0, base_size_plus_2, inst_ac?, true, seg_reg, prefixes, temp_rip, rex_byte, r_m, mod_var, sib, 0b000);
     let increment_rip_by : bits(3) = bits_of_int(increment_rip_by, 3);
-    if is_some(flg0) then throw(Emsg("Model state error: :X86-OPERAND-FROM-MODR/M-AND-SIB-BYTES"));
-    let (flg, temp_rip) : (option(string), sbits(49)) = add_to_iptr(proc_mode, temp_rip, sail_zero_extend(increment_rip_by, 48));
+    let temp_rip : sbits(49) = add_to_iptr(proc_mode, temp_rip, sail_zero_extend(increment_rip_by, 48));
     let temp_rip : sbits(48) = truncate(temp_rip, 48);
-    if is_some(flg) then throw(Emsg("Model state error: :RIP-INCREMENT-ERROR"));
     let badlength? : option(int) = check_instruction_length(start_rip, temp_rip, 0b000);
-    if is_some(badlength?) then throw(Emsg("A fault occurred.  Original ACL2 AST: (!!FAULT-FRESH :GP 0 :INSTRUCTION-LENGTH BADLENGTH?)"));
+    if is_some(badlength?) then x86_fault("(!!FAULT-FRESH :GP 0 :INSTRUCTION-LENGTH BADLENGTH?)");
     let p3? : bool = 0x66 == prefixes[opr];
     let operand_size : {|2, 4, 8|} = {
         if base_size == 8 then 8 else {
@@ -138,23 +134,21 @@ function x86_lldt (proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode, m
     let r_m : bits(3) = modr_m[r_m];
     let mod_var : bits(2) = modr_m[mod];
     let reg : bits(3) = modr_m[reg];
-    if app_view then throw(Emsg("Model state error: :LLDT-UNIMPLEMENTED"));
+    if app_view then x86_model_error(":LLDT-UNIMPLEMENTED");
     let p2 : bits(8) = prefixes[seg];
     let p4? : bool = 0x67 == prefixes[adr];
     let seg_reg : seg_reg_idx = select_segment_register(proc_mode, prefixes, mod_var, r_m, sib);
     let inst_ac? : bool = false;
-    let (flg0, selector, increment_rip_by, addr) : (option(string), bits(128), {|0, 1, 2, 4|}, sbits(64)) = x86_operand_from_modr_m_and_sib_bytes(proc_mode, 0b0, 2, inst_ac?, false, seg_reg, prefixes, temp_rip, rex_byte, r_m, mod_var, sib, 0b000);
+    let (selector, increment_rip_by, addr) : (bits(128), {|0, 1, 2, 4|}, sbits(64)) = x86_operand_from_modr_m_and_sib_bytes(proc_mode, 0b0, 2, inst_ac?, false, seg_reg, prefixes, temp_rip, rex_byte, r_m, mod_var, sib, 0b000);
     let increment_rip_by : bits(3) = bits_of_int(increment_rip_by, 3);
-    if is_some(flg0) then throw(Emsg("Model state error: :X86-OPERAND-FROM-MODR/M-AND-SIB-BYTES"));
-    let (flg, temp_rip) : (option(string), sbits(49)) = add_to_iptr(proc_mode, temp_rip, sail_zero_extend(increment_rip_by, 48));
+    let temp_rip : sbits(49) = add_to_iptr(proc_mode, temp_rip, sail_zero_extend(increment_rip_by, 48));
     let temp_rip : sbits(48) = truncate(temp_rip, 48);
-    if is_some(flg) then throw(Emsg("Model state error: :RIP-INCREMENT-ERROR"));
     let badlength? : option(int) = check_instruction_length(start_rip, temp_rip, 0b000);
-    if is_some(badlength?) then throw(Emsg("A fault occurred.  Original ACL2 AST: (!!FAULT-FRESH :GP 0 :INSTRUCTION-LENGTH BADLENGTH?)"));
+    if is_some(badlength?) then x86_fault("(!!FAULT-FRESH :GP 0 :INSTRUCTION-LENGTH BADLENGTH?)");
     let sel_index : bits(13) = Mk_segment_selectorbits(truncate(selector, 16))[index];
     let sel_ti : bits(1) = Mk_segment_selectorbits(truncate(selector, 16))[ti];
     let sel_rpl : bits(2) = Mk_segment_selectorbits(truncate(selector, 16))[rpl];
-    if sel_ti == 0b1 then throw(Emsg("Model state error: :GP-SELECTOR-DOES-NOT-POINT-TO-GDT"));
+    if sel_ti == 0b1 then x86_model_error(":GP-SELECTOR-DOES-NOT-POINT-TO-GDT");
     let gdtr : bits(80) = strs[0];
     let gdtr_base : bits(64) = {
         if in_64bit_mode(proc_mode) then {
@@ -165,19 +159,18 @@ function x86_lldt (proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode, m
     };
     let gdtr_limit : bits(16) = Mk_gdtr_idtrbits(gdtr)[limit];
     let largest_address : int = ash(unsigned(sel_index), 3) + (if in_64bit_mode(proc_mode) then 15 else 7);
-    if unsigned(gdtr_limit) < largest_address then throw(Emsg("Model state error: :GP-SELECTOR-LIMIT-CHECK-FAILED"));
+    if unsigned(gdtr_limit) < largest_address then x86_model_error(":GP-SELECTOR-LIMIT-CHECK-FAILED");
     if sel_index == 0b0000000000000 then {
         ssr_visibles[0] = truncate(selector, 16)
     } else {
         let descriptor_addr : int = unsigned(gdtr_base) + unsigned(bits_of_int(ash(unsigned(sel_index), 3), 16));
-        if not_bool(canonical_address_p(descriptor_addr)) then throw(Emsg("Model state error: :DESCRIPTOR-ADDR-VIRTUAL-MEMORY-ERROR"));
+        if not_bool(canonical_address_p(descriptor_addr)) then x86_model_error(":DESCRIPTOR-ADDR-VIRTUAL-MEMORY-ERROR");
         let descriptor_size : {|8, 16|} = {
             if in_64bit_mode(proc_mode) then 16 else 8
         };
-        let (flg, descriptor) : (option(string), bits(128)) = rml_size(descriptor_size, bits_of_int(descriptor_addr, 48), ":X");
-        if is_some(flg) then throw(Emsg("Model state error: :RML-SIZE-ERROR"));
+        let descriptor : bits(128) = rml_size(descriptor_size, bits_of_int(descriptor_addr, 48), ":X");
         let (descriptor_valid?, reason) : (bool, (string, bits(128))) = ia32e_valid_ldt_segment_descriptor_p(descriptor);
-        if not_bool(descriptor_valid?) then throw(Emsg("Model state error: :INVALID-SEGMENT-DESCRIPTOR"));
+        if not_bool(descriptor_valid?) then x86_model_error(":INVALID-SEGMENT-DESCRIPTOR");
         let ldtr_base15_0 : bits(16) = Mk_system_segment_descriptorbits(descriptor)[base15_0];
         let ldtr_base23_16 : bits(8) = Mk_system_segment_descriptorbits(descriptor)[base23_16];
         let ldtr_base31_24 : bits(8) = Mk_system_segment_descriptorbits(descriptor)[base31_24];

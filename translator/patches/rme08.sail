@@ -1,4 +1,4 @@
-val rme08 : (proc_mode, address_size, sbits(64), option(base_reg_idx), seg_reg_idx, string) -> (option(string), bits(8))
+val rme08 : (proc_mode, address_size, sbits(64), option(base_reg_idx), seg_reg_idx, string) -> bits(8)
 
 function rme08 (proc_mode, addr_size, eff_addr, base_reg, seg_reg, r_x) = {
     load_bytes_from_ea(proc_mode, addr_size, 1, eff_addr, base_reg, seg_reg, r_x, false, false)

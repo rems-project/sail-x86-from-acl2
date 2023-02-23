@@ -35,19 +35,15 @@ function x86_shufps_op_en_rmi (proc_mode, start_rip, temp_rip, prefixes, rex_byt
     let p4? : bool = 0x67 == prefixes[adr];
     let seg_reg : seg_reg_idx = select_segment_register(proc_mode, prefixes, mod_var, r_m, sib);
     let inst_ac? : bool = true;
-    let (flg0, xmm_mem, increment_rip_by, addr) : (option(string), bits(128), {|0, 1, 2, 4|}, sbits(64)) = x86_operand_from_modr_m_and_sib_bytes(proc_mode, 0b1, 16, inst_ac?, false, seg_reg, prefixes, temp_rip, rex_byte, r_m, mod_var, sib, 0b001);
-    if is_some(flg0) then throw(Emsg("Model state error: :X86-OPERAND-FROM-MODR/M-AND-SIB-BYTES"));
-    let (flg, temp_rip) : (option(string), sbits(49)) = add_to_iptr(proc_mode, temp_rip, bits_of_int(increment_rip_by, 48));
+    let (xmm_mem, increment_rip_by, addr) : (bits(128), {|0, 1, 2, 4|}, sbits(64)) = x86_operand_from_modr_m_and_sib_bytes(proc_mode, 0b1, 16, inst_ac?, false, seg_reg, prefixes, temp_rip, rex_byte, r_m, mod_var, sib, 0b001);
+    let temp_rip : sbits(49) = add_to_iptr(proc_mode, temp_rip, bits_of_int(increment_rip_by, 48));
     let temp_rip : sbits(48) = truncate(temp_rip, 48);
-    if is_some(flg) then throw(Emsg("Model state error: :RIP-INCREMENT-ERROR"));
-    let (flg1, imm) : (option(string), bits(128)) = rme_size(proc_mode, select_address_size(proc_mode, Some(prefixes)), 1, sail_sign_extend(temp_rip, 64), None(), 1, ":X", false, false);
+    let imm : bits(128) = rme_size(proc_mode, select_address_size(proc_mode, Some(prefixes)), 1, sail_sign_extend(temp_rip, 64), None(), 1, ":X", false, false);
     let imm : bits(8) = truncate(imm, 8);
-    if is_some(flg1) then throw(Emsg("Model state error: :IMM-RME-SIZE-ERROR"));
-    let (flg, temp_rip) : (option(string), sbits(49)) = add_to_iptr(proc_mode, temp_rip, 0x000000000001);
+    let temp_rip : sbits(49) = add_to_iptr(proc_mode, temp_rip, 0x000000000001);
     let temp_rip : sbits(48) = truncate(temp_rip, 48);
-    if is_some(flg) then throw(Emsg("Model state error: :RIP-INCREMENT-ERROR"));
     let badlength? : option(int) = check_instruction_length(start_rip, temp_rip, 0b000);
-    if is_some(badlength?) then throw(Emsg("A fault occurred.  Original ACL2 AST: (!!FAULT-FRESH :GP 0 :INSTRUCTION-LENGTH BADLENGTH?)"));
+    if is_some(badlength?) then x86_fault("(!!FAULT-FRESH :GP 0 :INSTRUCTION-LENGTH BADLENGTH?)");
     let imm0 : bits(2) = imm[1 .. 0];
     let imm1 : bits(2) = imm[3 .. 2];
     let imm2 : bits(2) = imm[5 .. 4];
@@ -77,19 +73,15 @@ function x86_shufpd_op_en_rmi (proc_mode, start_rip, temp_rip, prefixes, rex_byt
     let p4? : bool = 0x67 == prefixes[adr];
     let seg_reg : seg_reg_idx = select_segment_register(proc_mode, prefixes, mod_var, r_m, sib);
     let inst_ac? : bool = true;
-    let (flg0, xmm_mem, increment_rip_by, addr) : (option(string), bits(128), {|0, 1, 2, 4|}, sbits(64)) = x86_operand_from_modr_m_and_sib_bytes(proc_mode, 0b1, 16, inst_ac?, false, seg_reg, prefixes, temp_rip, rex_byte, r_m, mod_var, sib, 0b001);
-    if is_some(flg0) then throw(Emsg("Model state error: :X86-OPERAND-FROM-MODR/M-AND-SIB-BYTES"));
-    let (flg, temp_rip) : (option(string), sbits(49)) = add_to_iptr(proc_mode, temp_rip, bits_of_int(increment_rip_by, 48));
+    let (xmm_mem, increment_rip_by, addr) : (bits(128), {|0, 1, 2, 4|}, sbits(64)) = x86_operand_from_modr_m_and_sib_bytes(proc_mode, 0b1, 16, inst_ac?, false, seg_reg, prefixes, temp_rip, rex_byte, r_m, mod_var, sib, 0b001);
+    let temp_rip : sbits(49) = add_to_iptr(proc_mode, temp_rip, bits_of_int(increment_rip_by, 48));
     let temp_rip : sbits(48) = truncate(temp_rip, 48);
-    if is_some(flg) then throw(Emsg("Model state error: :RIP-INCREMENT-ERROR"));
-    let (flg1, imm) : (option(string), bits(128)) = rme_size(proc_mode, select_address_size(proc_mode, Some(prefixes)), 1, sail_sign_extend(temp_rip, 64), None(), 1, ":X", false, false);
+    let imm : bits(128) = rme_size(proc_mode, select_address_size(proc_mode, Some(prefixes)), 1, sail_sign_extend(temp_rip, 64), None(), 1, ":X", false, false);
     let imm : bits(8) = truncate(imm, 8);
-    if is_some(flg1) then throw(Emsg("Model state error: :IMM-RME-SIZE-ERROR"));
-    let (flg, temp_rip) : (option(string), sbits(49)) = add_to_iptr(proc_mode, temp_rip, 0x000000000001);
+    let temp_rip : sbits(49) = add_to_iptr(proc_mode, temp_rip, 0x000000000001);
     let temp_rip : sbits(48) = truncate(temp_rip, 48);
-    if is_some(flg) then throw(Emsg("Model state error: :RIP-INCREMENT-ERROR"));
     let badlength? : option(int) = check_instruction_length(start_rip, temp_rip, 0b000);
-    if is_some(badlength?) then throw(Emsg("A fault occurred.  Original ACL2 AST: (!!FAULT-FRESH :GP 0 :INSTRUCTION-LENGTH BADLENGTH?)"));
+    if is_some(badlength?) then x86_fault("(!!FAULT-FRESH :GP 0 :INSTRUCTION-LENGTH BADLENGTH?)");
     let imm0 : bits(1) = logbit(0, imm);
     let imm1 : bits(1) = logbit(1, imm);
     let qword0 : bits(64) = extract_64_bits(xmm, unsigned(imm0));
@@ -117,13 +109,11 @@ function x86_unpck?ps_op_en_rm (high_low, proc_mode, start_rip, temp_rip, prefix
     let p4? : bool = 0x67 == prefixes[adr];
     let seg_reg : seg_reg_idx = select_segment_register(proc_mode, prefixes, mod_var, r_m, sib);
     let inst_ac? : bool = true;
-    let (flg0, xmm_mem, increment_rip_by, addr) : (option(string), bits(128), {|0, 1, 2, 4|}, sbits(64)) = x86_operand_from_modr_m_and_sib_bytes(proc_mode, 0b1, 16, inst_ac?, false, seg_reg, prefixes, temp_rip, rex_byte, r_m, mod_var, sib, 0b000);
-    if is_some(flg0) then throw(Emsg("Model state error: :X86-OPERAND-FROM-MODR/M-AND-SIB-BYTES"));
-    let (flg, temp_rip) : (option(string), sbits(49)) = add_to_iptr(proc_mode, temp_rip, bits_of_int(increment_rip_by, 48));
+    let (xmm_mem, increment_rip_by, addr) : (bits(128), {|0, 1, 2, 4|}, sbits(64)) = x86_operand_from_modr_m_and_sib_bytes(proc_mode, 0b1, 16, inst_ac?, false, seg_reg, prefixes, temp_rip, rex_byte, r_m, mod_var, sib, 0b000);
+    let temp_rip : sbits(49) = add_to_iptr(proc_mode, temp_rip, bits_of_int(increment_rip_by, 48));
     let temp_rip : sbits(48) = truncate(temp_rip, 48);
-    if is_some(flg) then throw(Emsg("Model state error: :RIP-INCREMENT-ERROR"));
     let badlength? : option(int) = check_instruction_length(start_rip, temp_rip, 0b000);
-    if is_some(badlength?) then throw(Emsg("A fault occurred.  Original ACL2 AST: (!!FAULT-FRESH :GP 0 :INSTRUCTION-LENGTH BADLENGTH?)"));
+    if is_some(badlength?) then x86_fault("(!!FAULT-FRESH :GP 0 :INSTRUCTION-LENGTH BADLENGTH?)");
     let dword0 : bits(32) = {
         if high_low == 1 then {
             xmm[95 .. 64]
@@ -175,13 +165,11 @@ function x86_unpck?pd_op_en_rm (high_low, proc_mode, start_rip, temp_rip, prefix
     let p4? : bool = 0x67 == prefixes[adr];
     let seg_reg : seg_reg_idx = select_segment_register(proc_mode, prefixes, mod_var, r_m, sib);
     let inst_ac? : bool = true;
-    let (flg0, xmm_mem, increment_rip_by, addr) : (option(string), bits(128), {|0, 1, 2, 4|}, sbits(64)) = x86_operand_from_modr_m_and_sib_bytes(proc_mode, 0b1, 16, inst_ac?, false, seg_reg, prefixes, temp_rip, rex_byte, r_m, mod_var, sib, 0b000);
-    if is_some(flg0) then throw(Emsg("Model state error: :X86-OPERAND-FROM-MODR/M-AND-SIB-BYTES"));
-    let (flg, temp_rip) : (option(string), sbits(49)) = add_to_iptr(proc_mode, temp_rip, bits_of_int(increment_rip_by, 48));
+    let (xmm_mem, increment_rip_by, addr) : (bits(128), {|0, 1, 2, 4|}, sbits(64)) = x86_operand_from_modr_m_and_sib_bytes(proc_mode, 0b1, 16, inst_ac?, false, seg_reg, prefixes, temp_rip, rex_byte, r_m, mod_var, sib, 0b000);
+    let temp_rip : sbits(49) = add_to_iptr(proc_mode, temp_rip, bits_of_int(increment_rip_by, 48));
     let temp_rip : sbits(48) = truncate(temp_rip, 48);
-    if is_some(flg) then throw(Emsg("Model state error: :RIP-INCREMENT-ERROR"));
     let badlength? : option(int) = check_instruction_length(start_rip, temp_rip, 0b000);
-    if is_some(badlength?) then throw(Emsg("A fault occurred.  Original ACL2 AST: (!!FAULT-FRESH :GP 0 :INSTRUCTION-LENGTH BADLENGTH?)"));
+    if is_some(badlength?) then x86_fault("(!!FAULT-FRESH :GP 0 :INSTRUCTION-LENGTH BADLENGTH?)");
     let qword0 : bits(64) = {
         if high_low == 1 then {
             xmm[127 .. 64]

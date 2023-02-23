@@ -20,7 +20,7 @@ val x86_hlt : (proc_mode, sbits(48), sbits(48), prefixes, bits(8), bits(8), modr
 function x86_hlt (proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode, modr_m, sib) = {
     let ctx : string = "X86-HLT";
     write_iptr(proc_mode, temp_rip);
-    throw(Emsg("Model state error: :LEGAL-HALT"))
+    x86_model_error(":LEGAL-HALT")
 }
 
 val x86_cmc_clc_stc_cld_std : (proc_mode, sbits(48), sbits(48), prefixes, bits(8), bits(8), modr_m, sib) -> unit

@@ -246,7 +246,7 @@ function segment_base_and_bounds (proc_mode, seg_reg) = {
  The null segment selector check is skipped in 64-bit mode 
  ( see Intel manual, May ' 18, Volume 3, Section 5.4.1.1 ) . 
  </p> */
-val ea_to_la : (proc_mode, sbits(64), range(0, 5), {|1, 2, 4, 6, 8, 10, 16, 32, 64|}) -> (option(string), sbits(64))
+val ea_to_la : (proc_mode, sbits(64), range(0, 5), {|1, 2, 4, 6, 8, 10, 16, 32, 64|}) -> sbits(64)
 
 function ea_to_la (proc_mode, eff_addr, seg_reg, nbytes) = {
     if in_64bit_mode(proc_mode) then {
@@ -259,29 +259,20 @@ function ea_to_la (proc_mode, eff_addr, seg_reg, nbytes) = {
                 eff_addr
             }
         };
-        if not_bool(canonical_address_p(signed(lin_addr))) then {
-            (Some(":NON-CANONICAL-ADDRESS"), 0x0000000000000000)
-        } else {
-            (None() : option(string), lin_addr)
-        }
+        if not_bool(canonical_address_p(signed(lin_addr))) then x86_model_error(":NON-CANONICAL-ADDRESS");
+        lin_addr
     } else if in_compatibility_mode(proc_mode) then {
-        if not_bool(seg_reg == 1) & not_bool(seg_reg == 2) & unsigned(seg_visibles[seg_reg]) < 4 then {
-            (Some(":NULL-SEGMENT-SELECTOR"), 0x0000000000000000)
-        } else {
-            let (base, lower_bound, upper_bound) : (bits(64), int, bits(32)) = segment_base_and_bounds(proc_mode, seg_reg);
-            let base : bits(32) = truncate(base, 32);
-            let lower_bound : bits(33) = bits_of_int(lower_bound, 33);
-            let first_addr : sbits(64) = eff_addr;
-            let last_addr : int = signed(eff_addr) + (nbytes + -1);
-            if not_bool(unsigned(lower_bound) <= signed(first_addr) & last_addr <= unsigned(upper_bound)) then {
-                (Some(":SEGMENT-LIMIT-FAIL"), 0x0000000000000000)
-            } else {
-                let lin_addr : bits(32) = bits_of_int(unsigned(base) + unsigned(truncate(eff_addr, 32)), 32);
-                (None() : option(string), sail_zero_extend(lin_addr, 64))
-            }
-        }
+        if not_bool(seg_reg == 1) & not_bool(seg_reg == 2) & unsigned(seg_visibles[seg_reg]) < 4 then x86_model_error(":NULL-SEGMENT-SELECTOR");
+        let (base, lower_bound, upper_bound) : (bits(64), int, bits(32)) = segment_base_and_bounds(proc_mode, seg_reg);
+        let base : bits(32) = truncate(base, 32);
+        let lower_bound : bits(33) = bits_of_int(lower_bound, 33);
+        let first_addr : sbits(64) = eff_addr;
+        let last_addr : int = signed(eff_addr) + (nbytes + -1);
+        if not_bool(unsigned(lower_bound) <= signed(first_addr) & last_addr <= unsigned(upper_bound)) then x86_model_error(":SEGMENT-LIMIT-FAIL");
+        let lin_addr : bits(32) = bits_of_int(unsigned(base) + unsigned(truncate(eff_addr, 32)), 32);
+        sail_zero_extend(lin_addr, 64)
     } else {
-        (Some(":UNIMPLEMENTED-PROC-MODE"), 0x0000000000000000)
+        x86_model_error(":UNIMPLEMENTED-PROC-MODE")
     }
 }
 

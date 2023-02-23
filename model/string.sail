@@ -8,7 +8,7 @@ function x86_movs (proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode, m
     let reg : bits(3) = modr_m[reg];
     let group_1_prefix : bits(8) = prefixes[rep];
     let badlength? : option(int) = check_instruction_length(start_rip, temp_rip, 0b000);
-    if is_some(badlength?) then throw(Emsg("A fault occurred.  Original ACL2 AST: (!!FAULT-FRESH :GP 0 :INSTRUCTION-LENGTH BADLENGTH?)"));
+    if is_some(badlength?) then x86_fault("(!!FAULT-FRESH :GP 0 :INSTRUCTION-LENGTH BADLENGTH?)");
     let p2 : bits(8) = prefixes[seg];
     let p4? : bool = 0x67 == prefixes[adr];
     let df : bits(1) = {
@@ -26,11 +26,10 @@ function x86_movs (proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode, m
             sail_sign_extend(rgfi(6), 65)
         }
     };
-    if not_bool(counter_addr_size_2_4?) & not_bool(canonical_address_p(signed(src_addr))) then throw(Emsg("Model state error: :SRC-ADDR-NOT-CANONICAL"));
+    if not_bool(counter_addr_size_2_4?) & not_bool(canonical_address_p(signed(src_addr))) then x86_model_error(":SRC-ADDR-NOT-CANONICAL");
     let inst_ac? : bool = alignment_checking_enabled_p();
     let seg_reg : seg_reg_idx = select_segment_register(proc_mode, prefixes, mod_var, r_m, sib);
-    let (flg0, src) : (option(string), bits(128)) = rme_size(proc_mode, select_address_size(proc_mode, Some(prefixes)), operand_size, truncate(src_addr, 64), None(), seg_reg, ":R", inst_ac?, false);
-    if is_some(flg0) then throw(Emsg("Model state error: :SRC-RME-SIZE-ERROR"));
+    let src : bits(128) = rme_size(proc_mode, select_address_size(proc_mode, Some(prefixes)), operand_size, truncate(src_addr, 64), None(), seg_reg, ":R", inst_ac?, false);
     let dst_addr : sbits(65) = {
         if counter_addr_size_2_4? then {
             sail_zero_extend(rgfi_size(bits_of_int(counter_addr_size, 4), 0x7, rex_byte), 65)
@@ -38,7 +37,7 @@ function x86_movs (proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode, m
             sail_sign_extend(rgfi(7), 65)
         }
     };
-    if not_bool(counter_addr_size_2_4?) & not_bool(canonical_address_p(signed(dst_addr))) then throw(Emsg("Model state error: :DST-ADDR-NOT-CANONICAL"));
+    if not_bool(counter_addr_size_2_4?) & not_bool(canonical_address_p(signed(dst_addr))) then x86_model_error(":DST-ADDR-NOT-CANONICAL");
     let original_dst_addr : sbits(48) = truncate(dst_addr, 48);
     let (src_addr, dst_addr) : (int, int) = {
         match operand_size {
@@ -74,8 +73,7 @@ function x86_movs (proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode, m
     };
     let src_addr : sbits(49) = bits_of_int(src_addr, 49);
     let dst_addr : sbits(49) = bits_of_int(dst_addr, 49);
-    let flg1 : option(string) = wme_size(proc_mode, select_address_size(proc_mode, Some(prefixes)), operand_size, sail_sign_extend(original_dst_addr, 64), None(), 0, src, inst_ac?, false);
-    if is_some(flg1) then throw(Emsg("Model state error: :WME-SIZE-ERROR"));
+    wme_size(proc_mode, select_address_size(proc_mode, Some(prefixes)), operand_size, sail_sign_extend(original_dst_addr, 64), None(), 0, src, inst_ac?, false);
     (match group_1_prefix {
       243 => {
           let counter : bits(64) = rgfi_size(bits_of_int(counter_addr_size, 4), 0x1, rex_byte);
@@ -124,7 +122,7 @@ function x86_cmps (proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode, m
     let reg : bits(3) = modr_m[reg];
     let group_1_prefix : bits(8) = prefixes[rep];
     let badlength? : option(int) = check_instruction_length(start_rip, temp_rip, 0b000);
-    if is_some(badlength?) then throw(Emsg("A fault occurred.  Original ACL2 AST: (!!FAULT-FRESH :GP 0 :INSTRUCTION-LENGTH BADLENGTH?)"));
+    if is_some(badlength?) then x86_fault("(!!FAULT-FRESH :GP 0 :INSTRUCTION-LENGTH BADLENGTH?)");
     let p2 : bits(8) = prefixes[seg];
     let p4? : bool = 0x67 == prefixes[adr];
     let df : bits(1) = {
@@ -142,11 +140,10 @@ function x86_cmps (proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode, m
             sail_sign_extend(rgfi(6), 65)
         }
     };
-    if not_bool(counter_addr_size_2_4?) & not_bool(canonical_address_p(signed(src_addr))) then throw(Emsg("Model state error: :SRC-ADDR-NOT-CANONICAL"));
+    if not_bool(counter_addr_size_2_4?) & not_bool(canonical_address_p(signed(src_addr))) then x86_model_error(":SRC-ADDR-NOT-CANONICAL");
     let inst_ac? : bool = alignment_checking_enabled_p();
     let seg_reg : seg_reg_idx = select_segment_register(proc_mode, prefixes, mod_var, r_m, sib);
-    let (flg0, src) : (option(string), bits(128)) = rme_size(proc_mode, select_address_size(proc_mode, Some(prefixes)), operand_size, truncate(src_addr, 64), None(), seg_reg, ":R", inst_ac?, false);
-    if is_some(flg0) then throw(Emsg("Model state error: :SRC-RME-SIZE-ERROR"));
+    let src : bits(128) = rme_size(proc_mode, select_address_size(proc_mode, Some(prefixes)), operand_size, truncate(src_addr, 64), None(), seg_reg, ":R", inst_ac?, false);
     let dst_addr : sbits(65) = {
         if counter_addr_size_2_4? then {
             sail_zero_extend(rgfi_size(bits_of_int(counter_addr_size, 4), 0x7, rex_byte), 65)
@@ -154,9 +151,8 @@ function x86_cmps (proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode, m
             sail_sign_extend(rgfi(7), 65)
         }
     };
-    if not_bool(counter_addr_size_2_4?) & not_bool(canonical_address_p(signed(dst_addr))) then throw(Emsg("Model state error: :DST-ADDR-NOT-CANONICAL"));
-    let (flg0, dst) : (option(string), bits(128)) = rme_size(proc_mode, select_address_size(proc_mode, Some(prefixes)), operand_size, truncate(dst_addr, 64), None(), 0, ":R", inst_ac?, false);
-    if is_some(flg0) then throw(Emsg("Model state error: :DST-RME-SIZE-ERROR"));
+    if not_bool(counter_addr_size_2_4?) & not_bool(canonical_address_p(signed(dst_addr))) then x86_model_error(":DST-ADDR-NOT-CANONICAL");
+    let dst : bits(128) = rme_size(proc_mode, select_address_size(proc_mode, Some(prefixes)), operand_size, truncate(dst_addr, 64), None(), 0, ":R", inst_ac?, false);
     let input_rflags : rflagsbits = rflags;
     let (result, output_rflags, undefined_flags) : (bits(64), rflagsbits, rflagsbits) = gpr_arith_logic_spec(operand_size, 4, truncate(dst, 64), truncate(src, 64), input_rflags);
     write_user_rflags(output_rflags, undefined_flags);
@@ -239,7 +235,7 @@ function x86_stos (proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode, m
     let ctx : string = "X86-STOS";
     let group_1_prefix : bits(8) = prefixes[seg];
     let badlength? : option(int) = check_instruction_length(start_rip, temp_rip, 0b000);
-    if is_some(badlength?) then throw(Emsg("A fault occurred.  Original ACL2 AST: (!!FAULT-FRESH :GP 0 :INSTRUCTION-LENGTH BADLENGTH?)"));
+    if is_some(badlength?) then x86_fault("(!!FAULT-FRESH :GP 0 :INSTRUCTION-LENGTH BADLENGTH?)");
     let p4? : bool = 0x67 == prefixes[adr];
     let df : bits(1) = {
         let rflags_var : rflagsbits = rflags;
@@ -254,13 +250,12 @@ function x86_stos (proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode, m
             sail_sign_extend(rgfi(7), 65)
         }
     };
-    if not_bool(counter_addr_size_2_4?) & not_bool(canonical_address_p(signed(dst_addr))) then throw(Emsg("Model state error: :DST-ADDR-NOT-CANONICAL"));
+    if not_bool(counter_addr_size_2_4?) & not_bool(canonical_address_p(signed(dst_addr))) then x86_model_error(":DST-ADDR-NOT-CANONICAL");
     let select_byte_operand : bool = 0xaa == opcode;
     let operand_size : {|1, 2, 4, 8|} = select_operand_size(proc_mode, select_byte_operand, rex_byte, false, prefixes, false, false, false);
     let rax_var : bits(64) = rgfi_size(bits_of_int(operand_size, 4), 0x0, rex_byte);
     let inst_ac? : bool = alignment_checking_enabled_p();
-    let flg0 : option(string) = wme_size(proc_mode, select_address_size(proc_mode, Some(prefixes)), operand_size, truncate(dst_addr, 64), None(), 0, sail_zero_extend(rax_var, 128), inst_ac?, false);
-    if is_some(flg0) then throw(Emsg("Model state error: :WME-SIZE-ERROR"));
+    wme_size(proc_mode, select_address_size(proc_mode, Some(prefixes)), operand_size, truncate(dst_addr, 64), None(), 0, sail_zero_extend(rax_var, 128), inst_ac?, false);
     let dst_addr : sbits(49) = {
         match operand_size {
           1 => {

@@ -162,7 +162,7 @@ class Env:
 			print("Warning: env could not connect to ACL2 server")
 
 
-	def lookup(self, token, ignoreBindings=False):
+	def try_lookup(self, token, ignoreBindings=False):
 		"""
 		Given a token, this function looks up the translation function (TF)
 		which allows the translator to actually consume the it.  In order:
@@ -216,15 +216,27 @@ class Env:
 			if token in e:
 				return e[token]
 
-		# If lookup fails, abort and print debug information.
-		print()
-		print("Token lookup failed: {}".format(token))
-		print(f"Current file: {self.fileStack[-1]}")
-		print(f"DefineStack: {self.defineSlot}")
-		print(f"File stack: {self.fileStack}")
-		print(f"Context stack: {self.contextStack}")
-		print()
-		raise KeyError(f"Token lookup failed: {token}")
+		return None
+
+	def lookup(self, token, ignoreBindings=False):
+		result = self.try_lookup(token, ignoreBindings)
+
+		if result is None:
+			# Hack: If we encounter an error flag variable that was previously removed from the translation, return False
+			if is_acl2_flag_symbol(token):
+				return lambda _, env: ([SailBoolLit(False)], env, 1)
+			else:
+				# If lookup fails, abort and print debug information.
+				print()
+				print("Token lookup failed: {}".format(token))
+				print(f"Current file: {self.fileStack[-1]}")
+				print(f"DefineStack: {self.defineSlot}")
+				print(f"File stack: {self.fileStack}")
+				print(f"Context stack: {self.contextStack}")
+				print()
+				raise KeyError(f"Token lookup failed: {token}")
+		else:
+			return result
 
 	# === Environment manipulation
 	def addToAuto(self, token, fn):

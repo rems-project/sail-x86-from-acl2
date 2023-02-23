@@ -48,8 +48,8 @@ bitfield prefixes : bits(52) =
 val is_ext_prefix_byte : (proc_mode, prefixes, bits(8), range(0, 15), bits(8)) -> bool
 function is_ext_prefix_byte(proc_mode, prefixes, rex_byte, cnt, byte) = false
 
-val process_ext_prefix_byte : (proc_mode, prefixes, bits(8), range(0, 15), bits(8)) -> (option(string), prefixes, bits(8), bool)
-function process_ext_prefix_byte(proc_mode, prefixes, rex_byte, cnt, byte) = (None(), prefixes, rex_byte, false)
+val process_ext_prefix_byte : (proc_mode, prefixes, bits(8), range(0, 15), bits(8)) -> (prefixes, bits(8), bool)
+function process_ext_prefix_byte(proc_mode, prefixes, rex_byte, cnt, byte) = (prefixes, rex_byte, false)
 
 val ext_one_byte_opcode_execute : (proc_mode, sbits(48), sbits(48), prefixes, bits(8), bits(8), modr_m, sib) -> bool
 function ext_one_byte_opcode_execute(proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode, modr_m, sib) = false
