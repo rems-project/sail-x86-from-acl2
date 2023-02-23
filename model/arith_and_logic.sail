@@ -35,24 +35,17 @@ function x86_add_adc_sub_sbb_or_and_xor_cmp_test_e_g (operation, proc_mode, star
     let g : bits(64) = rgfi_size(bits_of_int(operand_size, 4), reg_index(reg, rex_byte, 0b10), rex_byte);
     let seg_reg : seg_reg_idx = select_segment_register(proc_mode, prefixes, mod_var, r_m, sib);
     let inst_ac? : bool = true;
-    let (flg0, e, increment_rip_by, e_addr) : (option(string), bits(128), {|0, 1, 2, 4|}, sbits(64)) = x86_operand_from_modr_m_and_sib_bytes(proc_mode, 0b0, operand_size, inst_ac?, false, seg_reg, prefixes, temp_rip, rex_byte, r_m, mod_var, sib, 0b000);
+    let (e, increment_rip_by, e_addr) : (bits(128), {|0, 1, 2, 4|}, sbits(64)) = x86_operand_from_modr_m_and_sib_bytes(proc_mode, 0b0, operand_size, inst_ac?, false, seg_reg, prefixes, temp_rip, rex_byte, r_m, mod_var, sib, 0b000);
     let increment_rip_by : bits(3) = bits_of_int(increment_rip_by, 3);
-    if is_some(flg0) then throw(Emsg("Model state error: :X86-OPERAND-FROM-MODR/M-AND-SIB-BYTES"));
-    let (flg, temp_rip) : (option(string), sbits(49)) = add_to_iptr(proc_mode, temp_rip, sail_zero_extend(increment_rip_by, 48));
+    let temp_rip : sbits(49) = add_to_iptr(proc_mode, temp_rip, sail_zero_extend(increment_rip_by, 48));
     let temp_rip : sbits(48) = truncate(temp_rip, 48);
-    if is_some(flg) then throw(Emsg("Model state error: :RIP-INCREMENT-ERROR"));
     let badlength? : option(int) = check_instruction_length(start_rip, temp_rip, 0b000);
-    if is_some(badlength?) then throw(Emsg("A fault occurred.  Original ACL2 AST: (!!FAULT-FRESH :GP 0 :INSTRUCTION-LENGTH BADLENGTH?)"));
+    if is_some(badlength?) then x86_fault("(!!FAULT-FRESH :GP 0 :INSTRUCTION-LENGTH BADLENGTH?)");
     let input_rflags : rflagsbits = rflags;
     let (result, output_rflags, undefined_flags) : (bits(64), rflagsbits, rflagsbits) = gpr_arith_logic_spec(operand_size, operation, truncate(e, 64), g, input_rflags);
-    let flg1 : option(string) = {
-        if operation == 8 | operation == 7 then {
-            None() : option(string)
-        } else {
-            x86_operand_to_reg_mem(proc_mode, operand_size, inst_ac?, false, sail_zero_extend(result, 128), seg_reg, e_addr, prefixes, rex_byte, r_m, mod_var, sib)
-        }
+    if operation == 8 | operation == 7 then () else {
+        x86_operand_to_reg_mem(proc_mode, operand_size, inst_ac?, false, sail_zero_extend(result, 128), seg_reg, e_addr, prefixes, rex_byte, r_m, mod_var, sib)
     };
-    if is_some(flg1) then throw(Emsg("Model state error: :X86-OPERAND-TO-REG/MEM"));
     write_user_rflags(output_rflags, undefined_flags);
     write_iptr(proc_mode, temp_rip)
 }
@@ -90,14 +83,12 @@ function x86_add_adc_sub_sbb_or_and_xor_cmp_g_e (operation, proc_mode, start_rip
     let g : bits(64) = rgfi_size(bits_of_int(operand_size, 4), reg_index(reg, rex_byte, 0b10), rex_byte);
     let seg_reg : seg_reg_idx = select_segment_register(proc_mode, prefixes, mod_var, r_m, sib);
     let inst_ac? : bool = true;
-    let (flg0, e, increment_rip_by, e_addr) : (option(string), bits(128), {|0, 1, 2, 4|}, sbits(64)) = x86_operand_from_modr_m_and_sib_bytes(proc_mode, 0b0, operand_size, inst_ac?, false, seg_reg, prefixes, temp_rip, rex_byte, r_m, mod_var, sib, 0b000);
+    let (e, increment_rip_by, e_addr) : (bits(128), {|0, 1, 2, 4|}, sbits(64)) = x86_operand_from_modr_m_and_sib_bytes(proc_mode, 0b0, operand_size, inst_ac?, false, seg_reg, prefixes, temp_rip, rex_byte, r_m, mod_var, sib, 0b000);
     let increment_rip_by : bits(3) = bits_of_int(increment_rip_by, 3);
-    if is_some(flg0) then throw(Emsg("Model state error: :X86-OPERAND-FROM-MODR/M-AND-SIB-BYTES"));
-    let (flg, temp_rip) : (option(string), sbits(49)) = add_to_iptr(proc_mode, temp_rip, sail_zero_extend(increment_rip_by, 48));
+    let temp_rip : sbits(49) = add_to_iptr(proc_mode, temp_rip, sail_zero_extend(increment_rip_by, 48));
     let temp_rip : sbits(48) = truncate(temp_rip, 48);
-    if is_some(flg) then throw(Emsg("Model state error: :RIP-INCREMENT-ERROR"));
     let badlength? : option(int) = check_instruction_length(start_rip, temp_rip, 0b000);
-    if is_some(badlength?) then throw(Emsg("A fault occurred.  Original ACL2 AST: (!!FAULT-FRESH :GP 0 :INSTRUCTION-LENGTH BADLENGTH?)"));
+    if is_some(badlength?) then x86_fault("(!!FAULT-FRESH :GP 0 :INSTRUCTION-LENGTH BADLENGTH?)");
     let input_rflags : rflagsbits = rflags;
     let (result, output_rflags, undefined_flags) : (bits(64), rflagsbits, rflagsbits) = gpr_arith_logic_spec(operand_size, operation, g, truncate(e, 64), input_rflags);
     if operation == 8 then () else {
@@ -144,29 +135,20 @@ function x86_add_adc_sub_sbb_or_and_xor_cmp_test_e_i (operation, proc_mode, star
     let imm_size : {|1, 2, 4|} = check_range(1, 4, select_operand_size(proc_mode, imm_byte_operand?, rex_byte, true, prefixes, false, false, false));
     let seg_reg : seg_reg_idx = select_segment_register(proc_mode, prefixes, mod_var, r_m, sib);
     let inst_ac? : bool = true;
-    let (flg0, e, increment_rip_by, e_addr) : (option(string), bits(128), {|0, 1, 2, 4|}, sbits(64)) = x86_operand_from_modr_m_and_sib_bytes(proc_mode, 0b0, e_size, inst_ac?, false, seg_reg, prefixes, temp_rip, rex_byte, r_m, mod_var, sib, bits_of_int(imm_size, 3));
-    if is_some(flg0) then throw(Emsg("Model state error: :X86-OPERAND-FROM-MODR/M-AND-SIB-BYTES"));
-    let (flg, temp_rip) : (option(string), sbits(49)) = add_to_iptr(proc_mode, temp_rip, bits_of_int(increment_rip_by, 48));
+    let (e, increment_rip_by, e_addr) : (bits(128), {|0, 1, 2, 4|}, sbits(64)) = x86_operand_from_modr_m_and_sib_bytes(proc_mode, 0b0, e_size, inst_ac?, false, seg_reg, prefixes, temp_rip, rex_byte, r_m, mod_var, sib, bits_of_int(imm_size, 3));
+    let temp_rip : sbits(49) = add_to_iptr(proc_mode, temp_rip, bits_of_int(increment_rip_by, 48));
     let temp_rip : sbits(48) = truncate(temp_rip, 48);
-    if is_some(flg) then throw(Emsg("Model state error: :RIP-INCREMENT-ERROR"));
-    let (flg1, imm) : (option(string), bits(128)) = rme_size(proc_mode, select_address_size(proc_mode, Some(prefixes)), imm_size, sail_sign_extend(temp_rip, 64), None(), 1, ":X", false, false);
+    let imm : bits(128) = rme_size(proc_mode, select_address_size(proc_mode, Some(prefixes)), imm_size, sail_sign_extend(temp_rip, 64), None(), 1, ":X", false, false);
     let imm : bits(32) = truncate(imm, 32);
-    if is_some(flg1) then throw(Emsg("Model state error: :RME-SIZE-ERROR"));
     let imm : int = loghead(ash(e_size, 3), binary_logext(ash(imm_size, 3), unsigned(imm)));
-    let (flg, temp_rip) : (option(string), sbits(49)) = add_to_iptr(proc_mode, temp_rip, bits_of_int(imm_size, 48));
-    if is_some(flg) then throw(Emsg("Model state error: :RIP-INCREMENT-ERROR"));
+    let temp_rip : sbits(49) = add_to_iptr(proc_mode, temp_rip, bits_of_int(imm_size, 48));
     let badlength? : option(int) = check_instruction_length(start_rip, truncate(temp_rip, 48), 0b000);
-    if is_some(badlength?) then throw(Emsg("A fault occurred.  Original ACL2 AST: (!!FAULT-FRESH :GP 0 :INSTRUCTION-LENGTH BADLENGTH?)"));
+    if is_some(badlength?) then x86_fault("(!!FAULT-FRESH :GP 0 :INSTRUCTION-LENGTH BADLENGTH?)");
     let input_rflags : rflagsbits = rflags;
     let (result, output_rflags, undefined_flags) : (bits(64), rflagsbits, rflagsbits) = gpr_arith_logic_spec(e_size, operation, truncate(e, 64), bits_of_int(imm, 64), input_rflags);
-    let flg1 : option(string) = {
-        if operation == 8 | operation == 7 then {
-            None() : option(string)
-        } else {
-            x86_operand_to_reg_mem(proc_mode, e_size, inst_ac?, false, sail_zero_extend(result, 128), seg_reg, e_addr, prefixes, rex_byte, r_m, mod_var, sib)
-        }
+    if operation == 8 | operation == 7 then () else {
+        x86_operand_to_reg_mem(proc_mode, e_size, inst_ac?, false, sail_zero_extend(result, 128), seg_reg, e_addr, prefixes, rex_byte, r_m, mod_var, sib)
     };
-    if is_some(flg1) then throw(Emsg("Model state error: :X86-OPERAND-TO-REG/MEM"));
     write_user_rflags(output_rflags, undefined_flags);
     write_iptr(proc_mode, truncate(temp_rip, 48))
 }
@@ -202,8 +184,7 @@ function x86_add_adc_sub_sbb_or_and_xor_cmp_test_rax_i (operation, proc_mode, st
         }
     };
     let rax_var : bits(64) = rgfi_size(bits_of_int(rax_size, 4), 0x0, rex_byte);
-    let (flg, imm) : (option(string), bits(128)) = rme_size(proc_mode, select_address_size(proc_mode, Some(prefixes)), operand_size, sail_sign_extend(temp_rip, 64), None(), 1, ":X", false, false);
-    if is_some(flg) then throw(Emsg("Model state error: :RME-SIZE-ERROR"));
+    let imm : bits(128) = rme_size(proc_mode, select_address_size(proc_mode, Some(prefixes)), operand_size, sail_sign_extend(temp_rip, 64), None(), 1, ":X", false, false);
     let imm : bits(64) = {
         if not_bool(byte_operand?) & rax_size == 8 then {
             sail_sign_extend(truncate(imm, 32), 64)
@@ -211,10 +192,9 @@ function x86_add_adc_sub_sbb_or_and_xor_cmp_test_rax_i (operation, proc_mode, st
             sail_zero_extend(truncate(imm, 32), 64)
         }
     };
-    let (flg, temp_rip) : (option(string), sbits(49)) = add_to_iptr(proc_mode, temp_rip, bits_of_int(operand_size, 48));
-    if is_some(flg) then throw(Emsg("Model state error: :RIP-INCREMENT-ERROR"));
+    let temp_rip : sbits(49) = add_to_iptr(proc_mode, temp_rip, bits_of_int(operand_size, 48));
     let badlength? : option(int) = check_instruction_length(start_rip, truncate(temp_rip, 48), 0b000);
-    if is_some(badlength?) then throw(Emsg("A fault occurred.  Original ACL2 AST: (!!FAULT-FRESH :GP 0 :INSTRUCTION-LENGTH BADLENGTH?)"));
+    if is_some(badlength?) then x86_fault("(!!FAULT-FRESH :GP 0 :INSTRUCTION-LENGTH BADLENGTH?)");
     let input_rflags : rflagsbits = rflags;
     let (result, output_rflags, undefined_flags) : (bits(64), rflagsbits, rflagsbits) = gpr_arith_logic_spec(rax_size, operation, rax_var, imm, input_rflags);
     if operation == 8 | operation == 7 then () else {
@@ -237,21 +217,18 @@ function x86_inc_dec_fe_ff (proc_mode, start_rip, temp_rip, prefixes, rex_byte, 
     let r_mem_size : {|1, 2, 4, 8|} = select_operand_size(proc_mode, select_byte_operand, rex_byte, false, prefixes, false, false, false);
     let seg_reg : seg_reg_idx = select_segment_register(proc_mode, prefixes, mod_var, r_m, sib);
     let inst_ac? : bool = true;
-    let (flg0, r_mem, increment_rip_by, addr) : (option(string), bits(128), {|0, 1, 2, 4|}, sbits(64)) = x86_operand_from_modr_m_and_sib_bytes(proc_mode, 0b0, r_mem_size, inst_ac?, false, seg_reg, prefixes, temp_rip, rex_byte, r_m, mod_var, sib, 0b000);
+    let (r_mem, increment_rip_by, addr) : (bits(128), {|0, 1, 2, 4|}, sbits(64)) = x86_operand_from_modr_m_and_sib_bytes(proc_mode, 0b0, r_mem_size, inst_ac?, false, seg_reg, prefixes, temp_rip, rex_byte, r_m, mod_var, sib, 0b000);
     let increment_rip_by : bits(3) = bits_of_int(increment_rip_by, 3);
-    if is_some(flg0) then throw(Emsg("Model state error: :X86-OPERAND-FROM-MODR/M-AND-SIB-BYTES"));
-    let (flg, temp_rip) : (option(string), sbits(49)) = add_to_iptr(proc_mode, temp_rip, sail_zero_extend(increment_rip_by, 48));
+    let temp_rip : sbits(49) = add_to_iptr(proc_mode, temp_rip, sail_zero_extend(increment_rip_by, 48));
     let temp_rip : sbits(48) = truncate(temp_rip, 48);
-    if is_some(flg) then throw(Emsg("Model state error: :RIP-INCREMENT-ERROR"));
     let badlength? : option(int) = check_instruction_length(start_rip, temp_rip, 0b000);
-    if is_some(badlength?) then throw(Emsg("A fault occurred.  Original ACL2 AST: (!!FAULT-FRESH :GP 0 :INSTRUCTION-LENGTH BADLENGTH?)"));
+    if is_some(badlength?) then x86_fault("(!!FAULT-FRESH :GP 0 :INSTRUCTION-LENGTH BADLENGTH?)");
     let input_rflags : rflagsbits = rflags;
     let old_cf : bits(1) = input_rflags[cf];
     let (result, output_rflags, undefined_flags) : (bits(64), rflagsbits, rflagsbits) = gpr_arith_logic_spec(r_mem_size, if reg == 0b000 then 0 else 4, truncate(r_mem, 64), 0x0000000000000001, input_rflags);
     let output_rflags : rflagsbits = [output_rflags with cf = old_cf];
     write_user_rflags(output_rflags, undefined_flags);
-    let flg1 : option(string) = x86_operand_to_reg_mem(proc_mode, r_mem_size, inst_ac?, false, sail_zero_extend(result, 128), seg_reg, addr, prefixes, rex_byte, r_m, mod_var, sib);
-    if is_some(flg1) then throw(Emsg("Model state error: :X86-OPERAND-TO-REG/MEM"));
+    x86_operand_to_reg_mem(proc_mode, r_mem_size, inst_ac?, false, sail_zero_extend(result, 128), seg_reg, addr, prefixes, rex_byte, r_m, mod_var, sib);
     write_iptr(proc_mode, temp_rip)
 }
 
@@ -261,7 +238,7 @@ function x86_inc_dec_4x (proc_mode, start_rip, temp_rip, prefixes, rex_byte, opc
     let ctx : string = "X86-INC/DEC-4X";
     let operand_size : {|2, 4|} = check_range(2, 4, select_operand_size(proc_mode, false, 0x00, false, prefixes, false, false, false));
     let badlength? : option(int) = check_instruction_length(start_rip, temp_rip, 0b000);
-    if is_some(badlength?) then throw(Emsg("A fault occurred.  Original ACL2 AST: (!!FAULT-FRESH :GP 0 :INSTRUCTION-LENGTH BADLENGTH?)"));
+    if is_some(badlength?) then x86_fault("(!!FAULT-FRESH :GP 0 :INSTRUCTION-LENGTH BADLENGTH?)");
     let reg : bits(3) = truncate(logand(0x07, opcode), 3);
     let operand : bits(64) = rgfi_size(bits_of_int(operand_size, 4), sail_zero_extend(reg, 4), 0x00);
     let input_rflags : rflagsbits = rflags;
@@ -286,14 +263,12 @@ function x86_not_neg_f6_f7 (proc_mode, start_rip, temp_rip, prefixes, rex_byte, 
     let r_mem_size : {|1, 2, 4, 8|} = select_operand_size(proc_mode, select_byte_operand, rex_byte, false, prefixes, false, false, false);
     let seg_reg : seg_reg_idx = select_segment_register(proc_mode, prefixes, mod_var, r_m, sib);
     let inst_ac? : bool = true;
-    let (flg0, r_mem, increment_rip_by, addr) : (option(string), bits(128), {|0, 1, 2, 4|}, sbits(64)) = x86_operand_from_modr_m_and_sib_bytes(proc_mode, 0b0, r_mem_size, inst_ac?, false, seg_reg, prefixes, temp_rip, rex_byte, r_m, mod_var, sib, 0b000);
+    let (r_mem, increment_rip_by, addr) : (bits(128), {|0, 1, 2, 4|}, sbits(64)) = x86_operand_from_modr_m_and_sib_bytes(proc_mode, 0b0, r_mem_size, inst_ac?, false, seg_reg, prefixes, temp_rip, rex_byte, r_m, mod_var, sib, 0b000);
     let increment_rip_by : bits(3) = bits_of_int(increment_rip_by, 3);
-    if is_some(flg0) then throw(Emsg("Model state error: :X86-OPERAND-FROM-MODR/M-AND-SIB-BYTES"));
-    let (flg, temp_rip) : (option(string), sbits(49)) = add_to_iptr(proc_mode, temp_rip, sail_zero_extend(increment_rip_by, 48));
+    let temp_rip : sbits(49) = add_to_iptr(proc_mode, temp_rip, sail_zero_extend(increment_rip_by, 48));
     let temp_rip : sbits(48) = truncate(temp_rip, 48);
-    if is_some(flg) then throw(Emsg("Model state error: :RIP-INCREMENT-ERROR"));
     let badlength? : option(int) = check_instruction_length(start_rip, temp_rip, 0b000);
-    if is_some(badlength?) then throw(Emsg("A fault occurred.  Original ACL2 AST: (!!FAULT-FRESH :GP 0 :INSTRUCTION-LENGTH BADLENGTH?)"));
+    if is_some(badlength?) then x86_fault("(!!FAULT-FRESH :GP 0 :INSTRUCTION-LENGTH BADLENGTH?)");
     let input_rflags : rflagsbits = rflags;
     let (result, output_rflags, undefined_flags) : (bits(64), rflagsbits, rflagsbits) = {
         match reg {
@@ -308,7 +283,6 @@ function x86_not_neg_f6_f7 (proc_mode, start_rip, temp_rip, prefixes, rex_byte, 
         let output_rflags : rflagsbits = [output_rflags with cf];
         write_user_rflags(output_rflags, undefined_flags)
     };
-    let flg1 : option(string) = x86_operand_to_reg_mem(proc_mode, r_mem_size, inst_ac?, false, sail_zero_extend(result, 128), seg_reg, addr, prefixes, rex_byte, r_m, mod_var, sib);
-    if is_some(flg1) then throw(Emsg("Model state error: :X86-OPERAND-TO-REG/MEM"));
+    x86_operand_to_reg_mem(proc_mode, r_mem_size, inst_ac?, false, sail_zero_extend(result, 128), seg_reg, addr, prefixes, rex_byte, r_m, mod_var, sib);
     write_iptr(proc_mode, temp_rip)
 }

@@ -684,10 +684,17 @@ def tr_define(ACL2ast, env):
 	# === Translate the body
 	# Evaluate the body - no events should take place but use the returned environment anyway
 	(SailItem, env, _) = transform.transformACL2asttoSail(fnBody, env)
+	retType = getType(SailItem[0])
 
 	# Coerce to forced return type, if any
 	if forced_return_type:
 		coercedBody = coerceExpr(SailItem[0], forced_return_type)
+		SailItem = [coercedBody] if coercedBody else SailItem
+	elif isinstance(retType, Sail_t_tuple) and isStringOptionType(retType.getSubTypes()[0]):
+		# Hack: Try to remove error flags
+		elemTypes = retType.getSubTypes()[1:]
+		newType = Sail_t_tuple(elemTypes) if len(elemTypes) > 0 else Sail_t_unit()
+		coercedBody = coerceExpr(SailItem[0], newType, exact=False)
 		SailItem = [coercedBody] if coercedBody else SailItem
 
 	# Amend the SailFn object to contain the body definition
@@ -855,17 +862,15 @@ def tr_if(ACL2ast, env):
 	if type(elseTerm) not in validTypes: sys.exit(f"Error: unexpected `else` term type: {type(elseTerm)}")
 
 	# Translate subterms.  Hacks:
-	# - Avoid handling system-view for now.
+	# - Error flags are treated as false;  error checks should have been
+	#   translated to exceptions at the point where the error is detected
+	# - Special-case `mbt` (must-be-true)
 	# - If we have just `if _ t nil` then force t and nil to both be bools (don't just return the predicate as it
 	#	might not be a bool.
-	# - Special-case `mbt` (must-be-true)
-	# if (isinstance(ifTerm, list) and ifTerm[0].lower() == 'app-view') or\
-	# 		(isinstance(ifTerm, list) and isinstance(ifTerm[0], SailBoolLit) and
-	# 		ifTerm[0].getBool()):
-
-	# 	(thenTermSail, env, _) = transform.transformACL2asttoSail(thenTerm, env)
-	# 	toReturn = thenTermSail
-	if isinstance(ifTerm, list) and len(ifTerm) == 2 and ifTerm[0].lower() == 'mbt':
+	if is_acl2_flag_symbol(ifTerm) and env.try_lookup(ifTerm) is None:
+		(elseTermSail, env, _) = transform.transformACL2asttoSail(elseTerm, env)
+		toReturn = elseTermSail
+	elif isinstance(ifTerm, list) and len(ifTerm) == 2 and ifTerm[0].lower() == 'mbt':
 		(assertionSail, env, _) = transform.transformACL2asttoSail(ifTerm[1], env)
 		(thenTermSail, env, _) = transform.transformACL2asttoSail(thenTerm, env)
 		toReturn = [SailBlock([assert_helper(assertionSail[0]), thenTermSail[0]])]
@@ -1306,25 +1311,6 @@ def _bstar_helper(bindersRemaining, results, env):
 		(resultsSail, env, _) = transform.transformACL2asttoSail(results, env)
 		return resultsSail, env
 
-	# ===== Helper function to handle leading `!` and `?!` from names ===== #
-	def sanitiseBstarName(name):
-		# See 'Side Effects and Ignoring Variables' section here:
-		# http://www.cs.utexas.edu/users/moore/acl2/manuals/current/manual/?topic=ACL2____B_A2
-		if name == '-':
-			# TODO: really ought to fix this as there may be side effects
-			print(f"Warning: '-' binder for b* not implemented - {bindersRemaining}")
-		if name == '&':
-			# TODO: we really want to use SailUnderScoreLit somehow, but this will do for now
-			name = '_'
-		if name.startswith('?!'):
-			sys.exit(f"Error: bstar name starting with `?!` encountered - {name}")
-		if name.startswith('?'):
-			# There is at least one instance of a binder starting with '?' which is used
-			# in the subsequent body (`?flg0` in `effective-address-computations` in
-			# `decoding-and-spec-utils.lisp`).
-			return name[1:]
-		return name
-
 	# ===== Recursive case: match on the first binding ===== #
 	# Extract the head element
 	binding = bindersRemaining[0]
@@ -1336,9 +1322,20 @@ def _bstar_helper(bindersRemaining, results, env):
 	# the way back up the recursive call
 	boundNames = [] # [str]
 
+	# Hack: Detect bindings of error flag variables and translate them to unit statements
+	# (the error handling should happen inside the body of the binding, raising an exception
+	# in the case of an error)
+	if is_acl2_flag_symbol(b):
+		(exprSail, env, _) = transform.transformACL2asttoSail(binding[1], env)
+		exprStmt = coerceExpr(exprSail[0], Sail_t_unit(), exact=False)
+		if exprStmt is None:
+			sys.exit(f"Error: failed to convert error flag check {exprSail[0].pp()} to unit statement")
+		(recursedSail, env) = _bstar_helper(bindersRemaining[1:], results, env)
+		toReturn = mkBlock([exprStmt] + recursedSail)
+
 	# b may be a symbol (e.g. '-') or a list - let*
-	if isinstance(b, str):
-		b = sanitiseBstarName(b)
+	elif isinstance(b, str):
+		b = sanitiseBindingName(b)
 
 		# Translate the body first, find its type, then register name with env and boundNames
 		forcedType = getForcedVariableType(env, b)
@@ -1370,10 +1367,7 @@ def _bstar_helper(bindersRemaining, results, env):
 				# ... and superfluous unit literals
 				toReturn = exprSail[0]
 			else:
-				if isinstance(recursedSail[0], SailBlock):
-					# Merge blocks
-					recursedSail = recursedSail[0].getExprs() + recursedSail[1:]
-				toReturn = SailBlock(exprSail + recursedSail)
+				toReturn = mkBlock(exprSail + recursedSail)
 		elif isinstance(exprSail[0], SailBoundVar) and bv[0].getName() == exprSail[0].getName():
 			# Omit superfluous 'let x = x in ...' bindings
 			toReturn = recursedSail[0]
@@ -1393,7 +1387,14 @@ def _bstar_helper(bindersRemaining, results, env):
 			# Translate the body before pushing new bindings as the old bindings may be used in the body
 			body = binding[1]
 			(bodySail, env, _) = transform.transformACL2asttoSail(body, env)
-			bodyTypes = bodySail[0].getType().getSubTypes() if isinstance(bodySail[0].getType(), Sail_t_tuple) else []
+			bodyTypes = bodySail[0].getType().getSubTypes() if isinstance(bodySail[0].getType(), Sail_t_tuple) else [getType(bodySail[0])]
+
+			# Hack: Try to remove error flags
+			if len(bodyTypes) > 0 and isStringOptionType(bodyTypes[0]):
+				newType = Sail_t_tuple(bodyTypes[1:]) if len(bodyTypes) > 1 else Sail_t_unit()
+				coercedBody = coerceExpr(bodySail[0], newType, exact=False)
+				bodySail = [coercedBody] if coercedBody else bodySail
+				bodyTypes = bodyTypes[1:] if coercedBody else bodyTypes
 
 			# Perform the bindings
 			afters = [] # [(name:str, the_expr : ACL2astElem)]
@@ -1401,18 +1402,19 @@ def _bstar_helper(bindersRemaining, results, env):
 			# Each name we bind may either be a raw symbol (easy) or a list (e.g. `the` - harder)
 			for i in range(len(b[1:])):
 				ident = b[i + 1]
+				j = len(boundVars)
 				if type(ident) == str:
-					if ident.lower() == 'x86':
+					if ident.lower() == 'x86' or is_acl2_flag_symbol(ident):
 						continue
-					name = sanitiseBstarName(ident)
-					typ = [bodyTypes[i]] if i < len(bodyTypes) else None
+					name = sanitiseBindingName(ident)
+					typ = [bodyTypes[j]] if j < len(bodyTypes) else None
 					boundVars.extend(env.pushToBindings([name], typ))
 					boundNames.append(name)
 				elif type(ident) == list and ident[0].lower() == 'the':
 					# This is a bit of a hack as we can have more general patterns in an mv b* binder
-					name = sanitiseBstarName(ident[2])
+					name = sanitiseBindingName(ident[2])
 					ident[2] = name # tr_the needs to be able to look up the sanitised symbol
-					typ = [bodyTypes[i]] if i < len(bodyTypes) else None
+					typ = [bodyTypes[j]] if j < len(bodyTypes) else None
 					boundVars.extend(env.pushToBindings([name], typ))
 					boundNames.append(name)
 					(sailThe, env, _) = tr_the(ident, env)
@@ -1427,6 +1429,12 @@ def _bstar_helper(bindersRemaining, results, env):
 						afters.append((name, sailThe[0]))
 				else:
 					sys.exit(f"Unknown type of mv binder - {ident}")
+
+			# Check whether we have a unit statement (can happen if the only bound variables are an error flag and the x86 state)
+			if len(boundVars) == 0 and isinstance(getType(bodySail[0]), Sail_t_unit):
+				# Return a block with the statement and the rest of the b* expression
+				(recursedSail, env) = _bstar_helper(bindersRemaining[1:], results, env)
+				return [mkBlock(bodySail + recursedSail)], env
 
 			# Get type information from the function call
 			bodyType = bodySail[0].getType().getSubTypes() if isinstance(bodySail[0].getType(), Sail_t_tuple) else [bodySail[0].getType()]
@@ -1494,7 +1502,7 @@ def _bstar_helper(bindersRemaining, results, env):
 		elif bindType.lower() == 'the':
 			# Extract typeSpec and name
 			(typeSpec, name) = _filterExtract(b, 3, [[list], [str]], [None, None], "`the`")
-			name = sanitiseBstarName(name)
+			name = sanitiseBindingName(name)
 
 			# Translate the body first (using the old environment, in case we are about to re-bind an existing variable)
 			body = filterAST(binding[1])
@@ -1530,13 +1538,7 @@ def _bstar_helper(bindersRemaining, results, env):
 
 			# Negate the condition if we are an 'unless'
 			if bindType.lower() == 'unless':
-				condSail = SailApp(
-					fn=SailHandwrittenFn(
-						name='not_bool',
-						typ=Sail_t_fn([Sail_t_bool()], Sail_t_bool())),
-					actuals=condSail
-				)
-				condSail = [condSail]
+				condSail = [negateBoolExpr(condSail[0])]
 
 			# Translate the thing to return if we exit early.  No extra binding takes place
 			bodySail, env, _ = transform.transformACL2asttoSail(binding[1], env)
@@ -1545,12 +1547,12 @@ def _bstar_helper(bindersRemaining, results, env):
 			recursedSail, env = _bstar_helper(bindersRemaining[1:], results, env)
 
 			# Create Sail term
-			if throwsException(bodySail[0]):
+			if (isinstance(condSail[0], SailBoolLit) and not(condSail[0].getBool())) or isinstance(condSail[0], SailPlaceholderNil):
+				# `(when false)`: drop the binder and just return the remaining expression
+				toReturn = recursedSail[0]
+			elif isException(bodySail[0]):
 				ifExp = SailIf(ifTerm=condSail, thenTerm=bodySail, elseTerm=[SailUnitLit()])
-				if isinstance(recursedSail[0], SailBlock):
-					# Merge blocks
-					recursedSail = recursedSail[0].getExprs() + recursedSail[1:]
-				toReturn = SailBlock([ifExp] + recursedSail)
+				toReturn = mkBlock([ifExp] + recursedSail)
 			else:
 				toReturn = SailIf(ifTerm=condSail, thenTerm=bodySail, elseTerm=recursedSail)
 		# Something else
@@ -1595,6 +1597,9 @@ def tr_bstar(ACL2ast, env):
 	# Return
 	return toReturn, env, len(ACL2ast)
 
+def exceptionHelper(msg, typ=Sail_t_unit()):
+	fn = SailHandwrittenFn("x86_model_error", Sail_t_fn([Sail_t_string()], typ))
+	return SailApp(fn, [msg])
 
 def tr_mv(ACL2ast, env):
 	"""
@@ -1616,25 +1621,42 @@ def tr_mv(ACL2ast, env):
 	# Extract things to return and translate them one by one
 	args = ACL2ast[1:]
 	sailArgs = []
+	sailTyps = []
 	for a in args:
 		# Hack: skip x86 tuple elements
 		if isinstance(a, str) and a.lower() == 'x86':
 			continue
+		# Hack: Skip error flags that were removed previously
+		if is_acl2_flag_symbol(a) and env.try_lookup(a) is None:
+			continue
 		(sa, env, _) = transform.transformACL2asttoSail(a, env)
 		if len(sa) > 1: sys.exit(f"Error: length of argument to mv not 1 - {sa}")
 		sailArgs.extend(sa)
+		sailTyps.extend([getType(e) for e in sa])
+
+	if len(sailArgs) == 0:
+		return [SailUnitLit()], env, len(ACL2ast)
 
 	# Hack: interpret error lists
+	restTyp = Sail_t_tuple(sailTyps[1:]) if len(sailTyps) > 2 else (sailTyps[1] if len(sailTyps) == 2 else Sail_t_unit())
 	# Option 1: the error list is actually a list
 	if isinstance(sailArgs[0], SailTuple):
 		errorString = sailArgs[0].getItems()[0]
 		if isinstance(errorString.getType(), Sail_t_string):
-			sailArgs = [someHelper(errorString)] + sailArgs[1:]
-		if isinstance(errorString.getType(), Sail_t_option) and isinstance(errorString.getType().getTyp(), Sail_t_string):
-			sailArgs = [errorString] + sailArgs[1:]
+			return [exceptionHelper(errorString, restTyp)], env, len(ACL2ast)
+			# sailArgs = [someHelper(errorString)] + sailArgs[1:]
+		elif isSome(errorString):
+			return [exceptionHelper(errorString.getActuals()[0], restTyp)], env, len(ACL2ast)
+		# elif isNone(errorString) or (isinstance(errorString, SailPlaceholderNil) and isStringOptionType(errorString.getType())):
+		# 	sailArgs = sailArgs[1:]
+		# if isinstance(errorString.getType(), Sail_t_option) and isinstance(errorString.getType().getTyp(), Sail_t_string):
+		# 	sailArgs = [errorString] + sailArgs[1:]
 	# The error 'list' is actually single item
-	if isinstance(sailArgs[0], SailStringLit):
-		sailArgs = [someHelper(sailArgs[0])] + sailArgs[1:]
+	elif isinstance(sailArgs[0], SailStringLit):
+		return [exceptionHelper(sailArgs[0], restTyp)], env, len(ACL2ast)
+		# sailArgs = [someHelper(sailArgs[0])] + sailArgs[1:]
+	# elif isNone(sailArgs[0]) or (isinstance(sailArgs[0], SailPlaceholderNil) and isStringOptionType(sailArgs[0].getType())):
+	# 	sailArgs = sailArgs[1:]
 
 	retSail = [SailTuple(sailArgs)] if len(sailArgs) > 1 else sailArgs
 	return retSail, env, len(ACL2ast)
@@ -2158,9 +2180,6 @@ def errorHelper(msg):
 	return throwHelper(exn)
 
 
-def throwsException(sailExp):
-	return isinstance(sailExp, SailApp) and sailExp.getFn().getName() == 'throw'
-
 def tr_er(ACL2ast, env):
 	"""
 	Translate `er` as an inline exception.  See errorHelper() docstring for
@@ -2187,7 +2206,8 @@ def tr_ms_fresh(ACL2ast, env):
 	Interpret the first argument as a string to be returned as an error
 	"""
 	(errString, env, _) = transform.transformACL2asttoSail(ACL2ast[1], env)
-	toReturn = errorHelper(f"Model state error: {errString[0].getString()}")
+	fnType = Sail_t_fn([Sail_t_string()], Sail_t_error())
+	toReturn = SailApp(SailHandwrittenFn("x86_model_error", fnType), errString)
 	return [toReturn], env, len(ACL2ast)
 
 
@@ -2197,7 +2217,9 @@ def tr_fault_fresh(ACL2ast, env):
 	docstring for more information.
 	"""
 	orig = pp_acl2(ACL2ast).replace('"', '\\"')
-	toReturn = errorHelper(f"A fault occurred.  Original ACL2 AST: {orig}")
+	errString = SailStringLit(orig)
+	fnType = Sail_t_fn([Sail_t_string()], Sail_t_error())
+	toReturn = SailApp(SailHandwrittenFn("x86_fault", fnType), [errString])
 	return [toReturn], env, len(ACL2ast)
 
 
@@ -2485,14 +2507,14 @@ def tr_rb(ACL2ast, env):
 	else:
 		sys.exit(f"Error: unsupported number of bytes {nBytesSail[0].pp()} in rb")
 
-	innerRetType = Sail_t_tuple([Sail_t_option(Sail_t_string()), innerType])
+	innerRetType = innerType # Sail_t_tuple([Sail_t_option(Sail_t_string()), innerType])
 	# virtual addresses are signed 48-bit values in the ACL2 model
 	vaType = Sail_t_bits(48, signed=True)
 	fnType = Sail_t_fn([Sail_t_nat(), vaType, Sail_t_string()], innerRetType)
 	addrSail = [coerceExpr(addrSail[0], vaType)]
 	innerSail = SailApp(SailHandwrittenFn('rb', fnType), nBytesSail + addrSail + accessKindSail)
 
-	outerRetType = Sail_t_tuple([Sail_t_option(Sail_t_string()), outerType])
+	outerRetType = outerType # Sail_t_tuple([Sail_t_option(Sail_t_string()), outerType])
 	outerSail = coerceExpr(innerSail, outerRetType)
 
 	return [outerSail], env, len(ACL2ast)
@@ -2518,7 +2540,7 @@ def tr_wb(ACL2ast, env):
 	if valueSail is None:
 		sys.exit(f"tr_wb: Failed to coerce value in {ACL2ast}")
 
-	retType = Sail_t_option(Sail_t_string())
+	retType = Sail_t_unit() # Sail_t_option(Sail_t_string())
 	vaType = Sail_t_bits(48, signed=True)
 	fnType = Sail_t_fn([Sail_t_nat(), vaType, Sail_t_string(), valueType], retType)
 	addrSail = [coerceExpr(addrSail[0], vaType)]
@@ -2662,9 +2684,39 @@ def tr_nil(ACL2ast, env):
 	if currentType is None or currentType == SailPlaceholderNil.DEFAULT:
 		return [SailPlaceholderNil()], env, 1
 	elif currentType == SailPlaceholderNil.BOOL:
+		print("bool nil")
 		return [SailPlaceholderNil(SailPlaceholderNil.BOOL)], env, 1
 	else:
 		sys.exit(f"Unknown current type when translating token 'nil`: {currentType}")
+
+def tr_or(ACL2ast, env):
+	args = ACL2ast[1:]
+	argsSail = []
+
+	for a in args:
+		(aSail, env, _) = transform.transformACL2asttoSail(a, env)
+		if (isinstance(aSail[0], SailBoolLit) and not(aSail[0].getBool())) or isinstance(aSail[0], SailPlaceholderNil):
+			continue
+		else:
+			argsSail.extend(aSail)
+
+	if len(argsSail) == 0:
+		return [SailPlaceholderNil(SailPlaceholderNil.BOOL)], env, len(ACL2ast)
+	elif len(argsSail) == 1:
+		return argsSail, env, len(ACL2ast)
+	else:
+		def mk_or(e1, e2):
+			fn = SailHandwrittenFn('|', typ=Sail_t_fn([Sail_t_bool(), Sail_t_bool()], Sail_t_bool()), infix=True)
+			return SailApp(fn=fn, actuals=[e1, e2], infix=True)
+		boolArgs = [coerceExpr(a, Sail_t_bool()) for a in argsSail]
+		if any(a is None for a in boolArgs):
+			sys.exit(f"Error: failed to convert args to bool in {pp_acl2(ACL2ast)}")
+		result = mk_or(boolArgs[-2], boolArgs[-1])
+		boolArgs = boolArgs[:-2]
+		while len(boolArgs) > 0:
+			a = boolArgs.pop()
+			result = mk_or(a, result)
+		return [result], env, len(ACL2ast)
 
 def tr_trunc(ACL2ast, env):
 	(nBytesSail, env, _) = transform.transformACL2asttoSail(ACL2ast[1], env)

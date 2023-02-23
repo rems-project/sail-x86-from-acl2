@@ -268,7 +268,7 @@ def isNumeric(st):
 	Returns:
 		bool
 	"""
-	return isinstance(st.generalise(), Sail_t_int)
+	return isinstance(st, SailType) and isinstance(st.generalise(), Sail_t_int)
 
 def isNonnegativeType(t):
 	return isinstance(t, Sail_t_nat) or \
@@ -294,7 +294,7 @@ def isString(st):
 	Returns:
 		bool
 	"""
-	return isinstance(st.generalise(), Sail_t_string)
+	return isinstance(st, SailType) and isinstance(st.generalise(), Sail_t_string)
 
 
 ################################################################################
@@ -702,9 +702,6 @@ class Sail_t_option(SailType):
 	def pp(self):
 		return f"option({self.typ.pp()})"
 
-def isStringOption(t):
-	return isinstance(t, Sail_t_option) and isinstance(t.getTyp(), Sail_t_string)
-
 class Sail_t_tuple(SailType):
 	"""
 	Represents a Sail tuple
@@ -959,6 +956,9 @@ def getBitvectorSize(typ):
 def isBitvectorType(typ):
 	return (getBitvectorSize(typ) is not None)
 
+def isStringOptionType(typ):
+	return isinstance(typ, Sail_t_option) and isinstance(typ.getTyp(), Sail_t_string)
+
 def mergeTypes(t1, t2):
 	if t1 == t2:
 		return t1
@@ -994,15 +994,33 @@ def mergeTypes(t1, t2):
 	elif isinstance(t1, Sail_t_tuple) and isinstance(t2, Sail_t_tuple):
 		ts1 = t1.getSubTypes()
 		ts2 = t2.getSubTypes()
-		if len(ts1) != len(ts2):
+		if len(ts1) == len(ts2):
+			merged = []
+			for i in range(len(ts1)):
+				t = mergeTypes(ts1[i], ts2[i])
+				if t is None:
+					return None
+				merged = merged + [t]
+			return Sail_t_tuple(merged)
+		# Hack: Support dropping of error flag
+		elif len(ts1) == len(ts2) + 1 and (isStringOptionType(ts1[0]) or isinstance(ts1[0], Sail_t_unknown)):
+			t1 = Sail_t_tuple(ts1[1:]) if len(ts1) > 1 else Sail_t_unit()
+			return mergeTypes(t1, t2)
+		elif len(ts2) == len(ts1) + 1 and (isStringOptionType(ts2[0]) or isinstance(ts2[0], Sail_t_unknown)):
+			t2 = Sail_t_tuple(ts2[1:]) if len(ts2) > 1 else Sail_t_unit()
+			return mergeTypes(t1, t2)
+		else:
 			return None
-		merged = []
-		for i in range(len(ts1)):
-			t = mergeTypes(ts1[i], ts2[i])
-			if t is None:
-				return None
-			merged = merged + [t]
-		return Sail_t_tuple(merged)
+	elif isinstance(t1, Sail_t_tuple) and len(t1.getSubTypes()) <= 2 and isStringOptionType(t1.getSubTypes()[0]):
+		ts1 = t1.getSubTypes()
+		t1 = ts1[1] if len(ts1) == 2 else Sail_t_unit()
+		return mergeTypes(t1, t2)
+	elif isinstance(t2, Sail_t_tuple) and len(t2.getSubTypes()) <= 2 and isStringOptionType(t2.getSubTypes()[0]):
+		ts2 = t2.getSubTypes()
+		t2 = ts2[1] if len(ts2) == 2 else Sail_t_unit()
+		return mergeTypes(t1, t2)
+	elif (isStringOptionType(t1) and isinstance(t2, Sail_t_unit)) or (isinstance(t1, Sail_t_unit) and isStringOptionType(t2)):
+		return Sail_t_unit()
 	elif isinstance(t2, Sail_t_unknown) or isinstance(t2, Sail_t_error):
 		return t1
 	elif isinstance(t1, Sail_t_unknown) or isinstance(t1, Sail_t_error):

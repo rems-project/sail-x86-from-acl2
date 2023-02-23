@@ -1,4 +1,4 @@
-from lex_parse import ACL2quote
+from lex_parse import ACL2quote, pp_acl2
 from SailASTelems import *
 import specialTokens
 import handwritten_tokens
@@ -38,30 +38,6 @@ Two important manual interventions are as follows:
 	the model as a dummy unit literal as state in Sail is global.
 """
 
-
-#
-# Some helper functions
-#
-
-def is_acl2_list(acl2, min_len=0):
-	return isinstance(acl2, list) and len(acl2) >= min_len
-
-def is_acl2_symbol(acl2, sym=None):
-	return isinstance(acl2, str) and (sym is None or (isinstance(sym, str) and acl2.lower() == sym.lower()))
-
-def is_acl2_app(acl2, head=None, min_len=1):
-	if not is_acl2_list(acl2, min_len=min_len):
-		return False
-	elif isinstance(head, list):
-		return any(is_acl2_symbol(acl2[0], sym) for sym in head)
-	else:
-		return is_acl2_symbol(acl2[0], head)
-
-def is_acl2_the_bind(acl2, sym=None):
-	return is_acl2_app(acl2, "the", min_len=3) and is_acl2_symbol(acl2[2], sym)
-
-def is_acl2_case_match(acl2, match_var=None):
-	return is_acl2_app(acl2, 'case', min_len=2) and (match_var is None or is_acl2_symbol(acl2[1], match_var))
 
 #
 # Manual intervention functions
@@ -131,38 +107,6 @@ def dispatch_creator(ACL2ast, env):
 
 		return True, sailAST, env
 
-def or_macro(ACL2ast, env):
-	"""
-	Usually `OR` behaves well - i.e. has exactly two (boolean) arguments.  In
-	the result of `create-dispatch-for-opcodes` however, it often only has one
-	argument.  In this case, the OR is redundant (`:trans (or x)` is just `x`)
-	so we remove it
-	"""
-	if isinstance(ACL2ast, list) and len(ACL2ast) == 2 and isinstance(ACL2ast[0], str) and ACL2ast[0].lower() == 'or':
-		sailAST, env, _ = transform.transformACL2asttoSail(ACL2ast[1], env)
-		return True, sailAST, env
-
-def chk_ex_or(ACL2ast, env):
-	"""
-	Similar issue to `OR` above in two byte opcode dispatch.  Here, OR is
-	expected to return its first non-nil argument, rather than a boolean.
-	"""
-	if isinstance(ACL2ast, list) and len(ACL2ast) >= 2 and \
-			isinstance(ACL2ast[0], str) and ACL2ast[0].lower() == 'or' and \
-			isinstance(ACL2ast[1], str) and ACL2ast[1].lower() == 'chk-ex':
-		chk_ex_BV_fn = env.lookup('chk-ex')
-		chk_ex_BV, env, _ = chk_ex_BV_fn([], env)
-		chk_ex_BV = chk_ex_BV[0]
-
-		elseTerm, env, _ = transform.transformACL2asttoSail(ACL2ast[2], env)
-		sailAST = SailIf(
-			ifTerm=[chk_ex_BV],  # Internal `convertToBool` does the work for us here
-			thenTerm=[chk_ex_BV],
-			elseTerm=elseTerm
-		)
-
-		return True, [sailAST], env
-
 def implemented_opcode(ACL2ast, env):
 	"""
 	The two large tables below represent the translated one- and two- byte
@@ -204,87 +148,18 @@ def implemented_opcode(ACL2ast, env):
 
 		return True, sailAST, env
 
-def t_in_get_prefixes(ACL2ast, env):
+def get_prefixes_flag(ACL2ast, env):
 	"""
-	`get-prefixes` in `x86.lisp` sometimes returns `t` as part of it's `mv`.
-	This `t` really wants to be interpreted as an option(string) rather than
-	a bool.
+	Remove the error flag from return values of `get-prefixes`
 	"""
 	if env.getDefineSlot().lower() == 'get-prefixes' and \
 			isinstance(ACL2ast, list) and len(ACL2ast) >= 2 and \
 			isinstance(ACL2ast[0], str) and ACL2ast[0].lower() == 'mv' and \
 			isinstance(ACL2ast[1], str) and ACL2ast[1].lower() == 't':
-		# Translate as per normal
-		sailAST, env, _ = specialTokens.tr_mv(ACL2ast, env)
-
-		# Replace the 't' literal with an option(string)
-		itemsList = sailAST[0].getItems()
-		itemsList[0] = someHelper(SailStringLit("This error was 't' in ACL2 but a Some(string) in Sail"))
-
+		# Hack: Remove error flag
+		new_acl2 = [ACL2ast[0]] + ACL2ast[2:]
+		sailAST, env, _ = specialTokens.tr_mv(new_acl2, env)
 		return True, sailAST, env
-
-def fault_var_int_dispatch_creator(ACL2ast, env):
-	"""
-	In `create-dispatch-for-opcodes` we want to make sure `fault-var` is an
-	option(string).
-	"""
-	if isinstance(ACL2ast, ACL2quote) and \
-			isinstance(ACL2ast.getAST(), str) and \
-			ACL2ast.getAST().upper() == ":UD":
-		toRet = someHelper(SailStringLit(':UD'))
-		print(toRet)
-		return True, [toRet], env
-
-def x86_illegal_instruction(ACL2ast, env):
-	"""
-	Want to force some instances of X86-ILLEGAL-INSTRUCTION to int.
-
-	We can't extract the correct form from the ACL2 code because the patterns
-	we would want to use are often not passed through the translator
-	top-level, instead they are broken down in `case` and `cond` translator
-	functions.  Instead, we match on a `cond`, let the translation happen,
-	then use `getChildrenByPred` to extract the bottom-most Sail `if`, then
-	change its type.
-	"""
-	if isinstance(ACL2ast, list) and \
-			isinstance(ACL2ast[0], str) and ACL2ast[0].lower() == 'cond' and \
-			isinstance(ACL2ast[-1], list) and \
-			isinstance(ACL2ast[-1][0], str) and ACL2ast[-1][0].lower() == 't' and \
-			isinstance(ACL2ast[-1][1], list) and isinstance(ACL2ast[-1][1][0], str) and \
-			ACL2ast[-1][1][0].lower() == 'x86-illegal-instruction':
-
-		# Translate as normal
-		sailAST, env, _ = specialTokens.tr_cond(ACL2ast, env)
-
-		# Get the bottom-most if expression and modify the type appropriately
-		pred = lambda e: isinstance(e, SailIf) and \
-						 isinstance(e.elseTerm[0], SailApp) and \
-						 e.elseTerm[0].getFn().getName().lower() == 'throw'
-
-		bottom = sailAST[0].getChildrenByPred(pred)
-
-		for _ in range(len(bottom)):
-			b = bottom.pop()
-			b.elseTerm[0].getFn().setType(Sail_t_fn([], Sail_t_unit(), {'escape'}))
-
-		return True, sailAST, env
-
-
-def x86_step_unimplemented(ACL2ast, env):
-	"""
-	Force type of all 'x86-step-unimplemented' to cope with some being left
-	dangling.  E.g. opcode 108.
-	"""
-	if isinstance(ACL2ast, list) and \
-			isinstance(ACL2ast[0], str) and ACL2ast[0].lower() == 'x86-step-unimplemented':
-		# Translate as normal
-		sailAST, env, _ = specialTokens.tr_ms_fresh(ACL2ast, env)
-
-		# Set type to unit
-		sailAST[0].getFn().setType(Sail_t_fn([], Sail_t_unit(), {'escape'}))
-
-		return True, sailAST, env
-
 
 def push_and_pop_errors(ACL2ast, env):
 	"""
@@ -310,7 +185,7 @@ def x86_hlt_return_type(ACL2ast, env):
 		sailAST, env, _ = specialTokens.tr_ms_fresh(ACL2ast, env)
 
 		# Set type
-		sailAST[0].getFn().setType(Sail_t_fn([], Sail_t_unit(), {'escape'}))
+		sailAST[0].getFn().setType(Sail_t_fn([], Sail_t_unit()))
 
 		return True, sailAST, env
 
@@ -341,7 +216,8 @@ def chk_exc_fn_type(ACL2ast, env):
 	"""
 	if env.getDefineSlot().lower() == 'chk-exc-fn':
 		if isinstance(ACL2ast, str) and ACL2ast.lower() in [':ud', ':nm'] and env.peekContext2 != 'cond':
-			return True, [someHelper(SailStringLit(ACL2ast.upper()))], env
+			sail, env, _ = specialTokens.tr_fault_fresh([ACL2ast], env)
+			return True, sail, env
 		elif isinstance(ACL2ast, list) and isinstance(ACL2ast[0], str) and ACL2ast[0].lower() == 'cond':
 			sail, env, _ = specialTokens.tr_cond(ACL2ast + [['t', 'nil']], env)
 			return True, sail, env
@@ -566,21 +442,22 @@ def moffset_hooks(ACL2ast, env):
 	else:
 		return None
 
+def literal_exceptions(ACL2ast, env):
+	if isinstance(ACL2ast, ACL2quote) and isinstance(ACL2ast.getAST(), str) and ACL2ast.getAST().lower() in [':ud', ':gp', ':nm']:
+		sail, env, _ = specialTokens.tr_fault_fresh([ACL2ast.getAST()], env)
+		sail = coerceExpr(sail[0], Sail_t_unit())
+		return True, [sail], env
+	return None
+
 interventionsList = [
 	x86_token,
 	and_macro,
-	wb_1,
+	# wb_1,
 	dispatch_creator,
-	or_macro,
-	chk_ex_or,
 	ext_opcode_hooks,
-	# implemented_opcode,
-	t_in_get_prefixes,
-	fault_var_int_dispatch_creator,
+	get_prefixes_flag,
 	proc_mode_hooks,
 	ext_memory_hooks,
-	x86_illegal_instruction,
-	x86_step_unimplemented,
 	push_and_pop_errors,
 	x86_hlt_return_type,
 	seg_descriptor_type,
@@ -588,7 +465,8 @@ interventionsList = [
 	chk_exc_fn_type,
 	bitvector_merges,
 	syscall_numbers,
-	moffset_hooks
+	moffset_hooks,
+	literal_exceptions
 ]
 
 def replacePatterns(ACL2ast, env):

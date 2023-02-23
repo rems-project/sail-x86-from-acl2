@@ -63,7 +63,7 @@ def specialTokens():
 		'>': 				num_op_gen('>', Sail_t_bool(), operandType=Sail_t_int(), numOfArgs=2, infix=True),
 		'<=': 				num_op_gen('<=', Sail_t_bool(), operandType=Sail_t_int(), numOfArgs=2, infix=True),
 		'and': 				num_op_gen('&', Sail_t_bool(), operandType=Sail_t_bool(), infix=True),
-		'or': 				num_op_gen('|', Sail_t_bool(), operandType=Sail_t_bool(), infix=True),
+		'or': 				tr_or, # num_op_gen('|', Sail_t_bool(), operandType=Sail_t_bool(), infix=True),
 		'logior':			bitwise_op_gen('logior'),
 		'logand':			bitwise_op_gen('logand'),
 		'logxor':			bitwise_op_gen('logxor'),

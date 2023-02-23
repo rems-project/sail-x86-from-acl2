@@ -329,7 +329,7 @@ class SailLet(SailASTelem):
 			pp_expr = f"({self.expr[0].pp(withAnnotation=False)})"
 		else:
 			pp_expr = f"({self.expr[0].pp()})"
-		if isMultilineExpr(self.expr[0]):
+		if isMultilineExpr(self.expr[0]) and not(isinstance(self.expr[0], SailBlock)):
 			# Wrap (potential) multi-line expressions in a block
 			pp_expr = "{ " + pp_expr + " }"
 		pp_body = self.body[0].pp()
@@ -351,10 +351,14 @@ class SailBlock(SailASTelem):
 		"""
 		super().__init__()
 
-		if any(not isUnitType(e.getType()) for e in exprs[:-1]):
-			sys.exit("Error: Non-unit expression in block")
+		if all(isUnitType(e.getType()) for e in exprs) and len(exprs) > 1 and isinstance(exprs[-1], SailUnitLit):
+			# Remove redundant unit literal at the end
+			self.exprs = exprs[:-1]
+		else:
+			self.exprs = exprs
 
-		self.exprs = exprs
+		if any(not isUnitType(e.getType()) for e in exprs[:-1]):
+			sys.exit("Error: Non-unit expression in block:\n" + self.pp())
 
 	### Custom Methods ###
 	def getExprs(self):
@@ -597,10 +601,10 @@ class SailApp(SailASTelem):
 		Returns:
 			None
 		"""
-		if self.fn.getName().lower() != 'throw':
-			print(f"Warning, try to resolve type of application to function {self.fn.getName()}")
+		if isException(self):
+			self.fn.setType(Sail_t_fn(self.fn.getType().getLHS(), resolvedType))
 		else:
-			self.fn.setType(Sail_t_fn([], resolvedType, {'escape'}))
+			print(f"Warning, try to resolve type of application to function {self.fn.getName()}")
 
 	### Required methods ###
 	def getType(self):
@@ -880,14 +884,14 @@ class SailIf(SailASTelem):
 
 	def coerceBranches(self):
 		typ = self.getType()
-		thenTerm = coerceExpr(self.thenTerm[0], typ)
+		thenTerm = coerceExpr(self.thenTerm[0], typ, exact=False)
 		if thenTerm is None:
-			print(f"Error: cannot coerce then-term {self.thenTerm[0].pp()} to {typ.pp()} (else-term {self.elseTerm[0].pp()}")
+			print(f"Error: cannot coerce then-term {self.thenTerm[0].pp()} to {typ.pp()} (else-term {self.elseTerm[0].pp()})")
 			sys.exit()
 		self.thenTerm[0] = thenTerm
-		elseTerm = coerceExpr(self.elseTerm[0], typ)
+		elseTerm = coerceExpr(self.elseTerm[0], typ, exact=False)
 		if elseTerm is None:
-			print(f"Error: cannot coerce else-term {self.elseTerm[0].pp()} to {typ.pp()} (then-term {self.thenTerm[0].pp()}")
+			print(f"Error: cannot coerce else-term {self.elseTerm[0].pp()} to {typ.pp()} (then-term {self.thenTerm[0].pp()})")
 			sys.exit()
 		self.elseTerm[0] = elseTerm
 
@@ -1064,7 +1068,7 @@ class SailMatch(SailASTelem):
 		typ = self.getType()
 		for i in range(len(self.matches)):
 			(p, e) = self.matches[i]
-			ce = coerceExpr(e, typ)
+			ce = coerceExpr(e, typ, exact=False)
 			if ce is None:
 				print(f"Error: cannot coerce ({e.pp()} : {e.getType().pp()}) to type {typ.pp()}")
 				sys.exit()
@@ -1099,7 +1103,7 @@ class SailMatch(SailASTelem):
 		matchLines = []
 		for (pat, expr) in self.matches:
 			expr_pp = expr.pp()
-			if isMultilineExpr(expr):
+			if isMultilineExpr(expr) and not(isinstance(expr, SailBlock)):
 				# Wrap (potential) multi-line expressions in a block
 				expr_pp = "{ " + expr_pp + " }"
 			matchLines.append(f"{pat.pp()} => {expr_pp}")
@@ -1578,15 +1582,111 @@ def noneHelper(typ):
 			typ = Sail_t_fn([], Sail_t_option(typ))),
 		actuals = [])
 
+def mkBlock(exprs):
+	if exprs == []:
+		return SailUnitLit()
+	else:
+		# Merge nested blocks
+		mergedExprs = [e.getExprs() if isinstance(e, SailBlock) else [e] for e in exprs]
+		# Flatten list of expressions
+		flattenedExprs = [e for es in mergedExprs for e in es]
+		# Remove all but last unit literal
+		filteredExprs = [e for e in flattenedExprs[:-1] if not isinstance(e, SailUnitLit)] + [flattenedExprs[-1]]
+		if len(filteredExprs) == 0:
+			return SailUnitLit()
+		elif len(filteredExprs) == 1:
+			return filteredExprs[0]
+		else:
+			return SailBlock(filteredExprs)
+
 def isNone(item):
 	return isinstance(item, SailApp) and isinstance(item.getFn(), SailHandwrittenFn)\
 			and item.getFn().getName() == 'None' and isinstance(item.getFn().getType().getRHS(), Sail_t_option)
+
+def isNoneOrPlaceholder(item):
+	return isNone(item) or isinstance(item, SailPlaceholderNil)
 
 def isMultilineExpr(expr):
 	return isinstance(expr, SailLet) or \
 			isinstance(expr, SailIf) or \
 			(isinstance(expr, SailBlock) and len(expr.getExprs()) > 1) or \
 			(isinstance(expr, SailMatch) and not isinstance(expr.var, SailStringLit))
+
+def isException(expr):
+	return isinstance(expr, SailApp) and expr.getFn().getName() in ['throw', 'x86_model_error', 'x86_fault']
+
+def negateBoolExpr(expr):
+	expr = coerceExpr(expr, Sail_t_bool())
+	if expr is None:
+		return None
+	elif isinstance(expr, SailBoolLit):
+		return SailBoolLit(not(expr.getBool()))
+	else:
+		fn = SailHandwrittenFn('not_bool', typ=Sail_t_fn([Sail_t_bool()], Sail_t_bool()))
+		return SailApp(fn, [expr])
+
+#
+# Some helper functions
+#
+
+def is_acl2_list(acl2, min_len=0):
+	return isinstance(acl2, list) and len(acl2) >= min_len
+
+def is_acl2_symbol(acl2, sym=None):
+	return isinstance(acl2, str) and (sym is None or (isinstance(sym, str) and acl2.lower() == sym.lower()))
+
+def is_acl2_app(acl2, head=None, min_len=1):
+	if not is_acl2_list(acl2, min_len=min_len):
+		return False
+	elif isinstance(head, list):
+		return any(is_acl2_symbol(acl2[0], sym) for sym in head)
+	else:
+		return is_acl2_symbol(acl2[0], head)
+
+def is_acl2_the_bind(acl2, sym=None):
+	return is_acl2_app(acl2, "the", min_len=3) and is_acl2_symbol(acl2[2], sym)
+
+def is_acl2_case_match(acl2, match_var=None):
+	return is_acl2_app(acl2, 'case', min_len=2) and (match_var is None or is_acl2_symbol(acl2[1], match_var))
+
+# Helper function to handle leading `!` and `?!` from names
+def sanitiseBindingName(name):
+	# See 'Side Effects and Ignoring Variables' section here:
+	# http://www.cs.utexas.edu/users/moore/acl2/manuals/current/manual/?topic=ACL2____B_A2
+	if name == '-':
+		# TODO: really ought to fix this as there may be side effects
+		print(f"Warning: '-' binder for b* not implemented")
+	if name == '&':
+		# TODO: we really want to use SailUnderScoreLit somehow, but this will do for now
+		name = '_'
+	if name.startswith('?!'):
+		sys.exit(f"Error: bstar name starting with `?!` encountered - {name}")
+	if name.startswith('?'):
+		# There is at least one instance of a binder starting with '?' which is used
+		# in the subsequent body (`?flg0` in `effective-address-computations` in
+		# `decoding-and-spec-utils.lisp`).
+		return name[1:]
+	return name
+
+def is_acl2_flag_symbol(acl2):
+	symbols = ["flag", "flg", "fault-var", "chk-ex"] + ["flg" + str(n) for n in range(0, 10)]
+	return is_acl2_symbol(acl2) and sanitiseBindingName(acl2).lower() in symbols
+
+def is_acl2_flag_check(acl2):
+	return is_acl2_list(acl2, min_len=2) and is_acl2_app(acl2[0], "when", min_len=2) and is_acl2_flag_symbol(acl2[0][1])
+
+def get_acl2_flag_check_variable(acl2):
+	return sanitiseBindingName(acl2[0][1]).lower() if is_acl2_flag_check(acl2) else None
+
+def get_acl2_flag_binder(acl2):
+	candidate = acl2[1] if is_acl2_app(acl2, head="mv", min_len=2) else acl2
+	return sanitiseBindingName(candidate).lower() if is_acl2_flag_symbol(candidate) else None
+
+def is_acl2_flag_binder(acl2):
+	return (get_acl2_flag_binder(acl2) is not None)
+
+def is_acl2_flag_binding(acl2):
+	return (is_acl2_list(acl2, min_len=2) and is_acl2_flag_binder(acl2[0]))
 
 def checkTypesMatch(items):
 	"""
@@ -1647,7 +1747,7 @@ def convertToBool(sailAST):
 			actuals=sailAST
 		)]
 	else:
-		sys.exit(f"Error: don't know how to handle term of type {ifType} in `convertToBool`")
+		sys.exit(f"Error: don't know how to handle {sailAST[0].pp()} : {ifType} in `convertToBool`")
 
 	return toReturn
 
@@ -1709,7 +1809,7 @@ def resolveNils(exprs):
 		otherExprs = exprs[:i] + exprs[i + 1:]
 
 		# If the expression is a nil or a `throw`, resolve directly against the other expressions' types
-		if isinstance(e, SailPlaceholderNil) or (isinstance(e, SailApp) and e.getFn().getName().lower() == 'throw'):
+		if isinstance(e, SailPlaceholderNil) or isException(e):
 			# Get the types of the other terms and filter out nils
 			otherTypes = [oe.getType() for oe in otherExprs]
 			resolveNilsInner(otherTypes, e)
@@ -1781,21 +1881,23 @@ def saveSail(SailAST, path, name, env, includeHeaders):
 		print(f"Successfully saved file path: {path}; name: {name}")
 
 def coerceExpr(expr, typ, exact=True):
-	try:
-		etyp = expr.getType()
-	except:
-		print(f"coerceExpr: Cannot get type of {expr.pp()}")
-		return None
-	if etyp is None or isinstance(etyp, Sail_t_unknown):
-		print(f"coerceExpr: Cannot coerce expression {expr.pp()} with unknown type")
-		return None
-	elif isSubType(etyp, typ):
+	etyp = getType(expr)
+	if isSubType(etyp, typ):
 		return expr
 	elif isinstance(expr, SailIf) or isinstance(expr, SailMatch):
 		expr.setType(typ)
 		return expr
-	elif isinstance(expr, SailLet) and coerceExpr(expr.getBody()[0], typ, exact):
-		return SailLet(expr.getVarName(), expr.getExpr(), [coerceExpr(expr.getBody()[0], typ, exact)])
+	elif isException(expr):
+		# Exception throwing is polymorphic, so return a new copy with the requested type
+		fn = SailHandwrittenFn(expr.getFn().getName(), typ=Sail_t_fn(expr.getFn().getType().getLHS(), typ))
+		return SailApp(fn, expr.getActuals())
+	elif isinstance(expr, SailLet):
+		body = coerceExpr(expr.getBody()[0], typ, exact)
+		return SailLet(expr.getVarName(), expr.getExpr(), [body]) if body is not None else None
+	elif isinstance(expr, SailBlock) and len(expr.getExprs()) > 0 and coerceExpr(expr.getExprs()[-1], typ, exact):
+		last = coerceExpr(expr.getExprs()[-1], typ, exact)
+		exprs = expr.getExprs()[:-1] + [last]
+		return SailBlock(exprs)
 	elif isNumeric(etyp) and not isNonnegativeType(etyp) and isinstance(typ, Sail_t_nat):
 		fntyp = Sail_t_fn([Sail_t_int()], typ)
 		return SailApp(SailHandwrittenFn("nat_of_int", fntyp), [expr])
@@ -1896,19 +1998,36 @@ def coerceExpr(expr, typ, exact=True):
 				ftyp = Sail_t_fn([Sail_t_bits(typ.getLength())], typ)
 				return SailApp(SailHandwrittenFn(fname, ftyp), [expr_bits])
 	elif isinstance(expr, SailTuple) and isinstance(typ, Sail_t_tuple):
-		elems = []
-		for i in range(len(expr.getItems())):
-			elem = coerceExpr(expr.getItems()[i], typ.getSubTypes()[i], exact)
-			if elem is None:
-				return None
-			elems = elems + [elem]
-		return SailTuple(elems)
+		exprs = expr.getItems()
+		if len(exprs) == len(typ.getSubTypes()):
+			elems = []
+			for i in range(len(exprs)):
+				elem = coerceExpr(exprs[i], typ.getSubTypes()[i], exact)
+				if elem is None:
+					return None
+				elems = elems + [elem]
+			return SailTuple(elems)
+		elif len(exprs) == len(typ.getSubTypes()) + 1 and isNoneOrPlaceholder(exprs[0]) and not(exact):
+			return coerceExpr(SailTuple(exprs[1:]), typ, exact=False)
+		else:
+			return None
+	elif isinstance(expr, SailTuple) and len(expr.getItems()) > 0 and isNoneOrPlaceholder(expr.getItems()[0]) and not(exact):
+		exprs = expr.getItems()
+		if len(exprs) > 2:
+			return coerceExpr(SailTuple(exprs[1:]), typ, exact=False)
+		elif len(exprs) == 2:
+			result = coerceExpr(exprs[1], typ, exact=False)
+			return result
+		else:
+			return Sail_t_unit()
 	elif isinstance(etyp, Sail_t_tuple) and isinstance(typ, Sail_t_tuple):
 		elems = SailTuple([SailBoundVar("elem" + str(i), typ=etyp.getSubTypes()[i]) for i in range(len(etyp.getSubTypes()))])
 		body = coerceExpr(elems, typ, exact)
 		return SailLet(elems, [expr], [body]) if body is not None else None
 	elif isinstance(expr, SailPlaceholderNil) and isinstance(typ, Sail_t_bool):
 		return SailBoolLit(False)
+	elif isinstance(expr, SailPlaceholderNil) and isinstance(typ, Sail_t_unit) and not(exact):
+		return SailUnitLit()
 	elif isinstance(etyp, Sail_t_option) and isinstance(typ, Sail_t_bool):
 		fntyp = Sail_t_fn([etyp], typ)
 		return SailApp(fn=SailHandwrittenFn(name='is_some', typ=fntyp), actuals=[expr])
@@ -1917,12 +2036,12 @@ def coerceExpr(expr, typ, exact=True):
 		return someHelper(item) if item is not None else None
 	elif isNone(expr) and isinstance(typ, Sail_t_option):
 		return noneHelper(typ.getTyp())
-	elif isinstance(expr, SailApp) and expr.getFn().getName().lower() == 'throw':
-		return expr
 	elif isinstance(expr, SailNumLit) and isinstance(typ, Sail_t_enum) and typ.elems and 0 <= expr.getNum() and expr.getNum() <= len(typ.elems):
 		return SailBoundVar(typ.elems[expr.getNum()], typ=typ, sanitise=False)
 	else:
-		print(f"coerceExpr: Cannot coerce {expr.pp()} : {etyp.pp()} to {typ.pp()}")
+		print(f"type(expr) = {type(expr).__name__}")
+		print(f"type(typ) = {type(typ).__name__}")
+		print(f"coerceExpr: Cannot coerce {expr.pp()} : {ppType(etyp)} to {typ.pp()}")
 		return None
 
 def coerceExprs(exprs, typs):

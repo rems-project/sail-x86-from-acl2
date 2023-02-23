@@ -16,7 +16,7 @@ function clause __SetConfig("set64bit", value) = {
   // Ignore the value
   initialise_64_bit_mode()
 }
-function clause __SetConfig(_, _) = throw(Emsg("Unrecognised Config"))
+function clause __SetConfig(c, _) = throw(Emsg("Unrecognised config " + c))
 end __SetConfig
 
 val x86_step_print_halt : (sbits(48), bool, bool, int) -> bool

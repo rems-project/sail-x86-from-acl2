@@ -54,7 +54,7 @@ function address_aligned_p (addr, operand_size, memory_ptr?) = {
  read access is attempted on an execute-only code segment, in 32-bit 
  mode. In 64-bit mode, the R bit of the code segment descriptor is 
  ignored ( see Atmel manual, Dec ' 17, Volume 2, Section 4.8.1 ) .</p> */
-val rme08 : (proc_mode, address_size, sbits(64), option(base_reg_idx), seg_reg_idx, string) -> (option(string), bits(8))
+val rme08 : (proc_mode, address_size, sbits(64), option(base_reg_idx), seg_reg_idx, string) -> bits(8)
 
 function rme08 (proc_mode, addr_size, eff_addr, base_reg, seg_reg, r_x) = {
     load_bytes_from_ea(proc_mode, addr_size, 1, eff_addr, base_reg, seg_reg, r_x, false, false)
@@ -82,7 +82,7 @@ overload rime08 = {rme08}
  read access is attempted on an execute-only code segment, in 32-bit 
  mode. In 64-bit mode, the R bit of the code segment descriptor is 
  ignored ( see Atmel manual, Dec ' 17, Volume 2, Section 4.8.1 ) .</p> */
-val rme16 : (proc_mode, address_size, sbits(64), option(base_reg_idx), seg_reg_idx, string, bool) -> (option(string), bits(16))
+val rme16 : (proc_mode, address_size, sbits(64), option(base_reg_idx), seg_reg_idx, string, bool) -> bits(16)
 
 function rme16 (proc_mode, addr_size, eff_addr, base_reg, seg_reg, r_x, check_alignment?) = {
     load_bytes_from_ea(proc_mode, addr_size, 2, eff_addr, base_reg, seg_reg, r_x, check_alignment?, false)
@@ -110,7 +110,7 @@ overload rime16 = {rme16}
  read access is attempted on an execute-only code segment, in 32-bit 
  mode. In 64-bit mode, the R bit of the code segment descriptor is 
  ignored ( see Atmel manual, Dec ' 17, Volume 2, Section 4.8.1 ) .</p> */
-val rme32 : (proc_mode, address_size, sbits(64), option(base_reg_idx), seg_reg_idx, string, bool, bool) -> (option(string), bits(32))
+val rme32 : (proc_mode, address_size, sbits(64), option(base_reg_idx), seg_reg_idx, string, bool, bool) -> bits(32)
 
 function rme32 (proc_mode, addr_size, eff_addr, base_reg, seg_reg, r_x, check_alignment?, mem_ptr?) = {
     load_bytes_from_ea(proc_mode, addr_size, 4, eff_addr, base_reg, seg_reg, r_x, check_alignment?, mem_ptr?)
@@ -138,7 +138,7 @@ overload rime32 = {rme32}
  read access is attempted on an execute-only code segment, in 32-bit 
  mode. In 64-bit mode, the R bit of the code segment descriptor is 
  ignored ( see Atmel manual, Dec ' 17, Volume 2, Section 4.8.1 ) .</p> */
-val rme48 : (proc_mode, address_size, sbits(64), option(base_reg_idx), seg_reg_idx, string, bool) -> (option(string), bits(48))
+val rme48 : (proc_mode, address_size, sbits(64), option(base_reg_idx), seg_reg_idx, string, bool) -> bits(48)
 
 function rme48 (proc_mode, addr_size, eff_addr, base_reg, seg_reg, r_x, check_alignment?) = {
     load_bytes_from_ea(proc_mode, addr_size, 6, eff_addr, base_reg, seg_reg, r_x, check_alignment?, false)
@@ -154,7 +154,7 @@ function rme48 (proc_mode, addr_size, eff_addr, base_reg, seg_reg, r_x, check_al
  read access is attempted on an execute-only code segment, in 32-bit 
  mode. In 64-bit mode, the R bit of the code segment descriptor is 
  ignored ( see Atmel manual, Dec ' 17, Volume 2, Section 4.8.1 ) .</p> */
-val rme64 : (proc_mode, address_size, sbits(64), option(base_reg_idx), seg_reg_idx, string, bool) -> (option(string), bits(64))
+val rme64 : (proc_mode, address_size, sbits(64), option(base_reg_idx), seg_reg_idx, string, bool) -> bits(64)
 
 function rme64 (proc_mode, addr_size, eff_addr, base_reg, seg_reg, r_x, check_alignment?) = {
     load_bytes_from_ea(proc_mode, addr_size, 8, eff_addr, base_reg, seg_reg, r_x, check_alignment?, false)
@@ -182,7 +182,7 @@ overload rime64 = {rme64}
  read access is attempted on an execute-only code segment, in 32-bit 
  mode. In 64-bit mode, the R bit of the code segment descriptor is 
  ignored ( see Atmel manual, Dec ' 17, Volume 2, Section 4.8.1 ) .</p> */
-val rme80 : (proc_mode, address_size, sbits(64), option(base_reg_idx), seg_reg_idx, string, bool) -> (option(string), bits(80))
+val rme80 : (proc_mode, address_size, sbits(64), option(base_reg_idx), seg_reg_idx, string, bool) -> bits(80)
 
 function rme80 (proc_mode, addr_size, eff_addr, base_reg, seg_reg, r_x, check_alignment?) = {
     load_bytes_from_ea(proc_mode, addr_size, 10, eff_addr, base_reg, seg_reg, r_x, check_alignment?, false)
@@ -198,7 +198,7 @@ function rme80 (proc_mode, addr_size, eff_addr, base_reg, seg_reg, r_x, check_al
  read access is attempted on an execute-only code segment, in 32-bit 
  mode. In 64-bit mode, the R bit of the code segment descriptor is 
  ignored ( see Atmel manual, Dec ' 17, Volume 2, Section 4.8.1 ) .</p> */
-val rme128 : (proc_mode, address_size, sbits(64), option(base_reg_idx), seg_reg_idx, string, bool) -> (option(string), bits(128))
+val rme128 : (proc_mode, address_size, sbits(64), option(base_reg_idx), seg_reg_idx, string, bool) -> bits(128)
 
 function rme128 (proc_mode, addr_size, eff_addr, base_reg, seg_reg, r_x, check_alignment?) = {
     load_bytes_from_ea(proc_mode, addr_size, 16, eff_addr, base_reg, seg_reg, r_x, check_alignment?, false)
@@ -214,11 +214,10 @@ function rme128 (proc_mode, addr_size, eff_addr, base_reg, seg_reg, r_x, check_a
  read access is attempted on an execute-only code segment, in 32-bit 
  mode. In 64-bit mode, the R bit of the code segment descriptor is 
  ignored; see Intel manual, Dec ' 17, Volume 2, Section 4.8.1</p> */
-val rme_size : (proc_mode, address_size, {|1, 2, 4, 6, 8, 10, 16|}, sbits(64), option(base_reg_idx), seg_reg_idx, string, bool, bool) -> (option(string), bits(128))
+val rme_size : (proc_mode, address_size, {|1, 2, 4, 6, 8, 10, 16|}, sbits(64), option(base_reg_idx), seg_reg_idx, string, bool, bool) -> bits(128)
 
 function rme_size (proc_mode, addr_size, nbytes, eff_addr, base_reg, seg_reg, r_x, check_alignment?, mem_ptr?) = {
-    let (flg, result) = load_bytes_from_ea(proc_mode, addr_size, nbytes, eff_addr, base_reg, seg_reg, r_x, check_alignment?, mem_ptr?);
-    (flg, sail_zero_extend(result, 128))
+    sail_zero_extend(load_bytes_from_ea(proc_mode, addr_size, nbytes, eff_addr, base_reg, seg_reg, r_x, check_alignment?, mem_ptr?), 128)
 }
 
 /*! Read a signed value with the specified number of bytes 
@@ -231,11 +230,10 @@ function rme_size (proc_mode, addr_size, nbytes, eff_addr, base_reg, seg_reg, r_
  read access is attempted on an execute-only code segment, in 32-bit 
  mode. In 64-bit mode, the R bit of the code segment descriptor is 
  ignored; see Atmel manual, Dec ' 17, Volume 2, Section 4.8.1</p> */
-val rime_size : (proc_mode, address_size, {|1, 2, 4, 6, 8|}, sbits(64), option(base_reg_idx), seg_reg_idx, string, bool, bool) -> (option(string), bits(64))
+val rime_size : (proc_mode, address_size, {|1, 2, 4, 6, 8|}, sbits(64), option(base_reg_idx), seg_reg_idx, string, bool, bool) -> bits(64)
 
 function rime_size (proc_mode, addr_size, nbytes, eff_addr, base_reg, seg_reg, r_x, check_alignment?, mem_ptr?) = {
-    let (flg, result) = load_bytes_from_ea(proc_mode, addr_size, nbytes, eff_addr, base_reg, seg_reg, r_x, check_alignment?, mem_ptr?);
-    (flg, sail_sign_extend(result, 64))
+    sail_sign_extend(load_bytes_from_ea(proc_mode, addr_size, nbytes, eff_addr, base_reg, seg_reg, r_x, check_alignment?, mem_ptr?), 64)
 }
 
 /*! Write an unsigned 8-bit value to memory via an effective address.
@@ -253,7 +251,7 @@ function rime_size (proc_mode, addr_size, nbytes, eff_addr, base_reg, seg_reg, r
  analogy, we allow write access to the code segment as well. 
  These checks may be slightly optimized using the invariant that 
  SS.W must be 1 when SS is loaded.</p> */
-val wme08 : (proc_mode, address_size, sbits(64), option(base_reg_idx), seg_reg_idx, bits(8)) -> option(string)
+val wme08 : (proc_mode, address_size, sbits(64), option(base_reg_idx), seg_reg_idx, bits(8)) -> unit
 
 function wme08 (proc_mode, addr_size, eff_addr, base_reg, seg_reg, data) = {
     store_bytes_to_ea(proc_mode, addr_size, 1, eff_addr, base_reg, seg_reg, data, false, false)
@@ -291,7 +289,7 @@ overload wime08 = {wme08}
  analogy, we allow write access to the code segment as well. 
  These checks may be slightly optimized using the invariant that 
  SS.W must be 1 when SS is loaded.</p> */
-val wme16 : (proc_mode, address_size, sbits(64), option(base_reg_idx), seg_reg_idx, bits(16), bool) -> option(string)
+val wme16 : (proc_mode, address_size, sbits(64), option(base_reg_idx), seg_reg_idx, bits(16), bool) -> unit
 
 function wme16 (proc_mode, addr_size, eff_addr, base_reg, seg_reg, data, check_alignment?) = {
     store_bytes_to_ea(proc_mode, addr_size, 2, eff_addr, base_reg, seg_reg, data, check_alignment?, false)
@@ -329,7 +327,7 @@ overload wime16 = {wme16}
  analogy, we allow write access to the code segment as well. 
  These checks may be slightly optimized using the invariant that 
  SS.W must be 1 when SS is loaded.</p> */
-val wme32 : (proc_mode, address_size, sbits(64), option(base_reg_idx), seg_reg_idx, bits(32), bool, bool) -> option(string)
+val wme32 : (proc_mode, address_size, sbits(64), option(base_reg_idx), seg_reg_idx, bits(32), bool, bool) -> unit
 
 function wme32 (proc_mode, addr_size, eff_addr, base_reg, seg_reg, data, check_alignment?, mem_ptr?) = {
     store_bytes_to_ea(proc_mode, addr_size, 4, eff_addr, base_reg, seg_reg, data, check_alignment?, mem_ptr?)
@@ -367,7 +365,7 @@ overload wime32 = {wme32}
  analogy, we allow write access to the code segment as well. 
  These checks may be slightly optimized using the invariant that 
  SS.W must be 1 when SS is loaded.</p> */
-val wme48 : (proc_mode, address_size, sbits(64), option(base_reg_idx), seg_reg_idx, bits(48), bool) -> option(string)
+val wme48 : (proc_mode, address_size, sbits(64), option(base_reg_idx), seg_reg_idx, bits(48), bool) -> unit
 
 function wme48 (proc_mode, addr_size, eff_addr, base_reg, seg_reg, data, check_alignment?) = {
     store_bytes_to_ea(proc_mode, addr_size, 6, eff_addr, base_reg, seg_reg, data, check_alignment?, false)
@@ -388,7 +386,7 @@ function wme48 (proc_mode, addr_size, eff_addr, base_reg, seg_reg, data, check_a
  analogy, we allow write access to the code segment as well. 
  These checks may be slightly optimized using the invariant that 
  SS.W must be 1 when SS is loaded.</p> */
-val wme64 : (proc_mode, address_size, sbits(64), option(base_reg_idx), seg_reg_idx, bits(64), bool) -> option(string)
+val wme64 : (proc_mode, address_size, sbits(64), option(base_reg_idx), seg_reg_idx, bits(64), bool) -> unit
 
 function wme64 (proc_mode, addr_size, eff_addr, base_reg, seg_reg, data, check_alignment?) = {
     store_bytes_to_ea(proc_mode, addr_size, 8, eff_addr, base_reg, seg_reg, data, check_alignment?, false)
@@ -426,7 +424,7 @@ overload wime64 = {wme64}
  analogy, we allow write access to the code segment as well. 
  These checks may be slightly optimized using the invariant that 
  SS.W must be 1 when SS is loaded.</p> */
-val wme80 : (proc_mode, address_size, sbits(64), option(base_reg_idx), seg_reg_idx, bits(80), bool) -> option(string)
+val wme80 : (proc_mode, address_size, sbits(64), option(base_reg_idx), seg_reg_idx, bits(80), bool) -> unit
 
 function wme80 (proc_mode, addr_size, eff_addr, base_reg, seg_reg, data, check_alignment?) = {
     store_bytes_to_ea(proc_mode, addr_size, 10, eff_addr, base_reg, seg_reg, data, check_alignment?, false)
@@ -447,7 +445,7 @@ function wme80 (proc_mode, addr_size, eff_addr, base_reg, seg_reg, data, check_a
  analogy, we allow write access to the code segment as well. 
  These checks may be slightly optimized using the invariant that 
  SS.W must be 1 when SS is loaded.</p> */
-val wme128 : (proc_mode, address_size, sbits(64), option(base_reg_idx), seg_reg_idx, bits(128), bool) -> option(string)
+val wme128 : (proc_mode, address_size, sbits(64), option(base_reg_idx), seg_reg_idx, bits(128), bool) -> unit
 
 function wme128 (proc_mode, addr_size, eff_addr, base_reg, seg_reg, data, check_alignment?) = {
     store_bytes_to_ea(proc_mode, addr_size, 16, eff_addr, base_reg, seg_reg, data, check_alignment?, false)
@@ -469,7 +467,7 @@ function wme128 (proc_mode, addr_size, eff_addr, base_reg, seg_reg, data, check_
  These checks may be slightly optimized using the invariant that 
  SS.W must be 1 when SS is loaded.</p> */
 val wme_size : forall 'nbytes, 'nbytes in {1, 2, 4, 6, 8, 10, 16}.
-  (proc_mode, address_size, int('nbytes), sbits(64), option(base_reg_idx), seg_reg_idx, bits(128), bool, bool) -> option(string)
+  (proc_mode, address_size, int('nbytes), sbits(64), option(base_reg_idx), seg_reg_idx, bits(128), bool, bool) -> unit
 
 function wme_size (proc_mode, addr_size, nbytes, eff_addr, base_reg, seg_reg, data, check_alignment?, mem_ptr?) = {
     store_bytes_to_ea(proc_mode, addr_size, nbytes, eff_addr, base_reg, seg_reg, truncate(data, 8 * nbytes), check_alignment?, mem_ptr?)
