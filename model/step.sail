@@ -1370,7 +1370,11 @@ function one_byte_opcode_execute (proc_mode, start_rip, temp_rip, prefixes, rex_
               if 0xf0 == prefixes[lck] then {
                   x86_fault("(:UD)")
               };
-              x86_xchg(proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode, modr_m, sib)
+              if logbitp(0, rex_byte) then {
+                  x86_xchg(proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode, modr_m, sib)
+              } else {
+                  x86_one_byte_nop(proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode, modr_m, sib)
+              }
           },
           145 => {
               if 0xf0 == prefixes[lck] then {
