@@ -18,7 +18,7 @@ ALL_SAILS=$(PRELUDE_SAILS) $(MODEL_SAILS) $(MAIN_SAIL)
 
 TRANSLATOR_OUTPUT=../output
 
-CC=gcc
+CC?=gcc
 
 GMP_FLAGS = $(shell pkg-config --cflags gmp)
 # N.B. GMP does not have pkg-config metadata on Ubuntu 18.04 so default to -lgmp
