@@ -2767,35 +2767,39 @@ val two_byte_opcode_decode_and_execute : (proc_mode, sbits(48), sbits(48), prefi
 function two_byte_opcode_decode_and_execute (proc_mode, start_rip, temp_rip, prefixes, rex_byte, escape_byte) = {
     let ctx : string = "two-byte-opcode-decode-and-execute";
     let opcode : bits(8) = rme08(proc_mode, select_address_size(proc_mode, Some(prefixes)), sail_sign_extend(temp_rip, 64), None(), 1, ":X");
-    let temp_rip : sbits(49) = add_to_iptr(proc_mode, temp_rip, 0x000000000001);
+    let temp_rip : sbits(48) = add_to_iptr(proc_mode, temp_rip, 0x000000000001);
     let mandatory_prefix : bits(8) = compute_mandatory_prefix_for_two_byte_opcode(proc_mode, opcode, prefixes);
     let modr_m? : bool = two_byte_opcode_modr_m_p(proc_mode, mandatory_prefix, opcode);
-    let modr_m : bits(8) = {
+    let modr_m : modr_m = {
         if modr_m? then {
-            rme08(proc_mode, select_address_size(proc_mode, Some(prefixes)), sail_sign_extend(temp_rip, 64), None(), 1, ":X")
-        } else 0x00
+            Mk_modr_m(rme08(proc_mode, select_address_size(proc_mode, Some(prefixes)), sail_sign_extend(temp_rip, 64), None(), 1, ":X"))
+        } else {
+            Mk_modr_m(0x00)
+        }
     };
-    let temp_rip : sbits(49) = {
+    let temp_rip : sbits(48) = {
         if modr_m? then {
-            add_to_iptr(proc_mode, truncate(temp_rip, 48), 0x000000000001)
+            add_to_iptr(proc_mode, temp_rip, 0x000000000001)
         } else {
             temp_rip
         }
     };
     let sib? : bool = modr_m? & (let p4? : bool = 0x67 == prefixes[adr] in
     let n16_bit_addressp : bool = 2 == select_address_size(proc_mode, Some(prefixes)) in
-      x86_decode_sib_p(Mk_modr_m(modr_m), n16_bit_addressp));
-    let sib : bits(8) = {
+      x86_decode_sib_p(modr_m, n16_bit_addressp));
+    let sib : sib = {
         if sib? then {
-            rme08(proc_mode, select_address_size(proc_mode, Some(prefixes)), sail_sign_extend(temp_rip, 64), None(), 1, ":X")
-        } else 0x00
+            Mk_sib(rme08(proc_mode, select_address_size(proc_mode, Some(prefixes)), sail_sign_extend(temp_rip, 64), None(), 1, ":X"))
+        } else {
+            Mk_sib(0x00)
+        }
     };
-    let temp_rip : sbits(49) = {
+    let temp_rip : sbits(48) = {
         if sib? then {
-            add_to_iptr(proc_mode, truncate(temp_rip, 48), 0x000000000001)
+            add_to_iptr(proc_mode, temp_rip, 0x000000000001)
         } else {
             temp_rip
         }
     };
-    two_byte_opcode_execute(proc_mode, start_rip, truncate(temp_rip, 48), prefixes, mandatory_prefix, rex_byte, opcode, Mk_modr_m(modr_m), Mk_sib(sib))
+    two_byte_opcode_execute(proc_mode, start_rip, temp_rip, prefixes, mandatory_prefix, rex_byte, opcode, modr_m, sib)
 }

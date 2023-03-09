@@ -1937,7 +1937,8 @@ def coerceExpr(expr, typ, exact=True):
 		if etyp.getLength() is not None and typ.getLength() is not None:
 			if typ.getLength() < etyp.getLength():
 				# Avoid redundant truncation after extension
-				if isinstance(expr, SailApp) and expr.getFn().getName() == 'sail_zero_extend'  and \
+				if isinstance(expr, SailApp) and \
+						expr.getFn().getName() in ['sail_zero_extend', 'sail_sign_extend'] and \
 						isinstance(getType(expr.getActuals()[0]), Sail_t_bits) and \
 						getType(expr.getActuals()[0]).getLength() and \
 						getType(expr.getActuals()[0]).getLength() >= typ.getLength():

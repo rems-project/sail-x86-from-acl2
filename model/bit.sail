@@ -20,8 +20,7 @@ function x86_bt_0f_a3 (proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcod
         }
     };
     let increment_rip_by : bits(3) = bits_of_int(increment_rip_by, 3);
-    let temp_rip : sbits(49) = add_to_iptr(proc_mode, temp_rip, sail_zero_extend(increment_rip_by, 48));
-    let temp_rip : sbits(48) = truncate(temp_rip, 48);
+    let temp_rip : sbits(48) = add_to_iptr(proc_mode, temp_rip, sail_zero_extend(increment_rip_by, 48));
     let badlength? : option(int) = check_instruction_length(start_rip, temp_rip, 0b000);
     if is_some(badlength?) then x86_fault("(!!FAULT-FRESH :GP 0 :INSTRUCTION-LENGTH BADLENGTH?)");
     let (bitoffset, bitbase) : (int, bits(128)) = {
@@ -81,12 +80,9 @@ function x86_bt_0f_ba (proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcod
     let inst_ac? : bool = true;
     let (bitbase, increment_rip_by, addr) : (bits(128), {|0, 1, 2, 4|}, sbits(64)) = x86_operand_from_modr_m_and_sib_bytes(proc_mode, 0b0, operand_size, inst_ac?, false, seg_reg, prefixes, temp_rip, rex_byte, r_m, mod_var, sib, 0b001);
     let increment_rip_by : bits(3) = bits_of_int(increment_rip_by, 3);
-    let temp_rip : sbits(49) = add_to_iptr(proc_mode, temp_rip, sail_zero_extend(increment_rip_by, 48));
-    let temp_rip : sbits(48) = truncate(temp_rip, 48);
-    let bitoffset : bits(128) = rme_size(proc_mode, select_address_size(proc_mode, Some(prefixes)), 1, sail_sign_extend(temp_rip, 64), None(), 1, ":X", false, false);
-    let bitoffset : bits(8) = truncate(bitoffset, 8);
-    let temp_rip : sbits(49) = add_to_iptr(proc_mode, temp_rip, 0x000000000001);
-    let temp_rip : sbits(48) = truncate(temp_rip, 48);
+    let temp_rip : sbits(48) = add_to_iptr(proc_mode, temp_rip, sail_zero_extend(increment_rip_by, 48));
+    let bitoffset : bits(8) = truncate(rme_size(proc_mode, select_address_size(proc_mode, Some(prefixes)), 1, sail_sign_extend(temp_rip, 64), None(), 1, ":X", false, false), 8);
+    let temp_rip : sbits(48) = add_to_iptr(proc_mode, temp_rip, 0x000000000001);
     let badlength? : option(int) = check_instruction_length(start_rip, temp_rip, 0b000);
     if is_some(badlength?) then x86_fault("(!!FAULT-FRESH :GP 0 :INSTRUCTION-LENGTH BADLENGTH?)");
     let bitoffset : range(0, 64) = check_range(0, 64, mod(unsigned(bitoffset), ash(operand_size, 3)));

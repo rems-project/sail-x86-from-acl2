@@ -9797,38 +9797,40 @@ function evex_decode_and_execute (proc_mode, start_rip, temp_rip, prefixes, rex_
     let (evex_0f_map?, evex_0f38_map?, evex_0f3a_map?) : (bool, bool, bool) = (Mk_evex_byte1(evex_byte1)[mm] == 0b01, Mk_evex_byte1(evex_byte1)[mm] == 0b10, Mk_evex_byte1(evex_byte1)[mm] == 0b11);
     if not_bool(evex_0f_map? | evex_0f38_map? | evex_0f3a_map?) then x86_fault("(!!fault-fresh :ud :evex-prefixes evex-prefixes :mm evex-byte1)");
     let evex_byte2 : bits(8) = rme08(proc_mode, select_address_size(proc_mode, Some(prefixes)), sail_sign_extend(temp_rip, 64), None(), 1, ":X");
-    let temp_rip : sbits(49) = add_to_iptr(proc_mode, temp_rip, 0x000000000001);
+    let temp_rip : sbits(48) = add_to_iptr(proc_mode, temp_rip, 0x000000000001);
     let evex_prefixes : evex_prefixes = [evex_prefixes with byte2 = evex_byte2];
     if not_bool(Mk_evex_byte2(evex_byte2)[res] == 0b1) then x86_fault("(!!fault-fresh :ud :evex-prefixes evex-prefixes :byte2-reserved-bit)");
     let evex_byte3 : bits(8) = rme08(proc_mode, select_address_size(proc_mode, Some(prefixes)), sail_sign_extend(temp_rip, 64), None(), 1, ":X");
-    let temp_rip : sbits(49) = add_to_iptr(proc_mode, truncate(temp_rip, 48), 0x000000000001);
+    let temp_rip : sbits(48) = add_to_iptr(proc_mode, temp_rip, 0x000000000001);
     let opcode : bits(8) = rme08(proc_mode, select_address_size(proc_mode, Some(prefixes)), sail_sign_extend(temp_rip, 64), None(), 1, ":X");
-    let temp_rip : sbits(49) = add_to_iptr(proc_mode, truncate(temp_rip, 48), 0x000000000001);
-    let modr_m : bits(8) = rme08(proc_mode, select_address_size(proc_mode, Some(prefixes)), sail_sign_extend(temp_rip, 64), None(), 1, ":X");
-    let temp_rip : sbits(49) = add_to_iptr(proc_mode, truncate(temp_rip, 48), 0x000000000001);
+    let temp_rip : sbits(48) = add_to_iptr(proc_mode, temp_rip, 0x000000000001);
+    let modr_m : modr_m = Mk_modr_m(rme08(proc_mode, select_address_size(proc_mode, Some(prefixes)), sail_sign_extend(temp_rip, 64), None(), 1, ":X"));
+    let temp_rip : sbits(48) = add_to_iptr(proc_mode, temp_rip, 0x000000000001);
     let sib? : bool = {
         let p4? : bool = 0x67 == prefixes[adr];
         let n16_bit_addressp : bool = 2 == select_address_size(proc_mode, Some(prefixes));
-        x86_decode_sib_p(Mk_modr_m(modr_m), n16_bit_addressp)
+        x86_decode_sib_p(modr_m, n16_bit_addressp)
     };
-    let sib : bits(8) = {
+    let sib : sib = {
         if sib? then {
-            rme08(proc_mode, select_address_size(proc_mode, Some(prefixes)), sail_sign_extend(temp_rip, 64), None(), 1, ":X")
-        } else 0x00
+            Mk_sib(rme08(proc_mode, select_address_size(proc_mode, Some(prefixes)), sail_sign_extend(temp_rip, 64), None(), 1, ":X"))
+        } else {
+            Mk_sib(0x00)
+        }
     };
-    let temp_rip : sbits(49) = {
+    let temp_rip : sbits(48) = {
         if sib? then {
-            add_to_iptr(proc_mode, truncate(temp_rip, 48), 0x000000000001)
+            add_to_iptr(proc_mode, temp_rip, 0x000000000001)
         } else {
             temp_rip
         }
     };
     if evex_0f_map? then {
-        evex_0f_execute(proc_mode, start_rip, truncate(temp_rip, 48), prefixes, rex_byte, evex_prefixes, opcode, Mk_modr_m(modr_m), Mk_sib(sib))
+        evex_0f_execute(proc_mode, start_rip, temp_rip, prefixes, rex_byte, evex_prefixes, opcode, modr_m, sib)
     } else if evex_0f38_map? then {
-        evex_0f38_execute(proc_mode, start_rip, truncate(temp_rip, 48), prefixes, rex_byte, evex_prefixes, opcode, Mk_modr_m(modr_m), Mk_sib(sib))
+        evex_0f38_execute(proc_mode, start_rip, temp_rip, prefixes, rex_byte, evex_prefixes, opcode, modr_m, sib)
     } else if evex_0f3a_map? then {
-        evex_0f3a_execute(proc_mode, start_rip, truncate(temp_rip, 48), prefixes, rex_byte, evex_prefixes, opcode, Mk_modr_m(modr_m), Mk_sib(sib))
+        evex_0f3a_execute(proc_mode, start_rip, temp_rip, prefixes, rex_byte, evex_prefixes, opcode, modr_m, sib)
     } else {
         x86_model_error(":ILLEGAL-VALUE-OF-EVEX-MM")
     }

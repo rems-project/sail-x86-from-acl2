@@ -95,8 +95,8 @@ function get_prefixes (proc_mode, start_rip, prefixes, rex_byte, cnt) = {
             if not_bool(continue?) then {
                 (prefixes, rex_byte)
             } else {
-                let next_rip : sbits(49) = add_to_iptr(proc_mode, start_rip, 0x000000000001);
-                get_prefixes(proc_mode, truncate(next_rip, 48), prefixes, rex_byte, check_range(0, 15, cnt - 1))
+                let next_rip : sbits(48) = add_to_iptr(proc_mode, start_rip, 0x000000000001);
+                get_prefixes(proc_mode, next_rip, prefixes, rex_byte, check_range(0, 15, cnt - 1))
             }
         } else {
             let prefix_byte_group_code : {|0, 1, 2, 3, 4|} = get_one_byte_prefix_array_code(byte);
@@ -104,15 +104,15 @@ function get_prefixes (proc_mode, start_rip, prefixes, rex_byte, cnt) = {
               0 => {
                   let rex? : bool = in_64bit_mode(proc_mode) & bits_of_int(ash(unsigned(byte), -4), 4) == 0x4;
                   if rex? then {
-                      let next_rip : sbits(49) = add_to_iptr(proc_mode, start_rip, 0x000000000001);
-                      get_prefixes(proc_mode, truncate(next_rip, 48), prefixes, byte, check_range(0, 15, cnt - 1))
+                      let next_rip : sbits(48) = add_to_iptr(proc_mode, start_rip, 0x000000000001);
+                      get_prefixes(proc_mode, next_rip, prefixes, byte, check_range(0, 15, cnt - 1))
                   } else {
                       let prefixes : prefixes = [prefixes with nxt = byte];
                       ([prefixes with num = bits_of_int(15 - cnt, 4)], rex_byte)
                   }
               },
               1 => {
-                  let next_rip : sbits(49) = add_to_iptr(proc_mode, start_rip, 0x000000000001);
+                  let next_rip : sbits(48) = add_to_iptr(proc_mode, start_rip, 0x000000000001);
                   let prefixes : prefixes = {
                       if byte == 0xf0 then {
                           [prefixes with lck = byte]
@@ -120,23 +120,23 @@ function get_prefixes (proc_mode, start_rip, prefixes, rex_byte, cnt) = {
                           [prefixes with rep = byte]
                       }
                   };
-                  get_prefixes(proc_mode, truncate(next_rip, 48), prefixes, 0x00, check_range(0, 15, cnt - 1))
+                  get_prefixes(proc_mode, next_rip, prefixes, 0x00, check_range(0, 15, cnt - 1))
               },
               2 => {
-                  let next_rip : sbits(49) = add_to_iptr(proc_mode, start_rip, 0x000000000001);
+                  let next_rip : sbits(48) = add_to_iptr(proc_mode, start_rip, 0x000000000001);
                   if in_64bit_mode(proc_mode) & (byte == 0x64 | byte == 0x65) | not_bool(in_64bit_mode(proc_mode)) then {
-                      get_prefixes(proc_mode, truncate(next_rip, 48), [prefixes with seg = byte], 0x00, check_range(0, 15, cnt - 1))
+                      get_prefixes(proc_mode, next_rip, [prefixes with seg = byte], 0x00, check_range(0, 15, cnt - 1))
                   } else {
-                      get_prefixes(proc_mode, truncate(next_rip, 48), prefixes, 0x00, check_range(0, 15, cnt - 1))
+                      get_prefixes(proc_mode, next_rip, prefixes, 0x00, check_range(0, 15, cnt - 1))
                   }
               },
               3 => {
-                  let next_rip : sbits(49) = add_to_iptr(proc_mode, start_rip, 0x000000000001);
-                  get_prefixes(proc_mode, truncate(next_rip, 48), [prefixes with opr = byte], 0x00, check_range(0, 15, cnt - 1))
+                  let next_rip : sbits(48) = add_to_iptr(proc_mode, start_rip, 0x000000000001);
+                  get_prefixes(proc_mode, next_rip, [prefixes with opr = byte], 0x00, check_range(0, 15, cnt - 1))
               },
               4 => {
-                  let next_rip : sbits(49) = add_to_iptr(proc_mode, start_rip, 0x000000000001);
-                  get_prefixes(proc_mode, truncate(next_rip, 48), [prefixes with adr = byte], 0x00, check_range(0, 15, cnt - 1))
+                  let next_rip : sbits(48) = add_to_iptr(proc_mode, start_rip, 0x000000000001);
+                  get_prefixes(proc_mode, next_rip, [prefixes with adr = byte], 0x00, check_range(0, 15, cnt - 1))
               },
               _ => (prefixes, rex_byte)
             }
@@ -2420,68 +2420,73 @@ function x86_fetch_decode_execute () = {
         let n64_bit_modep_var : bool = in_64bit_mode(proc_mode);
         let start_rip : sbits(48) = read_iptr(proc_mode);
         let (prefixes, rex_byte) : (prefixes, bits(8)) = get_prefixes(proc_mode, start_rip, Mk_prefixes(0x0000000000000), 0x00, 15);
-        let opcode_vex_evex_byte : bits(8) = Mk_prefixes(prefixes.bits)[nxt];
-        let prefix_length : bits(4) = Mk_prefixes(prefixes.bits)[num];
-        let temp_rip : sbits(49) = add_to_iptr(proc_mode, start_rip, bits_of_int(1 + unsigned(prefix_length), 48));
+        let prefixes : prefixes = Mk_prefixes(prefixes.bits);
+        let opcode_vex_evex_byte : bits(8) = prefixes[nxt];
+        let prefix_length : bits(4) = prefixes[num];
+        let temp_rip : sbits(48) = add_to_iptr(proc_mode, start_rip, bits_of_int(1 + unsigned(prefix_length), 48));
         let vex_byte0? : bool = opcode_vex_evex_byte == 0xc5 | opcode_vex_evex_byte == 0xc4;
         let les_lds_distinguishing_byte : bits(8) : bits(8) = {
             if vex_byte0? then {
-                rme08(proc_mode, select_address_size(proc_mode, Some(Mk_prefixes(prefixes.bits))), sail_sign_extend(temp_rip, 64), None(), 1, ":X")
+                rme08(proc_mode, select_address_size(proc_mode, Some(prefixes)), sail_sign_extend(temp_rip, 64), None(), 1, ":X")
             } else 0x00
         };
         if vex_byte0? & (n64_bit_modep_var | not_bool(n64_bit_modep_var) & les_lds_distinguishing_byte : bits(8)[7 .. 6] == 0b11) then {
-            let temp_rip : sbits(49) = add_to_iptr(proc_mode, truncate(temp_rip, 48), 0x000000000001);
+            let temp_rip : sbits(48) = add_to_iptr(proc_mode, temp_rip, 0x000000000001);
             let vex_prefixes : vex_prefixes = [Mk_vex_prefixes(0x000000) with byte0 = opcode_vex_evex_byte];
             let vex_prefixes : vex_prefixes = [vex_prefixes with byte1 = les_lds_distinguishing_byte : bits(8)];
-            vex_decode_and_execute(proc_mode, start_rip, truncate(temp_rip, 48), Mk_prefixes(prefixes.bits), rex_byte, vex_prefixes)
+            vex_decode_and_execute(proc_mode, start_rip, temp_rip, prefixes, rex_byte, vex_prefixes)
         } else {
             let opcode_evex_byte : bits(8) = opcode_vex_evex_byte;
             let evex_byte0? : bool = opcode_evex_byte == 0x62;
             let bound_distinguishing_byte : bits(8) = {
                 if evex_byte0? then {
-                    rme08(proc_mode, select_address_size(proc_mode, Some(Mk_prefixes(prefixes.bits))), sail_sign_extend(temp_rip, 64), None(), 1, ":X")
+                    rme08(proc_mode, select_address_size(proc_mode, Some(prefixes)), sail_sign_extend(temp_rip, 64), None(), 1, ":X")
                 } else 0x00
             };
             if evex_byte0? & (n64_bit_modep_var | not_bool(n64_bit_modep_var) & bound_distinguishing_byte[7 .. 6] == 0b11) then {
-                let temp_rip : sbits(49) = add_to_iptr(proc_mode, truncate(temp_rip, 48), 0x000000000001);
+                let temp_rip : sbits(48) = add_to_iptr(proc_mode, temp_rip, 0x000000000001);
                 let evex_prefixes : evex_prefixes = [Mk_evex_prefixes(0x00000000) with byte0 = opcode_evex_byte];
                 let evex_prefixes : evex_prefixes = [evex_prefixes with byte1 = bound_distinguishing_byte];
-                evex_decode_and_execute(proc_mode, start_rip, truncate(temp_rip, 48), Mk_prefixes(prefixes.bits), rex_byte, evex_prefixes)
+                evex_decode_and_execute(proc_mode, start_rip, temp_rip, prefixes, rex_byte, evex_prefixes)
             } else {
                 let opcode_byte : bits(8) = opcode_evex_byte;
                 let modr_m? : bool = one_byte_opcode_modr_m_p(proc_mode, opcode_byte);
-                let modr_m : bits(8) = {
+                let modr_m : modr_m = {
                     if modr_m? then {
                         if vex_byte0? | evex_byte0? then {
-                            les_lds_distinguishing_byte : bits(8)
+                            Mk_modr_m(les_lds_distinguishing_byte : bits(8))
                         } else {
-                            rme08(proc_mode, select_address_size(proc_mode, Some(Mk_prefixes(prefixes.bits))), sail_sign_extend(temp_rip, 64), None(), 1, ":X")
+                            Mk_modr_m(rme08(proc_mode, select_address_size(proc_mode, Some(prefixes)), sail_sign_extend(temp_rip, 64), None(), 1, ":X"))
                         }
-                    } else 0x00
+                    } else {
+                        Mk_modr_m(0x00)
+                    }
                 };
-                let temp_rip : sbits(49) = {
+                let temp_rip : sbits(48) = {
                     if modr_m? then {
-                        add_to_iptr(proc_mode, truncate(temp_rip, 48), 0x000000000001)
+                        add_to_iptr(proc_mode, temp_rip, 0x000000000001)
                     } else {
                         temp_rip
                     }
                 };
-                let sib? : bool = modr_m? & (let p4? : bool = 0x67 == Mk_prefixes(prefixes.bits)[adr] in
-                let n16_bit_addressp : bool = 2 == select_address_size(proc_mode, Some(Mk_prefixes(prefixes.bits))) in
-                  x86_decode_sib_p(Mk_modr_m(modr_m), n16_bit_addressp));
-                let sib : bits(8) = {
+                let sib? : bool = modr_m? & (let p4? : bool = 0x67 == prefixes[adr] in
+                let n16_bit_addressp : bool = 2 == select_address_size(proc_mode, Some(prefixes)) in
+                  x86_decode_sib_p(modr_m, n16_bit_addressp));
+                let sib : sib = {
                     if sib? then {
-                        rme08(proc_mode, select_address_size(proc_mode, Some(Mk_prefixes(prefixes.bits))), sail_sign_extend(temp_rip, 64), None(), 1, ":X")
-                    } else 0x00
+                        Mk_sib(rme08(proc_mode, select_address_size(proc_mode, Some(prefixes)), sail_sign_extend(temp_rip, 64), None(), 1, ":X"))
+                    } else {
+                        Mk_sib(0x00)
+                    }
                 };
-                let temp_rip : sbits(49) = {
+                let temp_rip : sbits(48) = {
                     if sib? then {
-                        add_to_iptr(proc_mode, truncate(temp_rip, 48), 0x000000000001)
+                        add_to_iptr(proc_mode, temp_rip, 0x000000000001)
                     } else {
                         temp_rip
                     }
                 };
-                one_byte_opcode_execute(proc_mode, start_rip, truncate(temp_rip, 48), Mk_prefixes(prefixes.bits), rex_byte, opcode_byte, Mk_modr_m(modr_m), Mk_sib(sib))
+                one_byte_opcode_execute(proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode_byte, modr_m, sib)
             }
         }
     }

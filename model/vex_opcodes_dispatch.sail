@@ -6012,7 +6012,7 @@ function vex_decode_and_execute (proc_mode, start_rip, temp_rip, prefixes, rex_b
     };
     if vex3_prefix? & not_bool(vex3_0f_map? | vex3_0f38_map? | vex3_0f3a_map?) then x86_fault("(!!fault-fresh :ud :vex-prefixes vex-prefixes :m-mmmm vex-byte1)");
     let byte2_next_byte : bits(8) = rme08(proc_mode, select_address_size(proc_mode, Some(prefixes)), sail_sign_extend(temp_rip, 64), None(), 1, ":X");
-    let temp_rip : sbits(49) = add_to_iptr(proc_mode, temp_rip, 0x000000000001);
+    let temp_rip : sbits(48) = add_to_iptr(proc_mode, temp_rip, 0x000000000001);
     let vex_prefixes : vex_prefixes = {
         if vex3_prefix? then {
             [vex_prefixes with byte2 = byte2_next_byte]
@@ -6025,9 +6025,9 @@ function vex_decode_and_execute (proc_mode, start_rip, temp_rip, prefixes, rex_b
             rme08(proc_mode, select_address_size(proc_mode, Some(prefixes)), sail_sign_extend(temp_rip, 64), None(), 1, ":X")
         } else 0x00
     };
-    let temp_rip : sbits(49) = {
+    let temp_rip : sbits(48) = {
         if vex3_prefix? then {
-            add_to_iptr(proc_mode, truncate(temp_rip, 48), 0x000000000001)
+            add_to_iptr(proc_mode, temp_rip, 0x000000000001)
         } else {
             temp_rip
         }
@@ -6040,39 +6040,43 @@ function vex_decode_and_execute (proc_mode, start_rip, temp_rip, prefixes, rex_b
         }
     };
     let modr_m? : bool = vex_opcode_modr_m_p(vex_prefixes, opcode);
-    let modr_m : bits(8) = {
+    let modr_m : modr_m = {
         if modr_m? then {
-            rme08(proc_mode, select_address_size(proc_mode, Some(prefixes)), sail_sign_extend(temp_rip, 64), None(), 1, ":X")
-        } else 0x00
+            Mk_modr_m(rme08(proc_mode, select_address_size(proc_mode, Some(prefixes)), sail_sign_extend(temp_rip, 64), None(), 1, ":X"))
+        } else {
+            Mk_modr_m(0x00)
+        }
     };
-    let temp_rip : sbits(49) = {
+    let temp_rip : sbits(48) = {
         if modr_m? then {
-            add_to_iptr(proc_mode, truncate(temp_rip, 48), 0x000000000001)
+            add_to_iptr(proc_mode, temp_rip, 0x000000000001)
         } else {
             temp_rip
         }
     };
     let sib? : bool = modr_m? & (let p4? : bool = 0x67 == prefixes[adr] in
     let n16_bit_addressp : bool = 2 == select_address_size(proc_mode, Some(prefixes)) in
-      x86_decode_sib_p(Mk_modr_m(modr_m), n16_bit_addressp));
-    let sib : bits(8) = {
+      x86_decode_sib_p(modr_m, n16_bit_addressp));
+    let sib : sib = {
         if sib? then {
-            rme08(proc_mode, select_address_size(proc_mode, Some(prefixes)), sail_sign_extend(temp_rip, 64), None(), 1, ":X")
-        } else 0x00
+            Mk_sib(rme08(proc_mode, select_address_size(proc_mode, Some(prefixes)), sail_sign_extend(temp_rip, 64), None(), 1, ":X"))
+        } else {
+            Mk_sib(0x00)
+        }
     };
-    let temp_rip : sbits(49) = {
+    let temp_rip : sbits(48) = {
         if sib? then {
-            add_to_iptr(proc_mode, truncate(temp_rip, 48), 0x000000000001)
+            add_to_iptr(proc_mode, temp_rip, 0x000000000001)
         } else {
             temp_rip
         }
     };
     if vex_prefixes_map_p(0x000f, vex_prefixes) then {
-        vex_0f_execute(proc_mode, start_rip, truncate(temp_rip, 48), prefixes, rex_byte, vex_prefixes, opcode, Mk_modr_m(modr_m), Mk_sib(sib))
+        vex_0f_execute(proc_mode, start_rip, temp_rip, prefixes, rex_byte, vex_prefixes, opcode, modr_m, sib)
     } else if vex_prefixes_map_p(0x0f38, vex_prefixes) then {
-        vex_0f38_execute(proc_mode, start_rip, truncate(temp_rip, 48), prefixes, rex_byte, vex_prefixes, opcode, Mk_modr_m(modr_m), Mk_sib(sib))
+        vex_0f38_execute(proc_mode, start_rip, temp_rip, prefixes, rex_byte, vex_prefixes, opcode, modr_m, sib)
     } else if vex_prefixes_map_p(0x0f3a, vex_prefixes) then {
-        vex_0f3a_execute(proc_mode, start_rip, truncate(temp_rip, 48), prefixes, rex_byte, vex_prefixes, opcode, Mk_modr_m(modr_m), Mk_sib(sib))
+        vex_0f3a_execute(proc_mode, start_rip, temp_rip, prefixes, rex_byte, vex_prefixes, opcode, modr_m, sib)
     } else {
         x86_model_error(":ILLEGAL-VALUE-OF-VEX-M-MMMM")
     }

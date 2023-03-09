@@ -5,20 +5,19 @@ function x86_near_jmp_op_en_d (proc_mode, start_rip, temp_rip, prefixes, rex_byt
     let ctx : string = "X86-NEAR-JMP-OP/EN-D";
     let byte_operand? : bool = opcode == 0xeb;
     let offset_size : {|1, 2, 4|} = check_range(0, 4, select_operand_size(proc_mode, byte_operand?, rex_byte, false, prefixes, false, true, true));
-    let offset : sbits(64) = rime_size(proc_mode, select_address_size(proc_mode, Some(prefixes)), offset_size, sail_sign_extend(temp_rip, 64), None(), 1, ":X", false, false);
-    let offset : sbits(32) = truncate(offset, 32);
-    let next_rip : sbits(49) = add_to_iptr(proc_mode, temp_rip, bits_of_int(offset_size, 48));
-    let badlength? : option(int) = check_instruction_length(start_rip, truncate(next_rip, 48), 0b000);
+    let offset : sbits(32) = truncate(rime_size(proc_mode, select_address_size(proc_mode, Some(prefixes)), offset_size, sail_sign_extend(temp_rip, 64), None(), 1, ":X", false, false), 32);
+    let next_rip : sbits(48) = add_to_iptr(proc_mode, temp_rip, bits_of_int(offset_size, 48));
+    let badlength? : option(int) = check_instruction_length(start_rip, next_rip, 0b000);
     if is_some(badlength?) then x86_fault("(!!FAULT-FRESH :GP 0 :INSTRUCTION-LENGTH BADLENGTH?)");
-    let temp_rip : sbits(49) = add_to_iptr(proc_mode, truncate(next_rip, 48), sail_sign_extend(offset, 48));
-    let temp_rip : sbits(49) = {
+    let temp_rip : sbits(48) = add_to_iptr(proc_mode, next_rip, sail_sign_extend(offset, 48));
+    let temp_rip : sbits(48) = {
         if offset_size == 2 then {
-            logand(0b0000000000000000000000000000000001111111111111111, temp_rip)
+            logand(0x00000000ffff, temp_rip)
         } else {
             temp_rip
         }
     };
-    write_iptr(proc_mode, truncate(temp_rip, 48))
+    write_iptr(proc_mode, temp_rip)
 }
 
 val x86_near_jmp_op_en_m : (proc_mode, sbits(48), sbits(48), prefixes, bits(8), bits(8), modr_m, sib) -> unit
@@ -34,16 +33,16 @@ function x86_near_jmp_op_en_m (proc_mode, start_rip, temp_rip, prefixes, rex_byt
     let seg_reg : seg_reg_idx = select_segment_register(proc_mode, prefixes, mod_var, r_m, sib);
     let inst_ac? : bool = true;
     let (jmp_addr, increment_rip_by, addr) : (bits(128), {|0, 1, 2, 4|}, sbits(64)) = x86_operand_from_modr_m_and_sib_bytes(proc_mode, 0b0, operand_size, inst_ac?, false, seg_reg, prefixes, temp_rip, rex_byte, r_m, mod_var, sib, 0b000);
+    let jmp_addr : sbits(64) = truncate(jmp_addr, 64);
     let increment_rip_by : bits(3) = bits_of_int(increment_rip_by, 3);
-    let temp_rip : sbits(49) = add_to_iptr(proc_mode, temp_rip, sail_zero_extend(increment_rip_by, 48));
-    let temp_rip : sbits(48) = truncate(temp_rip, 48);
+    let temp_rip : sbits(48) = add_to_iptr(proc_mode, temp_rip, sail_zero_extend(increment_rip_by, 48));
     let badlength? : option(int) = check_instruction_length(start_rip, temp_rip, 0b000);
     if is_some(badlength?) then x86_fault("(!!FAULT-FRESH :GP 0 :INSTRUCTION-LENGTH BADLENGTH?)");
-    let jmp_addr : sbits(130) = {
+    let jmp_addr : sbits(64) = {
         if in_64bit_mode(proc_mode) then {
-            sail_sign_extend(truncate(jmp_addr, 64), 130)
+            jmp_addr
         } else {
-            sail_zero_extend(jmp_addr, 130)
+            jmp_addr
         }
     };
     if not_bool(if in_64bit_mode(proc_mode) then {
@@ -141,8 +140,7 @@ function x86_far_jmp_op_en_d (proc_mode, start_rip, temp_rip, prefixes, rex_byte
     if unsigned(dt_limit) < largest_address then x86_fault("(!!FAULT-FRESH :GP SEL-INDEX :GP-SELECTOR-LIMIT-CHECK-FAILED (LIST SELECTOR DT-BASE-ADDR DT-LIMIT))");
     let descriptor_addr : int = unsigned(dt_base_addr) + unsigned(bits_of_int(ash(unsigned(sel_index), 3), 16));
     if not_bool(canonical_address_p(descriptor_addr)) then x86_model_error(":DESCRIPTOR-ADDR-VIRTUAL-MEMORY-ERROR");
-    let descriptor : bits(128) = rml_size(8, bits_of_int(descriptor_addr, 48), ":X");
-    let descriptor : bits(64) = truncate(descriptor, 64);
+    let descriptor : bits(64) = truncate(rml_size(8, bits_of_int(descriptor_addr, 48), ":X"), 64);
     let s : bits(1) = Mk_code_segment_descriptorbits(descriptor)[s];
     if s == 0b1 then {
         let msb_of_type : bits(1) = Mk_code_segment_descriptorbits(descriptor)[msb_of_type];
@@ -239,8 +237,7 @@ function x86_far_jmp_op_en_d (proc_mode, start_rip, temp_rip, prefixes, rex_byte
             if unsigned(cs_dt_limit) < largest_address then x86_fault("(!!FAULT-FRESH :GP CS-SEL-INDEX :GP-SELECTOR-LIMIT-CHECK-FAILED (LIST CS-SELECTOR CS-DT-BASE-ADDR CS-DT-LIMIT))");
             let cs_descriptor_addr : int = unsigned(cs_dt_base_addr) + unsigned(bits_of_int(ash(unsigned(cs_sel_index), 3), 16));
             if not_bool(canonical_address_p(cs_descriptor_addr)) then x86_model_error(":CS-DESCRIPTOR-ADDR-VIRTUAL-MEMORY-ERROR");
-            let cs_descriptor : bits(128) = rml_size(8, bits_of_int(cs_descriptor_addr, 48), ":X");
-            let cs_descriptor : bits(64) = truncate(cs_descriptor, 64);
+            let cs_descriptor : bits(64) = truncate(rml_size(8, bits_of_int(cs_descriptor_addr, 48), ":X"), 64);
             let (valid?, reason) : (bool, (string, bits(64))) = ia32e_valid_code_segment_descriptor_p(cs_descriptor);
             if not_bool(valid?) then x86_fault("(!!FAULT-FRESH :GP CS-SEL-INDEX :CALL-GATE-CODE-SEGMENT-DESCRIPTOR-INVALID (CONS REASON CS-DESCRIPTOR))");
             let cs_dpl : bits(2) = Mk_code_segment_descriptorbits(cs_descriptor)[dpl];
@@ -251,20 +248,20 @@ function x86_far_jmp_op_en_d (proc_mode, start_rip, temp_rip, prefixes, rex_byte
             let call_gate_offset63_32 : bits(32) = Mk_call_gate_descriptorbits(descriptor)[offset63_32];
             let call_gate_offset31_0 : int = changeSlice(ash(unsigned(call_gate_offset31_16), 16), 0, 16, unsigned(call_gate_offset15_0));
             let call_gate_offset : int = changeSlice(ash(unsigned(call_gate_offset63_32), 32), 0, 32, call_gate_offset31_0);
-            let jmp_addr : int = {
+            let jmp_addr : sbits(64) = {
                 match offset_size {
-                  2 => unsigned(bits_of_int(call_gate_offset, 16)),
-                  4 => unsigned(bits_of_int(call_gate_offset, 32)),
-                  _ => call_gate_offset
+                  2 => sail_zero_extend(bits_of_int(call_gate_offset, 16), 64),
+                  4 => sail_zero_extend(bits_of_int(call_gate_offset, 32), 64),
+                  _ => bits_of_int(call_gate_offset, 64)
                 }
             };
-            if not_bool(canonical_address_p(jmp_addr)) then x86_model_error(":TARGET-OFFSET-VIRTUAL-MEMORY-ERROR");
+            if not_bool(canonical_address_p(signed(jmp_addr))) then x86_model_error(":TARGET-OFFSET-VIRTUAL-MEMORY-ERROR");
             let new_cs_visible : segment_selectorbits = [Mk_segment_selectorbits(cs_selector) with rpl = cpl];
             seg_visibles[1] = new_cs_visible.bits;
             seg_hidden_bases[1] = cs_dt_base_addr;
             seg_hidden_limits[1] = cs_dt_limit;
             seg_hidden_attrs[1] = make_code_segment_attr_field(cs_descriptor).bits;
-            write_iptr(proc_mode, bits_of_int(jmp_addr, 48))
+            write_iptr(proc_mode, truncate(jmp_addr, 48))
         } else {
             x86_fault("(!!FAULT-FRESH :GP SEL-INDEX :EITHER-BOTH-CODE-SEGMENT-OR-CALL-GATE-ARE-ABSENT-OR-SOME-OTHER-DESCRIPTOR-IS-PRESENT (CONS REASON2 DESCRIPTOR))")
         }
@@ -296,12 +293,12 @@ function x86_loop (proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode, m
     };
     if branch_cond then {
         let rel8 : sbits(64) = rime_size(proc_mode, select_address_size(proc_mode, Some(prefixes)), 1, sail_sign_extend(temp_rip, 64), None(), 1, ":X", false, false);
-        let next_rip : sbits(49) = add_to_iptr(proc_mode, temp_rip, bits_of_int(1 + signed(rel8), 48));
+        let next_rip : sbits(48) = add_to_iptr(proc_mode, temp_rip, bits_of_int(1 + signed(rel8), 48));
         write_rgfi_size(bits_of_int(counter_size, 4), 0x1, counter, rex_byte);
-        write_iptr(proc_mode, truncate(next_rip, 48))
+        write_iptr(proc_mode, next_rip)
     } else {
-        let next_rip : sbits(49) = add_to_iptr(proc_mode, temp_rip, 0x000000000001);
+        let next_rip : sbits(48) = add_to_iptr(proc_mode, temp_rip, 0x000000000001);
         write_rgfi_size(bits_of_int(counter_size, 4), 0x1, counter, rex_byte);
-        write_iptr(proc_mode, truncate(next_rip, 48))
+        write_iptr(proc_mode, next_rip)
     }
 }

@@ -210,6 +210,9 @@ def filterAST(ACL2ast, comments=False):
 
 def getForcedVariableType(env, var):
 	typ = config_patterns.forced_variable_types.get(var.lower())
+	if isinstance(typ, dict):
+		# Check whether type is forced for current function
+		typ = typ.get(env.getDefineSlot().lower())
 	if isinstance(typ, Sail_t_bitfield):
 		typ = env.lookupBitfieldType(typ.getName())
 	return typ
@@ -693,7 +696,12 @@ def tr_define(ACL2ast, env):
 	elif isinstance(retType, Sail_t_tuple) and isStringOptionType(retType.getSubTypes()[0]):
 		# Hack: Try to remove error flags
 		elemTypes = retType.getSubTypes()[1:]
-		newType = Sail_t_tuple(elemTypes) if len(elemTypes) > 0 else Sail_t_unit()
+		if len(elemTypes) == 0:
+			newType = Sail_t_unit()
+		elif len(elemTypes) == 1:
+			newType = elemTypes[0]
+		else:
+			newType = Sail_t_tuple(elemTypes)
 		coercedBody = coerceExpr(SailItem[0], newType, exact=False)
 		SailItem = [coercedBody] if coercedBody else SailItem
 
@@ -1391,7 +1399,12 @@ def _bstar_helper(bindersRemaining, results, env):
 
 			# Hack: Try to remove error flags
 			if len(bodyTypes) > 0 and isStringOptionType(bodyTypes[0]):
-				newType = Sail_t_tuple(bodyTypes[1:]) if len(bodyTypes) > 1 else Sail_t_unit()
+				if len(bodyTypes) == 1:
+					newType = Sail_t_unit()
+				elif len(bodyTypes) == 2:
+					newType = bodyTypes[1]
+				else:
+					newType = Sail_t_tuple(bodyTypes[1:])
 				coercedBody = coerceExpr(bodySail[0], newType, exact=False)
 				bodySail = [coercedBody] if coercedBody else bodySail
 				bodyTypes = bodyTypes[1:] if coercedBody else bodyTypes
@@ -1408,18 +1421,30 @@ def _bstar_helper(bindersRemaining, results, env):
 						continue
 					name = sanitiseBindingName(ident)
 					typ = [bodyTypes[j]] if j < len(bodyTypes) else None
-					boundVars.extend(env.pushToBindings([name], typ))
+					bv = env.pushToBindings([name], typ)
+					boundVars.extend(bv)
 					boundNames.append(name)
+					if hasForcedVariableType(env, ident) and (typ is None or not(isSubType(getForcedVariableType(env, ident), typ[0]))):
+						forcedType = getForcedVariableType(env, ident)
+						coercedBinding = coerceExpr(bv[0], forcedType)
+						if coercedBinding is not None:
+							print(f"Debug: Adding coercion {coercedBinding.pp()} : {forcedType.pp()}")
+							afters.append((name, coercedBinding))
 				elif type(ident) == list and ident[0].lower() == 'the':
 					# This is a bit of a hack as we can have more general patterns in an mv b* binder
 					name = sanitiseBindingName(ident[2])
 					ident[2] = name # tr_the needs to be able to look up the sanitised symbol
 					typ = [bodyTypes[j]] if j < len(bodyTypes) else None
-					boundVars.extend(env.pushToBindings([name], typ))
+					bv = env.pushToBindings([name], typ)
+					boundVars.extend(bv)
 					boundNames.append(name)
 					(sailThe, env, _) = tr_the(ident, env)
+					if hasForcedVariableType(env, ident[2]) and (typ is None or not(isSubType(getForcedVariableType(env, ident[2]), typ[0]))):
+						forcedType = getForcedVariableType(env, ident[2])
+						coercedBinding = coerceExpr(bv[0], forcedType)
+						sailThe = [coercedBinding] if coercedBinding else sailThe
 					sailTyp = sailThe[0].getType()
-					if typ is not None and typ[0] == sailTyp:
+					if typ is not None and isSubType(sailTyp, typ[0]): # and typ[0] == sailTyp:
 						print(f"Debug: Skipping coercion {sailThe[0].pp()} : {sailTyp.pp()} from type {typ[0].pp()}")
 					else:
 						# Add a type coercion after the
@@ -1435,6 +1460,16 @@ def _bstar_helper(bindersRemaining, results, env):
 				# Return a block with the statement and the rest of the b* expression
 				(recursedSail, env) = _bstar_helper(bindersRemaining[1:], results, env)
 				return [mkBlock(bodySail + recursedSail)], env
+
+			# Similary, check if we only have one variable left and can coerce the type of the body directly
+			if len(boundVars) == 1 and len(afters) == 1:
+				(name, coerced) = afters[0]
+				forcedType = getType(coerced)
+				coercedBody = coerceExpr(bodySail[0], forcedType)
+				if coercedBody is not None:
+					bodySail = [coercedBody]
+					afters = []
+					boundVars[0].setType(forcedType)
 
 			# Get type information from the function call
 			bodyType = bodySail[0].getType().getSubTypes() if isinstance(bodySail[0].getType(), Sail_t_tuple) else [bodySail[0].getType()]

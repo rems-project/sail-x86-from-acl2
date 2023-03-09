@@ -70,20 +70,20 @@ function read_iptr proc_mode = {
  so the valid effective addresses are always between 0 and the segment limit 
  ( cf. @ ( tsee segment-base-and-bounds ) ) . 
  </p> */
-val add_to_iptr : (proc_mode, sbits(48), sbits(48)) -> sbits(49)
+val add_to_iptr : (proc_mode, sbits(48), sbits(48)) -> sbits(48)
 
 function add_to_iptr (proc_mode, iptr, delta) = {
     let iptr_plus_delta : sbits(49) = bits_of_int(signed(iptr) + signed(delta), 49);
     if in_64bit_mode(proc_mode) then {
         if canonical_address_p(signed(iptr_plus_delta)) then {
-            iptr_plus_delta
+            truncate(iptr_plus_delta, 48)
         } else {
             x86_model_error(":NON-CANONICAL-INSTRUCTION-POINTER")
         }
     } else if in_compatibility_mode(proc_mode) then {
         let cs_limit : bits(32) = loghead(32, seg_hidden_limits[1]);
         if 0 <= signed(iptr_plus_delta) & signed(iptr_plus_delta) <= unsigned(cs_limit) then {
-            sail_zero_extend(truncate(iptr_plus_delta, 32), 49)
+            truncate(sail_zero_extend(truncate(iptr_plus_delta, 32), 49), 48)
         } else {
             x86_model_error(":OUT-OF-SEGMENT-INSTRUCTION-POINTER")
         }
@@ -623,11 +623,11 @@ function x86_effective_addr_32_64 (proc_mode, p4, temp_rip, rex_byte, r_m, mod_v
                 5 => {
                     if in_64bit_mode(proc_mode) then {
                         let dword : sbits(64) = rime_size(Mode_64bit, select_address_size(proc_mode, None()), 4, sail_sign_extend(temp_rip, 64), None(), 1, ":X", false, false);
-                        let next_rip : sbits(49) = add_to_iptr(Mode_64bit, temp_rip, bits_of_int(4 + unsigned(num_imm_bytes), 48));
+                        let next_rip : sbits(48) = add_to_iptr(Mode_64bit, temp_rip, bits_of_int(4 + unsigned(num_imm_bytes), 48));
                         (signed(next_rip), dword, 4)
                     } else {
                         let dword : sbits(64) = rime_size(proc_mode, select_address_size(proc_mode, None()), 4, sail_sign_extend(temp_rip, 64), None(), 1, ":X", false, false);
-                        (signed(0b0000000000000000000000000000000000000000000000000), dword, 4)
+                        (signed(0x000000000000), dword, 4)
                     }
                 },
                 _ => (if in_64bit_mode(proc_mode) then {

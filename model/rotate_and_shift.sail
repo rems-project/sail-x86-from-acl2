@@ -69,8 +69,7 @@ function x86_sal_sar_shl_shr_rcl_rcr_rol_ror (proc_mode, start_rip, temp_rip, pr
     let inst_ac? : bool = true;
     let (reg_mem, increment_rip_by, addr) : (bits(128), {|0, 1, 2, 4|}, sbits(64)) = x86_operand_from_modr_m_and_sib_bytes(proc_mode, 0b0, reg_mem_size, inst_ac?, false, seg_reg, prefixes, temp_rip, rex_byte, r_m, mod_var, sib, if opcode == 0xc0 | opcode == 0xc1 then 0b001 else 0b000);
     let increment_rip_by : bits(3) = bits_of_int(increment_rip_by, 3);
-    let temp_rip : sbits(49) = add_to_iptr(proc_mode, temp_rip, sail_zero_extend(increment_rip_by, 48));
-    let temp_rip : sbits(48) = truncate(temp_rip, 48);
+    let temp_rip : sbits(48) = add_to_iptr(proc_mode, temp_rip, sail_zero_extend(increment_rip_by, 48));
     let shift_rotate_by : bits(128) = {
         match opcode {
           208 => 0x00000000000000000000000000000001,
@@ -88,7 +87,7 @@ function x86_sal_sar_shl_shr_rcl_rcr_rol_ror (proc_mode, start_rip, temp_rip, pr
     let shift_rotate_by : bits(128) = logand(bits_of_int(countmask, 128), shift_rotate_by);
     let temp_rip : sbits(49) = {
         if opcode == 0xc0 | opcode == 0xc1 then {
-            add_to_iptr(proc_mode, temp_rip, 0x000000000001)
+            sail_sign_extend(add_to_iptr(proc_mode, temp_rip, 0x000000000001), 49)
         } else {
             sail_sign_extend(temp_rip, 49)
         }
@@ -154,8 +153,7 @@ function x86_shld_shrd (proc_mode, start_rip, temp_rip, prefixes, rex_byte, opco
     let seg_reg : seg_reg_idx = select_segment_register(proc_mode, prefixes, mod_var, r_m, sib);
     let inst_ac? : bool = true;
     let (dst_value, increment_rip_by, dst_addr) : (bits(128), {|0, 1, 2, 4|}, sbits(64)) = x86_operand_from_modr_m_and_sib_bytes(proc_mode, 0b0, operand_size, inst_ac?, false, seg_reg, prefixes, temp_rip, rex_byte, r_m, mod_var, sib, 0b001);
-    let temp_rip : sbits(49) = add_to_iptr(proc_mode, temp_rip, bits_of_int(increment_rip_by, 48));
-    let temp_rip : sbits(48) = truncate(temp_rip, 48);
+    let temp_rip : sbits(48) = add_to_iptr(proc_mode, temp_rip, bits_of_int(increment_rip_by, 48));
     let src_value : bits(64) = rgfi_size(bits_of_int(operand_size, 4), reg_index(reg, rex_byte, 0b10), rex_byte);
     let count : bits(128) = {
         match opcode {
@@ -166,16 +164,15 @@ function x86_shld_shrd (proc_mode, start_rip, temp_rip, prefixes, rex_byte, opco
           _ => 0x00000000000000000000000000000000
         }
     };
-    let temp_rip : sbits(49) = {
+    let temp_rip : sbits(48) = {
         match opcode {
           164 => add_to_iptr(proc_mode, temp_rip, 0x000000000001),
           172 => add_to_iptr(proc_mode, temp_rip, 0x000000000001),
-          165 => sail_sign_extend(temp_rip, 49),
-          173 => sail_sign_extend(temp_rip, 49),
-          _ => 0b0000000000000000000000000000000000000000000000000
+          165 => temp_rip,
+          173 => temp_rip,
+          _ => 0x000000000000
         }
     };
-    let temp_rip : sbits(48) = truncate(temp_rip, 48);
     let badlength? : option(int) = check_instruction_length(start_rip, temp_rip, 0b000);
     if is_some(badlength?) then x86_fault("(!!FAULT-FRESH :GP 0 :INSTRUCTION-LENGTH BADLENGTH?)");
     let count_mask : {|31, 63|} = {

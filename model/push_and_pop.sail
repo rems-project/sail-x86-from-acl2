@@ -51,12 +51,12 @@ function x86_push_ev (proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode
     let seg_reg : seg_reg_idx = select_segment_register(proc_mode, prefixes, mod_var, r_m, sib);
     let (e, increment_rip_by, e_addr) : (bits(128), {|0, 1, 2, 4|}, sbits(64)) = x86_operand_from_modr_m_and_sib_bytes(proc_mode, 0b0, operand_size, true, false, seg_reg, prefixes, temp_rip, rex_byte, r_m, mod_var, sib, 0b000);
     let increment_rip_by : bits(3) = bits_of_int(increment_rip_by, 3);
-    let temp_rip : sbits(49) = add_to_iptr(proc_mode, temp_rip, sail_zero_extend(increment_rip_by, 48));
-    let badlength? : option(int) = check_instruction_length(start_rip, truncate(temp_rip, 48), 0b000);
+    let temp_rip : sbits(48) = add_to_iptr(proc_mode, temp_rip, sail_zero_extend(increment_rip_by, 48));
+    let badlength? : option(int) = check_instruction_length(start_rip, temp_rip, 0b000);
     if is_some(badlength?) then x86_fault("(!!FAULT-FRESH :GP 0 :INSTRUCTION-LENGTH BADLENGTH?)");
     wme_size(proc_mode, select_address_size(proc_mode, Some(prefixes)), operand_size, sail_sign_extend(truncate(new_rsp, 48), 64), None(), 2, e, alignment_checking_enabled_p(), false);
     write_sptr(proc_mode, new_rsp);
-    write_iptr(proc_mode, truncate(temp_rip, 48))
+    write_iptr(proc_mode, temp_rip)
 }
 
 /*! PUSH: 6A/68 ib/iw/id
@@ -83,10 +83,8 @@ function x86_push_i (proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode,
     let operand_size : {|1, 2, 4, 8|} = select_operand_size(proc_mode, false, rex_byte, false, prefixes, true, true, false);
     let rsp_var : sbits(64) = read_sptr(proc_mode);
     let new_rsp : sbits(64) = add_to_sptr(proc_mode, rsp_var, bits_of_int(negate(operand_size), 64));
-    let imm : sbits(64) = rime_size(proc_mode, select_address_size(proc_mode, Some(prefixes)), imm_size, sail_sign_extend(temp_rip, 64), None(), 1, ":X", false, false);
-    let imm : sbits(32) = truncate(imm, 32);
-    let temp_rip : sbits(49) = add_to_iptr(proc_mode, temp_rip, bits_of_int(imm_size, 48));
-    let temp_rip : sbits(48) = truncate(temp_rip, 48);
+    let imm : sbits(32) = truncate(rime_size(proc_mode, select_address_size(proc_mode, Some(prefixes)), imm_size, sail_sign_extend(temp_rip, 64), None(), 1, ":X", false, false), 32);
+    let temp_rip : sbits(48) = add_to_iptr(proc_mode, temp_rip, bits_of_int(imm_size, 48));
     let badlength? : option(int) = check_instruction_length(start_rip, temp_rip, 0b000);
     if is_some(badlength?) then x86_fault("(!!FAULT-FRESH :GP 0 :INSTRUCTION-LENGTH BADLENGTH?)");
     wme_size(proc_mode, select_address_size(proc_mode, Some(prefixes)), operand_size, new_rsp, None(), 2, bits_of_int(loghead(ash(operand_size, 3), signed(imm)), 128), alignment_checking_enabled_p(), false);
@@ -202,12 +200,12 @@ function x86_pop_ev (proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode,
     };
     let increment_rip_by : bits(3) = bits_of_int(increment_rip_by, 3);
     let seg_reg : seg_reg_idx = select_segment_register(proc_mode, prefixes, mod_var, r_m, sib);
-    let temp_rip : sbits(49) = add_to_iptr(proc_mode, temp_rip, sail_zero_extend(increment_rip_by, 48));
-    let badlength? : option(int) = check_instruction_length(start_rip, truncate(temp_rip, 48), 0b000);
+    let temp_rip : sbits(48) = add_to_iptr(proc_mode, temp_rip, sail_zero_extend(increment_rip_by, 48));
+    let badlength? : option(int) = check_instruction_length(start_rip, temp_rip, 0b000);
     if is_some(badlength?) then x86_fault("(!!FAULT-FRESH :GP 0 :INSTRUCTION-LENGTH BADLENGTH?)");
     write_sptr(proc_mode, new_rsp);
     x86_operand_to_reg_mem(proc_mode, operand_size, check_alignment?, false, sailval, seg_reg, addr, prefixes, rex_byte, r_m, mod_var, sib);
-    write_iptr(proc_mode, truncate(temp_rip, 48))
+    write_iptr(proc_mode, temp_rip)
 }
 
 val x86_pushf : (proc_mode, sbits(48), sbits(48), prefixes, bits(8), bits(8), modr_m, sib) -> unit

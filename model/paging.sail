@@ -241,8 +241,7 @@ function ia32e_la_to_pa_page_directory (lin_addr, base_addr, u_s_acc, r_w_acc, x
         changeSlice(ash(unsigned(Mk_ia32e_pde_2mb_pagebits(entry)[page]), 21), 0, 21, unsigned(get_slice_int(21, lin_addr, 0)))
     } else {
         let page_table_base_addr : int = ash(unsigned(Mk_ia32e_pde_pg_tablebits(entry)[pt]), 12);
-        let p_addr : int = ia32e_la_to_pa_page_table(bits_of_int(lin_addr, 48), bits_of_int(page_table_base_addr, 52), u_s_all, r_w_all, x_d_all, wp, smep, smap, ac, nxe, r_w_x, cpl);
-        let p_addr : bits(52) = bits_of_int(p_addr, 52);
+        let p_addr : bits(52) = bits_of_int(ia32e_la_to_pa_page_table(bits_of_int(lin_addr, 48), bits_of_int(page_table_base_addr, 52), u_s_all, r_w_all, x_d_all, wp, smep, smap, ac, nxe, r_w_x, cpl), 52);
         if marking_view then {
             let entry : bits(64) = rm_low_64(unsigned(p_entry_addr));
             let accessed : bits(1) = accessed_bit(entry);
@@ -301,8 +300,7 @@ function ia32e_la_to_pa_page_dir_ptr_table (lin_addr, base_addr, u_s_acc, r_w_ac
         changeSlice(ash(unsigned(Mk_ia32e_pdpte_1gb_pagebits(entry)[page]), 30), 0, 30, unsigned(get_slice_int(30, lin_addr, 0)))
     } else {
         let page_directory_base_addr : int = ash(unsigned(Mk_ia32e_pdpte_pg_dirbits(entry)[pd]), 12);
-        let p_addr : int = ia32e_la_to_pa_page_directory(bits_of_int(lin_addr, 48), bits_of_int(page_directory_base_addr, 52), u_s_all, r_w_all, x_d_all, wp, smep, smap, ac, nxe, r_w_x, cpl);
-        let p_addr : bits(52) = bits_of_int(p_addr, 52);
+        let p_addr : bits(52) = bits_of_int(ia32e_la_to_pa_page_directory(bits_of_int(lin_addr, 48), bits_of_int(page_directory_base_addr, 52), u_s_all, r_w_all, x_d_all, wp, smep, smap, ac, nxe, r_w_x, cpl), 52);
         if marking_view then {
             let entry : bits(64) = rm_low_64(unsigned(p_entry_addr));
             let accessed : bits(1) = accessed_bit(entry);
@@ -336,8 +334,7 @@ function ia32e_la_to_pa_pml4_table (lin_addr, base_addr, wp, smep, smap, ac, nxe
     let (fault_flg, sailval) : (bool, {|0|}) = paging_entry_no_page_fault_p(0b11, bits_of_int(lin_addr, 48), entry, u_s_all, r_w_all, x_d_all, wp, smep, smap, ac, nxe, r_w_x, cpl, struct { supervisor_mode_access_type = 0 });
     if fault_flg then x86_model_error("Page-Fault");
     let page_dir_ptr_table_base_addr : int = ash(unsigned(Mk_ia32e_pml4ebits(entry)[pdpt]), 12);
-    let p_addr : int = ia32e_la_to_pa_page_dir_ptr_table(bits_of_int(lin_addr, 48), bits_of_int(page_dir_ptr_table_base_addr, 52), u_s_all, r_w_all, x_d_all, wp, smep, smap, ac, nxe, r_w_x, cpl);
-    let p_addr : bits(52) = bits_of_int(p_addr, 52);
+    let p_addr : bits(52) = bits_of_int(ia32e_la_to_pa_page_dir_ptr_table(bits_of_int(lin_addr, 48), bits_of_int(page_dir_ptr_table_base_addr, 52), u_s_all, r_w_all, x_d_all, wp, smep, smap, ac, nxe, r_w_x, cpl), 52);
     if marking_view then {
         let entry : bits(64) = rm_low_64(unsigned(p_entry_addr));
         let accessed : bits(1) = accessed_bit(entry);

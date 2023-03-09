@@ -48,7 +48,8 @@ forced_return_types = {
 	# TODO: Replace with a handwritten function
 	'bitcount8': Sail_t_nat(),
 	'zf-spec': Sail_t_bits(1),
-	'chk-exc-fn' : Sail_t_unit()
+	'chk-exc-fn' : Sail_t_unit(),
+	'add-to-*ip': Sail_t_bits(48, signed=True)
 }
 
 
@@ -78,7 +79,10 @@ forced_variable_types = {
         'evex-prefixes': Sail_t_bitfield("evex-prefixes", 32),
         'modr/m': Sail_t_bitfield("modr/m", 8),
         'sib': Sail_t_bitfield("sib", 8),
-		'proc-mode': handwritten_tokens.proc_mode_typ
+        'proc-mode': handwritten_tokens.proc_mode_typ,
+        'call-rip': { 'x86-call-ff/2-op/en-m': Sail_t_bits(64, signed=True) },
+        'jmp-addr': Sail_t_bits(64, signed=True),
+        'tos': { 'x86-ret': Sail_t_bits(64, signed=True) }
 }
 
 forward_declarations = [
