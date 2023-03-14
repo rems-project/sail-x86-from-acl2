@@ -213,7 +213,8 @@ def handwritten():
 		'merge-2-u64s'			: merge_2_u64s_fn,
 		'merge-2-u32s'			: merge_2_u32s_fn,
 		'merge-4-u32s'			: merge_4_u32s_fn,
-		'x86-operation-mode'	: x86_operation_mode_fn
+		'x86-operation-mode'	: x86_operation_mode_fn,
+		'x86-one-byte-nop'		: x86_one_byte_nop_fn
 	}
 
 	# Convert names to uppercase and use apply_fn_gen()

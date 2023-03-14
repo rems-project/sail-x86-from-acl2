@@ -347,6 +347,11 @@ x86_operation_mode_fn = SailHandwrittenFn('x86_operation_mode', Sail_t_fn([], pr
 def bits_list(bits):
 	return [Sail_t_bits(n) for n in bits]
 
+x86_one_byte_nop_fn = SailHandwrittenFn(
+	'x86_one_byte_nop',
+	Sail_t_fn([proc_mode_typ] + [Sail_t_bits(48, signed=True)] * 2 + [Sail_t_bitfield("prefixes", 52)] + bits_list([8, 8]) + [Sail_t_bitfield("modr_m", 8), Sail_t_bitfield("sib", 8)], Sail_t_unit())
+)
+
 ext_one_byte_opcode_execute_fn = SailHandwrittenFn(
 	'ext_one_byte_opcode_execute',
 	Sail_t_fn([proc_mode_typ] + [Sail_t_bits(48, signed=True)] * 2 + bits_list([52, 8, 8, 8, 8]), Sail_t_bool())

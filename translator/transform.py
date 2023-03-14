@@ -794,9 +794,9 @@ def getPatchPath(name, env, original=False):
 def hasPatch(name, env):
 	return getPatchPath(name, env).is_file()
 
-def loadPatch(name, sail, env):
+def loadPatch(name, typ, env):
 	body = getPatchPath(name, env).read_text()
-	return SailPatchedDefinition(name, getType(sail), body)
+	return SailPatchedDefinition(name, typ, body)
 
 def translate(config):
 	"""

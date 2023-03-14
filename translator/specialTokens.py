@@ -701,7 +701,7 @@ def tr_define(ACL2ast, env):
 	thisSailFn.setBody(SailItem)
 
 	# Check for manual patches
-	thisSailFn = transform.loadPatch(fnName, thisSailFn, env) if transform.hasPatch(fnName, env) else thisSailFn
+	thisSailFn = transform.loadPatch(fnName, thisSailFn.getType(), env) if transform.hasPatch(fnName, env) else thisSailFn
 
 	# Add to the AST
 	SailAST.append(thisSailFn)
@@ -1661,7 +1661,7 @@ def tr_mv(ACL2ast, env):
 	retSail = [SailTuple(sailArgs)] if len(sailArgs) > 1 else sailArgs
 	return retSail, env, len(ACL2ast)
 
-def tr_case(ACL2ast, env):
+def tr_case(ACL2ast, env, caseOverride=None):
 	"""
 	An ACL2 case expression translates to a Sail `match` expression.
 	Translate the ACL2 form `otherwise` to the underscore in Sail.
@@ -1705,7 +1705,10 @@ def tr_case(ACL2ast, env):
 			patternSail = patternSail[0]
 
 		# Translate the expr and check its length
-		(exprSail, env, _) = transform.transformACL2asttoSail(expr, env)
+		if caseOverride:
+			(exprSail, env) = caseOverride(pattern, expr, env)
+		else:
+			(exprSail, env, _) = transform.transformACL2asttoSail(expr, env)
 		if len(exprSail) != 1: sys.exit(f"Error: incorrect length of `case` expression - {ACL2ast}")
 		exprSail = exprSail[0]
 
@@ -2848,7 +2851,10 @@ def apply_dependent_fn_gen(funcToApply_gen, numOfArgs, keywordStruct=None, coerc
 			# Try to coerce actuals to the expected type
 			for (i, arg) in enumerate(SailActuals):
 				try:
-					new = coerceExpr(arg, funcToApply.getType().getLHS()[i])
+					typ = funcToApply.getType().getLHS()[i]
+					if isinstance(typ, Sail_t_bitfield):
+						typ = env.lookupBitfieldType(typ.getName())
+					new = coerceExpr(arg, typ)
 					if new is not None:
 						SailActuals[i] = new
 				except:

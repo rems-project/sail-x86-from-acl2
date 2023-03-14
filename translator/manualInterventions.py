@@ -107,6 +107,29 @@ def dispatch_creator(ACL2ast, env):
 
 		return True, sailAST, env
 
+def insert_one_byte_nop(ACL2ast, env):
+	if isinstance(ACL2ast, list) and len(ACL2ast) >= 2 and ACL2ast[0].lower() == 'def-inst' and ACL2ast[1].lower() == 'x86-two-byte-nop':
+		one_byte_nop = transform.loadPatch('x86-one-byte-nop', handwritten_tokens.x86_one_byte_nop_fn.getType(), env)
+		(two_byte_nop, env, _) = specialTokens.tr_def_inst(ACL2ast, env)
+		return True, [one_byte_nop] + two_byte_nop, env
+	else:
+		return None
+
+def call_one_byte_nop(pattern, expr, env):
+	(patternSail, env, _) = transform.transformACL2asttoSail(pattern, env)
+	if env.getDefineSlot().lower() == 'one-byte-opcode-execute' and isinstance(patternSail[0], SailNumLit) and patternSail[0].getNum() == 144:
+		def patch_instr(acl2):
+			if is_acl2_app(acl2, 'x86-xchg'):
+				nop_call = ['x86-one-byte-nop'] + acl2[1:]
+				return ['if', ['logbitp', '0', 'rex-byte'], acl2, nop_call]
+			elif is_acl2_list(acl2):
+				return [patch_instr(e) for e in acl2]
+			else:
+				return acl2
+		expr = patch_instr(expr)
+	(exprSail, env, _) = transform.transformACL2asttoSail(expr, env)
+	return (exprSail, env)
+
 def implemented_opcode(ACL2ast, env):
 	"""
 	The two large tables below represent the translated one- and two- byte
@@ -139,7 +162,7 @@ def implemented_opcode(ACL2ast, env):
 
 		# Exclude the opcodes listed above
 		newACL2ast = ACL2ast[:2] + [case for case in ACL2ast[2:-1] if int(case[0]) not in casesToExclude] + [ACL2ast[-1]]
-		sailAST, env, _ = specialTokens.tr_case(newACL2ast, env)
+		sailAST, env, _ = specialTokens.tr_case(newACL2ast, env, caseOverride=call_one_byte_nop)
 
 		# Make the missing opcodes throw exceptions
 		matchesList = sailAST[0].getMatches()
@@ -460,6 +483,7 @@ interventionsList = [
 	ext_memory_hooks,
 	push_and_pop_errors,
 	x86_hlt_return_type,
+	insert_one_byte_nop,
 	seg_descriptor_type,
 	div_type,
 	chk_exc_fn_type,
