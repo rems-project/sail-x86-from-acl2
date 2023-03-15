@@ -208,8 +208,8 @@ def handwritten():
 		'ms'					: ms_fn,
 		'fault'					: fault_fn,
 		'b-xor'					: b_xor_fn,
-		'fast-rotate-left'		: rotate_left_fn,
-		'fast-rotate-right'		: rotate_right_fn,
+#		'fast-rotate-left'		: rotate_left_fn,
+#		'fast-rotate-right'		: rotate_right_fn,
 		'merge-2-u64s'			: merge_2_u64s_fn,
 		'merge-2-u32s'			: merge_2_u32s_fn,
 		'merge-4-u32s'			: merge_4_u32s_fn,
@@ -226,10 +226,12 @@ def handwritten():
 		return {'func': func, 'numOfArgs': numOfArgs, 'coerceActuals': coerceActuals}
 
 	dependentHandwrittenDefs = {
-		'loghead'	: dependent_fn(loghead_fn, 2, coerceActuals=True),
-		'logbitp'	: dependent_fn(logbitp_fn, 2, coerceActuals=True),
-		'logbit'	: dependent_fn(logbit_fn, 2, coerceActuals=True),
-		'lognot'	: dependent_fn(lognot_fn, 1, coerceActuals=False),
+		'loghead'		: dependent_fn(loghead_fn, 2, coerceActuals=True),
+		'logbitp'		: dependent_fn(logbitp_fn, 2, coerceActuals=True),
+		'logbit'		: dependent_fn(logbit_fn, 2, coerceActuals=True),
+		'lognot'		: dependent_fn(lognot_fn, 1, coerceActuals=False),
+                'fast-rotate-left'	: dependent_fn(rotate_left_fn, 3, coerceActuals=True),
+                'fast-rotate-right'	: dependent_fn(rotate_right_fn, 3, coerceActuals=True),
 	}
 	for (name, fn) in dependentHandwrittenDefs.items():
 		name = name.upper()
