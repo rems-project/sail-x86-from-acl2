@@ -12,8 +12,16 @@ of Cambridge Computer Laboratory (Department of Computer Science and
 Technology), and Capabilities Limited under Defense Advanced Research
 Projects Agency (DARPA) Contract No. HR001122C0110 ("ETC").
 
-Portions of this software were developed by Thomas Bauereiss under
-contract to Capabilities Limited.
+Portions of this software were developed by Thomas Bauereiss and Brian
+Campbell under contract to Capabilities Limited.
+
+The gdb protocol software in the gdb directory is based on
+experimental code written for the Sail RISC-V model by Prashanth
+Mundkur, which was developed under DARPA/AFRL contract
+FA8650-18-C-7809 ("CIFV"), and under DARPA contract HR0011-18-C-0016
+("ECATS") as part of the DARPA SSITH research programme.
+
+Copyright (c) 2017-2019 Prashanth Mundkur
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:

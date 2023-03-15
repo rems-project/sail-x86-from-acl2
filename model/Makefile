@@ -38,6 +38,16 @@ x86_emulator.c: $(ALL_SAILS)
 x86_emulator: x86_emulator.c
 	$(CC) -O2 -DHAVE_SETCONFIG x86_emulator.c $(SAIL_DIR)/lib/*.c $(GMP_FLAGS) $(GMP_LIBS) $(ZLIB_FLAGS) $(ZLIB_LIBS) -I $(SAIL_DIR)/lib/ -o x86_emulator
 
+x86_gdb.c: $(ALL_SAILS)
+	$(SAIL) -c -c_gdb -c_no_main -memo_z3 $(SAIL_FLAGS) $(ALL_SAILS) > x86_gdb.c.temp
+	mv x86_gdb.c.temp x86_gdb.c
+
+x86_gdb.o: x86_gdb.c
+	$(CC) -g -O2 -DHAVE_SETCONFIG -c x86_gdb.c -I $(SAIL_DIR)/lib/
+
+x86_gdb: x86_gdb.o ../gdb/*.c
+	$(CC) -g -O2 -DHAVE_SETCONFIG x86_gdb.o ../gdb/*.c $(SAIL_DIR)/lib/*.c -lgmp -lz -I $(SAIL_DIR)/lib/ -o x86_gdb
+
 x86.ir: $(ALL_SAILS)
 	$(ISLA_SAIL) $(foreach file,$(wildcard ../test-generation-patches/*.sail),-splice $(file)) -verbose 1 -o x86 $(ALL_SAILS)
 
