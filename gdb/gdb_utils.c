@@ -63,7 +63,7 @@ int extract_hex_integer_le(struct rsp_conn *conn, struct rsp_buf *req, int *star
 
     byte |= int_of_hex(req->cmd_buf[i++]) & 0xf;
 
-    *val |= byte << shft;
+    *val |= (uint64_t) byte << shft;
     shft +=8;
   }
   *start_ofs = i;
