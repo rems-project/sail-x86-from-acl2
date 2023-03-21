@@ -315,23 +315,28 @@ static void handle_stop_reply(struct rsp_conn *conn, struct rsp_buf *req, struct
   }
 }
 
-static void send_reg_val(struct rsp_conn *conn, struct rsp_buf *r, mach_bits reg) {
+static void send_reg_val(struct rsp_conn *conn, struct rsp_buf *r, const mpz_t reg, int size) {
   struct sail_arch *arch = conn->arch;
-  int nbytes = (arch->archlen == ARCH32) ? 4 : 8;  // only RV32 or RV64 for now
+  int nbytes = size / 8;
+  if (size % 8 != 0) nbytes++;
   for (int i = 0; i < nbytes; i++) {
-    unsigned char c = (unsigned char) (reg & 0xff);
+    unsigned char c = 0;
+    for (int j = 0; j < 8; j++) {
+      c |= mpz_tstbit(reg, 8*i + j) << j;
+    }
     append_rsp_buf_hex_byte(conn, r, c);
-    reg >>= 8;
   }
 }
 
 static void handle_regs_read(struct rsp_conn *conn, struct rsp_buf *req, struct rsp_buf *resp) {
-  mach_bits regval;
+  mpz_t regval;
   struct sail_arch *arch = conn->arch;
+  mpz_init(regval);
   for (uint64_t i = 0; i <= arch->nregs; i++) {
-    regval = conn->arch->get_reg(conn, conn->arch, i);
-    send_reg_val(conn, resp, regval);
+    int size = conn->arch->get_reg(conn, conn->arch, regval, i);
+    send_reg_val(conn, resp, regval, size);
   }
+  mpz_clear(regval);
 }
 
 static void handle_reg_read(struct rsp_conn *conn, struct rsp_buf *req, struct rsp_buf *resp) {
@@ -342,28 +347,39 @@ static void handle_reg_read(struct rsp_conn *conn, struct rsp_buf *req, struct r
     dprintf(conn->log_fd, "internal error: no 'p' packet terminator '#' found\n");
     exit(1);
   }
-
-  uint64_t regval = conn->arch->get_reg(conn, conn->arch, regno);
-  dprintf(conn->log_fd, "read reg %ld as 0x%016" PRIx64 "\n", regno, regval);
-  send_reg_val(conn, resp, regval);
+  mpz_t regval;
+  mpz_init(regval);
+  int size = conn->arch->get_reg(conn, conn->arch, regval, regno);
+  char *s = mpz_get_str(NULL, 16, regval);
+  dprintf(conn->log_fd, "read reg %ld as 0x%s\n", regno, s);
+  free(s);
+  send_reg_val(conn, resp, regval, size);
+  mpz_clear(regval);
 }
 
 static void handle_reg_write(struct rsp_conn *conn, struct rsp_buf *req, struct rsp_buf *resp) {
   // extract regno,regval
   int ofs = 1; // past 'P'
-  uint64_t regno = 0, regval = 0;
+  uint64_t regno = 0;
+  mpz_t regval;
+  mpz_init(regval);
+
   if (extract_hex_integer_be(conn, req, &ofs, '=', &regno) < 0) {
     dprintf(conn->log_fd, "internal error: no 'P' packet terminator '=' found\n");
     exit(1);
   }
   ofs++;
-  if (extract_hex_integer_le(conn, req, &ofs, '#', &regval) < 0) {
+  if (extract_hex_mpz_le(conn, req, &ofs, '#', regval) < 0) {
     dprintf(conn->log_fd, "internal error: no 'P' packet terminator '#' found\n");
     exit(1);
   }
 
-  dprintf(conn->log_fd, "setting reg %ld to 0x%016" PRIx64 "\n", regno, regval);
+  char *s = mpz_get_str(NULL, 16, regval);
+  dprintf(conn->log_fd, "setting reg %ld to 0x%s\n", regno, s);
+  free(s);
+
   conn->arch->set_reg(conn, conn->arch, regno, regval);
+  mpz_clear(regval);
 
   make_ok_resp(conn, resp);
 }

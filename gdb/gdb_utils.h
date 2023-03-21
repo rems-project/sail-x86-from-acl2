@@ -63,6 +63,7 @@ void push_hex_byte(char *buf, uint8_t byte);
 // integers from endian-specific hex-encodings
 int extract_hex_integer_be(struct rsp_conn *c, struct rsp_buf *r, int *start_ofs, char terminator, uint64_t *val);
 int extract_hex_integer_le(struct rsp_conn *conn, struct rsp_buf *req, int *start_ofs, char terminator, uint64_t *val);
+int extract_hex_mpz_le(struct rsp_conn *conn, struct rsp_buf *req, int *start_ofs, char terminator, mpz_t val);
 
 // basic interface to the sail model.
 
@@ -74,9 +75,9 @@ typedef enum {
 struct sail_arch {
   archlen_t archlen;
   uint64_t  nregs;    // inclusive bound, and typically includes the PC register
-  mach_bits (*get_reg)(struct rsp_conn *conn, struct sail_arch *arch, uint64_t regno);
+  int (*get_reg)(struct rsp_conn *conn, struct sail_arch *arch, mpz_t result, uint64_t regno);
   mach_bits (*get_pc)(struct rsp_conn *conn, struct sail_arch *arch);
-  void (*set_reg) (struct rsp_conn *conn, struct sail_arch *arch, uint64_t regno, mach_bits regval);
+  void (*set_reg) (struct rsp_conn *conn, struct sail_arch *arch, uint64_t regno, const mpz_t regval);
   void (*set_pc) (struct rsp_conn *conn, struct sail_arch *arch, mach_bits regval);
 
   int (*step) (struct rsp_conn *conn, struct sail_arch *arch);

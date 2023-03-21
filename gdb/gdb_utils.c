@@ -70,6 +70,34 @@ int extract_hex_integer_le(struct rsp_conn *conn, struct rsp_buf *req, int *star
   return 0;
 }
 
+// little-endian hex
+int extract_hex_mpz_le(struct rsp_conn *conn, struct rsp_buf *req, int *start_ofs, char terminator, mpz_t val) {
+  mpz_set_ui(val, 0);
+  int i = *start_ofs;
+  int shft = 0;
+  while (true) {
+    uint8_t byte;
+    if (i >= req->bufsz) return -1;
+    if (req->cmd_buf[i] == terminator) break;
+
+    byte = int_of_hex(req->cmd_buf[i++]);
+    byte <<= 4;
+
+    if (i >= req->bufsz) return -1;
+    if (req->cmd_buf[i] == terminator) return -1; // unexpected terminator in middle of byte
+
+    byte |= int_of_hex(req->cmd_buf[i++]) & 0xf;
+
+    for (int j = 0; j<8; j++) {
+      if (byte & 1 << j)
+        mpz_setbit(val, shft+j);
+    }
+    shft +=8;
+  }
+  *start_ofs = i;
+  return 0;
+}
+
 // protocol message utilities
 
 void grow_rsp_buf(struct rsp_conn *conn, struct rsp_buf *b) {

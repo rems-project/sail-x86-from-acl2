@@ -61,21 +61,28 @@ void set_pc(struct rsp_conn *conn, struct sail_arch *arch, mach_bits regval) {
   zrip = regval;
 }
 
-mach_bits get_reg(struct rsp_conn *conn, struct sail_arch *arch, uint64_t regno) {
+int get_reg(struct rsp_conn *conn, struct sail_arch *arch, mpz_t result, uint64_t regno) {
   assert (regno < gdb_register_count);
   if (gdb_registers[regno].ty == gdb_fbits) {
-    return *(int64_t *)gdb_registers[regno].value;
+    mpz_set_ui(result, *(int64_t *)gdb_registers[regno].value);
+    return gdb_registers[regno].size;
+  } else if (gdb_registers[regno].ty == gdb_sbits) {
+    mpz_set(result, *((lbits *)gdb_registers[regno].value)->bits);
+    return gdb_registers[regno].size;
   } else {
-    return 0; // TODO: errors
+    assert(false);
   }
 }
 
-void set_reg(struct rsp_conn *conn, struct sail_arch *arch, uint64_t regno, mach_bits regval) {
+// TODO: check number of bits
+void set_reg(struct rsp_conn *conn, struct sail_arch *arch, uint64_t regno, const mpz_t regval) {
   assert (regno < gdb_register_count);
   if (gdb_registers[regno].ty == gdb_fbits) {
-    *(int64_t *)gdb_registers[regno].value = regval;
+    *(int64_t *)gdb_registers[regno].value = mpz_get_ui(regval);
+  } else if (gdb_registers[regno].ty == gdb_sbits) {
+    mpz_set(*((lbits *)gdb_registers[regno].value)->bits, regval);
   } else {
-    return; // TODO: errors
+    assert(false);
   }
 }
 
