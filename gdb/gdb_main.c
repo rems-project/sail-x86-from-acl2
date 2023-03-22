@@ -10,6 +10,7 @@ void model_init(void);
 unit zinitializze_model(unit);
 unit zinitialise_64_bit_mode(unit);
 unit zx86_fetch_decode_execute(unit);
+uint64_t zread_rip(unit);
 
 enum kind_zexception { Kind_zEmsg, Kind_zSyscall };
 
@@ -27,8 +28,9 @@ extern sail_string *throw_location;
 
 extern uint64_t zrip;
 
-enum gdb_reg_type { gdb_sbits, gdb_fbits };
-struct gdb_register_info { char *name; enum gdb_reg_type ty; void *value; int size; };
+enum gdb_reg_type { gdb_sbits, gdb_fbits, gdb_lbits };
+struct gdb_register_info { char *name; enum gdb_reg_type ty; int size; void *reg; void (*read_fn)(void *dst, void *reg); void (*write_fn)(
+void *src, void *reg); };
 
 extern int gdb_register_count;
 extern struct gdb_register_info gdb_registers[];
@@ -54,7 +56,7 @@ int step(struct rsp_conn *conn, struct sail_arch *arch) {
 }
 
 mach_bits get_pc(struct rsp_conn *conn, struct sail_arch *arch) {
-  return zrip;
+  return zread_rip(UNIT);
 }
 
 void set_pc(struct rsp_conn *conn, struct sail_arch *arch, mach_bits regval) {
@@ -63,11 +65,18 @@ void set_pc(struct rsp_conn *conn, struct sail_arch *arch, mach_bits regval) {
 
 int get_reg(struct rsp_conn *conn, struct sail_arch *arch, mpz_t result, uint64_t regno) {
   assert (regno < gdb_register_count);
-  if (gdb_registers[regno].ty == gdb_fbits) {
-    mpz_set_ui(result, *(int64_t *)gdb_registers[regno].value);
+  if (gdb_registers[regno].read_fn) {
+    assert(gdb_registers[regno].ty == gdb_lbits); // TODO: others
+    lbits read;
+    read.bits = (mpz_t *) result;
+    read.len = 0;
+    gdb_registers[regno].read_fn((void *)&read, gdb_registers[regno].reg);
+    return read.len;
+  } else if (gdb_registers[regno].ty == gdb_fbits) {
+    mpz_set_ui(result, *(int64_t *)gdb_registers[regno].reg);
     return gdb_registers[regno].size;
   } else if (gdb_registers[regno].ty == gdb_sbits) {
-    mpz_set(result, *((lbits *)gdb_registers[regno].value)->bits);
+    mpz_set(result, *((lbits *)gdb_registers[regno].reg)->bits);
     return gdb_registers[regno].size;
   } else {
     assert(false);
@@ -77,10 +86,16 @@ int get_reg(struct rsp_conn *conn, struct sail_arch *arch, mpz_t result, uint64_
 // TODO: check number of bits
 void set_reg(struct rsp_conn *conn, struct sail_arch *arch, uint64_t regno, const mpz_t regval) {
   assert (regno < gdb_register_count);
-  if (gdb_registers[regno].ty == gdb_fbits) {
-    *(int64_t *)gdb_registers[regno].value = mpz_get_ui(regval);
+  if (gdb_registers[regno].write_fn) {
+    assert(gdb_registers[regno].ty == gdb_lbits); // TODO: others
+    lbits v;
+    v.bits = (mpz_t *) regval;
+    v.len = gdb_registers[regno].size;
+    gdb_registers[regno].write_fn((void *)&v, gdb_registers[regno].reg);
+  } else if (gdb_registers[regno].ty == gdb_fbits) {
+    *(int64_t *)gdb_registers[regno].reg = mpz_get_ui(regval);
   } else if (gdb_registers[regno].ty == gdb_sbits) {
-    mpz_set(*((lbits *)gdb_registers[regno].value)->bits, regval);
+    mpz_set(*((lbits *)gdb_registers[regno].reg)->bits, regval);
   } else {
     assert(false);
   }
