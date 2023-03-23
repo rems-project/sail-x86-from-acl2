@@ -1,0 +1,16 @@
+diff --git a/model/subroutine.sail b/model/subroutine.sail
+index cf19576..0644e72 100644
+--- a/model/subroutine.sail
++++ b/model/subroutine.sail
+@@ -60,9 +60,9 @@ function x86_call_ff_2_op_en_m (proc_mode, start_rip, temp_rip, prefixes, rex_by
+     let new_rsp : sbits(64) = add_to_sptr(proc_mode, rsp_var, bits_of_int(negate(addr_size), 64));
+     let check_alignment? : bool = alignment_checking_enabled_p();
+     if operand_size == 8 then {
+-        wime_size(proc_mode, select_address_size(proc_mode, Some(prefixes)), operand_size, rsp_var, None(), 2, sail_sign_extend(call_rip, 128), check_alignment?, false)
++        wime_size(proc_mode, select_address_size(proc_mode, Some(prefixes)), operand_size, new_rsp, None(), 2, sail_sign_extend(next_rip, 128), check_alignment?, false)
+     } else {
+-        wme_size(proc_mode, select_address_size(proc_mode, Some(prefixes)), operand_size, rsp_var, None(), 2, sail_sign_extend(call_rip, 128), check_alignment?, false)
++        wme_size(proc_mode, select_address_size(proc_mode, Some(prefixes)), operand_size, new_rsp, None(), 2, sail_sign_extend(next_rip, 128), check_alignment?, false)
+     };
+     write_iptr(proc_mode, truncate(call_rip, 48));
+     write_sptr(proc_mode, new_rsp)
