@@ -48,6 +48,16 @@ x86_gdb.o: x86_gdb.c
 x86_gdb: x86_gdb.o ../gdb/*.c
 	$(CC) -g -O2 -DHAVE_SETCONFIG x86_gdb.o ../gdb/*.c $(SAIL_DIR)/lib/*.c -lgmp -lz -I $(SAIL_DIR)/lib/ -o x86_gdb
 
+x86_gdb_cov.c: $(ALL_SAILS)
+	$(SAIL) -c -c_gdb -c_no_main -c_coverage all_branches -c_include sail_coverage.h -memo_z3 $(SAIL_FLAGS) $(ALL_SAILS) > x86_gdb_cov.c.temp
+	mv x86_gdb_cov.c.temp x86_gdb_cov.c
+
+x86_gdb_cov.o: x86_gdb_cov.c
+	$(CC) -g -O2 -DHAVE_SETCONFIG -c x86_gdb_cov.c -I $(SAIL_DIR)/lib/
+
+x86_gdb_cov: x86_gdb_cov.o ../gdb/*.c
+	$(CC) -g -O2 -DHAVE_SETCONFIG x86_gdb_cov.o ../gdb/*.c $(SAIL_DIR)/lib/*.c -lgmp -lz -I $(SAIL_DIR)/lib/ $(SAIL_DIR)/lib/coverage/libsail_coverage.a -lpthread -ldl -o x86_gdb_cov
+
 x86.ir: $(ALL_SAILS) ../test-generation-patches/*.sail
 	$(ISLA_SAIL) $(foreach file,$(wildcard ../test-generation-patches/*.sail),-splice $(file)) -verbose 1 -o x86 $(ALL_SAILS)
 

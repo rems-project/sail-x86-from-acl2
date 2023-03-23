@@ -10,6 +10,10 @@
 #include "rts.h"
 #include "gdb_utils.h"
 
+// TODO: include in a principled way
+extern void model_fini(void);
+extern void model_pre_exit(void);
+
 // hex utils
 
 int int_of_hex(char c) {
@@ -149,7 +153,10 @@ void init_gdb_model(struct model_state *model) {
   model->step_no = 0;
 }
 
+// TODO: orderly exits through main
 void conn_exit(struct rsp_conn *conn, int code) {
+  model_fini();
+  model_pre_exit();
   close(conn->conn_fd);
   close(conn->listen_fd);
   close(conn->log_fd);

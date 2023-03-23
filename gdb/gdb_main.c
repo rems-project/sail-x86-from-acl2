@@ -1,4 +1,6 @@
 #include <assert.h>
+#include <unistd.h>
+#include <fcntl.h>
 
 #include "sail.h"
 #include "gdb_rsp.h"
@@ -108,7 +110,7 @@ extern bool zapp_view;
 extern bool zms_reg;
 extern bool zfault_reg;
  
-int main() {
+int main(int argc, char *argv[]) {
   struct sail_arch arch = {
     .archlen = ARCH64,
     .nregs = gdb_register_count,
@@ -121,14 +123,32 @@ int main() {
     .arch_info = 0,
   };
 
+  int opt;
+  int verbose = 1;
+  while ((opt = getopt(argc, argv, "q")) != -1) {
+    switch (opt) {
+    case 'q':
+      verbose = 0;
+      break;
+    default:
+      fprintf(stderr, "Usage: %s [-q]\n", argv[0]);
+      exit(1);
+    }
+  }
+
   model_init();
   zapp_view = true;
   zms_reg = false;
   zfault_reg = false;
   zinitializze_model(UNIT);
   zinitialise_64_bit_mode(UNIT);
-  struct rsp_conn *conn = gdb_server_init(1234, 2);
+  int log_fd = 2;
+  if (!verbose) {
+    log_fd = open("/dev/null", O_WRONLY);
+  }
+  struct rsp_conn *conn = gdb_server_init(1234, log_fd);
   gdb_server_set_arch(conn, &arch);
   gdb_server_run(conn);
+  // Doesn't return (currently)
   return 0;
 }
