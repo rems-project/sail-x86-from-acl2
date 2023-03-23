@@ -269,6 +269,82 @@ static void handle_query(struct rsp_conn *conn, struct rsp_buf *req, struct rsp_
       }
     }
   }
+  if (match_req_cmd(req, "qXfer:capa:read:")) {
+    int offset, length;
+    uint64_t address;
+    if (sscanf(req->cmd_buf, "qXfer:capa:read:%" PRIx64 ":%d,%d", &address, &offset, &length) != EOF) {
+      if (offset > 17) {
+        append_rsp_buf_msg(conn, resp, "E00"); // TODO: correct errno
+        return;
+      }
+      if (offset + length > 17) {
+        length = 17 - offset;
+      }
+      if (offset + length == 17) {
+          append_rsp_buf_msg(conn, resp, "l");
+      } else {
+          append_rsp_buf_msg(conn, resp, "m");
+      }
+      if (offset == 0) {
+        if (read_tag_bool(address >> 4)) {
+          append_rsp_buf_hex_byte(conn, resp, 1);
+        } else {
+          append_rsp_buf_hex_byte(conn, resp, 0);
+        }
+        offset++;
+        length--;
+      }
+      for (int i = offset; i < offset + length; i++) {
+        unsigned char byte = (unsigned char) read_mem(address + i - 1);
+        append_rsp_buf_hex_byte(conn, resp, byte);
+      }
+      return;
+    }
+  }
+  if (match_req_cmd(req, "qXfer:capa:write:")) {
+    int offset, length = 0;
+    int ofs;
+    uint64_t address;
+    if (sscanf(req->cmd_buf, "qXfer:capa:write:%" PRIx64 ":%d:%n", &address, &offset, &ofs) != EOF) {
+      if (offset > 17) {
+        append_rsp_buf_msg(conn, resp, "E00"); // TODO: correct errno
+        return;
+      }
+      if (offset == 0) {
+        uint64_t byte = int_of_hex(req->cmd_buf[ofs++]);
+        byte <<= 4;
+        byte += int_of_hex(req->cmd_buf[ofs++]);
+        switch (byte) {
+        case 0:
+          dprintf(conn->log_fd, "clearing tag at %#" PRIx64 "\n", address);
+          write_tag_bool(address >> 4, false);
+          break;
+        case 1:
+          dprintf(conn->log_fd, "setting tag at %#" PRIx64 "\n", address);
+          write_tag_bool(address >> 4, true);
+          break;
+        default:
+          append_rsp_buf_msg(conn, resp, "E00"); // TODO: correct errno?
+          return;
+        }
+        offset++;
+        length++;
+      }
+      while (req->cmd_buf[ofs] != '#') {
+        if (ofs >= req->bufsz) {
+          dprintf(conn->log_fd, "not enough payload in 'M' packet!\n");
+          exit(1);
+        }
+        uint64_t byte = int_of_hex(req->cmd_buf[ofs++]);
+        byte <<= 4;
+        byte += int_of_hex(req->cmd_buf[ofs++]);
+        write_mem(address++, byte);
+        length++;
+      }
+      append_rsp_buf_hex_byte(conn, resp, length);
+      return;
+    }
+  }
   make_empty_resp(conn, resp);
 }
 

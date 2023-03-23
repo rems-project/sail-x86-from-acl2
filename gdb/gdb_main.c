@@ -11,6 +11,7 @@ unit zinitializze_model(unit);
 unit zinitialise_64_bit_mode(unit);
 unit zx86_fetch_decode_execute(unit);
 uint64_t zread_rip(unit);
+unit zwrite_rip(uint64_t);
 
 enum kind_zexception { Kind_zEmsg, Kind_zSyscall };
 
@@ -25,8 +26,6 @@ struct zexception {
 extern struct zexception *current_exception;
 extern bool have_exception;
 extern sail_string *throw_location;
-
-extern uint64_t zrip;
 
 enum gdb_reg_type { gdb_sbits, gdb_fbits, gdb_lbits };
 struct gdb_register_info { char *name; enum gdb_reg_type ty; int size; void *reg; void (*read_fn)(void *dst, void *reg); void (*write_fn)(
@@ -60,7 +59,7 @@ mach_bits get_pc(struct rsp_conn *conn, struct sail_arch *arch) {
 }
 
 void set_pc(struct rsp_conn *conn, struct sail_arch *arch, mach_bits regval) {
-  zrip = regval;
+  zwrite_rip(regval);
 }
 
 int get_reg(struct rsp_conn *conn, struct sail_arch *arch, mpz_t result, uint64_t regno) {
