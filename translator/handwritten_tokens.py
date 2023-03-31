@@ -315,15 +315,37 @@ b_xor_fn = SailHandwrittenFn(
 	Sail_t_fn([Sail_t_int(), Sail_t_int()], Sail_t_int(), {'escape'})
 )
 
-rotate_left_fn = SailHandwrittenFn(
-	'rotate_left',
-	Sail_t_fn([Sail_t_int(), Sail_t_int(), Sail_t_int()], Sail_t_int(), {'escape'})
-)
+def rotate_left_fn(args, _):
+	if isinstance(args[0], SailApp) and args[0].getFn().getName() == 'unsigned':
+		arg = args[0].getActuals()[0]
+	else:
+		arg = args[0]
+	if isinstance(getType(arg), Sail_t_bits):
+		argType = getType(arg)
+	else:
+		argType = Sail_t_int()
+	return SailHandwrittenFn('rotate_left', Sail_t_fn([argType, Sail_t_int(), Sail_t_int()], argType))
 
-rotate_right_fn = SailHandwrittenFn(
-	'rotate_right',
-	Sail_t_fn([Sail_t_int(), Sail_t_int(), Sail_t_int()], Sail_t_int(), {'escape'})
-)
+def rotate_right_fn(args, _):
+	if isinstance(args[0], SailApp) and args[0].getFn().getName() == 'unsigned':
+		arg = args[0].getActuals()[0]
+	else:
+		arg = args[0]
+	if isinstance(getType(arg), Sail_t_bits):
+		argType = getType(arg)
+	else:
+		argType = Sail_t_int()
+	return SailHandwrittenFn('rotate_right', Sail_t_fn([argType, Sail_t_int(), Sail_t_int()], argType))
+
+#rotate_left_fn = SailHandwrittenFn(
+#	'rotate_left',
+#	Sail_t_fn([Sail_t_int(), Sail_t_int(), Sail_t_int()], Sail_t_int(), {'escape'})
+#)
+#
+#rotate_right_fn = SailHandwrittenFn(
+#	'rotate_right',
+#	Sail_t_fn([Sail_t_int(), Sail_t_int(), Sail_t_int()], Sail_t_int(), {'escape'})
+#)
 
 merge_2_u64s_fn = SailHandwrittenFn(
 	'merge_2_u64s',
