@@ -6,35 +6,35 @@ $include "./paging.sail"
  like @ ( ' rml08 ' ) , @ ( ' rml16 ' ) , @ ( ' rml32 ' ) , and @ ( ' rml64 ' ) are reduced to 
  @ ( ' rb ' ) , and @ ( ' wml08 ' ) , @ ( ' wml16 ' ) , @ ( ' wml32 ' ) , and @ ( ' wml64 ' ) to 
  @ ( ' wb ' ) during reasoning.</p> */
-val rml08 : (sbits(48), string) -> bits(8)
+val rml08 : (sbits(64), string) -> bits(8)
 
 function rml08 (lin_addr, r_x) = {
     rb(1, lin_addr, r_x)
 }
 
-val riml08 : (sbits(48), string) -> sbits(8)
+val riml08 : (sbits(64), string) -> sbits(8)
 
 function riml08 (lin_addr, r_x) = {
     let sailval : bits(8) = rml08(lin_addr, r_x);
     sailval
 }
 
-val wml08 : (sbits(48), bits(8)) -> unit
+val wml08 : (sbits(64), bits(8)) -> unit
 
 function wml08 (lin_addr, sailval) = {
     wb(1, lin_addr, ":W", sailval)
 }
 
-val wiml08 : (sbits(48), sbits(8)) -> unit
+val wiml08 : (sbits(64), sbits(8)) -> unit
 
 function wiml08 (lin_addr, sailval) = {
     wml08(lin_addr, sailval)
 }
 
-val rml16 : (sbits(48), string) -> bits(16)
+val rml16 : (sbits(64), string) -> bits(16)
 
 function rml16 (lin_addr, r_x) = {
-    let one__plus_lin_addr : sbits(49) = bits_of_int(1 + signed(lin_addr), 49);
+    let one__plus_lin_addr : sbits(65) = bits_of_int(1 + signed(lin_addr), 65);
     if canonical_address_p(signed(one__plus_lin_addr)) then {
         rb(2, lin_addr, r_x)
     } else {
@@ -42,18 +42,18 @@ function rml16 (lin_addr, r_x) = {
     }
 }
 
-val riml16 : (sbits(48), string) -> sbits(16)
+val riml16 : (sbits(64), string) -> sbits(16)
 
 function riml16 (lin_addr, r_x) = {
     let sailval : bits(16) = rml16(lin_addr, r_x);
     sailval
 }
 
-val wml16 : (sbits(48), bits(16)) -> unit
+val wml16 : (sbits(64), bits(16)) -> unit
 
 function wml16 (lin_addr, sailval) = {
     assert(canonical_address_p(signed(lin_addr)));
-    let one__plus_lin_addr : sbits(49) = bits_of_int(1 + signed(lin_addr), 49);
+    let one__plus_lin_addr : sbits(65) = bits_of_int(1 + signed(lin_addr), 65);
     if canonical_address_p(signed(one__plus_lin_addr)) then {
         wb(2, lin_addr, ":W", sailval)
     } else {
@@ -61,17 +61,17 @@ function wml16 (lin_addr, sailval) = {
     }
 }
 
-val wiml16 : (sbits(48), sbits(16)) -> unit
+val wiml16 : (sbits(64), sbits(16)) -> unit
 
 function wiml16 (lin_addr, sailval) = {
     wml16(lin_addr, sailval)
 }
 
-val rml32 : (sbits(48), string) -> bits(32)
+val rml32 : (sbits(64), string) -> bits(32)
 
 function rml32 (lin_addr, r_x) = {
     assert(canonical_address_p(signed(lin_addr)));
-    let three__plus_lin_addr : sbits(49) = bits_of_int(3 + signed(lin_addr), 49);
+    let three__plus_lin_addr : sbits(65) = bits_of_int(3 + signed(lin_addr), 65);
     if canonical_address_p(signed(three__plus_lin_addr)) then {
         rb(4, lin_addr, r_x)
     } else {
@@ -79,18 +79,18 @@ function rml32 (lin_addr, r_x) = {
     }
 }
 
-val riml32 : (sbits(48), string) -> sbits(32)
+val riml32 : (sbits(64), string) -> sbits(32)
 
 function riml32 (lin_addr, r_x) = {
     let sailval : bits(32) = rml32(lin_addr, r_x);
     sailval
 }
 
-val wml32 : (sbits(48), bits(32)) -> unit
+val wml32 : (sbits(64), bits(32)) -> unit
 
 function wml32 (lin_addr, sailval) = {
     assert(canonical_address_p(signed(lin_addr)));
-    let three__plus_lin_addr : sbits(49) = bits_of_int(3 + signed(lin_addr), 49);
+    let three__plus_lin_addr : sbits(65) = bits_of_int(3 + signed(lin_addr), 65);
     if canonical_address_p(signed(three__plus_lin_addr)) then {
         wb(4, lin_addr, ":W", sailval)
     } else {
@@ -98,17 +98,17 @@ function wml32 (lin_addr, sailval) = {
     }
 }
 
-val wiml32 : (sbits(48), sbits(32)) -> unit
+val wiml32 : (sbits(64), sbits(32)) -> unit
 
 function wiml32 (lin_addr, sailval) = {
     wml32(lin_addr, sailval)
 }
 
-val rml48 : (sbits(48), string) -> bits(48)
+val rml48 : (sbits(64), string) -> bits(48)
 
 function rml48 (lin_addr, r_x) = {
     assert(canonical_address_p(signed(lin_addr)));
-    let five__plus_lin_addr : sbits(49) = bits_of_int(5 + signed(lin_addr), 49);
+    let five__plus_lin_addr : sbits(65) = bits_of_int(5 + signed(lin_addr), 65);
     if canonical_address_p(signed(five__plus_lin_addr)) then {
         rb(6, lin_addr, r_x)
     } else {
@@ -116,11 +116,11 @@ function rml48 (lin_addr, r_x) = {
     }
 }
 
-val wml48 : (sbits(48), bits(48)) -> unit
+val wml48 : (sbits(64), bits(48)) -> unit
 
 function wml48 (lin_addr, sailval) = {
     assert(canonical_address_p(signed(lin_addr)));
-    let five__plus_lin_addr : sbits(49) = bits_of_int(5 + signed(lin_addr), 49);
+    let five__plus_lin_addr : sbits(65) = bits_of_int(5 + signed(lin_addr), 65);
     if canonical_address_p(signed(five__plus_lin_addr)) then {
         wb(6, lin_addr, ":W", sailval)
     } else {
@@ -128,11 +128,11 @@ function wml48 (lin_addr, sailval) = {
     }
 }
 
-val rml64 : (sbits(48), string) -> bits(64)
+val rml64 : (sbits(64), string) -> bits(64)
 
 function rml64 (lin_addr, r_x) = {
     assert(canonical_address_p(signed(lin_addr)));
-    let seven__plus_lin_addr : sbits(49) = bits_of_int(7 + signed(lin_addr), 49);
+    let seven__plus_lin_addr : sbits(65) = bits_of_int(7 + signed(lin_addr), 65);
     if canonical_address_p(signed(seven__plus_lin_addr)) then {
         rb(8, lin_addr, r_x)
     } else {
@@ -140,18 +140,18 @@ function rml64 (lin_addr, r_x) = {
     }
 }
 
-val riml64 : (sbits(48), string) -> sbits(64)
+val riml64 : (sbits(64), string) -> sbits(64)
 
 function riml64 (lin_addr, r_x) = {
     let sailval : bits(64) = rml64(lin_addr, r_x);
     sailval
 }
 
-val wml64 : (sbits(48), bits(64)) -> unit
+val wml64 : (sbits(64), bits(64)) -> unit
 
 function wml64 (lin_addr, sailval) = {
     assert(canonical_address_p(signed(lin_addr)));
-    let seven__plus_lin_addr : sbits(50) = bits_of_int(7 + signed(lin_addr), 50);
+    let seven__plus_lin_addr : sbits(66) = bits_of_int(7 + signed(lin_addr), 66);
     if canonical_address_p(signed(seven__plus_lin_addr)) then {
         wb(8, lin_addr, ":W", sailval)
     } else {
@@ -159,17 +159,17 @@ function wml64 (lin_addr, sailval) = {
     }
 }
 
-val wiml64 : (sbits(48), sbits(64)) -> unit
+val wiml64 : (sbits(64), sbits(64)) -> unit
 
 function wiml64 (lin_addr, sailval) = {
     wml64(lin_addr, sailval)
 }
 
-val rml80 : (sbits(48), string) -> bits(80)
+val rml80 : (sbits(64), string) -> bits(80)
 
 function rml80 (lin_addr, r_x) = {
     assert(canonical_address_p(signed(lin_addr)));
-    let nine__plus_lin_addr : sbits(49) = bits_of_int(9 + signed(lin_addr), 49);
+    let nine__plus_lin_addr : sbits(65) = bits_of_int(9 + signed(lin_addr), 65);
     if canonical_address_p(signed(nine__plus_lin_addr)) then {
         rb(10, lin_addr, r_x)
     } else {
@@ -177,11 +177,11 @@ function rml80 (lin_addr, r_x) = {
     }
 }
 
-val wml80 : (sbits(48), bits(80)) -> unit
+val wml80 : (sbits(64), bits(80)) -> unit
 
 function wml80 (lin_addr, sailval) = {
     assert(canonical_address_p(signed(lin_addr)));
-    let nine__plus_lin_addr : sbits(49) = bits_of_int(9 + signed(lin_addr), 49);
+    let nine__plus_lin_addr : sbits(65) = bits_of_int(9 + signed(lin_addr), 65);
     if canonical_address_p(signed(nine__plus_lin_addr)) then {
         wb(10, lin_addr, ":W", sailval)
     } else {
@@ -189,46 +189,46 @@ function wml80 (lin_addr, sailval) = {
     }
 }
 
-val rml128 : (sbits(48), string) -> bits(128)
+val rml128 : (sbits(64), string) -> bits(128)
 
 function rml128 (lin_addr, r_x) = {
     assert(canonical_address_p(signed(lin_addr)));
-    let one_5_plus_lin_addr : sbits(49) = bits_of_int(15 + signed(lin_addr), 49);
+    let one_5_plus_lin_addr : sbits(65) = bits_of_int(15 + signed(lin_addr), 65);
     if canonical_address_p(signed(one_5_plus_lin_addr)) then {
         if app_view then {
             rb(16, lin_addr, r_x)
         } else {
             let p_addr0 : bits(52) = la_to_pa(lin_addr, r_x);
-            let one__plus_lin_addr : sbits(49) = bits_of_int(1 + signed(lin_addr), 49);
-            let p_addr1 : bits(52) = la_to_pa(truncate(one__plus_lin_addr, 48), r_x);
-            let _2_plus_lin_addr : sbits(50) = bits_of_int(2 + signed(lin_addr), 50);
-            let p_addr2 : bits(52) = la_to_pa(truncate(_2_plus_lin_addr, 48), r_x);
-            let three__plus_lin_addr : sbits(51) = bits_of_int(3 + signed(lin_addr), 51);
-            let p_addr3 : bits(52) = la_to_pa(truncate(three__plus_lin_addr, 48), r_x);
-            let _4_plus_lin_addr : sbits(52) = bits_of_int(4 + signed(lin_addr), 52);
-            let p_addr4 : bits(52) = la_to_pa(truncate(_4_plus_lin_addr, 48), r_x);
-            let five__plus_lin_addr : sbits(53) = bits_of_int(5 + signed(lin_addr), 53);
-            let p_addr5 : bits(52) = la_to_pa(truncate(five__plus_lin_addr, 48), r_x);
-            let _6_plus_lin_addr : sbits(54) = bits_of_int(6 + signed(lin_addr), 54);
-            let p_addr6 : bits(52) = la_to_pa(truncate(_6_plus_lin_addr, 48), r_x);
-            let seven__plus_lin_addr : sbits(55) = bits_of_int(7 + signed(lin_addr), 55);
-            let p_addr7 : bits(52) = la_to_pa(truncate(seven__plus_lin_addr, 48), r_x);
-            let _8_plus_lin_addr : sbits(56) = bits_of_int(8 + signed(lin_addr), 56);
-            let p_addr8 : bits(52) = la_to_pa(truncate(_8_plus_lin_addr, 48), r_x);
-            let nine__plus_lin_addr : sbits(57) = bits_of_int(9 + signed(lin_addr), 57);
-            let p_addr9 : bits(52) = la_to_pa(truncate(nine__plus_lin_addr, 48), r_x);
-            let one_0_plus_lin_addr : sbits(58) = bits_of_int(10 + signed(lin_addr), 58);
-            let p_addr10 : bits(52) = la_to_pa(truncate(one_0_plus_lin_addr, 48), r_x);
-            let one_1_plus_lin_addr : sbits(59) = bits_of_int(11 + signed(lin_addr), 59);
-            let p_addr11 : bits(52) = la_to_pa(truncate(one_1_plus_lin_addr, 48), r_x);
-            let one_2_plus_lin_addr : sbits(60) = bits_of_int(12 + signed(lin_addr), 60);
-            let p_addr12 : bits(52) = la_to_pa(truncate(one_2_plus_lin_addr, 48), r_x);
-            let one_3_plus_lin_addr : sbits(61) = bits_of_int(13 + signed(lin_addr), 61);
-            let p_addr13 : bits(52) = la_to_pa(truncate(one_3_plus_lin_addr, 48), r_x);
-            let one_4_plus_lin_addr : sbits(62) = bits_of_int(14 + signed(lin_addr), 62);
-            let p_addr14 : bits(52) = la_to_pa(truncate(one_4_plus_lin_addr, 48), r_x);
-            let one_5_plus_lin_addr : sbits(63) = bits_of_int(15 + signed(lin_addr), 63);
-            let p_addr15 : bits(52) = la_to_pa(truncate(one_5_plus_lin_addr, 48), r_x);
+            let one__plus_lin_addr : sbits(65) = bits_of_int(1 + signed(lin_addr), 65);
+            let p_addr1 : bits(52) = la_to_pa(truncate(one__plus_lin_addr, 64), r_x);
+            let _2_plus_lin_addr : sbits(66) = bits_of_int(2 + signed(lin_addr), 66);
+            let p_addr2 : bits(52) = la_to_pa(truncate(_2_plus_lin_addr, 64), r_x);
+            let three__plus_lin_addr : sbits(67) = bits_of_int(3 + signed(lin_addr), 67);
+            let p_addr3 : bits(52) = la_to_pa(truncate(three__plus_lin_addr, 64), r_x);
+            let _4_plus_lin_addr : sbits(68) = bits_of_int(4 + signed(lin_addr), 68);
+            let p_addr4 : bits(52) = la_to_pa(truncate(_4_plus_lin_addr, 64), r_x);
+            let five__plus_lin_addr : sbits(69) = bits_of_int(5 + signed(lin_addr), 69);
+            let p_addr5 : bits(52) = la_to_pa(truncate(five__plus_lin_addr, 64), r_x);
+            let _6_plus_lin_addr : sbits(70) = bits_of_int(6 + signed(lin_addr), 70);
+            let p_addr6 : bits(52) = la_to_pa(truncate(_6_plus_lin_addr, 64), r_x);
+            let seven__plus_lin_addr : sbits(71) = bits_of_int(7 + signed(lin_addr), 71);
+            let p_addr7 : bits(52) = la_to_pa(truncate(seven__plus_lin_addr, 64), r_x);
+            let _8_plus_lin_addr : sbits(72) = bits_of_int(8 + signed(lin_addr), 72);
+            let p_addr8 : bits(52) = la_to_pa(truncate(_8_plus_lin_addr, 64), r_x);
+            let nine__plus_lin_addr : sbits(73) = bits_of_int(9 + signed(lin_addr), 73);
+            let p_addr9 : bits(52) = la_to_pa(truncate(nine__plus_lin_addr, 64), r_x);
+            let one_0_plus_lin_addr : sbits(74) = bits_of_int(10 + signed(lin_addr), 74);
+            let p_addr10 : bits(52) = la_to_pa(truncate(one_0_plus_lin_addr, 64), r_x);
+            let one_1_plus_lin_addr : sbits(75) = bits_of_int(11 + signed(lin_addr), 75);
+            let p_addr11 : bits(52) = la_to_pa(truncate(one_1_plus_lin_addr, 64), r_x);
+            let one_2_plus_lin_addr : sbits(76) = bits_of_int(12 + signed(lin_addr), 76);
+            let p_addr12 : bits(52) = la_to_pa(truncate(one_2_plus_lin_addr, 64), r_x);
+            let one_3_plus_lin_addr : sbits(77) = bits_of_int(13 + signed(lin_addr), 77);
+            let p_addr13 : bits(52) = la_to_pa(truncate(one_3_plus_lin_addr, 64), r_x);
+            let one_4_plus_lin_addr : sbits(78) = bits_of_int(14 + signed(lin_addr), 78);
+            let p_addr14 : bits(52) = la_to_pa(truncate(one_4_plus_lin_addr, 64), r_x);
+            let one_5_plus_lin_addr : sbits(79) = bits_of_int(15 + signed(lin_addr), 79);
+            let p_addr15 : bits(52) = la_to_pa(truncate(one_5_plus_lin_addr, 64), r_x);
             let byte0 : bits(8) = memi(sail_zero_extend(p_addr0, 64));
             let byte1 : bits(8) = memi(sail_zero_extend(p_addr1, 64));
             let byte2 : bits(8) = memi(sail_zero_extend(p_addr2, 64));
@@ -253,46 +253,46 @@ function rml128 (lin_addr, r_x) = {
     }
 }
 
-val wml128 : (sbits(48), bits(128)) -> unit
+val wml128 : (sbits(64), bits(128)) -> unit
 
 function wml128 (lin_addr, sailval) = {
     assert(canonical_address_p(signed(lin_addr)));
-    let one_5_plus_lin_addr : sbits(49) = bits_of_int(15 + signed(lin_addr), 49);
+    let one_5_plus_lin_addr : sbits(65) = bits_of_int(15 + signed(lin_addr), 65);
     if canonical_address_p(signed(one_5_plus_lin_addr)) then {
         if app_view then {
             wb(16, lin_addr, ":W", sailval)
         } else {
             let p_addr0 : bits(52) = la_to_pa(lin_addr, ":W");
-            let one__plus_lin_addr : sbits(49) = bits_of_int(1 + signed(lin_addr), 49);
-            let p_addr1 : bits(52) = la_to_pa(truncate(one__plus_lin_addr, 48), ":W");
-            let _2_plus_lin_addr : sbits(50) = bits_of_int(2 + signed(lin_addr), 50);
-            let p_addr2 : bits(52) = la_to_pa(truncate(_2_plus_lin_addr, 48), ":W");
-            let three__plus_lin_addr : sbits(51) = bits_of_int(3 + signed(lin_addr), 51);
-            let p_addr3 : bits(52) = la_to_pa(truncate(three__plus_lin_addr, 48), ":W");
-            let _4_plus_lin_addr : sbits(52) = bits_of_int(4 + signed(lin_addr), 52);
-            let p_addr4 : bits(52) = la_to_pa(truncate(_4_plus_lin_addr, 48), ":W");
-            let five__plus_lin_addr : sbits(53) = bits_of_int(5 + signed(lin_addr), 53);
-            let p_addr5 : bits(52) = la_to_pa(truncate(five__plus_lin_addr, 48), ":W");
-            let _6_plus_lin_addr : sbits(54) = bits_of_int(6 + signed(lin_addr), 54);
-            let p_addr6 : bits(52) = la_to_pa(truncate(_6_plus_lin_addr, 48), ":W");
-            let seven__plus_lin_addr : sbits(55) = bits_of_int(7 + signed(lin_addr), 55);
-            let p_addr7 : bits(52) = la_to_pa(truncate(seven__plus_lin_addr, 48), ":W");
-            let _8_plus_lin_addr : sbits(56) = bits_of_int(8 + signed(lin_addr), 56);
-            let p_addr8 : bits(52) = la_to_pa(truncate(_8_plus_lin_addr, 48), ":W");
-            let nine__plus_lin_addr : sbits(57) = bits_of_int(9 + signed(lin_addr), 57);
-            let p_addr9 : bits(52) = la_to_pa(truncate(nine__plus_lin_addr, 48), ":W");
-            let one_0_plus_lin_addr : sbits(58) = bits_of_int(10 + signed(lin_addr), 58);
-            let p_addr10 : bits(52) = la_to_pa(truncate(one_0_plus_lin_addr, 48), ":W");
-            let one_1_plus_lin_addr : sbits(59) = bits_of_int(11 + signed(lin_addr), 59);
-            let p_addr11 : bits(52) = la_to_pa(truncate(one_1_plus_lin_addr, 48), ":W");
-            let one_2_plus_lin_addr : sbits(60) = bits_of_int(12 + signed(lin_addr), 60);
-            let p_addr12 : bits(52) = la_to_pa(truncate(one_2_plus_lin_addr, 48), ":W");
-            let one_3_plus_lin_addr : sbits(61) = bits_of_int(13 + signed(lin_addr), 61);
-            let p_addr13 : bits(52) = la_to_pa(truncate(one_3_plus_lin_addr, 48), ":W");
-            let one_4_plus_lin_addr : sbits(62) = bits_of_int(14 + signed(lin_addr), 62);
-            let p_addr14 : bits(52) = la_to_pa(truncate(one_4_plus_lin_addr, 48), ":W");
-            let one_5_plus_lin_addr : sbits(63) = bits_of_int(15 + signed(lin_addr), 63);
-            let p_addr15 : bits(52) = la_to_pa(truncate(one_5_plus_lin_addr, 48), ":W");
+            let one__plus_lin_addr : sbits(65) = bits_of_int(1 + signed(lin_addr), 65);
+            let p_addr1 : bits(52) = la_to_pa(truncate(one__plus_lin_addr, 64), ":W");
+            let _2_plus_lin_addr : sbits(66) = bits_of_int(2 + signed(lin_addr), 66);
+            let p_addr2 : bits(52) = la_to_pa(truncate(_2_plus_lin_addr, 64), ":W");
+            let three__plus_lin_addr : sbits(67) = bits_of_int(3 + signed(lin_addr), 67);
+            let p_addr3 : bits(52) = la_to_pa(truncate(three__plus_lin_addr, 64), ":W");
+            let _4_plus_lin_addr : sbits(68) = bits_of_int(4 + signed(lin_addr), 68);
+            let p_addr4 : bits(52) = la_to_pa(truncate(_4_plus_lin_addr, 64), ":W");
+            let five__plus_lin_addr : sbits(69) = bits_of_int(5 + signed(lin_addr), 69);
+            let p_addr5 : bits(52) = la_to_pa(truncate(five__plus_lin_addr, 64), ":W");
+            let _6_plus_lin_addr : sbits(70) = bits_of_int(6 + signed(lin_addr), 70);
+            let p_addr6 : bits(52) = la_to_pa(truncate(_6_plus_lin_addr, 64), ":W");
+            let seven__plus_lin_addr : sbits(71) = bits_of_int(7 + signed(lin_addr), 71);
+            let p_addr7 : bits(52) = la_to_pa(truncate(seven__plus_lin_addr, 64), ":W");
+            let _8_plus_lin_addr : sbits(72) = bits_of_int(8 + signed(lin_addr), 72);
+            let p_addr8 : bits(52) = la_to_pa(truncate(_8_plus_lin_addr, 64), ":W");
+            let nine__plus_lin_addr : sbits(73) = bits_of_int(9 + signed(lin_addr), 73);
+            let p_addr9 : bits(52) = la_to_pa(truncate(nine__plus_lin_addr, 64), ":W");
+            let one_0_plus_lin_addr : sbits(74) = bits_of_int(10 + signed(lin_addr), 74);
+            let p_addr10 : bits(52) = la_to_pa(truncate(one_0_plus_lin_addr, 64), ":W");
+            let one_1_plus_lin_addr : sbits(75) = bits_of_int(11 + signed(lin_addr), 75);
+            let p_addr11 : bits(52) = la_to_pa(truncate(one_1_plus_lin_addr, 64), ":W");
+            let one_2_plus_lin_addr : sbits(76) = bits_of_int(12 + signed(lin_addr), 76);
+            let p_addr12 : bits(52) = la_to_pa(truncate(one_2_plus_lin_addr, 64), ":W");
+            let one_3_plus_lin_addr : sbits(77) = bits_of_int(13 + signed(lin_addr), 77);
+            let p_addr13 : bits(52) = la_to_pa(truncate(one_3_plus_lin_addr, 64), ":W");
+            let one_4_plus_lin_addr : sbits(78) = bits_of_int(14 + signed(lin_addr), 78);
+            let p_addr14 : bits(52) = la_to_pa(truncate(one_4_plus_lin_addr, 64), ":W");
+            let one_5_plus_lin_addr : sbits(79) = bits_of_int(15 + signed(lin_addr), 79);
+            let p_addr15 : bits(52) = la_to_pa(truncate(one_5_plus_lin_addr, 64), ":W");
             let byte0 : bits(8) = sailval[7 .. 0];
             let byte1 : bits(8) = sailval[15 .. 8];
             let byte2 : bits(8) = sailval[23 .. 16];
@@ -332,7 +332,7 @@ function wml128 (lin_addr, sailval) = {
 }
 
 /*! Functions to read/write 8/16/32/64/128 bits into the memory: */
-val rml_size : ({|1, 2, 4, 6, 8, 10, 16|}, sbits(48), string) -> bits(128)
+val rml_size : ({|1, 2, 4, 6, 8, 10, 16|}, sbits(64), string) -> bits(128)
 
 function rml_size (nbytes, addr, r_x) = {
     (match nbytes {
@@ -353,7 +353,7 @@ function rml_size (nbytes, addr, r_x) = {
     }) : bits(128)
 }
 
-val riml_size : ({|1, 2, 4, 8|}, sbits(48), string) -> sbits(64)
+val riml_size : ({|1, 2, 4, 8|}, sbits(64), string) -> sbits(64)
 
 function riml_size (nbytes, addr, r_x) = {
     (match nbytes {
@@ -365,7 +365,7 @@ function riml_size (nbytes, addr, r_x) = {
     }) : sbits(64)
 }
 
-val wml_size : ({|1, 2, 4, 6, 8, 10, 16|}, sbits(48), nat) -> unit
+val wml_size : ({|1, 2, 4, 6, 8, 10, 16|}, sbits(64), nat) -> unit
 
 function wml_size (nbytes, addr, sailval) = {
     (match nbytes {
@@ -386,7 +386,7 @@ function wml_size (nbytes, addr, sailval) = {
     }) : unit
 }
 
-val wiml_size : ({|1, 2, 4, 8|}, sbits(48), int) -> unit
+val wiml_size : ({|1, 2, 4, 8|}, sbits(64), int) -> unit
 
 function wiml_size (nbytes, addr, sailval) = {
     (match nbytes {
@@ -398,23 +398,23 @@ function wiml_size (nbytes, addr, sailval) = {
     }) : unit
 }
 
-val write_canonical_address_to_memory_user_exec : (sbits(48), sbits(48)) -> option(string)
+val write_canonical_address_to_memory_user_exec : (sbits(64), sbits(64)) -> option(string)
 
 function write_canonical_address_to_memory_user_exec (lin_addr, canonical_address) = {
     assert(app_view & canonical_address_p(7 + signed(lin_addr)));
     let canonical_address_low_nat : bits(32) = truncate(canonical_address, 32);
     let canonical_address_high_int : sbits(32) = sail_sign_extend(sail_zero_extend(canonical_address[47 .. 32], 16), 32);
     wml32(lin_addr, canonical_address_low_nat);
-    let next_addr : sbits(49) = bits_of_int(4 + signed(lin_addr), 49);
+    let next_addr : sbits(65) = bits_of_int(4 + signed(lin_addr), 65);
     if not_bool(canonical_address_p(signed(next_addr))) then x86_model_error("wml64-canonical-address-user-view");
-    wiml32(truncate(next_addr, 48), canonical_address_high_int);
+    wiml32(truncate(next_addr, 64), canonical_address_high_int);
     None() : option(string)
 }
 
-val write_canonical_address_to_memory : (sbits(48), sbits(48)) -> unit
+val write_canonical_address_to_memory : (sbits(64), sbits(64)) -> unit
 
 function write_canonical_address_to_memory (lin_addr, canonical_address) = {
-    let seven__plus_lin_addr : sbits(50) = bits_of_int(7 + signed(lin_addr), 50);
+    let seven__plus_lin_addr : sbits(66) = bits_of_int(7 + signed(lin_addr), 66);
     if canonical_address_p(signed(seven__plus_lin_addr)) then {
         if app_view then {
             wb(8, lin_addr, ":W", loghead(64, canonical_address))

@@ -6,25 +6,5 @@
  @ ( ' *max-linear-address-size* ' ) in these books ) are set to either all ones or 
  all zeros.</p> */
 function canonical_address_p lin_addr = {
-    signed_byte_p(max_linear_address_size, lin_addr)
-}
-
-val rvm08 : sbits(48) -> bits(8)
-
-function rvm08 addr = {
-    if canonical_address_p(signed(addr)) then {
-        memi(sail_zero_extend(addr, 64))
-    } else {
-        x86_model_error("rvm08")
-    }
-}
-
-val wvm08 : (sbits(48), bits(8)) -> unit
-
-function wvm08 (addr, sailval) = {
-    if canonical_address_p(signed(addr)) then {
-        bang_memi(sail_zero_extend(addr, 64), sailval)
-    } else {
-        x86_model_error("wvm08")
-    }
+    signed_byte_p(48, lin_addr)
 }

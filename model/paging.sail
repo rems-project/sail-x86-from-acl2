@@ -7,11 +7,11 @@ function page_fault_err_no (p_flag, r_w_x, cpl, rsvd, smep, pae, nxe) = {
     logior(if p_flag == 0b1 then 1 else 0, if r_w_x == ":W" then 2 else 0)
 }
 
-val page_fault_exception : (sbits(48), int) -> (bool, {|0|})
+val page_fault_exception : (sbits(64), int) -> (bool, {|0|})
 
 function page_fault_exception (addr, err_no) = {
     let old_faults : bool = fault();
-    let new_faults : ((string, (int, sbits(48))), bool) = ((":PAGE-FAULT", (err_no, addr)), old_faults);
+    let new_faults : ((string, (int, sbits(64))), bool) = ((":PAGE-FAULT", (err_no, addr)), old_faults);
     x86_fault("(!fault new-faults x86)");
     (true, 0)
 }
@@ -70,28 +70,28 @@ function set_dirty_bit entry = {
     [Mk_ia32e_page_tablesbits(entry) with d = 0b1]
 }
 
-val page_table_entry_addr : (sbits(48), bits(52)) -> bits(52)
+val page_table_entry_addr : (sbits(64), bits(52)) -> bits(52)
 
 function page_table_entry_addr (lin_addr, base_addr) = {
     assert(unsigned_byte_p(52, unsigned(base_addr)) & loghead(12, base_addr) == 0x000);
     changeSlice(base_addr, 3, 9, lin_addr[20 .. 12])
 }
 
-val page_directory_entry_addr : (sbits(48), bits(52)) -> bits(52)
+val page_directory_entry_addr : (sbits(64), bits(52)) -> bits(52)
 
 function page_directory_entry_addr (lin_addr, base_addr) = {
     assert(unsigned_byte_p(52, unsigned(base_addr)) & loghead(12, base_addr) == 0x000);
     changeSlice(base_addr, 3, 9, lin_addr[29 .. 21])
 }
 
-val page_dir_ptr_table_entry_addr : (sbits(48), bits(52)) -> bits(52)
+val page_dir_ptr_table_entry_addr : (sbits(64), bits(52)) -> bits(52)
 
 function page_dir_ptr_table_entry_addr (lin_addr, base_addr) = {
     assert(unsigned_byte_p(52, unsigned(base_addr)) & loghead(12, base_addr) == 0x000);
     changeSlice(base_addr, 3, 9, lin_addr[38 .. 30])
 }
 
-val pml4_table_entry_addr : (sbits(48), bits(52)) -> bits(52)
+val pml4_table_entry_addr : (sbits(64), bits(52)) -> bits(52)
 
 function pml4_table_entry_addr (lin_addr, base_addr) = {
     assert(unsigned_byte_p(52, unsigned(base_addr)) & loghead(12, base_addr) == 0x000);
@@ -100,7 +100,7 @@ function pml4_table_entry_addr (lin_addr, base_addr) = {
 
 struct struct_paging_entry_no_page_fault_p = {supervisor_mode_access_type : int}
 
-val paging_entry_no_page_fault_p : (bits(2), sbits(48), bits(64), bits(1), bits(1), bits(1), bits(1), bits(1), bits(1), bits(1), bits(1), string, bits(2), struct_paging_entry_no_page_fault_p) -> (bool, {|0|})
+val paging_entry_no_page_fault_p : (bits(2), sbits(64), bits(64), bits(1), bits(1), bits(1), bits(1), bits(1), bits(1), bits(1), bits(1), string, bits(2), struct_paging_entry_no_page_fault_p) -> (bool, {|0|})
 
 function paging_entry_no_page_fault_p (structure_type, lin_addr, entry, u_s_acc, r_w_acc, x_d_acc, wp, smep, smap, ac, nxe, r_w_x, cpl, keywords) = {
     let entry : bits(64) = loghead(64, entry);
@@ -167,15 +167,15 @@ function paging_entry_no_page_fault_p (structure_type, lin_addr, entry, u_s_acc,
     }
 }
 
-val ia32e_la_to_pa_page_table : (sbits(48), bits(52), bits(1), bits(1), bits(1), bits(1), bits(1), bits(1), bits(1), bits(1), string, bits(2)) -> int
+val ia32e_la_to_pa_page_table : (sbits(64), bits(52), bits(1), bits(1), bits(1), bits(1), bits(1), bits(1), bits(1), bits(1), string, bits(2)) -> int
 
 function ia32e_la_to_pa_page_table (lin_addr, base_addr, u_s_acc, r_w_acc, x_d_acc, wp, smep, smap, ac, nxe, r_w_x, cpl) = {
     assert(not_bool(app_view));
     let lin_addr : int = binary_logext(48, unsigned(loghead(48, lin_addr)));
     let base_addr : bits(52) = changeSlice(loghead(52, base_addr), 0, 12, 0x000);
-    let p_entry_addr : bits(52) = page_table_entry_addr(bits_of_int(lin_addr, 48), base_addr);
+    let p_entry_addr : bits(52) = page_table_entry_addr(bits_of_int(lin_addr, 64), base_addr);
     let entry : bits(64) = rm_low_64(unsigned(p_entry_addr));
-    let (fault_flg, sailval) : (bool, {|0|}) = paging_entry_no_page_fault_p(0b00, bits_of_int(lin_addr, 48), entry, u_s_acc, r_w_acc, x_d_acc, wp, smep, smap, ac, nxe, r_w_x, cpl, struct { supervisor_mode_access_type = 0 });
+    let (fault_flg, sailval) : (bool, {|0|}) = paging_entry_no_page_fault_p(0b00, bits_of_int(lin_addr, 64), entry, u_s_acc, r_w_acc, x_d_acc, wp, smep, smap, ac, nxe, r_w_x, cpl, struct { supervisor_mode_access_type = 0 });
     if fault_flg then x86_model_error("Page-Fault");
     if marking_view then {
         let accessed : bits(1) = accessed_bit(entry);
@@ -202,18 +202,18 @@ function ia32e_la_to_pa_page_table (lin_addr, base_addr, u_s_acc, r_w_acc, x_d_a
     changeSlice(ash(unsigned(Mk_ia32e_pte_4k_pagebits(entry)[page]), 12), 0, 12, unsigned(get_slice_int(12, lin_addr, 0)))
 }
 
-val ia32e_la_to_pa_page_directory : (sbits(48), bits(52), bits(1), bits(1), bits(1), bits(1), bits(1), bits(1), bits(1), bits(1), string, bits(2)) -> int
+val ia32e_la_to_pa_page_directory : (sbits(64), bits(52), bits(1), bits(1), bits(1), bits(1), bits(1), bits(1), bits(1), bits(1), string, bits(2)) -> int
 
 function ia32e_la_to_pa_page_directory (lin_addr, base_addr, u_s_acc, r_w_acc, x_d_acc, wp, smep, smap, ac, nxe, r_w_x, cpl) = {
     assert(not_bool(app_view));
     let lin_addr : int = binary_logext(48, unsigned(loghead(48, lin_addr)));
     let base_addr : bits(52) = changeSlice(loghead(52, base_addr), 0, 12, 0x000);
-    let p_entry_addr : bits(52) = page_directory_entry_addr(bits_of_int(lin_addr, 48), base_addr);
+    let p_entry_addr : bits(52) = page_directory_entry_addr(bits_of_int(lin_addr, 64), base_addr);
     let entry : bits(64) = rm_low_64(unsigned(p_entry_addr));
     let u_s_all : bits(1) = logand(u_s_acc, page_user_supervisor(entry));
     let r_w_all : bits(1) = logand(r_w_acc, page_read_write(entry));
     let x_d_all : bits(1) = logand(x_d_acc, page_execute_disable(entry));
-    let (fault_flg, sailval) : (bool, {|0|}) = paging_entry_no_page_fault_p(0b01, bits_of_int(lin_addr, 48), entry, u_s_all, r_w_all, x_d_all, wp, smep, smap, ac, nxe, r_w_x, cpl, struct { supervisor_mode_access_type = 0 });
+    let (fault_flg, sailval) : (bool, {|0|}) = paging_entry_no_page_fault_p(0b01, bits_of_int(lin_addr, 64), entry, u_s_all, r_w_all, x_d_all, wp, smep, smap, ac, nxe, r_w_x, cpl, struct { supervisor_mode_access_type = 0 });
     if fault_flg then x86_model_error("Page-Fault");
     if page_size(entry) == 0b1 then {
         if marking_view then {
@@ -241,7 +241,7 @@ function ia32e_la_to_pa_page_directory (lin_addr, base_addr, u_s_acc, r_w_acc, x
         changeSlice(ash(unsigned(Mk_ia32e_pde_2mb_pagebits(entry)[page]), 21), 0, 21, unsigned(get_slice_int(21, lin_addr, 0)))
     } else {
         let page_table_base_addr : int = ash(unsigned(Mk_ia32e_pde_pg_tablebits(entry)[pt]), 12);
-        let p_addr : bits(52) = bits_of_int(ia32e_la_to_pa_page_table(bits_of_int(lin_addr, 48), bits_of_int(page_table_base_addr, 52), u_s_all, r_w_all, x_d_all, wp, smep, smap, ac, nxe, r_w_x, cpl), 52);
+        let p_addr : bits(52) = bits_of_int(ia32e_la_to_pa_page_table(bits_of_int(lin_addr, 64), bits_of_int(page_table_base_addr, 52), u_s_all, r_w_all, x_d_all, wp, smep, smap, ac, nxe, r_w_x, cpl), 52);
         if marking_view then {
             let entry : bits(64) = rm_low_64(unsigned(p_entry_addr));
             let accessed : bits(1) = accessed_bit(entry);
@@ -261,18 +261,18 @@ function ia32e_la_to_pa_page_directory (lin_addr, base_addr, u_s_acc, r_w_acc, x
     }
 }
 
-val ia32e_la_to_pa_page_dir_ptr_table : (sbits(48), bits(52), bits(1), bits(1), bits(1), bits(1), bits(1), bits(1), bits(1), bits(1), string, bits(2)) -> int
+val ia32e_la_to_pa_page_dir_ptr_table : (sbits(64), bits(52), bits(1), bits(1), bits(1), bits(1), bits(1), bits(1), bits(1), bits(1), string, bits(2)) -> int
 
 function ia32e_la_to_pa_page_dir_ptr_table (lin_addr, base_addr, u_s_acc, r_w_acc, x_d_acc, wp, smep, smap, ac, nxe, r_w_x, cpl) = {
     assert(not_bool(app_view));
     let lin_addr : int = binary_logext(48, unsigned(loghead(48, lin_addr)));
     let base_addr : bits(52) = changeSlice(loghead(52, base_addr), 0, 12, 0x000);
-    let p_entry_addr : bits(52) = page_dir_ptr_table_entry_addr(bits_of_int(lin_addr, 48), base_addr);
+    let p_entry_addr : bits(52) = page_dir_ptr_table_entry_addr(bits_of_int(lin_addr, 64), base_addr);
     let entry : bits(64) = rm_low_64(unsigned(p_entry_addr));
     let u_s_all : bits(1) = logand(u_s_acc, page_user_supervisor(entry));
     let r_w_all : bits(1) = logand(r_w_acc, page_read_write(entry));
     let x_d_all : bits(1) = logand(x_d_acc, page_execute_disable(entry));
-    let (fault_flg, sailval) : (bool, {|0|}) = paging_entry_no_page_fault_p(0b10, bits_of_int(lin_addr, 48), entry, u_s_all, r_w_all, x_d_all, wp, smep, smap, ac, nxe, r_w_x, cpl, struct { supervisor_mode_access_type = 0 });
+    let (fault_flg, sailval) : (bool, {|0|}) = paging_entry_no_page_fault_p(0b10, bits_of_int(lin_addr, 64), entry, u_s_all, r_w_all, x_d_all, wp, smep, smap, ac, nxe, r_w_x, cpl, struct { supervisor_mode_access_type = 0 });
     if fault_flg then x86_model_error("Page-Fault");
     if page_size(entry) == 0b1 then {
         if marking_view then {
@@ -300,7 +300,7 @@ function ia32e_la_to_pa_page_dir_ptr_table (lin_addr, base_addr, u_s_acc, r_w_ac
         changeSlice(ash(unsigned(Mk_ia32e_pdpte_1gb_pagebits(entry)[page]), 30), 0, 30, unsigned(get_slice_int(30, lin_addr, 0)))
     } else {
         let page_directory_base_addr : int = ash(unsigned(Mk_ia32e_pdpte_pg_dirbits(entry)[pd]), 12);
-        let p_addr : bits(52) = bits_of_int(ia32e_la_to_pa_page_directory(bits_of_int(lin_addr, 48), bits_of_int(page_directory_base_addr, 52), u_s_all, r_w_all, x_d_all, wp, smep, smap, ac, nxe, r_w_x, cpl), 52);
+        let p_addr : bits(52) = bits_of_int(ia32e_la_to_pa_page_directory(bits_of_int(lin_addr, 64), bits_of_int(page_directory_base_addr, 52), u_s_all, r_w_all, x_d_all, wp, smep, smap, ac, nxe, r_w_x, cpl), 52);
         if marking_view then {
             let entry : bits(64) = rm_low_64(unsigned(p_entry_addr));
             let accessed : bits(1) = accessed_bit(entry);
@@ -320,21 +320,21 @@ function ia32e_la_to_pa_page_dir_ptr_table (lin_addr, base_addr, u_s_acc, r_w_ac
     }
 }
 
-val ia32e_la_to_pa_pml4_table : (sbits(48), bits(52), bits(1), bits(1), bits(1), bits(1), bits(1), string, bits(2)) -> bits(52)
+val ia32e_la_to_pa_pml4_table : (sbits(64), bits(52), bits(1), bits(1), bits(1), bits(1), bits(1), string, bits(2)) -> bits(52)
 
 function ia32e_la_to_pa_pml4_table (lin_addr, base_addr, wp, smep, smap, ac, nxe, r_w_x, cpl) = {
     assert(not_bool(app_view));
     let lin_addr : int = binary_logext(48, unsigned(loghead(48, lin_addr)));
     let base_addr : bits(52) = changeSlice(loghead(52, base_addr), 0, 12, 0x000);
-    let p_entry_addr : bits(52) = pml4_table_entry_addr(bits_of_int(lin_addr, 48), base_addr);
+    let p_entry_addr : bits(52) = pml4_table_entry_addr(bits_of_int(lin_addr, 64), base_addr);
     let entry : bits(64) = rm_low_64(unsigned(p_entry_addr));
     let u_s_all : bits(1) = page_user_supervisor(entry);
     let r_w_all : bits(1) = page_read_write(entry);
     let x_d_all : bits(1) = page_execute_disable(entry);
-    let (fault_flg, sailval) : (bool, {|0|}) = paging_entry_no_page_fault_p(0b11, bits_of_int(lin_addr, 48), entry, u_s_all, r_w_all, x_d_all, wp, smep, smap, ac, nxe, r_w_x, cpl, struct { supervisor_mode_access_type = 0 });
+    let (fault_flg, sailval) : (bool, {|0|}) = paging_entry_no_page_fault_p(0b11, bits_of_int(lin_addr, 64), entry, u_s_all, r_w_all, x_d_all, wp, smep, smap, ac, nxe, r_w_x, cpl, struct { supervisor_mode_access_type = 0 });
     if fault_flg then x86_model_error("Page-Fault");
     let page_dir_ptr_table_base_addr : int = ash(unsigned(Mk_ia32e_pml4ebits(entry)[pdpt]), 12);
-    let p_addr : bits(52) = bits_of_int(ia32e_la_to_pa_page_dir_ptr_table(bits_of_int(lin_addr, 48), bits_of_int(page_dir_ptr_table_base_addr, 52), u_s_all, r_w_all, x_d_all, wp, smep, smap, ac, nxe, r_w_x, cpl), 52);
+    let p_addr : bits(52) = bits_of_int(ia32e_la_to_pa_page_dir_ptr_table(bits_of_int(lin_addr, 64), bits_of_int(page_dir_ptr_table_base_addr, 52), u_s_all, r_w_all, x_d_all, wp, smep, smap, ac, nxe, r_w_x, cpl), 52);
     if marking_view then {
         let entry : bits(64) = rm_low_64(unsigned(p_entry_addr));
         let accessed : bits(1) = accessed_bit(entry);
@@ -367,11 +367,11 @@ function ia32e_la_to_pa (lin_addr, r_w_x) = {
     let nxe : bits(1) = Mk_ia32_eferbits(ia32_efer)[nxe];
     let cr3 : bits(64) = ctrs[3];
     let pml4_table_base_addr : int = ash(unsigned(Mk_cr3bits(cr3)[pdb]), 12);
-    ia32e_la_to_pa_pml4_table(bits_of_int(lin_addr, 48), bits_of_int(pml4_table_base_addr, 52), wp, smep, smap, ac, nxe, r_w_x, cpl)
+    ia32e_la_to_pa_pml4_table(bits_of_int(lin_addr, 64), bits_of_int(pml4_table_base_addr, 52), wp, smep, smap, ac, nxe, r_w_x, cpl)
 }
 
 /*! Top-level page translation function */
-val la_to_pa : (sbits(48), string) -> bits(52)
+val la_to_pa : (sbits(64), string) -> bits(52)
 
 function la_to_pa (lin_addr, r_w_x) = {
     assert(canonical_address_p(signed(lin_addr)) & not_bool(app_view));

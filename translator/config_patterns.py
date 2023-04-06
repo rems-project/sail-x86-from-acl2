@@ -59,7 +59,7 @@ forced_argument_types = {
         'canonical-address-p': {'lin-addr': Sail_t_int()},
         'address-aligned-p': {'addr': Sail_t_bits(64, signed=True)},
         'gpr-arith/logic-spec': {'operand-size': Sail_t_member([1, 2, 4, 8]), 'dst': Sail_t_bits(64), 'src': Sail_t_bits(64)},
-        'page-fault-exception': {'addr': Sail_t_bits(48, signed=True), 'err-no': Sail_t_int()},
+        'page-fault-exception': {'addr': Sail_t_bits(64, signed=True), 'err-no': Sail_t_int()},
 		'wme-size': {'val': Sail_t_bits(128)},
 		'wime-size': {'val': Sail_t_bits(128)},
 		'!rgfi-size': {'val': Sail_t_bits(64)},
@@ -91,6 +91,7 @@ forced_variable_types = {
         'start-rip': Sail_t_bits(64, signed=True),
         'temp-rip': Sail_t_bits(64, signed=True),
         'new-rip': Sail_t_bits(64, signed=True),
+        'next-rip': Sail_t_bits(64, signed=True),
         'rip-new': Sail_t_bits(64, signed=True),
         'jmp-addr': Sail_t_bits(64, signed=True),
         'call-rip': Sail_t_bits(64, signed=True),
@@ -367,7 +368,7 @@ only_translate = {
 		['include-book', ACL2String('state')],
 
 		['define', 'canonical-address-p'],
-		['define', 'rvm08'],
-		['define', 'wvm08'],
+		# ['define', 'rvm08'],
+		# ['define', 'wvm08'],
 	]
 }

@@ -165,7 +165,7 @@ function x86_lldt (proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode, m
         let descriptor_size : {|8, 16|} = {
             if in_64bit_mode(proc_mode) then 16 else 8
         };
-        let descriptor : bits(128) = rml_size(descriptor_size, bits_of_int(descriptor_addr, 48), ":X");
+        let descriptor : bits(128) = rml_size(descriptor_size, bits_of_int(descriptor_addr, 64), ":X");
         let (descriptor_valid?, reason) : (bool, (string, bits(128))) = ia32e_valid_ldt_segment_descriptor_p(descriptor);
         if not_bool(descriptor_valid?) then x86_model_error(":INVALID-SEGMENT-DESCRIPTOR");
         let ldtr_base15_0 : bits(16) = Mk_system_segment_descriptorbits(descriptor)[base15_0];

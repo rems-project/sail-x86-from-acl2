@@ -30,16 +30,15 @@
  it cannot be a memory pointer of the form m16:xx. 
  </p> */
 function address_aligned_p (addr, operand_size, memory_ptr?) = {
-    let addr : sbits(48) = truncate(addr, 48);
     (match operand_size {
       1 => true,
-      6 => logand(addr, 0x000000000003) == 0x000000000000,
-      10 => logand(addr, 0x000000000007) == 0x000000000000,
+      6 => logand(addr, 0x0000000000000003) == 0x0000000000000000,
+      10 => logand(addr, 0x0000000000000007) == 0x0000000000000000,
       _ => {
           if memory_ptr? & operand_size == 4 then {
-              logand(addr, 0x000000000001) == 0x000000000000
+              logand(addr, 0x0000000000000001) == 0x0000000000000000
           } else {
-              logand(addr, bits_of_int(check_range(0, 65, operand_size - 1), 48)) == 0x000000000000
+              logand(addr, bits_of_int(check_range(0, 65, operand_size - 1), 64)) == 0x0000000000000000
           }
       }
     }) : bool

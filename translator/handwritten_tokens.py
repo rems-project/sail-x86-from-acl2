@@ -290,8 +290,9 @@ def rb_fn(args, env):
 		sys.exit(f"Error: unsupported number of bytes {args[0].pp()} in rb")
 	valTyp = Sail_t_bits(8 * nBytes)
 	retTyp = Sail_t_tuple([Sail_t_option(Sail_t_string()), valTyp])
-	# virtual addresses are signed 48-bit values in the ACL2 model
-	vaTyp = Sail_t_bits(48, signed=True)
+	# virtual addresses are signed 48-bit values in the ACL2 model,
+	# but we treat them as 64 bits
+	vaTyp = Sail_t_bits(64, signed=True)
 	fnTyp = Sail_t_fn([Sail_t_nat(), vaTyp, Sail_t_string()], retTyp)
 	return SailHandwrittenFn('rb', fnTyp)
 
@@ -305,8 +306,9 @@ def wb_fn(args, env):
 		sys.exit(f"Error: non-constant number of bytes {args[0].pp()} in wb")
 	valTyp = Sail_t_bits(8 * nBytes)
 	retTyp = Sail_t_option(Sail_t_string())
-	# virtual addresses are signed 48-bit values in the ACL2 model
-	vaTyp = Sail_t_bits(48, signed=True)
+	# virtual addresses are signed 48-bit values in the ACL2 model,
+	# but we treat them as 64 bits
+	vaTyp = Sail_t_bits(64, signed=True)
 	fnTyp = Sail_t_fn([Sail_t_nat(), vaTyp, Sail_t_string(), valTyp], retTyp)
 	return SailHandwrittenFn('wb', fnTyp)
 
@@ -386,12 +388,12 @@ ext_two_byte_opcode_execute_fn = SailHandwrittenFn(
 
 def ext_vex_execute_fn(name):
 	ext_name = 'ext_' + utils.sanitiseSymbol(name)
-	args = [proc_mode_typ] + [Sail_t_bits(48, signed=True)] * 2 + bits_list([52, 8, 24, 8, 8, 8])
+	args = [proc_mode_typ] + [Sail_t_bits(64, signed=True)] * 2 + bits_list([52, 8, 24, 8, 8, 8])
 	return SailHandwrittenFn(ext_name, Sail_t_fn(args, Sail_t_bool())
 )
 
 def ext_evex_execute_fn(name):
 	ext_name = 'ext_' + utils.sanitiseSymbol(name)
-	args = [proc_mode_typ] + [Sail_t_bits(48, signed=True)] * 2 + bits_list([52, 8, 32, 8, 8, 8])
+	args = [proc_mode_typ] + [Sail_t_bits(64, signed=True)] * 2 + bits_list([52, 8, 32, 8, 8, 8])
 	return SailHandwrittenFn(ext_name, Sail_t_fn(args, Sail_t_bool())
 )

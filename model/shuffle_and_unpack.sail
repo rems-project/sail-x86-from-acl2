@@ -37,7 +37,7 @@ function x86_shufps_op_en_rmi (proc_mode, start_rip, temp_rip, prefixes, rex_byt
     let inst_ac? : bool = true;
     let (xmm_mem, increment_rip_by, addr) : (bits(128), {|0, 1, 2, 4|}, sbits(64)) = x86_operand_from_modr_m_and_sib_bytes(proc_mode, 0b1, 16, inst_ac?, false, seg_reg, prefixes, temp_rip, rex_byte, r_m, mod_var, sib, 0b001);
     let temp_rip : sbits(64) = add_to_iptr(proc_mode, temp_rip, bits_of_int(increment_rip_by, 64));
-    let imm : bits(8) = truncate(rme_size(proc_mode, select_address_size(proc_mode, Some(prefixes)), 1, sail_sign_extend(truncate(temp_rip, 48), 64), None(), 1, ":X", false, false), 8);
+    let imm : bits(8) = truncate(rme_size(proc_mode, select_address_size(proc_mode, Some(prefixes)), 1, temp_rip, None(), 1, ":X", false, false), 8);
     let temp_rip : sbits(64) = add_to_iptr(proc_mode, temp_rip, 0x0000000000000001);
     let badlength? : option(int) = check_instruction_length(start_rip, temp_rip, 0b000);
     if is_some(badlength?) then x86_fault("(!!FAULT-FRESH :GP 0 :INSTRUCTION-LENGTH BADLENGTH?)");
@@ -72,7 +72,7 @@ function x86_shufpd_op_en_rmi (proc_mode, start_rip, temp_rip, prefixes, rex_byt
     let inst_ac? : bool = true;
     let (xmm_mem, increment_rip_by, addr) : (bits(128), {|0, 1, 2, 4|}, sbits(64)) = x86_operand_from_modr_m_and_sib_bytes(proc_mode, 0b1, 16, inst_ac?, false, seg_reg, prefixes, temp_rip, rex_byte, r_m, mod_var, sib, 0b001);
     let temp_rip : sbits(64) = add_to_iptr(proc_mode, temp_rip, bits_of_int(increment_rip_by, 64));
-    let imm : bits(8) = truncate(rme_size(proc_mode, select_address_size(proc_mode, Some(prefixes)), 1, sail_sign_extend(truncate(temp_rip, 48), 64), None(), 1, ":X", false, false), 8);
+    let imm : bits(8) = truncate(rme_size(proc_mode, select_address_size(proc_mode, Some(prefixes)), 1, temp_rip, None(), 1, ":X", false, false), 8);
     let temp_rip : sbits(64) = add_to_iptr(proc_mode, temp_rip, 0x0000000000000001);
     let badlength? : option(int) = check_instruction_length(start_rip, temp_rip, 0b000);
     if is_some(badlength?) then x86_fault("(!!FAULT-FRESH :GP 0 :INSTRUCTION-LENGTH BADLENGTH?)");

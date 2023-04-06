@@ -611,6 +611,7 @@ def transformACL2FiletoSail(file, env):
 	print("Parsed file: {}".format(file))
 
 	##### Translate #####
+	ACL2ast = manualInterventions.patch_acl2_tree(ACL2ast, env)
 	(SailAST, env, length) = transformACL2asttoSail(ACL2ast, env)
 
 	##### Post-process the AST - resolve unknown types#####

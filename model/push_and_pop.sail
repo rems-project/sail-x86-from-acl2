@@ -19,7 +19,7 @@ function x86_push_general_register (proc_mode, start_rip, temp_rip, prefixes, re
     let sailval : bits(64) = rgfi_size(bits_of_int(operand_size, 4), reg_index(reg, rex_byte, 0b00), rex_byte);
     let badlength? : option(int) = check_instruction_length(start_rip, temp_rip, 0b000);
     if is_some(badlength?) then x86_fault("(!!FAULT-FRESH :GP 0 :INSTRUCTION-LENGTH BADLENGTH?)");
-    wme_size(proc_mode, select_address_size(proc_mode, Some(prefixes)), operand_size, sail_sign_extend(truncate(new_rsp, 48), 64), None(), 2, sail_zero_extend(sailval, 128), alignment_checking_enabled_p(), false);
+    wme_size(proc_mode, select_address_size(proc_mode, Some(prefixes)), operand_size, new_rsp, None(), 2, sail_zero_extend(sailval, 128), alignment_checking_enabled_p(), false);
     write_sptr(proc_mode, new_rsp);
     write_iptr(proc_mode, temp_rip)
 }
@@ -54,7 +54,7 @@ function x86_push_ev (proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode
     let temp_rip : sbits(64) = add_to_iptr(proc_mode, temp_rip, sail_zero_extend(increment_rip_by, 64));
     let badlength? : option(int) = check_instruction_length(start_rip, temp_rip, 0b000);
     if is_some(badlength?) then x86_fault("(!!FAULT-FRESH :GP 0 :INSTRUCTION-LENGTH BADLENGTH?)");
-    wme_size(proc_mode, select_address_size(proc_mode, Some(prefixes)), operand_size, sail_sign_extend(truncate(new_rsp, 48), 64), None(), 2, e, alignment_checking_enabled_p(), false);
+    wme_size(proc_mode, select_address_size(proc_mode, Some(prefixes)), operand_size, new_rsp, None(), 2, e, alignment_checking_enabled_p(), false);
     write_sptr(proc_mode, new_rsp);
     write_iptr(proc_mode, temp_rip)
 }
@@ -135,7 +135,7 @@ function x86_push_segment_register (proc_mode, start_rip, temp_rip, prefixes, re
     }) : {|0, 1, 2, 3, 4, 5|}];
     wme_size(proc_mode, select_address_size(proc_mode, Some(prefixes)), if operand_size == 4 then 2 else {
         operand_size
-    }, sail_sign_extend(truncate(new_rsp, 48), 64), None(), 2, sail_zero_extend(sailval, 128), alignment_checking_enabled_p(), false);
+    }, new_rsp, None(), 2, sail_zero_extend(sailval, 128), alignment_checking_enabled_p(), false);
     write_sptr(proc_mode, new_rsp);
     write_iptr(proc_mode, temp_rip)
 }
@@ -222,7 +222,7 @@ function x86_pushf (proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode, 
           _ => bits_of_int(logand(3997695, unsigned(eflags.bits)), 32)
         }
     };
-    wme_size(proc_mode, select_address_size(proc_mode, Some(prefixes)), operand_size, sail_sign_extend(truncate(new_rsp, 48), 64), None(), 2, sail_zero_extend(eflags, 128), alignment_checking_enabled_p(), false);
+    wme_size(proc_mode, select_address_size(proc_mode, Some(prefixes)), operand_size, new_rsp, None(), 2, sail_zero_extend(eflags, 128), alignment_checking_enabled_p(), false);
     write_sptr(proc_mode, new_rsp);
     write_iptr(proc_mode, temp_rip)
 }

@@ -140,7 +140,7 @@ function x86_far_jmp_op_en_d (proc_mode, start_rip, temp_rip, prefixes, rex_byte
     if unsigned(dt_limit) < largest_address then x86_fault("(!!FAULT-FRESH :GP SEL-INDEX :GP-SELECTOR-LIMIT-CHECK-FAILED (LIST SELECTOR DT-BASE-ADDR DT-LIMIT))");
     let descriptor_addr : int = unsigned(dt_base_addr) + unsigned(bits_of_int(ash(unsigned(sel_index), 3), 16));
     if not_bool(canonical_address_p(descriptor_addr)) then x86_model_error(":DESCRIPTOR-ADDR-VIRTUAL-MEMORY-ERROR");
-    let descriptor : bits(64) = truncate(rml_size(8, bits_of_int(descriptor_addr, 48), ":X"), 64);
+    let descriptor : bits(64) = truncate(rml_size(8, bits_of_int(descriptor_addr, 64), ":X"), 64);
     let s : bits(1) = Mk_code_segment_descriptorbits(descriptor)[s];
     if s == 0b1 then {
         let msb_of_type : bits(1) = Mk_code_segment_descriptorbits(descriptor)[msb_of_type];
@@ -196,7 +196,7 @@ function x86_far_jmp_op_en_d (proc_mode, start_rip, temp_rip, prefixes, rex_byte
         if not_bool(in_64bit_mode(proc_mode)) then x86_model_error(":FAR-JMP-SYSTEM-UNIMPLEMENTED-IN-32-BIT-MODE");
         let largest_address : int = ash(unsigned(sel_index), 3) + 15;
         if unsigned(dt_limit) < largest_address then x86_fault("(!!FAULT-FRESH :GP SEL-INDEX :GP-SELECTOR-LIMIT-CHECK-FAILED (LIST SELECTOR DT-BASE-ADDR DT-LIMIT))");
-        let descriptor : bits(128) = rml_size(16, bits_of_int(descriptor_addr, 48), ":X");
+        let descriptor : bits(128) = rml_size(16, bits_of_int(descriptor_addr, 64), ":X");
         let (call_gate_desc?, reason2) : (bool, (string, bits(128))) = ia32e_valid_call_gate_segment_descriptor_p(descriptor);
         if call_gate_desc? then {
             let cpl : bits(2) = Mk_segment_selectorbits(seg_visibles[1])[rpl];
@@ -237,7 +237,7 @@ function x86_far_jmp_op_en_d (proc_mode, start_rip, temp_rip, prefixes, rex_byte
             if unsigned(cs_dt_limit) < largest_address then x86_fault("(!!FAULT-FRESH :GP CS-SEL-INDEX :GP-SELECTOR-LIMIT-CHECK-FAILED (LIST CS-SELECTOR CS-DT-BASE-ADDR CS-DT-LIMIT))");
             let cs_descriptor_addr : int = unsigned(cs_dt_base_addr) + unsigned(bits_of_int(ash(unsigned(cs_sel_index), 3), 16));
             if not_bool(canonical_address_p(cs_descriptor_addr)) then x86_model_error(":CS-DESCRIPTOR-ADDR-VIRTUAL-MEMORY-ERROR");
-            let cs_descriptor : bits(64) = truncate(rml_size(8, bits_of_int(cs_descriptor_addr, 48), ":X"), 64);
+            let cs_descriptor : bits(64) = truncate(rml_size(8, bits_of_int(cs_descriptor_addr, 64), ":X"), 64);
             let (valid?, reason) : (bool, (string, bits(64))) = ia32e_valid_code_segment_descriptor_p(cs_descriptor);
             if not_bool(valid?) then x86_fault("(!!FAULT-FRESH :GP CS-SEL-INDEX :CALL-GATE-CODE-SEGMENT-DESCRIPTOR-INVALID (CONS REASON CS-DESCRIPTOR))");
             let cs_dpl : bits(2) = Mk_code_segment_descriptorbits(cs_descriptor)[dpl];

@@ -2555,8 +2555,9 @@ def tr_rb(ACL2ast, env):
 		sys.exit(f"Error: unsupported number of bytes {nBytesSail[0].pp()} in rb")
 
 	innerRetType = innerType # Sail_t_tuple([Sail_t_option(Sail_t_string()), innerType])
-	# virtual addresses are signed 48-bit values in the ACL2 model
-	vaType = Sail_t_bits(48, signed=True)
+	# virtual addresses are signed 48-bit values in the ACL2 model,
+	# but we treat them as 64 bits
+	vaType = Sail_t_bits(64, signed=True)
 	fnType = Sail_t_fn([Sail_t_nat(), vaType, Sail_t_string()], innerRetType)
 	addrSail = [coerceExpr(addrSail[0], vaType)]
 	innerSail = SailApp(SailHandwrittenFn('rb', fnType), nBytesSail + addrSail + accessKindSail)
@@ -2588,7 +2589,7 @@ def tr_wb(ACL2ast, env):
 		sys.exit(f"tr_wb: Failed to coerce value in {ACL2ast}")
 
 	retType = Sail_t_unit() # Sail_t_option(Sail_t_string())
-	vaType = Sail_t_bits(48, signed=True)
+	vaType = Sail_t_bits(64, signed=True)
 	fnType = Sail_t_fn([Sail_t_nat(), vaType, Sail_t_string(), valueType], retType)
 	addrSail = [coerceExpr(addrSail[0], vaType)]
 	sailExpr = SailApp(SailHandwrittenFn('wb', fnType), nBytesSail + addrSail + accessKindSail + [valueSail])

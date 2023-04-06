@@ -1,4 +1,4 @@
-from lex_parse import ACL2quote, pp_acl2
+from lex_parse import ACL2quote, CodeTopLevel, pp_acl2
 from SailASTelems import *
 import specialTokens
 import handwritten_tokens
@@ -511,3 +511,33 @@ def replacePatterns(ACL2ast, env):
 
 	# Indicate no manual interventions were applied
 	return False, [], env
+
+def patch_linear_address_size(ACL2ast, env):
+	if is_acl2_app(ACL2ast, "signed-byte") and len(ACL2ast) == 2:
+		lin_addr_pattern = re.compile(r"#\.\*max-linear-address-size(\+\d+)?\*")
+		lin_addr_match = lin_addr_pattern.match(ACL2ast[1].lower())
+		if lin_addr_match:
+			incr = int(lin_addr_match.group(1)[1:]) if lin_addr_match.group(1) else 0
+			width = 64 + incr
+			return ["signed-byte", str(width)]
+	return ACL2ast
+
+acl2_interventions = [
+	patch_linear_address_size
+]
+
+def patch_acl2_node(ACL2ast, env):
+	for fn in acl2_interventions:
+		ACL2ast = fn(ACL2ast, env)
+
+	return ACL2ast
+
+def patch_acl2_tree(ACL2ast, env):
+	if isinstance(ACL2ast, list):
+		children = [patch_acl2_tree(t, env) for t in ACL2ast]
+		return patch_acl2_node(children, env)
+	elif isinstance(ACL2ast, CodeTopLevel):
+		children = [patch_acl2_tree(t, env) for t in ACL2ast.topLevels]
+		return patch_acl2_node(CodeTopLevel(children), env)
+	else:
+		return patch_acl2_node(ACL2ast, env)

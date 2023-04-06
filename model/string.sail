@@ -38,42 +38,42 @@ function x86_movs (proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode, m
         }
     };
     if not_bool(counter_addr_size_2_4?) & not_bool(canonical_address_p(signed(dst_addr))) then x86_model_error(":DST-ADDR-NOT-CANONICAL");
-    let original_dst_addr : sbits(48) = truncate(dst_addr, 48);
+    let original_dst_addr : sbits(64) = truncate(dst_addr, 64);
     let (src_addr, dst_addr) : (int, int) = {
         match operand_size {
           1 => {
               if df == 0b0 then {
-                  (1 + signed(truncate(src_addr, 48)), 1 + signed(truncate(dst_addr, 48)))
+                  (1 + signed(truncate(src_addr, 64)), 1 + signed(truncate(dst_addr, 64)))
               } else {
-                  (-1 + signed(truncate(src_addr, 48)), -1 + signed(truncate(dst_addr, 48)))
+                  (-1 + signed(truncate(src_addr, 64)), -1 + signed(truncate(dst_addr, 64)))
               }
           },
           2 => {
               if df == 0b0 then {
-                  (2 + signed(truncate(src_addr, 48)), 2 + signed(truncate(dst_addr, 48)))
+                  (2 + signed(truncate(src_addr, 64)), 2 + signed(truncate(dst_addr, 64)))
               } else {
-                  (-2 + signed(truncate(src_addr, 48)), -2 + signed(truncate(dst_addr, 48)))
+                  (-2 + signed(truncate(src_addr, 64)), -2 + signed(truncate(dst_addr, 64)))
               }
           },
           4 => {
               if df == 0b0 then {
-                  (4 + signed(truncate(src_addr, 48)), 4 + signed(truncate(dst_addr, 48)))
+                  (4 + signed(truncate(src_addr, 64)), 4 + signed(truncate(dst_addr, 64)))
               } else {
-                  (-4 + signed(truncate(src_addr, 48)), -4 + signed(truncate(dst_addr, 48)))
+                  (-4 + signed(truncate(src_addr, 64)), -4 + signed(truncate(dst_addr, 64)))
               }
           },
           _ => {
               if df == 0b0 then {
-                  (8 + signed(truncate(src_addr, 48)), 8 + signed(truncate(dst_addr, 48)))
+                  (8 + signed(truncate(src_addr, 64)), 8 + signed(truncate(dst_addr, 64)))
               } else {
-                  (-8 + signed(truncate(src_addr, 48)), -8 + signed(truncate(dst_addr, 48)))
+                  (-8 + signed(truncate(src_addr, 64)), -8 + signed(truncate(dst_addr, 64)))
               }
           }
         }
     };
-    let src_addr : sbits(49) = bits_of_int(src_addr, 49);
-    let dst_addr : sbits(49) = bits_of_int(dst_addr, 49);
-    wme_size(proc_mode, select_address_size(proc_mode, Some(prefixes)), operand_size, sail_sign_extend(original_dst_addr, 64), None(), 0, src, inst_ac?, false);
+    let src_addr : sbits(65) = bits_of_int(src_addr, 65);
+    let dst_addr : sbits(65) = bits_of_int(dst_addr, 65);
+    wme_size(proc_mode, select_address_size(proc_mode, Some(prefixes)), operand_size, original_dst_addr, None(), 0, src, inst_ac?, false);
     (match group_1_prefix {
       243 => {
           let counter : bits(64) = rgfi_size(bits_of_int(counter_addr_size, 4), 0x1, rex_byte);
@@ -104,12 +104,12 @@ function x86_movs (proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode, m
     (match counter_addr_size {
       2 => write_rgfi_size(0x2, 0x6, sail_zero_extend(truncate(src_addr, 16), 64), rex_byte),
       4 => write_rgfi_size(0x4, 0x6, sail_zero_extend(truncate(src_addr, 32), 64), rex_byte),
-      _ => write_rgfi(6, sail_sign_extend(src_addr, 64))
+      _ => write_rgfi(6, truncate(src_addr, 64))
     }) : unit;
     (match counter_addr_size {
       2 => write_rgfi_size(0x2, 0x7, sail_zero_extend(truncate(dst_addr, 16), 64), rex_byte),
       4 => write_rgfi_size(0x4, 0x7, sail_zero_extend(truncate(dst_addr, 32), 64), rex_byte),
-      _ => write_rgfi(7, sail_sign_extend(dst_addr, 64))
+      _ => write_rgfi(7, truncate(dst_addr, 64))
     }) : unit
 }
 
@@ -160,36 +160,36 @@ function x86_cmps (proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode, m
         match operand_size {
           1 => {
               if df == 0b0 then {
-                  (signed(truncate(src_addr, 48)) + 1, signed(truncate(dst_addr, 48)) + 1)
+                  (signed(truncate(src_addr, 64)) + 1, signed(truncate(dst_addr, 64)) + 1)
               } else {
-                  (signed(truncate(src_addr, 48)) - 1, signed(truncate(dst_addr, 48)) - 1)
+                  (signed(truncate(src_addr, 64)) - 1, signed(truncate(dst_addr, 64)) - 1)
               }
           },
           2 => {
               if df == 0b0 then {
-                  (signed(truncate(src_addr, 48)) + 2, signed(truncate(dst_addr, 48)) + 2)
+                  (signed(truncate(src_addr, 64)) + 2, signed(truncate(dst_addr, 64)) + 2)
               } else {
-                  (signed(truncate(src_addr, 48)) - 2, signed(truncate(dst_addr, 48)) - 2)
+                  (signed(truncate(src_addr, 64)) - 2, signed(truncate(dst_addr, 64)) - 2)
               }
           },
           4 => {
               if df == 0b0 then {
-                  (signed(truncate(src_addr, 48)) + 4, signed(truncate(dst_addr, 48)) + 4)
+                  (signed(truncate(src_addr, 64)) + 4, signed(truncate(dst_addr, 64)) + 4)
               } else {
-                  (signed(truncate(src_addr, 48)) - 4, signed(truncate(dst_addr, 48)) - 4)
+                  (signed(truncate(src_addr, 64)) - 4, signed(truncate(dst_addr, 64)) - 4)
               }
           },
           _ => {
               if df == 0b0 then {
-                  (signed(truncate(src_addr, 48)) + 8, signed(truncate(dst_addr, 48)) + 8)
+                  (signed(truncate(src_addr, 64)) + 8, signed(truncate(dst_addr, 64)) + 8)
               } else {
-                  (signed(truncate(src_addr, 48)) - 8, signed(truncate(dst_addr, 48)) - 8)
+                  (signed(truncate(src_addr, 64)) - 8, signed(truncate(dst_addr, 64)) - 8)
               }
           }
         }
     };
-    let src_addr : sbits(49) = bits_of_int(src_addr, 49);
-    let dst_addr : sbits(49) = bits_of_int(dst_addr, 49);
+    let src_addr : sbits(65) = bits_of_int(src_addr, 65);
+    let dst_addr : sbits(65) = bits_of_int(dst_addr, 65);
     (match group_1_prefix {
       243 => {
           let counter : bits(64) = rgfi_size(bits_of_int(counter_addr_size, 4), 0x1, rex_byte);
@@ -220,12 +220,12 @@ function x86_cmps (proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode, m
     (match counter_addr_size {
       2 => write_rgfi_size(0x2, 0x6, sail_zero_extend(truncate(src_addr, 16), 64), rex_byte),
       4 => write_rgfi_size(0x4, 0x6, sail_zero_extend(truncate(src_addr, 32), 64), rex_byte),
-      _ => write_rgfi(6, sail_sign_extend(src_addr, 64))
+      _ => write_rgfi(6, truncate(src_addr, 64))
     }) : unit;
     (match counter_addr_size {
       2 => write_rgfi_size(0x2, 0x7, sail_zero_extend(truncate(dst_addr, 16), 64), rex_byte),
       4 => write_rgfi_size(0x4, 0x7, sail_zero_extend(truncate(dst_addr, 32), 64), rex_byte),
-      _ => write_rgfi(7, sail_sign_extend(dst_addr, 64))
+      _ => write_rgfi(7, truncate(dst_addr, 64))
     }) : unit
 }
 
@@ -256,34 +256,34 @@ function x86_stos (proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode, m
     let rax_var : bits(64) = rgfi_size(bits_of_int(operand_size, 4), 0x0, rex_byte);
     let inst_ac? : bool = alignment_checking_enabled_p();
     wme_size(proc_mode, select_address_size(proc_mode, Some(prefixes)), operand_size, truncate(dst_addr, 64), None(), 0, sail_zero_extend(rax_var, 128), inst_ac?, false);
-    let dst_addr : sbits(49) = {
+    let dst_addr : sbits(65) = {
         match operand_size {
           1 => {
               if df == 0b0 then {
-                  bits_of_int(1 + signed(truncate(dst_addr, 48)), 49)
+                  bits_of_int(1 + signed(truncate(dst_addr, 64)), 65)
               } else {
-                  bits_of_int(-1 + signed(truncate(dst_addr, 48)), 49)
+                  bits_of_int(-1 + signed(truncate(dst_addr, 64)), 65)
               }
           },
           2 => {
               if df == 0b0 then {
-                  bits_of_int(2 + signed(truncate(dst_addr, 48)), 49)
+                  bits_of_int(2 + signed(truncate(dst_addr, 64)), 65)
               } else {
-                  bits_of_int(-2 + signed(truncate(dst_addr, 48)), 49)
+                  bits_of_int(-2 + signed(truncate(dst_addr, 64)), 65)
               }
           },
           4 => {
               if df == 0b0 then {
-                  bits_of_int(4 + signed(truncate(dst_addr, 48)), 49)
+                  bits_of_int(4 + signed(truncate(dst_addr, 64)), 65)
               } else {
-                  bits_of_int(-4 + signed(truncate(dst_addr, 48)), 49)
+                  bits_of_int(-4 + signed(truncate(dst_addr, 64)), 65)
               }
           },
           _ => {
               if df == 0b0 then {
-                  bits_of_int(8 + signed(truncate(dst_addr, 48)), 49)
+                  bits_of_int(8 + signed(truncate(dst_addr, 64)), 65)
               } else {
-                  bits_of_int(-8 + signed(truncate(dst_addr, 48)), 49)
+                  bits_of_int(-8 + signed(truncate(dst_addr, 64)), 65)
               }
           }
         }
@@ -318,6 +318,6 @@ function x86_stos (proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode, m
     (match counter_addr_size {
       2 => write_rgfi_size(0x2, 0x7, sail_zero_extend(truncate(dst_addr, 16), 64), rex_byte),
       4 => write_rgfi_size(0x4, 0x7, sail_zero_extend(truncate(dst_addr, 32), 64), rex_byte),
-      _ => write_rgfi(7, sail_sign_extend(dst_addr, 64))
+      _ => write_rgfi(7, truncate(dst_addr, 64))
     }) : unit
 }

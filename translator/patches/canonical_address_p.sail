@@ -5,5 +5,5 @@
  @ ( ' *max-linear-address-size* ' ) in these books ) are set to either all ones or 
  all zeros.</p> */
 function canonical_address_p lin_addr = {
-  signed_byte_p(max_linear_address_size, lin_addr)
+  signed_byte_p(48, lin_addr)
 }
