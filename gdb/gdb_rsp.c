@@ -251,7 +251,7 @@ static void handle_query(struct rsp_conn *conn, struct rsp_buf *req, struct rsp_
   }
   if (match_req_cmd(req, "qXfer:features:read:target.xml:")) {
     int offset, length;
-    if (sscanf(req->cmd_buf, "qXfer:features:read:target.xml:%d,%d", &offset, &length) != EOF) {
+    if (sscanf(req->cmd_buf, "qXfer:features:read:target.xml:%x,%x", &offset, &length) != EOF) {
       int xml_length = strlen(gdb_xml);
       if (offset > xml_length) {
         append_rsp_buf_msg(conn, resp, "E00"); // TODO: correct errno
@@ -408,7 +408,7 @@ static void handle_regs_read(struct rsp_conn *conn, struct rsp_buf *req, struct 
   mpz_t regval;
   struct sail_arch *arch = conn->arch;
   mpz_init(regval);
-  for (uint64_t i = 0; i <= arch->nregs; i++) {
+  for (uint64_t i = 0; i < arch->nregs; i++) {
     int size = conn->arch->get_reg(conn, conn->arch, regval, i);
     send_reg_val(conn, resp, regval, size);
   }
