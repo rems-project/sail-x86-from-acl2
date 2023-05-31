@@ -1,6 +1,13 @@
 $ifndef __X86_STRUCTURES
 $define __X86_STRUCTURES
 
+/*! Functions to collect legacy prefix bytes from an x86 instruction
+<p>The field @ ( ' num ' ) of @ ( ' prefixes ' ) not only includes the number of 
+ legacy prefixes present in an instruction, but also the number of REX bytes, 
+ even though REX bytes are not stored in this structure. See @ ( tsee 
+ get-prefixes ) for details.</p>
+Functions to decode and collect VEX prefix bytes from an x86 
+ instruction */
 bitfield vex_prefixes : bits(24) = {byte2 : 23..16, byte1 : 15..8, byte0 : 7..0}
 
 /*! Returns @ ( ' t ' ) if byte0 of the @ ( ' vex-prefixes ' ) structure is 
@@ -83,6 +90,8 @@ function vex_get_w vex_prefixes = {
     }) : bits(1)
 }
 
+/*! Functions to decode and collect EVEX prefix bytes from an x86 
+ instruction */
 bitfield evex_prefixes : bits(32) = {byte3 : 31..24, byte2 : 23..16, byte1 : 15..8, byte0 : 7..0}
 
 bitfield evex_byte1 : bits(8) = {r : 7..7, x : 6..6, b : 5..5, r_prime : 4..4, res : 3..2, mm : 1..0}
@@ -140,8 +149,10 @@ function evex_get_w evex_prefixes = {
     Mk_evex_byte2(evex_prefixes[byte2])[w]
 }
 
+/*! Bitstruct definitions to store a ModR/M byte and its fields */
 bitfield modr_m : bits(8) = {mod : 7..6, reg : 5..3, r_m : 2..0}
 
+/*! Bitstruct definitions to store a SIB byte and its fields */
 bitfield sib : bits(8) = {scale : 7..6, index : 5..3, base : 2..0}
 
 bitfield rflagsbits : bits(32) =

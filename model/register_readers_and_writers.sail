@@ -1,5 +1,8 @@
 
-/*! <p>In 64-bit mode, in addition to generating 64-bit operand sizes, 
+/*! Functions that enable the use of extended GPRs using the 
+ @ ( ' rex ' ) byte
+Using the REX prefix to access general-purpose registers
+<p>In 64-bit mode, in addition to generating 64-bit operand sizes, 
  the REX prefix is used to reference registers R8 to R15. Instructions that 
  include REX prefixes can access these registers if the relevant W, R, X, or 
  B bit in the REX prefix is set. E.g., let R be the relevant bit in the REX 
@@ -21,7 +24,27 @@ function reg_index (reg, rex_byte, index) = {
     }
 }
 
-/*! Read from byte general-purpose registers
+/*! Functions to read/write 8/16/32/64 bits into the registers
+<p>@ ( see rr08 ) , @ ( see rr16 ) , @ ( see rr32 ) , and @ ( see rr64 ) 
+ will read the contents of the GPRs as natural numbers. Remember that 
+ @ ( ' rgfi ' ) will return an @ ( see i64p ) value.</p> 
+ 
+ <p>Here is an example:</p> 
+ <br/> 
+ <tt> 
+ \ ( !rgfi 0 -1 x86\ ) ;; Write -1 to register 0 
+ </tt> 
+ 
+ <p><tt>\ ( rr64 0 x86\ ) </tt> returns @ ( ' 18446744073709551615 ' ) and 
+ <tt> ( rgfi 0 x86 ) </tt> returns @ ( ' -1 ' ) . Note that 
+ @ ( ' 18446744073709551615 ' ) is a bignum in CCL. This is precisely the 
+ reason why we declared registers as @ ( ' i64p ' ) instead of @ ( ' n64p ' ) ; 
+ @ ( ' -1 ' ) would be stored as a bignum if the registers were 
+ @ ( ' n64p ' ) . </p> 
+ 
+ <p>Similarly, @ ( see wr08 ) , @ ( see wr16 ) , @ ( see wr32 ) , and @ ( see wr64 ) 
+ are used to write natural numbers into the GPRs.</p>
+Read from byte general-purpose registers
 <p><i>Source: Intel Manuals, Vol. 1, Section 
  3.4.1.1 ( General-Purpose Registers in 64-bit Mode ) </i></p> 
  
@@ -223,7 +246,53 @@ function write_rgfi_size (nbytes, index, sailval, rex) = {
     }) : unit
 }
 
-/*! Functions to read/write 32/64/128/256/512 bits into the 
+/*! Functions to read/write into the MMX registers
+<p>From Section 12.2, Intel Manual, Volume 3 \ ( System 
+ Programming\ ) :</p> 
+ 
+ <p><em>The MMX state consists of eight 64-bit registers \ ( MM0 
+ through MM7\ ) . These registers are aliased to the low 64-bits \ ( bits 0 
+ through 63\ ) of floating-point registers R0 through R7 \ ( see Figure 
+ 12-1\ ) . Note that the MMX registers are mapped to the physical 
+ locations of the floating-point registers \ ( R0 through R7\ ) , not to 
+ the relative locations of the registers in the floating-point register 
+ stack \ ( ST0 through ST7\ ) . As a result, the MMX register mapping is 
+ fixed and is not affected by value in the Top Of Stack \ ( TOS\ ) field 
+ in the floating-point status word \ ( bits 11 through 13\ ) .</em></p> 
+ 
+ <p>From Section 12.2, Intel Manual, Volume 3 \ ( System Programming\ ) </p>: 
+ 
+ <p><em>When a value is written into an MMX register using an MMX 
+ instruction, the value also appears in the corresponding 
+ floating-point register in bits 0 through 63. Likewise, when a 
+ floating-point value written into a floating-point register by a x87 
+ FPU, the low 64 bits of that value also appears in a the corresponding 
+ MMX register.</em></p> 
+ 
+ <p><em>The execution of MMX instructions have several side effects on 
+ the x87 FPU state contained in the floating-point registers, the x87 
+ FPU tag word, and the x87 FPU status word. These side effects are as 
+ follows:</em></p> 
+ 
+ <p><em>* When an MMX instruction writes a value into an MMX register, 
+ at the same time, bits 64 through 79 of the corresponding 
+ floating-point register are set to all 1s.</em></p> 
+ 
+ <p><em>* When an MMX instruction \ ( other than the EMMS instruction\ ) is 
+ executed, each of the tag fields in the x87 FPU tag word is set to 00B 
+ \ ( valid\ ) . \ ( See also Section 12.2.1, Effect of MMX, x87 FPU, FXSAVE, 
+ and FXRSTOR Instructions on the x87 FPU Tag Word.\ ) </em></p> 
+ 
+ <p><em>* When the EMMS instruction is executed, each tag field in the 
+ x87 FPU tag word is set to 11B \ ( empty ) \.</em></p> 
+ 
+ <p><em>* Each time an MMX instruction is executed, the TOS value is 
+ set to 000B. Execution of MMX instructions does not affect the other 
+ bits in the x87 FPU status word \ ( bits 0 through 10 and bits 14 and 
+ 15\ ) or the contents of the other x87 FPU registers that comprise the 
+ x87 FPU state \ ( the x87 FPU control word, instruction pointer, data 
+ pointer, or opcode registers\ ) .</em></p>
+Functions to read/write 32/64/128/256/512 bits into the 
  XMM/YMM/ZMM registers
 <p>Source: Intel Vol. 1, Section 15.5: ACCESSING XMM, YMM AND ZMM 
  REGISTERS</p> 
@@ -277,6 +346,12 @@ function rz128 reg = {
     truncate(zmms[unsigned(reg)], 128)
 }
 
+/*! Write @ ( ' val ' ) to low 32 bits of a ZMM register
+<p><i>Upper bits</i>: For XMM registers, upper @ ( ` ( - 512 
+ 128 ) ` ) bits are preserved if @ ( ' regtype ' ) is @ ( ' *xmm-access* ' ) ; 
+ for @ ( ' *vex-xmm-access* ' ) , these bits are zeroed out. For 
+ @ ( ' *ymm-access* ' ) , upper @ ( ` ( - 512 256 ) ` ) bits are zeroed 
+ out. For @ ( ' *zmm-access* ' ) , no upper bits are zeroed out.</p> */
 struct struct_wz32 = {regtype : int}
 
 val wz32 : (bits(5), bits(32), struct_wz32) -> unit
@@ -294,6 +369,12 @@ function wz32 (reg, sailval, keywords) = {
     zmms[unsigned(reg)] = changeSlice(data, 0, 32, sailval)
 }
 
+/*! Write @ ( ' val ' ) to low 64 bits of a ZMM register
+<p><i>Upper bits</i>: For XMM registers, upper @ ( ` ( - 512 
+ 128 ) ` ) bits are preserved if @ ( ' regtype ' ) is @ ( ' *xmm-access* ' ) ; 
+ for @ ( ' *vex-xmm-access* ' ) , these bits are zeroed out. For 
+ @ ( ' *ymm-access* ' ) , upper @ ( ` ( - 512 256 ) ` ) bits are zeroed 
+ out. For @ ( ' *zmm-access* ' ) , no upper bits are zeroed out.</p> */
 struct struct_wz64 = {regtype : int}
 
 val wz64 : (bits(5), bits(64), struct_wz64) -> unit
@@ -311,6 +392,12 @@ function wz64 (reg, sailval, keywords) = {
     zmms[unsigned(reg)] = changeSlice(data, 0, 64, sailval)
 }
 
+/*! Write @ ( ' val ' ) to low 128 bits of a ZMM register
+<p><i>Upper bits</i>: For XMM registers, upper @ ( ` ( - 512 
+ 128 ) ` ) bits are preserved if @ ( ' regtype ' ) is @ ( ' *xmm-access* ' ) ; 
+ for @ ( ' *vex-xmm-access* ' ) , these bits are zeroed out. For 
+ @ ( ' *ymm-access* ' ) , upper @ ( ` ( - 512 256 ) ` ) bits are zeroed 
+ out. For @ ( ' *zmm-access* ' ) , no upper bits are zeroed out.</p> */
 struct struct_wz128 = {regtype : int}
 
 val wz128 : (bits(5), bits(128), struct_wz128) -> unit

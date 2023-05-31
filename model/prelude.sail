@@ -503,8 +503,15 @@ Based loosely on:
 	* http://www.cs.utexas.edu/users/moore/acl2/manuals/current/manual/?topic=ACL2____ROTATE-LEFT
 	* http://www.cs.utexas.edu/users/moore/acl2/manuals/current/manual/?topic=ACL2____ROTATE-RIGHT
 */
-val rotate_left : (int, int, int) -> int
-function rotate_left (x, width, places) = {
+val rotate_left_bits : forall 'n. (bits('n), int, int) -> bits('n)
+function rotate_left_bits (x, width, places) = {
+  let high = sail_shiftleft(x, places);
+  let low = sail_shiftright(x, width-places);
+  high | low
+}
+
+val rotate_left_int : (int, int, int) -> int
+function rotate_left_int (x, width, places) = {
 	assert(0 <= places);
 	placesMod = mod(places, width);
 	low_num = width - placesMod;
@@ -512,15 +519,24 @@ function rotate_left (x, width, places) = {
 	xh = get_slice_int(placesMod, x, low_num);
 	unsigned(xl @ xh)
 }
+overload rotate_left = {rotate_left_bits, rotate_left_int}
 
-val rotate_right : (int, int, int) -> int
-function rotate_right (x, width, places) = {
+val rotate_right_bits : forall 'n. (bits('n), int, int) -> bits('n)
+function rotate_right_bits (x, width, places) = {
+  let low = sail_shiftright(x, places);
+  let high = sail_shiftleft(x, width-places);
+  high | low
+}
+
+val rotate_right_int : (int, int, int) -> int
+function rotate_right_int (x, width, places) = {
 	assert(0 <= places);
 	placesMod = mod(places, width);
 	xl = get_slice_int(placesMod, x, 0);
 	xh = get_slice_int(width - placesMod, x, placesMod);
 	unsigned(xl @ xh)
 }
+overload rotate_right = {rotate_right_bits, rotate_right_int}
 
 /*-----------------------------------------------------------------*/
 /*

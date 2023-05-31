@@ -4,7 +4,7 @@ val rcl_spec_8 : (bits(8), bits(6), rflagsbits) -> (bits(8), rflagsbits, rflagsb
 function rcl_spec_8 (dst, src, input_rflags) = {
     let old_cf : bits(1) = input_rflags[cf];
     let new_dst : bits(9) = changeSlice(sail_zero_extend(dst, 9), 8, 1, old_cf);
-    let raw_result : bits(9) = bits_of_int(rotate_left(unsigned(new_dst), 9, unsigned(src)), 9);
+    let raw_result : bits(9) = rotate_left(new_dst, 9, unsigned(src));
     let result : bits(8) = truncate(raw_result, 8);
     let (output_rflags, undefined_flags) : (rflagsbits, rflagsbits) = {
         match src {
@@ -31,7 +31,7 @@ val rcl_spec_16 : (bits(16), bits(6), rflagsbits) -> (bits(16), rflagsbits, rfla
 function rcl_spec_16 (dst, src, input_rflags) = {
     let old_cf : bits(1) = input_rflags[cf];
     let new_dst : bits(17) = changeSlice(sail_zero_extend(dst, 17), 16, 1, old_cf);
-    let raw_result : bits(17) = bits_of_int(rotate_left(unsigned(new_dst), 17, unsigned(src)), 17);
+    let raw_result : bits(17) = rotate_left(new_dst, 17, unsigned(src));
     let result : bits(16) = truncate(raw_result, 16);
     let (output_rflags, undefined_flags) : (rflagsbits, rflagsbits) = {
         match src {
@@ -58,7 +58,7 @@ val rcl_spec_32 : (bits(32), bits(6), rflagsbits) -> (bits(32), rflagsbits, rfla
 function rcl_spec_32 (dst, src, input_rflags) = {
     let old_cf : bits(1) = input_rflags[cf];
     let new_dst : bits(33) = changeSlice(sail_zero_extend(dst, 33), 32, 1, old_cf);
-    let raw_result : bits(33) = bits_of_int(rotate_left(unsigned(new_dst), 33, unsigned(src)), 33);
+    let raw_result : bits(33) = rotate_left(new_dst, 33, unsigned(src));
     let result : bits(32) = truncate(raw_result, 32);
     let (output_rflags, undefined_flags) : (rflagsbits, rflagsbits) = {
         match src {
@@ -85,7 +85,7 @@ val rcl_spec_64 : (bits(64), bits(6), rflagsbits) -> (bits(64), rflagsbits, rfla
 function rcl_spec_64 (dst, src, input_rflags) = {
     let old_cf : bits(1) = input_rflags[cf];
     let new_dst : bits(65) = changeSlice(sail_zero_extend(dst, 65), 64, 1, old_cf);
-    let raw_result : bits(65) = bits_of_int(rotate_left(unsigned(new_dst), 65, unsigned(src)), 65);
+    let raw_result : bits(65) = rotate_left(new_dst, 65, unsigned(src));
     let result : bits(64) = truncate(raw_result, 64);
     let (output_rflags, undefined_flags) : (rflagsbits, rflagsbits) = {
         match src {
@@ -142,7 +142,7 @@ function rcl_spec (size, dst, src, input_rflags) = {
 val rol_spec_8 : (bits(8), bits(6), rflagsbits) -> (bits(8), rflagsbits, rflagsbits)
 
 function rol_spec_8 (dst, src, input_rflags) = {
-    let result : bits(8) = truncate(bits_of_int(rotate_left(unsigned(dst), 8, unsigned(src)), 9), 8);
+    let result : bits(8) = rotate_left(dst, 8, unsigned(src));
     let (output_rflags, undefined_flags) : (rflagsbits, rflagsbits) = {
         match src {
           0 => {
@@ -169,7 +169,7 @@ function rol_spec_8 (dst, src, input_rflags) = {
 val rol_spec_16 : (bits(16), bits(6), rflagsbits) -> (bits(16), rflagsbits, rflagsbits)
 
 function rol_spec_16 (dst, src, input_rflags) = {
-    let result : bits(16) = truncate(bits_of_int(rotate_left(unsigned(dst), 16, unsigned(src)), 17), 16);
+    let result : bits(16) = rotate_left(dst, 16, unsigned(src));
     let (output_rflags, undefined_flags) : (rflagsbits, rflagsbits) = {
         match src {
           0 => {
@@ -196,7 +196,7 @@ function rol_spec_16 (dst, src, input_rflags) = {
 val rol_spec_32 : (bits(32), bits(6), rflagsbits) -> (bits(32), rflagsbits, rflagsbits)
 
 function rol_spec_32 (dst, src, input_rflags) = {
-    let result : bits(32) = truncate(bits_of_int(rotate_left(unsigned(dst), 32, unsigned(src)), 33), 32);
+    let result : bits(32) = rotate_left(dst, 32, unsigned(src));
     let (output_rflags, undefined_flags) : (rflagsbits, rflagsbits) = {
         match src {
           0 => {
@@ -223,7 +223,7 @@ function rol_spec_32 (dst, src, input_rflags) = {
 val rol_spec_64 : (bits(64), bits(6), rflagsbits) -> (bits(64), rflagsbits, rflagsbits)
 
 function rol_spec_64 (dst, src, input_rflags) = {
-    let result : bits(64) = truncate(bits_of_int(rotate_left(unsigned(dst), 64, unsigned(src)), 65), 64);
+    let result : bits(64) = rotate_left(dst, 64, unsigned(src));
     let (output_rflags, undefined_flags) : (rflagsbits, rflagsbits) = {
         match src {
           0 => {
@@ -285,7 +285,7 @@ val rcr_spec_8 : (bits(8), bits(6), rflagsbits) -> (bits(8), rflagsbits, rflagsb
 function rcr_spec_8 (dst, src, input_rflags) = {
     let input_cf : bits(1) = input_rflags[cf];
     let new_dst : bits(9) = changeSlice(sail_zero_extend(dst, 9), 8, 1, input_cf);
-    let raw_result : bits(9) = bits_of_int(rotate_right(unsigned(new_dst), 9, unsigned(src)), 9);
+    let raw_result : bits(9) = rotate_right(new_dst, 9, unsigned(src));
     let result : bits(8) = truncate(raw_result, 8);
     let (output_rflags, undefined_flags) : (rflagsbits, rflagsbits) = {
         match src {
@@ -312,7 +312,7 @@ val rcr_spec_16 : (bits(16), bits(6), rflagsbits) -> (bits(16), rflagsbits, rfla
 function rcr_spec_16 (dst, src, input_rflags) = {
     let input_cf : bits(1) = input_rflags[cf];
     let new_dst : bits(17) = changeSlice(sail_zero_extend(dst, 17), 16, 1, input_cf);
-    let raw_result : bits(17) = bits_of_int(rotate_right(unsigned(new_dst), 17, unsigned(src)), 17);
+    let raw_result : bits(17) = rotate_right(new_dst, 17, unsigned(src));
     let result : bits(16) = truncate(raw_result, 16);
     let (output_rflags, undefined_flags) : (rflagsbits, rflagsbits) = {
         match src {
@@ -339,7 +339,7 @@ val rcr_spec_32 : (bits(32), bits(6), rflagsbits) -> (bits(32), rflagsbits, rfla
 function rcr_spec_32 (dst, src, input_rflags) = {
     let input_cf : bits(1) = input_rflags[cf];
     let new_dst : bits(33) = changeSlice(sail_zero_extend(dst, 33), 32, 1, input_cf);
-    let raw_result : bits(33) = bits_of_int(rotate_right(unsigned(new_dst), 33, unsigned(src)), 33);
+    let raw_result : bits(33) = rotate_right(new_dst, 33, unsigned(src));
     let result : bits(32) = truncate(raw_result, 32);
     let (output_rflags, undefined_flags) : (rflagsbits, rflagsbits) = {
         match src {
@@ -366,7 +366,7 @@ val rcr_spec_64 : (bits(64), bits(6), rflagsbits) -> (bits(64), rflagsbits, rfla
 function rcr_spec_64 (dst, src, input_rflags) = {
     let input_cf : bits(1) = input_rflags[cf];
     let new_dst : bits(65) = changeSlice(sail_zero_extend(dst, 65), 64, 1, input_cf);
-    let raw_result : bits(65) = bits_of_int(rotate_right(unsigned(new_dst), 65, unsigned(src)), 65);
+    let raw_result : bits(65) = rotate_right(new_dst, 65, unsigned(src));
     let result : bits(64) = truncate(raw_result, 64);
     let (output_rflags, undefined_flags) : (rflagsbits, rflagsbits) = {
         match src {
@@ -423,7 +423,7 @@ function rcr_spec (size, dst, src, input_rflags) = {
 val ror_spec_8 : (bits(8), bits(6), rflagsbits) -> (bits(8), rflagsbits, rflagsbits)
 
 function ror_spec_8 (dst, src, input_rflags) = {
-    let result : bits(8) = bits_of_int(rotate_right(unsigned(dst), 8, unsigned(src)), 8);
+    let result : bits(8) = rotate_right(dst, 8, unsigned(src));
     let (output_rflags, undefined_flags) : (rflagsbits, rflagsbits) = {
         match src {
           0 => {
@@ -450,7 +450,7 @@ function ror_spec_8 (dst, src, input_rflags) = {
 val ror_spec_16 : (bits(16), bits(6), rflagsbits) -> (bits(16), rflagsbits, rflagsbits)
 
 function ror_spec_16 (dst, src, input_rflags) = {
-    let result : bits(16) = bits_of_int(rotate_right(unsigned(dst), 16, unsigned(src)), 16);
+    let result : bits(16) = rotate_right(dst, 16, unsigned(src));
     let (output_rflags, undefined_flags) : (rflagsbits, rflagsbits) = {
         match src {
           0 => {
@@ -477,7 +477,7 @@ function ror_spec_16 (dst, src, input_rflags) = {
 val ror_spec_32 : (bits(32), bits(6), rflagsbits) -> (bits(32), rflagsbits, rflagsbits)
 
 function ror_spec_32 (dst, src, input_rflags) = {
-    let result : bits(32) = bits_of_int(rotate_right(unsigned(dst), 32, unsigned(src)), 32);
+    let result : bits(32) = rotate_right(dst, 32, unsigned(src));
     let (output_rflags, undefined_flags) : (rflagsbits, rflagsbits) = {
         match src {
           0 => {
@@ -504,7 +504,7 @@ function ror_spec_32 (dst, src, input_rflags) = {
 val ror_spec_64 : (bits(64), bits(6), rflagsbits) -> (bits(64), rflagsbits, rflagsbits)
 
 function ror_spec_64 (dst, src, input_rflags) = {
-    let result : bits(64) = bits_of_int(rotate_right(unsigned(dst), 64, unsigned(src)), 64);
+    let result : bits(64) = rotate_right(dst, 64, unsigned(src));
     let (output_rflags, undefined_flags) : (rflagsbits, rflagsbits) = {
         match src {
           0 => {

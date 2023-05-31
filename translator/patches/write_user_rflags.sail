@@ -1,7 +1,3 @@
-/*! Writing user rflags \ ( CF, PF, AF, ZF, SF, and OF\ ) , 
- including undefined ones, to the x86 state
-<p>We set the undefined flags, which are indicated by 
- @ ( ' mask ' ) , to the value returned by @ ( see undef-read ) .</p> */
 val write_user_rflags : (rflagsbits, rflagsbits) -> unit
 
 function write_user_rflags (user_flags_vector, undefined_mask) = {

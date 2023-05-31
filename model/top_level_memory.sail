@@ -60,7 +60,7 @@ function rme08 (proc_mode, addr_size, eff_addr, base_reg, seg_reg, r_x) = {
     load_bytes_from_ea(proc_mode, addr_size, 1, eff_addr, base_reg, seg_reg, r_x, false, false)
 }
 
-/* Read a signed 8-bit value from memory via an effective address.
+/*! Read a signed 8-bit value from memory via an effective address.
 <p>The effective address @ ( ' eff-addr ' ) is translated to a canonical 
  linear address using @ ( see ea-to-la ) . If this translation is 
  successful and no other errors ( like alignment errors ) occur, then 
@@ -88,7 +88,7 @@ function rme16 (proc_mode, addr_size, eff_addr, base_reg, seg_reg, r_x, check_al
     load_bytes_from_ea(proc_mode, addr_size, 2, eff_addr, base_reg, seg_reg, r_x, check_alignment?, false)
 }
 
-/* Read a signed 16-bit value from memory via an effective address.
+/*! Read a signed 16-bit value from memory via an effective address.
 <p>The effective address @ ( ' eff-addr ' ) is translated to a canonical 
  linear address using @ ( see ea-to-la ) . If this translation is 
  successful and no other errors ( like alignment errors ) occur, then 
@@ -116,7 +116,7 @@ function rme32 (proc_mode, addr_size, eff_addr, base_reg, seg_reg, r_x, check_al
     load_bytes_from_ea(proc_mode, addr_size, 4, eff_addr, base_reg, seg_reg, r_x, check_alignment?, mem_ptr?)
 }
 
-/* Read a signed 32-bit value from memory via an effective address.
+/*! Read a signed 32-bit value from memory via an effective address.
 <p>The effective address @ ( ' eff-addr ' ) is translated to a canonical 
  linear address using @ ( see ea-to-la ) . If this translation is 
  successful and no other errors ( like alignment errors ) occur, then 
@@ -160,7 +160,7 @@ function rme64 (proc_mode, addr_size, eff_addr, base_reg, seg_reg, r_x, check_al
     load_bytes_from_ea(proc_mode, addr_size, 8, eff_addr, base_reg, seg_reg, r_x, check_alignment?, false)
 }
 
-/* Read a signed 64-bit value from memory via an effective address.
+/*! Read a signed 64-bit value from memory via an effective address.
 <p>The effective address @ ( ' eff-addr ' ) is translated to a canonical 
  linear address using @ ( see ea-to-la ) . If this translation is 
  successful and no other errors ( like alignment errors ) occur, then 
@@ -257,7 +257,7 @@ function wme08 (proc_mode, addr_size, eff_addr, base_reg, seg_reg, data) = {
     store_bytes_to_ea(proc_mode, addr_size, 1, eff_addr, base_reg, seg_reg, data, false, false)
 }
 
-/* Write a signed 8-bit value to memory via an effective address.
+/*! Write a signed 8-bit value to memory via an effective address.
 <p>The effective address @ ( ' eff-addr ' ) is translated to a canonical 
  linear address. If this translation is successful and no other error 
  occurs ( like alignment errors ) , then @ ( see WIML08 ) is 
@@ -295,7 +295,7 @@ function wme16 (proc_mode, addr_size, eff_addr, base_reg, seg_reg, data, check_a
     store_bytes_to_ea(proc_mode, addr_size, 2, eff_addr, base_reg, seg_reg, data, check_alignment?, false)
 }
 
-/* Write a signed 16-bit value to memory via an effective address.
+/*! Write a signed 16-bit value to memory via an effective address.
 <p>The effective address @ ( ' eff-addr ' ) is translated to a canonical 
  linear address. If this translation is successful and no other error 
  occurs ( like alignment errors ) , then @ ( see WIML16 ) is 
@@ -333,7 +333,7 @@ function wme32 (proc_mode, addr_size, eff_addr, base_reg, seg_reg, data, check_a
     store_bytes_to_ea(proc_mode, addr_size, 4, eff_addr, base_reg, seg_reg, data, check_alignment?, mem_ptr?)
 }
 
-/* Write a signed 32-bit value to memory via an effective address.
+/*! Write a signed 32-bit value to memory via an effective address.
 <p>The effective address @ ( ' eff-addr ' ) is translated to a canonical 
  linear address. If this translation is successful and no other error 
  occurs ( like alignment errors ) , then @ ( see WIML32 ) is 
@@ -392,7 +392,7 @@ function wme64 (proc_mode, addr_size, eff_addr, base_reg, seg_reg, data, check_a
     store_bytes_to_ea(proc_mode, addr_size, 8, eff_addr, base_reg, seg_reg, data, check_alignment?, false)
 }
 
-/* Write a signed 64-bit value to memory via an effective address.
+/*! Write a signed 64-bit value to memory via an effective address.
 <p>The effective address @ ( ' eff-addr ' ) is translated to a canonical 
  linear address. If this translation is successful and no other error 
  occurs ( like alignment errors ) , then @ ( see WIML64 ) is 
@@ -473,7 +473,7 @@ function wme_size (proc_mode, addr_size, nbytes, eff_addr, base_reg, seg_reg, da
     store_bytes_to_ea(proc_mode, addr_size, nbytes, eff_addr, base_reg, seg_reg, truncate(data, 8 * nbytes), check_alignment?, mem_ptr?)
 }
 
-/* Write a signed value with the specified number of bytes 
+/*! Write a signed value with the specified number of bytes 
  to memory via an effective address.
 <p>The effective address is translated to a canonical linear address. If 
  this translation is successful and no other errors occur ( like alignment 

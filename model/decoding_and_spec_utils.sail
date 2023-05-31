@@ -1,6 +1,8 @@
 $include "./other_non_det.sail"
 
-/*! <p> 
+/*! Operations to manipulate instruction pointers.
+Read the instruction pointer from the register RIP, EIP, or IP.
+<p> 
  In 64-bit mode, a 64-bit instruction pointer is read from the full RIP. 
  Since, in the model, this is a 48-bit signed integer, 
  this function returns a 48-bit signed integer. 
@@ -185,7 +187,9 @@ function write_iptr (proc_mode, iptr) = {
     } else ()
 }
 
-/*! <p> 
+/*! Operations to manipulate stack pointers.
+Read the stack pointer from the register RSP, ESP, or SP.
+<p> 
  In 64-bit mode, a 64-bit stack pointer is read from the full RSP. 
  Since, in the model, this is a 64-bit signed integer, 
  this function returns a 64-bit signed integer. 
@@ -375,7 +379,10 @@ function write_sptr (proc_mode, sptr) = {
     } else ()
 }
 
-/*! <p>Source: Intel Vol. 2A, Table 2-3.</p> 
+/*! Computing effective address using ModR/M, SIB bytes, and 
+ displacement bytes present in the instruction
+Calculates effective address when SIB is present.
+<p>Source: Intel Vol. 2A, Table 2-3.</p> 
  <p>Also see Intel Vol. 2A, Table 2-2 and Figure 2-6.</p> 
  <p>In 64-bit mode, 
  we use @ ( ' rgfi ' ) to read bases as signed linear addresses, 
@@ -705,7 +712,11 @@ function x86_effective_addr (proc_mode, prefixes, temp_rip, rex_byte, r_m, mod_v
     }
 }
 
-/*! <p> Source: Intel Manuals, Volume 3, Section 6.15, Exception 
+/*! Functions to fetch and read operands from an instruction, 
+ and to write results to appropriate registers/memory locations, 
+ based on ModR/M, SIB, immediate, and/or displacement bytes.
+Checking if alignment is enabled
+<p> Source: Intel Manuals, Volume 3, Section 6.15, Exception 
  and Interrupt Reference:</p> 
  
  <h4>Interrupt 17 Alignment Check Exception ( #AC ) </h4> 

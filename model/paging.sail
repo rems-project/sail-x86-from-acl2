@@ -98,6 +98,50 @@ function pml4_table_entry_addr (lin_addr, base_addr) = {
     changeSlice(base_addr, 3, 9, lin_addr[47 .. 39])
 }
 
+/*! Determining access rights and detecting page faults
+<p>Source for determining the access rights: Section 4.6 in 
+ the Intel Manuals, Vol. 3A.</p> 
+ 
+ <p>It is important to differentiate between:</p> 
+ 
+ <ol> 
+ <li>a supervisor-mode and a user-mode access</li> 
+ <li>an implicit and an explicit supervisor-mode access</li> 
+ <li>a supervisor-mode and a user-mode address</li> 
+ </ol> 
+ 
+ <p>These concepts are defined below.</p> 
+ 
+ <ul> 
+ 
+ <li>Every access to a linear address is either a <b>supervisor-mode 
+ access</b> or a <b>user-mode access</b>. For all instruction fetches 
+ and most data accesses, accesses made while CPL @ ( ' < ' ) 3 are 
+ <b>supervisor-mode accesses</b>, while accesses made while CPL = 3 are 
+ <b>user-mode accesses</b>.</li> 
+ 
+ <li>Some operations implicitly access system data structures with 
+ linear addresses; the resulting accesses to those data structures are 
+ supervisor-mode accesses regardless of CPL. Examples of such accesses 
+ include the following: accesses to the global descriptor table \ ( GDT\ ) 
+ or local descriptor table \ ( LDT\ ) to load a segment descriptor; 
+ accesses to the interrupt descriptor table \ ( IDT\ ) when delivering an 
+ interrupt or exception; and accesses to the task-state segment \ ( TSS\ ) 
+ as part of a task switch or change of CPL. All these accesses are 
+ called <b>implicit supervisor-mode accesses</b> regardless of 
+ CPL. Other accesses made while CPL @ ( ' < ' ) 3 are called <b>explicit 
+ supervisor-mode accesses</b>.</li> 
+ 
+ <li>If the U/S flag \ ( bit 2\ ) is 0 in at least one of the 
+ paging-structure entries, the address is a <b>supervisor-mode 
+ address</b>. Otherwise, the address is a <b>user-mode 
+ address</b>.</li> 
+ 
+ <p><i>TO-DO:</i> For now, we are treating all supervisor-mode accesses 
+ as explicit. We need to detect and then account for implicit 
+ accesses.</p> 
+ 
+ </ul> */
 struct struct_paging_entry_no_page_fault_p = {supervisor_mode_access_type : int}
 
 val paging_entry_no_page_fault_p : (bits(2), sbits(48), bits(64), bits(1), bits(1), bits(1), bits(1), bits(1), bits(1), bits(1), bits(1), string, bits(2), struct_paging_entry_no_page_fault_p) -> (bool, {|0|})

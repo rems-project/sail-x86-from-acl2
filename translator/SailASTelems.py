@@ -1844,6 +1844,7 @@ def saveSail(SailAST, path, name, env, includeHeaders):
 			c2 = SailAST[idx + 1]
 			c1 = SailAST.pop(idx)
 			SailAST[idx] = ACL2Comment(c1.getComment() + "\n" + c2.getComment())
+			continue
 		idx = idx + 1
 	# Get the pretty printed version
 	pp = "\n".join([elem.pp() for elem in SailAST])

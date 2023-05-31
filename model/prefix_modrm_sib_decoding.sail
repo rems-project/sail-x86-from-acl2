@@ -143,7 +143,10 @@ function vex_opcode_modr_m_p (vex_prefixes, opcode) = {
     }
 }
 
-/*! <p> 
+/*! Functions to detect and decode SIB bytes
+Returns a boolean saying whether a SIB byte is expected to follow a 
+ ModR/M byte or not.
+<p> 
  This is based on Intel manual, Jan ' 19, Volume 2, Tables 2-1 and 2-2, 
  as well as AMD manual, Dec ' 17, Volume 3, Tables A-33 and A-35. 
  When the address size is 32 or 64 bits, 
