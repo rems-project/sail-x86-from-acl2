@@ -2783,15 +2783,21 @@ def tr_trunc(ACL2ast, env):
 		if coercedOperand is None:
 			sys.exit(f"Error: Could not coerce operand {operandSail.pp()} for `trunc` to a bitvector")
 		operandSail = coercedOperand
+		signed = False
+	else:
+		signed = operandSail.getType().isSigned()
+
 	operandType = operandSail.getType() if isinstance(operandSail.getType(), Sail_t_bits) else resultType
 
-	innerFn = SailHandwrittenFn('trunc', Sail_t_fn([nBytesSail.getType(), operandType], resultType))
+	innerFnType = Sail_t_fn([nBytesSail.getType(), operandType], resultType)
+	innerFn = SailHandwrittenFn('trunc_signed' if signed else 'trunc', innerFnType)
 	innerSail = SailApp(innerFn, [nBytesSail, operandSail])
 
 	if isConstant:
 		outerSail = innerSail
 	else:
 		# Add the coercion from variable to constant (maximum) bitvector length
+		# This uses `sail_mask`, i.e. zero-extension, because the result of `trunc` is unsigned in ACL2
 		outerFn = SailHandwrittenFn('sail_mask', Sail_t_fn([Sail_t_int(), resultType], resultType))
 		outerSail = SailApp(outerFn, [SailNumLit(8 * nBytes), innerSail])
 

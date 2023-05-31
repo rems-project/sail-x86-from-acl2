@@ -112,12 +112,19 @@ function bits_to_bool (b) = match b {
     0b0 => false
 }
 
+val sail_mask_signed : forall 'len 'v, 'len >= 0 & 'v >= 0. (int('len), bits('v)) -> bits('len)
+
+function sail_mask_signed(len, v) = if len <= length(v) then truncate(v, len) else sail_sign_extend(v, len)
+
 // TODO: The original trunc function in x86isa/utils/utilities.lisp
 // seems to intrepret n as the number of bytes in some cases, and
 // the number of bits in others... although it seems to be used with
 // numbers of bytes as far as I can see, so use that...
 val trunc : forall 'n 'm, 'n in {1, 2, 4, 8, 16} & 'm > 0. (int('n), bits('m)) -> bits(8 * 'n)
 function trunc (n, x) = sail_mask(8 * n, x)
+
+val trunc_signed : forall 'n 'm, 'n in {1, 2, 4, 8, 16} & 'm > 0. (int('n), bits('m)) -> bits(8 * 'n)
+function trunc_signed (n, x) = sail_mask_signed(8 * n, x)
 
 // Bit slicing functions for translating part_select.  This may be called with
 // indices that go beyond the length of the bitvector, so handle the case where
@@ -164,10 +171,6 @@ function check_range(n, m, i) = {
 	assert(n <= i & i <= m);
 	i
 }
-
-val sail_mask_signed : forall 'len 'v, 'len >= 0 & 'v >= 0. (int('len), bits('v)) -> bits('len)
-
-function sail_mask_signed(len, v) = if len <= length(v) then truncate(v, len) else sail_sign_extend(v, len)
 
 val bits_of_int : forall 'n, 'n >= 0. (int, int('n)) -> bits('n)
 function bits_of_int (x, n) = get_slice_int(n, x, 0)

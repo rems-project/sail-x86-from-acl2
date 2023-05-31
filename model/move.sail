@@ -161,7 +161,7 @@ function x86_lea (proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode, mo
     let temp_rip : sbits(48) = add_to_iptr(proc_mode, temp_rip, sail_zero_extend(increment_rip_by, 48));
     let badlength? : option(int) = check_instruction_length(start_rip, temp_rip, 0b000);
     if is_some(badlength?) then x86_fault("(!!FAULT-FRESH :GP 0 :INSTRUCTION-LENGTH BADLENGTH?)");
-    let m : bits(64) = sail_mask(64, trunc(register_size, m));
+    let m : bits(64) = sail_mask(64, trunc_signed(register_size, m));
     write_rgfi_size(bits_of_int(register_size, 4), reg_index(reg, rex_byte, 0b10), m, rex_byte);
     write_iptr(proc_mode, temp_rip)
 }

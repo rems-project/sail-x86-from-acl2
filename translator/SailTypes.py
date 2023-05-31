@@ -274,7 +274,7 @@ def isNonnegativeType(t):
 	return isinstance(t, Sail_t_nat) or \
 			(isinstance(t, Sail_t_range) and t.low >= 0 and t.high >= 0) or \
 			(isinstance(t, Sail_t_member) and t.subType == Sail_t_member.INT and all(m >= 0 for m in t.members)) or \
-			(isinstance(t, Sail_t_bits) and t.signed == False) or \
+			(isinstance(t, Sail_t_bits) and t.isSigned() == False) or \
 			(isinstance(t, Sail_t_bitfield)) or \
 			(isinstance(t, Sail_t_synonym) and isNonnegativeType(t.getTyp()))
 
@@ -453,6 +453,9 @@ class Sail_t_bits(SailType):
 
 	def getLength(self):
 		return self.length if isinstance(self.length, int) else None
+
+	def isSigned(self):
+		return self.signed
 
 	def generalise(self):
 		return Sail_t_bits(self.length, signed=self.signed)

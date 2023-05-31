@@ -8,7 +8,7 @@ function x86_cbw_cwd_cdqe (proc_mode, start_rip, temp_rip, prefixes, rex_byte, o
     let src : bits(32) = truncate(rgfi_size(bits_of_int(src_size, 4), 0x0, rex_byte), 32);
     let dst : bits(64) = {
         if logbitp(check_range(0, 32, check_range(0, 32, ash(src_size, 3)) - 1), src) then {
-            sail_mask(64, trunc(register_size, (match src_size {
+            sail_mask(64, trunc_signed(register_size, (match src_size {
               1 => sail_sign_extend(truncate(src, 8), 32),
               2 => sail_sign_extend(truncate(src, 16), 32),
               _ => src
