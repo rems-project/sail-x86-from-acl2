@@ -76,4 +76,3 @@ update_snapshot:
 	echo "\$$endif" >> structures.sail.tmp
 	mv structures.sail.tmp structures.sail
 	rm structures.sail.header
-	patch < $(wildcard ../translator/patches/*.patch)
