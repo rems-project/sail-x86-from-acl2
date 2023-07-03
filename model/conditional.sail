@@ -111,7 +111,9 @@ function x86_cmovcc (proc_mode, start_rip, temp_rip, prefixes, rex_byte, opcode,
     let branch_cond : bool = jcc_cmovcc_setcc_spec(opcode);
     if branch_cond then {
         write_rgfi_size(bits_of_int(operand_size, 4), reg_index(reg, rex_byte, 0b10), truncate(reg_mem, 64), rex_byte)
-    };
+    } else if operand_size == 4 & (in_64bit_mode(proc_mode) | in_compatibility_mode(proc_mode)) then {
+        wr32(reg_index(reg, rex_byte, 0b10), rr32(reg_index(reg, rex_byte, 0b10)))
+    } else ();
     write_iptr(proc_mode, temp_rip)
 }
 

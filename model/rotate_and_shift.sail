@@ -82,7 +82,7 @@ function x86_sal_sar_shl_shr_rcl_rcr_rol_ror (proc_mode, start_rip, temp_rip, pr
         }
     };
     let countmask : {|31, 63|} = {
-        if logbitp(3, rex_byte) then 63 else 31
+        if logbitp(3, rex_byte) & not_bool(byte_operand?) then 63 else 31
     };
     let shift_rotate_by : bits(128) = logand(bits_of_int(countmask, 128), shift_rotate_by);
     let temp_rip : sbits(49) = {

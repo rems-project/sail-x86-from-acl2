@@ -181,11 +181,11 @@ function x86_add_adc_sub_sbb_or_and_xor_cmp_test_rax_i (operation, proc_mode, st
     };
     let rax_var : bits(64) = rgfi_size(bits_of_int(rax_size, 4), 0x0, rex_byte);
     let imm : bits(128) = rme_size(proc_mode, select_address_size(proc_mode, Some(prefixes)), operand_size, sail_sign_extend(temp_rip, 64), None(), 1, ":X", false, false);
-    let imm : bits(64) = {
+    let (final_operand_size, imm) : ({|1, 2, 4, 8|}, bits(64)) = {
         if not_bool(byte_operand?) & rax_size == 8 then {
-            sail_sign_extend(truncate(imm, 32), 64)
+            (8, sail_sign_extend(truncate(imm, 32), 64))
         } else {
-            sail_zero_extend(truncate(imm, 32), 64)
+            (operand_size, sail_zero_extend(truncate(imm, 32), 64))
         }
     };
     let temp_rip : sbits(49) = sail_sign_extend(add_to_iptr(proc_mode, temp_rip, bits_of_int(operand_size, 48)), 49);
@@ -194,7 +194,7 @@ function x86_add_adc_sub_sbb_or_and_xor_cmp_test_rax_i (operation, proc_mode, st
     let input_rflags : rflagsbits = rflags;
     let (result, output_rflags, undefined_flags) : (bits(64), rflagsbits, rflagsbits) = gpr_arith_logic_spec(rax_size, operation, rax_var, imm, input_rflags);
     if operation == 8 | operation == 7 then () else {
-        write_rgfi_size(bits_of_int(rax_size, 4), 0x0, result, rex_byte)
+        write_rgfi_size(bits_of_int(final_operand_size, 4), 0x0, result, rex_byte)
     };
     write_user_rflags(output_rflags, undefined_flags);
     write_iptr(proc_mode, truncate(temp_rip, 48))

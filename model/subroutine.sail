@@ -59,10 +59,14 @@ function x86_call_ff_2_op_en_m (proc_mode, start_rip, temp_rip, prefixes, rex_by
     let addr_size : address_size = select_address_size(proc_mode, None());
     let new_rsp : sbits(64) = add_to_sptr(proc_mode, rsp_var, bits_of_int(negate(addr_size), 64));
     let check_alignment? : bool = alignment_checking_enabled_p();
-    if operand_size == 8 then {
-        wime_size(proc_mode, select_address_size(proc_mode, Some(prefixes)), operand_size, rsp_var, None(), 2, sail_sign_extend(call_rip, 128), check_alignment?, false)
+    if in_64bit_mode(proc_mode) then {
+        wime_size(Mode_64bit, select_address_size(proc_mode, Some(prefixes)), addr_size, sail_sign_extend(truncate(new_rsp, 48), 64), None(), 2, sail_sign_extend(next_rip, 128), alignment_checking_enabled_p(), false)
     } else {
-        wme_size(proc_mode, select_address_size(proc_mode, Some(prefixes)), operand_size, rsp_var, None(), 2, sail_sign_extend(call_rip, 128), check_alignment?, false)
+        wme_size(proc_mode, select_address_size(proc_mode, Some(prefixes)), addr_size, sail_sign_extend(truncate(new_rsp, 48), 64), None(), 2, if addr_size == 2 then {
+            sail_zero_extend(sail_zero_extend(truncate(next_rip, 16), 32), 128)
+        } else {
+            sail_zero_extend(truncate(next_rip, 32), 128)
+        }, alignment_checking_enabled_p(), false)
     };
     write_iptr(proc_mode, truncate(call_rip, 48));
     write_sptr(proc_mode, new_rsp)
