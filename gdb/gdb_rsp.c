@@ -1,5 +1,6 @@
 #include <assert.h>
 #include <sys/types.h>
+#include <sys/select.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
@@ -7,6 +8,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <errno.h>
 
 #include "elf.h"
 #include "sail.h"
@@ -713,8 +715,17 @@ static void send_resp(struct rsp_conn *conn, struct rsp_buf *r) {
 
 static void gdb_server_dispatch(struct rsp_conn *conn, struct rsp_buf *req, struct rsp_buf *resp) {
   while (1) {
-    while (!read_req(conn, req))  // should move to a select loop :p
-      ;
+    do {
+      fd_set fds;
+      FD_ZERO(&fds);
+      FD_SET(conn->conn_fd, &fds);
+
+      int r = select(conn->conn_fd + 1, &fds, NULL, NULL, NULL);
+      if (r == -1) {
+        dprintf(conn->log_fd, "[dbg] error in select waiting for data: %s\n", strerror(errno));
+        exit(1);
+      }
+    } while (!read_req(conn, req));
 
     if (dispatch_req(conn, req, resp)) {
       /* detach command received */
