@@ -5,6 +5,10 @@
 #include <stdbool.h>
 #include <string.h>
 #include <unistd.h>
+#include <sys/types.h>
+#include <sys/socket.h>
+#include <fcntl.h>
+#include <errno.h>
 
 #include "sail.h"
 #include "rts.h"
@@ -163,4 +167,18 @@ void conn_exit(struct rsp_conn *conn, int code) {
   exit(code);
 }
 
+void conn_accept(struct rsp_conn *conn) {
+  if ((conn->conn_fd = accept(conn->listen_fd, (struct sockaddr *)NULL, NULL)) < 0) {
+    dprintf(conn->log_fd, "[dbg] error accepting connection: %s\n", strerror(errno));
+    exit(1);
+  }
+  if (fcntl(conn->conn_fd, F_SETFL, O_NONBLOCK) < 0) {
+    dprintf(conn->log_fd, "[dbg] error making connection non-blocking: %s\n", strerror(errno));
+    exit(1);
+  }
+}
 
+void conn_detach_and_accept(struct rsp_conn *conn) {
+  close(conn->conn_fd);
+  conn_accept(conn);
+}

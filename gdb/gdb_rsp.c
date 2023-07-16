@@ -3,12 +3,10 @@
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
-#include <fcntl.h>
 #include <unistd.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <errno.h>
 
 #include "elf.h"
 #include "sail.h"
@@ -622,7 +620,8 @@ static void handle_sw_breakpoint(struct rsp_conn *conn, struct rsp_buf *req, str
   make_empty_resp(conn, resp);
 }
 
-static void dispatch_req(struct rsp_conn *conn, struct rsp_buf *req, struct rsp_buf *resp) {
+/* Returns non-zero on detach, zero normally. */
+static int dispatch_req(struct rsp_conn *conn, struct rsp_buf *req, struct rsp_buf *resp) {
   prepare_resp(conn, resp);
   switch (req->cmd_buf[0]) {
   case 'q':
@@ -648,9 +647,8 @@ static void dispatch_req(struct rsp_conn *conn, struct rsp_buf *req, struct rsp_
     handle_stop_reply(conn, req, resp);
     break;
   case 'D':
-    dprintf(conn->log_fd, "GDB disconnecting, exiting.\n");
-    /* wait for another connection? */
-    conn_exit(conn, 0);
+    dprintf(conn->log_fd, "GDB detach\n");
+    return 1;
     break;
   case 's':
     handle_step(conn, req, resp);
@@ -676,6 +674,7 @@ static void dispatch_req(struct rsp_conn *conn, struct rsp_buf *req, struct rsp_
     dprintf(conn->log_fd, "Unsupported cmd %c\n", req->cmd_buf[0]);
     conn_exit(conn, 1);
   }
+  return 0;
 }
 
 static void resp_set_checksum(struct rsp_conn *conn, struct rsp_buf *r) {
@@ -717,10 +716,13 @@ static void gdb_server_dispatch(struct rsp_conn *conn, struct rsp_buf *req, stru
     while (!read_req(conn, req))  // should move to a select loop :p
       ;
 
-    dispatch_req(conn, req, resp);
-
-    resp_set_checksum(conn, resp);
-    send_resp(conn, resp);
+    if (dispatch_req(conn, req, resp)) {
+      /* detach command received */
+      conn_detach_and_accept(conn);
+    } else {
+      resp_set_checksum(conn, resp);
+      send_resp(conn, resp);
+    }
 
     req->bufofs = 0;
     resp->bufofs = 0;
@@ -728,14 +730,7 @@ static void gdb_server_dispatch(struct rsp_conn *conn, struct rsp_buf *req, stru
 }
 
 void gdb_server_run(struct rsp_conn *conn) {
-  if ((conn->conn_fd = accept(conn->listen_fd, (struct sockaddr *)NULL, NULL)) < 0) {
-    dprintf(conn->log_fd, "[dbg] error accepting connection: %s\n", strerror(errno));
-    exit(1);
-  }
-  if (fcntl(conn->conn_fd, F_SETFL, O_NONBLOCK) < 0) {
-    dprintf(conn->log_fd, "[dbg] error making connection non-blocking: %s\n", strerror(errno));
-    exit(1);
-  }
+  conn_accept(conn);
 
   grow_rsp_buf(conn, &req);
   grow_rsp_buf(conn, &resp);

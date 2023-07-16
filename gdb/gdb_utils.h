@@ -38,6 +38,8 @@ struct rsp_conn {
 };
 
 void init_gdb_model(struct model_state *model);
+void conn_accept(struct rsp_conn *conn);
+void conn_detach_and_accept(struct rsp_conn *conn);
 void conn_exit(struct rsp_conn *conn, int code);
 
 // protocol message buffers
