@@ -205,7 +205,7 @@ function in_list (x, xs) = match xs {
 /*-----------------------------------------------------------------*/
 
 /*
-http://www.cs.utexas.edu/users/moore/acl2/manuals/current/manual/index-seo.php/ACL2____UNSIGNED-BYTE-P
+http://www.cs.utexas.edu/users/moore/acl2/manuals/current/manual/?topic=ACL2____UNSIGNED-BYTE-P
 */
 val unsigned_byte_p_int : (int, int) -> bool
 function unsigned_byte_p_int (bits, x) = {
@@ -219,7 +219,7 @@ function unsigned_byte_p_bits (bits, x) = unsigned_byte_p_int(bits, unsigned(x))
 overload unsigned_byte_p = {unsigned_byte_p_int, unsigned_byte_p_bits}
 
 /*
-http://www.cs.utexas.edu/users/moore/acl2/manuals/current/manual/index-seo.php/ACL2____SIGNED-BYTE-P
+http://www.cs.utexas.edu/users/moore/acl2/manuals/current/manual/?topic=ACL2____SIGNED-BYTE-P
 */
 val signed_byte_p_int : (int, int) -> bool
 function signed_byte_p_int (bits, x) = {
@@ -241,7 +241,7 @@ overload signed_byte_p = {signed_byte_p_int, signed_byte_p_bits}
 In C-like languages: `i & ((1 << size) - 1)`
 If size = 0, then return = 0
 
-See: http://www.cs.utexas.edu/users/moore/acl2/manuals/current/manual/index-seo.php/ACL2____LOGHEAD
+See: http://www.cs.utexas.edu/users/moore/acl2/manuals/current/manual/?topic=ACL2____LOGHEAD
 */
 
 val loghead_int : (int, int) -> int
@@ -262,7 +262,7 @@ overload loghead = {loghead_bits, loghead_int}
 /*
 `logtail pos i` returns high-order part of i starting at bit pos
 
-See: http://www.cs.utexas.edu/users/moore/acl2/manuals/current/manual/index-seo.php/ACL2____LOGTAIL
+See: http://www.cs.utexas.edu/users/moore/acl2/manuals/current/manual/?topic=ACL2____LOGTAIL
 */
 val logtail_int : (int, int) -> int
 function logtail_int (pos, x) =
@@ -282,7 +282,7 @@ the two's complement representation of j.
 (Logbitp i j) has a guard that i is a nonnegative integer and j is
 an integer."
 
-See: http://www.cs.utexas.edu/users/moore/acl2/manuals/current/manual/index-seo.php/COMMON-LISP____LOGBITP
+See: http://www.cs.utexas.edu/users/moore/acl2/manuals/current/manual/?topic=COMMON-LISP____LOGBITP
 */
 val logbitp_int : (int, int) -> bool
 function logbitp_int (i, j) = {
@@ -320,8 +320,8 @@ overload logbit = {logbit_bits, logbit_int}
 The function lognot is used in the definition of logcount.  It is
 simply a bitwise not.
 
-See (logcount): http://www.cs.utexas.edu/users/moore/acl2/manuals/current/manual/index-seo.php/COMMON-LISP____LOGCOUNT
-See (lognot): http://www.cs.utexas.edu/users/moore/acl2/manuals/current/manual/index-seo.php/COMMON-LISP____LOGNOT
+See (logcount): http://www.cs.utexas.edu/users/moore/acl2/manuals/current/manual/?topic=COMMON-LISP____LOGCOUNT
+See (lognot): http://www.cs.utexas.edu/users/moore/acl2/manuals/current/manual/?topic=COMMON-LISP____LOGNOT
 
 TODO: why do we take the lognot?  This does a bitwise not and seems
 to change the number of on bits?  Maybe 'on' bits means 0 when
@@ -377,7 +377,7 @@ This is what we want when replacing the `floor` function
 NOTE: at first tried using tdiv_int instead of floor2, but this does
 not have the same behaviour as floor in the ACL2 spec.
 
-See: http://www.cs.utexas.edu/users/moore/acl2/manuals/current/manual/index-seo.php/COMMON-LISP____LOGAND
+See: http://www.cs.utexas.edu/users/moore/acl2/manuals/current/manual/?topic=COMMON-LISP____LOGAND
 */
 
 val logand_int : (int, int) -> int
@@ -415,9 +415,9 @@ logxor
 Here only the binary version is implemented.
 
 See:
-	logxor: http://www.cs.utexas.edu/users/moore/acl2/manuals/current/manual/index-seo.php/COMMON-LISP____LOGXOR
-	logeqv: http://www.cs.utexas.edu/users/moore/acl2/manuals/current/manual/index-seo.php/COMMON-LISP____LOGEQV
-	logorc1:http://www.cs.utexas.edu/users/moore/acl2/manuals/current/manual/index-seo.php/COMMON-LISP____LOGORC1
+	logxor: http://www.cs.utexas.edu/users/moore/acl2/manuals/current/manual/?topic=COMMON-LISP____LOGXOR
+	logeqv: http://www.cs.utexas.edu/users/moore/acl2/manuals/current/manual/?topic=COMMON-LISP____LOGEQV
+	logorc1:http://www.cs.utexas.edu/users/moore/acl2/manuals/current/manual/?topic=COMMON-LISP____LOGORC1
 */
 val logxor : forall 'n, 'n >= 0. (bits('n), bits('n)) -> bits('n)
 function logxor (x, y) = xor_vec(x, y)

@@ -4,7 +4,7 @@
 
 ## Introduction
 
-This project translates the [X86isa](https://www.cs.utexas.edu/users/moore/acl2/manuals/current/manual/index-seo.php/ACL2____X86ISA) formal model of the x86 ISA, written in ACL2 by Shilpi Goel, Warren A. Hunt, Jr., and Matt Kaufmann, into [Sail](https://www.cl.cam.ac.uk/~pes20/sail/popl2019.html), a language designed for modelling ISA semantics.
+This project translates the [X86isa](https://www.cs.utexas.edu/~moore/acl2/v8-5/combined-manual/index.html?topic=ACL2____X86ISA) formal model of the x86 ISA, written in ACL2 by Shilpi Goel, Warren A. Hunt, Jr., and Matt Kaufmann, into [Sail](https://www.cl.cam.ac.uk/~pes20/sail/popl2019.html), a language designed for modelling ISA semantics.
 
 The translator was originally developed by Patrick Taylor as a student project in 2020, with supervision by Alasdair Armstrong and Peter Sewell.  Since then, Thomas Bauereiss has updated and extended it, in particular extending the scope of the translation, making the data type annotations more precise, and making the generated Sail code more idiomatic.
 
